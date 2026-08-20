@@ -176,6 +176,69 @@
     padding:9px 14px; margin-bottom:22px; display:flex; align-items:center; gap:8px;
   }
 
+  .add-btn{
+    margin-left:auto;
+    font-family:var(--font-mono); font-size:12px; font-weight:600; letter-spacing:.02em;
+    color:var(--ink-0); background:var(--text-hi); border:1px solid var(--text-hi);
+    border-radius:999px; padding:7px 16px; cursor:pointer; transition:opacity .15s ease;
+  }
+  .add-btn:hover{opacity:.85;}
+  .add-btn:focus-visible{outline:2px solid #6c8cff; outline-offset:2px;}
+
+  .modal-overlay{
+    display:none; position:fixed; inset:0; background:#05070fcc; backdrop-filter:blur(2px);
+    align-items:center; justify-content:center; z-index:100; padding:20px;
+  }
+  .modal-overlay.open{display:flex;}
+  .modal{
+    background:var(--ink-1); border:1px solid var(--hairline); border-radius:16px;
+    width:100%; max-width:480px; max-height:90vh; overflow-y:auto;
+    padding:22px 24px 24px; box-shadow:0 20px 60px #00000066;
+  }
+  .modal-head{display:flex; align-items:center; justify-content:space-between; margin-bottom:16px;}
+  .modal-head h2{font-size:17px; margin:0; font-weight:600;}
+  .modal-close{
+    background:none; border:none; color:var(--text-low); font-size:16px; cursor:pointer;
+    width:28px; height:28px; border-radius:6px; line-height:1;
+  }
+  .modal-close:hover{background:var(--ink-2); color:var(--text-hi);}
+
+  .field{display:block; margin-bottom:14px;}
+  .field-label{
+    display:block; font-family:var(--font-mono); font-size:11px; text-transform:uppercase;
+    letter-spacing:.06em; color:var(--text-low); margin-bottom:6px;
+  }
+  .field input[type="text"], .field select, .field textarea{
+    width:100%; background:var(--ink-2); border:1px solid var(--hairline); border-radius:8px;
+    color:var(--text-hi); font-family:var(--font-display); font-size:13.5px;
+    padding:9px 11px; resize:vertical;
+  }
+  .field input:focus-visible, .field select:focus-visible, .field textarea:focus-visible{
+    outline:2px solid #6c8cff; outline-offset:1px;
+  }
+  .field-row{display:grid; grid-template-columns:1fr 1fr; gap:12px;}
+
+  .modal-actions{display:flex; justify-content:flex-end; gap:10px; margin-top:6px;}
+  .btn-secondary, .btn-primary{
+    font-family:var(--font-mono); font-size:12.5px; border-radius:999px; padding:8px 18px;
+    cursor:pointer; border:1px solid var(--hairline);
+  }
+  .btn-secondary{background:transparent; color:var(--text-mid);}
+  .btn-secondary:hover{color:var(--text-hi); border-color:var(--text-low);}
+  .btn-primary{background:var(--text-hi); color:var(--ink-0); border-color:var(--text-hi); font-weight:600;}
+  .btn-primary:hover{opacity:.85;}
+
+  .remove-btn{
+    background:none; border:none; color:var(--text-low); font-size:12px; cursor:pointer;
+    padding:2px 4px; line-height:1; border-radius:4px;
+  }
+  .remove-btn:hover{color:var(--sev-critica); background:#e2564f1a;}
+
+  @media (max-width:480px){
+    .field-row{grid-template-columns:1fr;}
+    .add-btn{margin-left:0;}
+  }
+
   footer{margin-top:34px; padding-top:16px; border-top:1px solid var(--hairline); font-family:var(--font-mono); font-size:11px; color:var(--text-low); text-align:center; line-height:1.7;}
 
   @media (max-width:900px){
@@ -246,11 +309,57 @@
       <button class="filter-btn" data-status-filter="andamento">Em andamento</button>
       <button class="filter-btn" data-status-filter="concluido">Concluído</button>
     </div>
+    <button class="add-btn" id="open-add-modal">+ Nova demanda</button>
   </div>
 
   <div class="storage-note" id="storage-note">⏳ Carregando status salvos…</div>
 
   <div class="board" id="board"></div>
+
+  <div class="modal-overlay" id="modal-overlay">
+    <div class="modal" role="dialog" aria-modal="true" aria-labelledby="modal-title">
+      <div class="modal-head">
+        <h2 id="modal-title">Nova demanda</h2>
+        <button class="modal-close" id="modal-close" aria-label="Fechar">✕</button>
+      </div>
+      <form id="add-form">
+        <label class="field">
+          <span class="field-label">Título *</span>
+          <input type="text" id="f-title" required maxlength="120" placeholder="Ex: Revisão do script de boas-vindas" />
+        </label>
+        <div class="field-row">
+          <label class="field">
+            <span class="field-label">Área responsável *</span>
+            <select id="f-area" required>
+              <option value="op">Operações</option>
+              <option value="ql">Qualidade</option>
+              <option value="pa">PA Digital</option>
+            </select>
+          </label>
+          <label class="field">
+            <span class="field-label">Prioridade *</span>
+            <select id="f-sev" required>
+              <option value="media">Média</option>
+              <option value="alta">Alta</option>
+              <option value="critica">Crítica</option>
+            </select>
+          </label>
+        </div>
+        <label class="field">
+          <span class="field-label">Como fazemos hoje</span>
+          <textarea id="f-hoje" rows="3" maxlength="400" placeholder="Descreva a situação atual (opcional)"></textarea>
+        </label>
+        <label class="field">
+          <span class="field-label">Sugestão de melhoria</span>
+          <textarea id="f-sugestao" rows="3" maxlength="400" placeholder="Descreva a melhoria proposta (opcional)"></textarea>
+        </label>
+        <div class="modal-actions">
+          <button type="button" class="btn-secondary" id="modal-cancel">Cancelar</button>
+          <button type="submit" class="btn-primary">Adicionar demanda</button>
+        </div>
+      </form>
+    </div>
+  </div>
 
   <footer>
     Este board não contém dados pessoais de clientes, em conformidade com a LGPD (Lei nº 13.709/2018).<br/>
@@ -339,9 +448,12 @@ function cardHTML(item){
     <div class="card ${item.area}-card" data-sev="${item.sev}" data-id="${item.id}" tabindex="0" role="button" aria-expanded="false">
       <div class="card-top">
         <span class="tag">${item.id}</span>
-        <span class="sev ${item.sev}"><span class="bars"><i></i><i></i><i></i></span>${SEV_LABEL[item.sev]}</span>
+        <span style="display:flex; align-items:center; gap:8px;">
+          <span class="sev ${item.sev}"><span class="bars"><i></i><i></i><i></i></span>${SEV_LABEL[item.sev]}</span>
+          ${item.custom ? `<button class="remove-btn" data-remove-id="${item.id}" aria-label="Remover demanda" title="Remover demanda">✕</button>` : ""}
+        </span>
       </div>
-      <h3>${item.title}${item.shared ? `<span class="shared">${item.shared}</span>` : ""}</h3>
+      <h3>${item.title}${item.shared ? `<span class="shared">${item.shared}</span>` : ""}${item.custom ? `<span class="shared">Nova</span>` : ""}</h3>
       <div class="status-row">
         <select class="status-select" data-status="${item.status}" aria-label="Status de ${item.title}">
           <option value="aberto" ${item.status==="aberto"?"selected":""}>Em aberto</option>
@@ -349,15 +461,15 @@ function cardHTML(item){
           <option value="concluido" ${item.status==="concluido"?"selected":""}>Concluído</option>
         </select>
       </div>
-      <p class="snippet"><b>Hoje:</b> ${item.hoje.length > 92 ? item.hoje.slice(0,92) + "…" : item.hoje}</p>
+      <p class="snippet"><b>Hoje:</b> ${(item.hoje && item.hoje.length > 92) ? item.hoje.slice(0,92) + "…" : (item.hoje || "Não descrito ainda.")}</p>
       <div class="detail">
         <div class="detail-block">
           <div class="detail-label">Como fazemos hoje</div>
-          <p class="detail-text">${item.hoje}</p>
+          <p class="detail-text">${item.hoje || "Não descrito ainda."}</p>
         </div>
         <div class="detail-block">
           <div class="detail-label">Sugestão de melhoria</div>
-          <p class="detail-text">${item.sugestao}</p>
+          <p class="detail-text">${item.sugestao || "Não descrito ainda."}</p>
         </div>
       </div>
       <div style="text-align:right; margin-top:8px;"><span class="caret">▾ ver detalhes</span></div>
@@ -406,6 +518,14 @@ function render(){
     });
   });
 
+  document.querySelectorAll(".remove-btn").forEach(btn => {
+    btn.addEventListener("click", (e) => {
+      e.stopPropagation();
+      const id = btn.getAttribute("data-remove-id");
+      removeCustomItem(id);
+    });
+  });
+
   updateSummary();
 }
 
@@ -444,7 +564,8 @@ async function loadStatuses(){
   const note = document.getElementById("storage-note");
 
   if(storageMode === "none"){
-    note.textContent = "⚠ Armazenamento não disponível neste navegador — o status não será salvo ao recarregar a página.";
+    note.textContent = "⚠ Armazenamento não disponível neste navegador — nada será salvo ao recarregar a página.";
+    render();
     return;
   }
 
@@ -458,13 +579,95 @@ async function loadStatuses(){
       }
     }));
     note.textContent = storageMode === "shared"
-      ? "☁ Status compartilhado — visível para todos que abrirem este board."
-      : "💾 Status salvo neste navegador — visível só para você, não sincroniza com outras pessoas.";
+      ? "☁ Status e demandas compartilhados — visível para todos que abrirem este board."
+      : "💾 Status e demandas salvos neste navegador — visível só para você, não sincroniza com outras pessoas.";
   }catch(e){
-    note.textContent = "⚠ Não foi possível carregar status salvos anteriormente.";
+    note.textContent = "⚠ Não foi possível carregar dados salvos anteriormente.";
   }
   render();
 }
+
+async function loadCustomItems(){
+  if(storageMode === "none") return;
+  try{
+    const raw = await storageAdapter.get("custom-items");
+    if(raw){
+      const items = JSON.parse(raw);
+      items.forEach(it => DATA.push(it));
+    }
+  }catch(e){
+    // ainda não existe nenhuma demanda customizada
+  }
+}
+
+async function saveCustomItems(){
+  const custom = DATA.filter(d => d.custom);
+  try{
+    await storageAdapter.set("custom-items", JSON.stringify(custom));
+  }catch(e){
+    console.error("Falha ao salvar demandas customizadas:", e);
+  }
+}
+
+function nextCustomId(){
+  const customCount = DATA.filter(d => d.custom).length;
+  return `N${customCount + 1}`;
+}
+
+async function addNewItem({title, area, sev, hoje, sugestao}){
+  const item = {
+    id: nextCustomId(),
+    area, sev,
+    title: title.trim(),
+    hoje: hoje.trim(),
+    sugestao: sugestao.trim(),
+    status: "aberto",
+    custom: true,
+  };
+  DATA.push(item);
+  render();
+  await saveCustomItems();
+}
+
+async function removeCustomItem(id){
+  const idx = DATA.findIndex(d => d.id === id && d.custom);
+  if(idx === -1) return;
+  DATA.splice(idx, 1);
+  render();
+  await saveCustomItems();
+  try{ await storageAdapter.set(`status:${id}`, ""); }catch(e){}
+}
+
+function openModal(){
+  document.getElementById("modal-overlay").classList.add("open");
+  document.getElementById("f-title").focus();
+}
+function closeModal(){
+  document.getElementById("modal-overlay").classList.remove("open");
+  document.getElementById("add-form").reset();
+}
+
+document.getElementById("open-add-modal").addEventListener("click", openModal);
+document.getElementById("modal-close").addEventListener("click", closeModal);
+document.getElementById("modal-cancel").addEventListener("click", closeModal);
+document.getElementById("modal-overlay").addEventListener("click", (e) => {
+  if(e.target.id === "modal-overlay") closeModal();
+});
+document.addEventListener("keydown", (e) => {
+  if(e.key === "Escape" && document.getElementById("modal-overlay").classList.contains("open")) closeModal();
+});
+
+document.getElementById("add-form").addEventListener("submit", async (e) => {
+  e.preventDefault();
+  const title = document.getElementById("f-title").value;
+  if(!title.trim()) return;
+  const area = document.getElementById("f-area").value;
+  const sev = document.getElementById("f-sev").value;
+  const hoje = document.getElementById("f-hoje").value;
+  const sugestao = document.getElementById("f-sugestao").value;
+  await addNewItem({title, area, sev, hoje, sugestao});
+  closeModal();
+});
 
 document.getElementById("filters-sev").addEventListener("click", (e) => {
   const btn = e.target.closest(".filter-btn");
@@ -484,8 +687,11 @@ document.getElementById("filters-status").addEventListener("click", (e) => {
   render();
 });
 
-render();
-loadStatuses();
+(async function init(){
+  render();
+  await loadCustomItems();
+  await loadStatuses();
+})();
 </script>
 </body>
 </html>
