@@ -162,7 +162,7 @@
   .snippet b{color:var(--text-hi); font-weight:600;}
 
   .detail{max-height:0; overflow:hidden; transition:max-height .3s ease;}
-  .card.open .detail{max-height:420px; margin-top:10px;}
+  .card.open .detail{max-height:640px; margin-top:10px;}
   .detail-block{border-top:1px dashed var(--hairline); padding-top:10px; margin-top:2px;}
   .detail-block + .detail-block{margin-top:10px;}
   .detail-label{font-family:var(--font-mono); font-size:10px; text-transform:uppercase; letter-spacing:.08em; color:var(--text-low); margin-bottom:4px;}
@@ -233,6 +233,19 @@
     padding:2px 4px; line-height:1; border-radius:4px;
   }
   .remove-btn:hover{color:var(--sev-critica); background:#e2564f1a;}
+
+  .obs-textarea{
+    width:100%; background:var(--ink-1); border:1px solid var(--hairline); border-radius:8px;
+    color:var(--text-hi); font-family:var(--font-display); font-size:12.5px;
+    padding:8px 10px; resize:vertical; margin-top:2px;
+  }
+  .obs-textarea:focus-visible{outline:2px solid #6c8cff; outline-offset:1px;}
+  .obs-save-row{display:flex; justify-content:flex-end; align-items:center; gap:8px; margin-top:6px;}
+  .obs-save-btn{
+    font-family:var(--font-mono); font-size:11px; border-radius:999px; padding:5px 12px;
+    cursor:pointer; border:1px solid var(--hairline); background:transparent; color:var(--text-mid);
+  }
+  .obs-save-btn:hover{color:var(--text-hi); border-color:var(--text-low);}
 
   @media (max-width:480px){
     .field-row{grid-template-columns:1fr;}
@@ -353,6 +366,10 @@
           <span class="field-label">Sugestão de melhoria</span>
           <textarea id="f-sugestao" rows="3" maxlength="400" placeholder="Descreva a melhoria proposta (opcional)"></textarea>
         </label>
+        <label class="field">
+          <span class="field-label">Observações</span>
+          <textarea id="f-obs" rows="2" maxlength="500" placeholder="Observações adicionais (opcional)"></textarea>
+        </label>
         <div class="modal-actions">
           <button type="button" class="btn-secondary" id="modal-cancel">Cancelar</button>
           <button type="submit" class="btn-primary">Adicionar demanda</button>
@@ -457,7 +474,7 @@ let storageMode = hasClaudeStorage ? "shared" : (hasLocalStorage ? "local" : "no
 async function ensureBoardDoc(){
   const snap = await fsGetDoc(BOARD_DOC);
   if(!snap.exists()){
-    const initial = { statuses:{}, customItems:[] };
+    const initial = { statuses:{}, customItems:[], observacoes:{} };
     await fsSetDoc(BOARD_DOC, initial);
     return initial;
   }
@@ -472,6 +489,10 @@ const storageAdapter = {
       if(key.startsWith("status:")){
         const id = key.slice(7);
         return (data.statuses && data.statuses[id]) || null;
+      }
+      if(key.startsWith("obs:")){
+        const id = key.slice(4);
+        return (data.observacoes && data.observacoes[id]) || null;
       }
       return null;
     }
@@ -503,6 +524,14 @@ const storageAdapter = {
         await fsSetDoc(BOARD_DOC, boardDocCache);
         return;
       }
+      if(key.startsWith("obs:")){
+        const id = key.slice(4);
+        const observacoes = { ...((boardDocCache && boardDocCache.observacoes) || {}) };
+        if(value === ""){ delete observacoes[id]; } else { observacoes[id] = value; }
+        boardDocCache = { ...(boardDocCache || {}), observacoes };
+        await fsSetDoc(BOARD_DOC, boardDocCache);
+        return;
+      }
       return;
     }
     if(storageMode === "shared"){
@@ -519,20 +548,28 @@ const storageAdapter = {
 function applyRemoteState(data){
   if(!data) return;
   const statuses = data.statuses || {};
+  const observacoes = data.observacoes || {};
   const baseItems = DATA.filter(d => !d.custom);
   const customItems = (data.customItems || []).slice();
   DATA.length = 0;
   baseItems.forEach(d => DATA.push(d));
   customItems.forEach(d => DATA.push(d));
-  DATA.forEach(d => { if(statuses[d.id] !== undefined && statuses[d.id] !== "") d.status = statuses[d.id]; });
+  DATA.forEach(d => {
+    if(statuses[d.id] !== undefined && statuses[d.id] !== "") d.status = statuses[d.id];
+    // Itens customizados já trazem "obs" embutido em customItems; só aplicamos o mapa
+    // separado "observacoes" aos itens de base, que não têm outro lugar para persistir isso.
+    if(!d.custom && observacoes[d.id] !== undefined) d.obs = observacoes[d.id];
+  });
   render();
 }
 
 let state = { sev:"todos", status:"todos" };
 
 function cardHTML(item){
+  const isOpen = openCardIds.has(item.id);
+  const obsValue = Object.prototype.hasOwnProperty.call(obsDrafts, item.id) ? obsDrafts[item.id] : (item.obs || "");
   return `
-    <div class="card ${item.area}-card" data-sev="${item.sev}" data-id="${item.id}" tabindex="0" role="button" aria-expanded="false">
+    <div class="card ${item.area}-card${isOpen ? " open" : ""}" data-sev="${item.sev}" data-id="${item.id}" tabindex="0" role="button" aria-expanded="${isOpen ? "true" : "false"}">
       <div class="card-top">
         <span class="tag">${item.id}</span>
         <span style="display:flex; align-items:center; gap:8px;">
@@ -558,6 +595,14 @@ function cardHTML(item){
           <div class="detail-label">Sugestão de melhoria</div>
           <p class="detail-text">${item.sugestao || "Não descrito ainda."}</p>
         </div>
+        <div class="detail-block">
+          <div class="detail-label">Observações</div>
+          <textarea class="obs-textarea" data-obs-id="${item.id}" rows="2" maxlength="500" placeholder="Adicionar observação (opcional)">${obsValue}</textarea>
+          <div class="obs-save-row">
+            <span class="obs-saved-hint" data-obs-hint-id="${item.id}" style="font-family:var(--font-mono); font-size:10px; color:var(--st-concluido); opacity:0;">Salvo ✓</span>
+            <button type="button" class="obs-save-btn" data-obs-save-id="${item.id}">Salvar observação</button>
+          </div>
+        </div>
       </div>
       <div style="text-align:right; margin-top:8px;"><span class="caret">▾ ver detalhes</span></div>
     </div>
@@ -570,8 +615,29 @@ function passesFilter(item){
   return sevOk && stOk;
 }
 
+const openCardIds = new Set();
+const obsDrafts = {}; // id -> texto ainda não salvo, preservado entre re-renders
+
 function render(){
   const board = document.getElementById("board");
+
+  // Preserva o rascunho de observação (texto digitado mas ainda não salvo) apenas do campo
+  // que está com foco no momento — assim uma atualização em tempo real (Firestore onSnapshot)
+  // ou o carregamento inicial não apaga o que a pessoa está digitando, mas também não usa um
+  // valor antigo/vazio de um campo que não está sendo editado para sobrescrever um dado que acabou
+  // de ser carregado do armazenamento.
+  const focusedObsId = (document.activeElement && document.activeElement.classList && document.activeElement.classList.contains("obs-textarea"))
+    ? document.activeElement.getAttribute("data-obs-id")
+    : null;
+  if(focusedObsId){
+    const ta = document.activeElement;
+    const item = DATA.find(d => d.id === focusedObsId);
+    if(item && ta.value !== (item.obs || "")) obsDrafts[focusedObsId] = ta.value;
+    else delete obsDrafts[focusedObsId];
+  }
+  const focusedSelectionStart = focusedObsId ? document.activeElement.selectionStart : null;
+  const focusedSelectionEnd = focusedObsId ? document.activeElement.selectionEnd : null;
+
   board.innerHTML = "";
   AREAS.forEach(area => {
     const items = DATA.filter(d => d.area === area.key && passesFilter(d));
@@ -613,12 +679,37 @@ function render(){
     });
   });
 
+  document.querySelectorAll(".obs-textarea").forEach(ta => {
+    ta.addEventListener("click", e => e.stopPropagation());
+    ta.addEventListener("mousedown", e => e.stopPropagation());
+    ta.addEventListener("keydown", e => e.stopPropagation());
+  });
+
+  document.querySelectorAll(".obs-save-btn").forEach(btn => {
+    btn.addEventListener("click", (e) => {
+      e.stopPropagation();
+      const id = btn.getAttribute("data-obs-save-id");
+      const ta = document.querySelector(`.obs-textarea[data-obs-id="${id}"]`);
+      updateObservacao(id, ta ? ta.value : "");
+    });
+  });
+
+  if(focusedObsId){
+    const ta = document.querySelector(`.obs-textarea[data-obs-id="${focusedObsId}"]`);
+    if(ta){
+      ta.focus();
+      try{ ta.setSelectionRange(focusedSelectionStart, focusedSelectionEnd); }catch(e){}
+    }
+  }
+
   updateSummary();
 }
 
 function toggleCard(card){
   const isOpen = card.classList.toggle("open");
   card.setAttribute("aria-expanded", isOpen ? "true" : "false");
+  const id = card.getAttribute("data-id");
+  if(isOpen) openCardIds.add(id); else openCardIds.delete(id);
 }
 
 function updateSummary(){
@@ -644,6 +735,45 @@ async function updateStatus(id, value){
     await storageAdapter.set(`status:${id}`, value);
   }catch(err){
     console.error("Falha ao salvar status:", err);
+  }
+}
+
+async function updateObservacao(id, value){
+  const item = DATA.find(d => d.id === id);
+  if(!item) return;
+  item.obs = value;
+  delete obsDrafts[id]; // já foi salvo, não é mais um rascunho pendente
+
+  const hint = document.querySelector(`.obs-saved-hint[data-obs-hint-id="${id}"]`);
+
+  try{
+    if(item.custom){
+      await saveCustomItems();
+    }else{
+      await storageAdapter.set(`obs:${id}`, value);
+    }
+    if(hint){
+      hint.style.opacity = "1";
+      setTimeout(() => { hint.style.opacity = "0"; }, 1600);
+    }
+  }catch(err){
+    console.error("Falha ao salvar observação:", err);
+  }
+}
+
+async function loadObservacoes(){
+  if(storageMode === "none") return;
+  try{
+    await Promise.all(DATA.filter(d => !d.custom).map(async (item) => {
+      try{
+        const value = await storageAdapter.get(`obs:${item.id}`);
+        if(value) item.obs = value;
+      }catch(e){
+        // ainda não existe observação salva para este item
+      }
+    }));
+  }catch(e){
+    console.error("Falha ao carregar observações:", e);
   }
 }
 
@@ -701,13 +831,14 @@ function nextCustomId(){
   return `N${customCount + 1}`;
 }
 
-async function addNewItem({title, area, sev, hoje, sugestao}){
+async function addNewItem({title, area, sev, hoje, sugestao, obs}){
   const item = {
     id: nextCustomId(),
     area, sev,
     title: title.trim(),
     hoje: hoje.trim(),
     sugestao: sugestao.trim(),
+    obs: (obs || "").trim(),
     status: "aberto",
     custom: true,
   };
@@ -752,7 +883,8 @@ document.getElementById("add-form").addEventListener("submit", async (e) => {
   const sev = document.getElementById("f-sev").value;
   const hoje = document.getElementById("f-hoje").value;
   const sugestao = document.getElementById("f-sugestao").value;
-  await addNewItem({title, area, sev, hoje, sugestao});
+  const obs = document.getElementById("f-obs").value;
+  await addNewItem({title, area, sev, hoje, sugestao, obs});
   closeModal();
 });
 
@@ -802,6 +934,7 @@ document.getElementById("filters-status").addEventListener("click", (e) => {
   }
 
   await loadCustomItems();
+  await loadObservacoes();
   await loadStatuses();
 })();
 </script>
