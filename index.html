@@ -368,7 +368,43 @@
 
 </div>
 
-<script>
+<script type="module">
+// Firebase é carregado dinamicamente (import() em vez de import estático) para que,
+// se o CDN falhar (rede bloqueada, ad-blocker etc.), o board continue funcionando
+// normalmente com armazenamento local — nunca deve ficar em branco por causa disso.
+const firebaseConfig = {
+  apiKey: "AIzaSyBt7bmMF1R8LPCudnU0Qfh5mR4TXAH79lg",
+  authDomain: "board-crediffato.firebaseapp.com",
+  projectId: "board-crediffato",
+  storageBucket: "board-crediffato.firebasestorage.app",
+  messagingSenderId: "1010277250901",
+  appId: "1:1010277250901:web:99e214f915db73f4e161dc"
+};
+
+let db = null;
+let firebaseReady = false;
+let BOARD_DOC = null;
+let boardDocCache = null;
+let fsDoc, fsGetDoc, fsSetDoc, fsUpdateDoc, fsOnSnapshot;
+
+async function initFirebase(){
+  try{
+    const [{ initializeApp }, fsMod] = await Promise.all([
+      import("https://www.gstatic.com/firebasejs/10.14.1/firebase-app.js"),
+      import("https://www.gstatic.com/firebasejs/10.14.1/firebase-firestore.js"),
+    ]);
+    fsDoc = fsMod.doc; fsGetDoc = fsMod.getDoc; fsSetDoc = fsMod.setDoc;
+    fsUpdateDoc = fsMod.updateDoc; fsOnSnapshot = fsMod.onSnapshot;
+    const fbApp = initializeApp(firebaseConfig);
+    db = fsMod.getFirestore(fbApp);
+    BOARD_DOC = fsDoc(db, "boards", "crediffato");
+    firebaseReady = true;
+  }catch(e){
+    console.error("Firebase indisponível — seguindo sem sincronização em nuvem:", e);
+    firebaseReady = false;
+  }
+}
+
 const DATA = [
   { id:"1.1", area:"op", title:"Protocolo de Atendimento (Smart NX)", sev:"alta", status:"aberto",
     hoje:"Protocolo às vezes gerado no sistema, mas não comunicado ao cliente; já houve sinalização grave aplicada indevidamente quando o problema real era só a falta de comunicação.",
@@ -416,10 +452,29 @@ const hasLocalStorage = (() => {
   }catch(e){ return false; }
 })();
 
-const storageMode = hasClaudeStorage ? "shared" : (hasLocalStorage ? "local" : "none");
+let storageMode = hasClaudeStorage ? "shared" : (hasLocalStorage ? "local" : "none");
+
+async function ensureBoardDoc(){
+  const snap = await fsGetDoc(BOARD_DOC);
+  if(!snap.exists()){
+    const initial = { statuses:{}, customItems:[] };
+    await fsSetDoc(BOARD_DOC, initial);
+    return initial;
+  }
+  return snap.data();
+}
 
 const storageAdapter = {
   async get(key){
+    if(storageMode === "firebase"){
+      const data = boardDocCache || {};
+      if(key === "custom-items") return JSON.stringify(data.customItems || []);
+      if(key.startsWith("status:")){
+        const id = key.slice(7);
+        return (data.statuses && data.statuses[id]) || null;
+      }
+      return null;
+    }
     if(storageMode === "shared"){
       const res = await window.storage.get(key, true);
       return res ? res.value : null;
@@ -430,6 +485,18 @@ const storageAdapter = {
     return null;
   },
   async set(key, value){
+    if(storageMode === "firebase"){
+      if(key === "custom-items"){
+        await fsUpdateDoc(BOARD_DOC, { customItems: JSON.parse(value) });
+        return;
+      }
+      if(key.startsWith("status:")){
+        const id = key.slice(7);
+        await fsUpdateDoc(BOARD_DOC, { [`statuses.${id}`]: value });
+        return;
+      }
+      return;
+    }
     if(storageMode === "shared"){
       await window.storage.set(key, value, true);
       return;
@@ -440,6 +507,18 @@ const storageAdapter = {
     }
   }
 };
+
+function applyRemoteState(data){
+  if(!data) return;
+  const statuses = data.statuses || {};
+  const baseItems = DATA.filter(d => !d.custom);
+  const customItems = (data.customItems || []).slice();
+  DATA.length = 0;
+  baseItems.forEach(d => DATA.push(d));
+  customItems.forEach(d => DATA.push(d));
+  DATA.forEach(d => { if(statuses[d.id] !== undefined && statuses[d.id] !== "") d.status = statuses[d.id]; });
+  render();
+}
 
 let state = { sev:"todos", status:"todos" };
 
@@ -688,7 +767,32 @@ document.getElementById("filters-status").addEventListener("click", (e) => {
 });
 
 (async function init(){
-  render();
+  render(); // board aparece imediatamente com os dados padrão, mesmo se a rede falhar
+
+  await initFirebase();
+
+  if(firebaseReady){
+    storageMode = "firebase";
+    const note = document.getElementById("storage-note");
+    try{
+      boardDocCache = await ensureBoardDoc();
+      applyRemoteState(boardDocCache);
+      fsOnSnapshot(BOARD_DOC, (snap) => {
+        if(snap.exists()){
+          boardDocCache = snap.data();
+          applyRemoteState(boardDocCache);
+        }
+      }, (err) => {
+        console.error("Erro na sincronização em tempo real:", err);
+      });
+      note.textContent = "☁ Conectado ao banco compartilhado — status e novas demandas sincronizados em tempo real para todos que acessam este link.";
+      return;
+    }catch(e){
+      console.error("Firebase indisponível, usando armazenamento local como reserva:", e);
+      storageMode = hasClaudeStorage ? "shared" : (hasLocalStorage ? "local" : "none");
+    }
+  }
+
   await loadCustomItems();
   await loadStatuses();
 })();
