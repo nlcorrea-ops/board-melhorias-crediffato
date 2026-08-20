@@ -1,0 +1,491 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>Board de Responsabilidades — Central de Monitoria Crediffato</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500;600&family=IBM+Plex+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --ink-0:#0b1220;
+    --ink-1:#121b30;
+    --ink-2:#182642;
+    --ink-3:#22335a;
+    --hairline:#2b3a5e;
+    --text-hi:#eef2fb;
+    --text-mid:#aab6d6;
+    --text-low:#7382a8;
+
+    --op:#37b8a6;
+    --ql:#d8a94a;
+    --pa:#8b8dfb;
+
+    --sev-critica:#e2564f;
+    --sev-alta:#e08a3c;
+    --sev-media:#7382a8;
+
+    --st-aberto:#7382a8;
+    --st-andamento:#d8a94a;
+    --st-concluido:#4ee2a0;
+
+    --radius:14px;
+    --font-display:'IBM Plex Sans', sans-serif;
+    --font-mono:'IBM Plex Mono', monospace;
+  }
+
+  *{box-sizing:border-box;}
+  html,body{margin:0;padding:0;}
+  body{
+    background:
+      radial-gradient(ellipse 900px 500px at 12% -10%, #16264a55, transparent),
+      radial-gradient(ellipse 700px 500px at 100% 0%, #1a1f3a55, transparent),
+      var(--ink-0);
+    color:var(--text-hi);
+    font-family:var(--font-display);
+    min-height:100vh;
+    padding:32px 20px 60px;
+  }
+
+  .wrap{max-width:1180px;margin:0 auto;}
+
+  header{
+    display:flex; justify-content:space-between; align-items:flex-start; gap:24px; flex-wrap:wrap;
+    border-bottom:1px solid var(--hairline); padding-bottom:22px; margin-bottom:26px;
+  }
+  .eyebrow{
+    font-family:var(--font-mono); font-size:12px; letter-spacing:.14em; text-transform:uppercase;
+    color:var(--text-low); display:flex; align-items:center; gap:8px; margin-bottom:10px;
+  }
+  .pulse{
+    width:7px;height:7px;border-radius:50%; background:#4ee2a0;
+    box-shadow:0 0 0 0 #4ee2a066; animation:pulse 2.4s infinite;
+  }
+  @keyframes pulse{0%{box-shadow:0 0 0 0 #4ee2a055;}70%{box-shadow:0 0 0 8px #4ee2a000;}100%{box-shadow:0 0 0 0 #4ee2a000;}}
+  h1{font-size:26px; line-height:1.25; margin:0 0 6px; font-weight:600; letter-spacing:-.01em;}
+  .sub{color:var(--text-mid); font-size:14.5px; max-width:52ch; margin:0;}
+  .meta{font-family:var(--font-mono); font-size:12px; color:var(--text-low); text-align:right; min-width:160px; line-height:1.7;}
+  .meta b{color:var(--text-mid); font-weight:500;}
+
+  .summary-group{margin-bottom:18px;}
+  .summary-label{
+    font-family:var(--font-mono); font-size:11px; text-transform:uppercase; letter-spacing:.08em;
+    color:var(--text-low); margin-bottom:8px;
+  }
+  .summary{display:grid; grid-template-columns:repeat(4, 1fr); gap:14px;}
+  .summary.status{grid-template-columns:repeat(3, 1fr);}
+  .sumcard{background:var(--ink-1); border:1px solid var(--hairline); border-radius:var(--radius); padding:14px 16px;}
+  .sumcard .n{font-family:var(--font-mono); font-size:22px; font-weight:600; transition:color .2s ease;}
+  .sumcard .l{font-size:11.5px; color:var(--text-low); text-transform:uppercase; letter-spacing:.08em; margin-top:2px;}
+  .sumcard.crit .n{color:var(--sev-critica);}
+  .sumcard.alta .n{color:var(--sev-alta);}
+  .sumcard.media .n{color:var(--sev-media);}
+  .sumcard.total .n{color:var(--text-hi);}
+  .sumcard.st-aberto .n{color:var(--st-aberto);}
+  .sumcard.st-andamento .n{color:var(--st-andamento);}
+  .sumcard.st-concluido .n{color:var(--st-concluido);}
+
+  .filters-row{display:flex; gap:22px; flex-wrap:wrap; align-items:center; margin-bottom:26px;}
+  .filter-group{display:flex; gap:8px; flex-wrap:wrap; align-items:center;}
+  .filter-group .fg-label{font-family:var(--font-mono); font-size:11px; color:var(--text-low); margin-right:2px;}
+  .filter-btn{
+    font-family:var(--font-mono); font-size:12px; letter-spacing:.03em; color:var(--text-mid);
+    background:var(--ink-1); border:1px solid var(--hairline); border-radius:999px; padding:7px 14px;
+    cursor:pointer; transition:all .15s ease;
+  }
+  .filter-btn:hover{border-color:var(--text-low); color:var(--text-hi);}
+  .filter-btn.active{background:var(--text-hi); color:var(--ink-0); border-color:var(--text-hi);}
+  .filter-btn:focus-visible{outline:2px solid #6c8cff; outline-offset:2px;}
+
+  .board{display:grid; grid-template-columns:repeat(3, 1fr); gap:20px; align-items:start;}
+  .column{background:var(--ink-1); border:1px solid var(--hairline); border-radius:18px; overflow:hidden;}
+  .col-head{padding:16px 18px 14px; border-bottom:1px solid var(--hairline); display:flex; align-items:center; justify-content:space-between;}
+  .col-head .name{font-weight:600; font-size:15px; display:flex; align-items:center; gap:9px;}
+  .rail-dot{width:9px;height:9px;border-radius:2px; flex-shrink:0;}
+  .col-head .count{font-family:var(--font-mono); font-size:12px; color:var(--text-low); background:var(--ink-2); border:1px solid var(--hairline); border-radius:999px; padding:2px 9px;}
+  .col-body{padding:14px; display:flex; flex-direction:column; gap:12px;}
+
+  .op .rail-dot{background:var(--op);}
+  .ql .rail-dot{background:var(--ql);}
+  .pa .rail-dot{background:var(--pa);}
+
+  .card{
+    background:var(--ink-2); border:1px solid var(--hairline); border-left:3px solid var(--rail, var(--text-low));
+    border-radius:10px; padding:14px 14px 13px; cursor:pointer;
+    transition:transform .15s ease, background .15s ease, border-color .15s ease;
+    opacity:0; transform:translateY(8px); animation:rise .5s ease forwards;
+  }
+  .card:hover{background:var(--ink-3);}
+  .card:focus-visible{outline:2px solid #6c8cff; outline-offset:2px;}
+  @keyframes rise{ to{opacity:1; transform:translateY(0);} }
+
+  .op-card{--rail:var(--op);}
+  .ql-card{--rail:var(--ql);}
+  .pa-card{--rail:var(--pa);}
+
+  .card-top{display:flex; align-items:center; justify-content:space-between; gap:10px; margin-bottom:8px;}
+  .tag{font-family:var(--font-mono); font-size:11px; color:var(--text-low);}
+  .sev{display:flex; align-items:center; gap:6px; font-family:var(--font-mono); font-size:10.5px; text-transform:uppercase; letter-spacing:.06em;}
+  .sev .bars{display:flex; gap:2px;}
+  .sev .bars i{width:4px; height:9px; border-radius:1px; background:var(--hairline); display:block;}
+  .sev.critica{color:var(--sev-critica);}
+  .sev.critica .bars i:nth-child(-n+3){background:var(--sev-critica);}
+  .sev.alta{color:var(--sev-alta);}
+  .sev.alta .bars i:nth-child(-n+2){background:var(--sev-alta);}
+  .sev.media{color:var(--sev-media);}
+  .sev.media .bars i:nth-child(-n+1){background:var(--sev-media);}
+
+  .card h3{font-size:14.5px; margin:0 0 8px; font-weight:600; line-height:1.35;}
+  .shared{display:inline-block; font-family:var(--font-mono); font-size:10px; color:var(--text-low); border:1px solid var(--hairline); border-radius:5px; padding:1px 6px; margin-left:6px; vertical-align:middle;}
+
+  /* ---------- status select ---------- */
+  .status-row{margin-bottom:10px;}
+  .status-select{
+    appearance:none; -webkit-appearance:none;
+    width:100%;
+    font-family:var(--font-mono); font-size:11px; letter-spacing:.02em;
+    padding:6px 26px 6px 10px;
+    border-radius:7px; border:1px solid var(--hairline);
+    background-color:var(--ink-1); color:var(--text-mid);
+    cursor:pointer;
+    background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='10' height='6'%3E%3Cpath d='M1 1l4 4 4-4' stroke='%237382a8' stroke-width='1.5' fill='none' fill-rule='evenodd'/%3E%3C/svg%3E");
+    background-repeat:no-repeat; background-position:right 10px center;
+    transition:background-color .15s ease, color .15s ease, border-color .15s ease;
+  }
+  .status-select:focus-visible{outline:2px solid #6c8cff; outline-offset:2px;}
+  .status-select[data-status="andamento"]{background-color:#d8a94a1f; color:var(--st-andamento); border-color:var(--st-andamento);}
+  .status-select[data-status="concluido"]{background-color:#4ee2a01f; color:var(--st-concluido); border-color:var(--st-concluido);}
+  .status-select[data-status="aberto"]{background-color:var(--ink-1); color:var(--text-mid); border-color:var(--hairline);}
+
+  .snippet{font-size:12.5px; color:var(--text-mid); line-height:1.5; margin:0;}
+  .snippet b{color:var(--text-hi); font-weight:600;}
+
+  .detail{max-height:0; overflow:hidden; transition:max-height .3s ease;}
+  .card.open .detail{max-height:420px; margin-top:10px;}
+  .detail-block{border-top:1px dashed var(--hairline); padding-top:10px; margin-top:2px;}
+  .detail-block + .detail-block{margin-top:10px;}
+  .detail-label{font-family:var(--font-mono); font-size:10px; text-transform:uppercase; letter-spacing:.08em; color:var(--text-low); margin-bottom:4px;}
+  .detail-text{font-size:12.5px; color:var(--text-mid); line-height:1.55; margin:0;}
+  .caret{font-family:var(--font-mono); font-size:11px; color:var(--text-low); transition:transform .2s ease;}
+  .card.open .caret{transform:rotate(180deg);}
+
+  .storage-note{
+    font-family:var(--font-mono); font-size:11px; color:var(--text-low);
+    background:var(--ink-1); border:1px solid var(--hairline); border-radius:10px;
+    padding:9px 14px; margin-bottom:22px; display:flex; align-items:center; gap:8px;
+  }
+
+  footer{margin-top:34px; padding-top:16px; border-top:1px solid var(--hairline); font-family:var(--font-mono); font-size:11px; color:var(--text-low); text-align:center; line-height:1.7;}
+
+  @media (max-width:900px){
+    .board{grid-template-columns:1fr;}
+    .summary{grid-template-columns:repeat(2,1fr);}
+    .summary.status{grid-template-columns:repeat(3,1fr);}
+    header{flex-direction:column;}
+    .meta{text-align:left;}
+  }
+  @media (max-width:480px){
+    .summary.status{grid-template-columns:1fr;}
+  }
+
+  @media (prefers-reduced-motion: reduce){
+    .card{animation:none; opacity:1; transform:none;}
+    .pulse{animation:none;}
+    *{transition:none !important;}
+  }
+</style>
+</head>
+<body>
+<div class="wrap">
+
+  <header>
+    <div>
+      <div class="eyebrow"><span class="pulse"></span> Central de Monitoria Crediffato · Setor de Operações</div>
+      <h1>Board de Melhorias por Responsável</h1>
+      <p class="sub">Guia de melhorias internas e institucionais, organizado por quem executa cada ponto. Clique em um cartão para ver o comparativo completo; use o campo de status para marcar o andamento.</p>
+    </div>
+    <div class="meta">
+      <div><b>7</b> pontos ativos</div>
+      <div>3 áreas responsáveis</div>
+      <div>Atualizado 20/08/2026</div>
+    </div>
+  </header>
+
+  <div class="summary-group">
+    <div class="summary-label">Por prioridade</div>
+    <div class="summary">
+      <div class="sumcard total"><div class="n" id="sum-total">7</div><div class="l">Total de pontos</div></div>
+      <div class="sumcard crit"><div class="n" id="sum-critica">0</div><div class="l">Prioridade crítica</div></div>
+      <div class="sumcard alta"><div class="n" id="sum-alta">4</div><div class="l">Prioridade alta</div></div>
+      <div class="sumcard media"><div class="n" id="sum-media">3</div><div class="l">Prioridade média</div></div>
+    </div>
+  </div>
+
+  <div class="summary-group">
+    <div class="summary-label">Por status</div>
+    <div class="summary status">
+      <div class="sumcard st-aberto"><div class="n" id="sum-st-aberto">7</div><div class="l">Em aberto</div></div>
+      <div class="sumcard st-andamento"><div class="n" id="sum-st-andamento">0</div><div class="l">Em andamento</div></div>
+      <div class="sumcard st-concluido"><div class="n" id="sum-st-concluido">0</div><div class="l">Concluído</div></div>
+    </div>
+  </div>
+
+  <div class="filters-row">
+    <div class="filter-group" id="filters-sev">
+      <span class="fg-label">Prioridade:</span>
+      <button class="filter-btn active" data-filter="todos">Todos</button>
+      <button class="filter-btn" data-filter="critica">Crítica</button>
+      <button class="filter-btn" data-filter="alta">Alta</button>
+      <button class="filter-btn" data-filter="media">Média</button>
+    </div>
+    <div class="filter-group" id="filters-status">
+      <span class="fg-label">Status:</span>
+      <button class="filter-btn active" data-status-filter="todos">Todos</button>
+      <button class="filter-btn" data-status-filter="aberto">Em aberto</button>
+      <button class="filter-btn" data-status-filter="andamento">Em andamento</button>
+      <button class="filter-btn" data-status-filter="concluido">Concluído</button>
+    </div>
+  </div>
+
+  <div class="storage-note" id="storage-note">⏳ Carregando status salvos…</div>
+
+  <div class="board" id="board"></div>
+
+  <footer>
+    Este board não contém dados pessoais de clientes, em conformidade com a LGPD (Lei nº 13.709/2018).<br/>
+    Uso interno — Central de Monitoria Crediffato, Setor de Operações.
+  </footer>
+
+</div>
+
+<script>
+const DATA = [
+  { id:"1.1", area:"op", title:"Protocolo de Atendimento (Smart NX)", sev:"alta", status:"aberto",
+    hoje:"Protocolo às vezes gerado no sistema, mas não comunicado ao cliente; já houve sinalização grave aplicada indevidamente quando o problema real era só a falta de comunicação.",
+    sugestao:"Alerta automático no painel do operador que só libera o encerramento após a leitura confirmada do protocolo ao cliente." },
+  { id:"1.7", area:"op", title:"Filas e TMA", sev:"media", status:"aberto",
+    hoje:"TMA acima da meta — em alguns casos até o quádruplo — é uma das sinalizações mais recorrentes; filas longas impactam operadores fora do controle direto deles.",
+    sugestao:"Painel de acompanhamento de fila e TMA em tempo real, com alerta preventivo antes de atingir os limiares que hoje geram sinalização." },
+  { id:"1.4", area:"ql", title:"Amostragem por Operador", sev:"media", status:"aberto",
+    hoje:"Parte dos operadores ainda não acumulou as 5 monitorias recomendadas antes de decisões de laudo/mérito.",
+    sugestao:"Cronograma fixo garantindo a base mínima de 5 avaliações por operador antes de qualquer decisão disciplinar." },
+  { id:"1.5", area:"ql", title:"Loop de Fechamento dos Planos de Ação", sev:"alta", status:"aberto",
+    hoje:"Cada ciclo gera um plano de ação novo, sem verificação sistemática se a ação anterior reduziu a reincidência.",
+    sugestao:"Modelo de 'ciclo fechado': todo relatório abre com o status das ações do ciclo anterior antes dos novos achados." },
+  { id:"1.6", area:"ql", shared:"+ Operações", title:"Treinamento Direcionado por Ciclo", sev:"alta", status:"aberto",
+    hoje:"O treinamento mensal já existe, mas nem sempre está vinculado à sinalização mais recorrente do ciclo específico.",
+    sugestao:"Treinamento mensal sempre construído a partir do achado nº1 do ciclo mais recente, aplicado a toda a equipe monitorada." },
+  { id:"1.8", area:"ql", title:"Critérios Pendentes de Validação Formal", sev:"media", status:"aberto",
+    hoje:"Piso de 45 min para AUSENTAR-SE e isenção de OFERTA DE ASSISTÊNCIA no refin/PA Digital seguem sem validação formal.",
+    sugestao:"Levar os dois critérios ao comitê de qualidade para validação formal e uniformização em todos os relatórios futuros." },
+  { id:"1.3", area:"pa", title:"Encerramento por Timeout", sev:"alta", status:"aberto",
+    hoje:"Diversos casos de encerramento automático do chat por inatividade, sem nenhuma mensagem de despedida ou orientação.",
+    sugestao:"Mensagem de fallback padrão antes do encerramento por inatividade, com aviso e despedida automática." },
+];
+
+const AREAS = [
+  {key:"op", label:"Operações", cls:"op"},
+  {key:"ql", label:"Qualidade", cls:"ql"},
+  {key:"pa", label:"PA Digital", cls:"pa"},
+];
+
+const SEV_LABEL = {critica:"Crítica", alta:"Alta", media:"Média"};
+const STATUS_LABEL = {aberto:"Em aberto", andamento:"Em andamento", concluido:"Concluído"};
+
+// Adaptador de armazenamento:
+// 1) Se rodando dentro do Claude, usa window.storage (compartilhado entre todos que abrem o artefato).
+// 2) Se rodando fora (ex.: GitHub Pages), cai para localStorage do navegador (persiste só localmente, por pessoa).
+// 3) Se nada disponível, roda apenas em memória (perde ao recarregar).
+const hasClaudeStorage = (typeof window !== "undefined") && !!window.storage;
+const hasLocalStorage = (() => {
+  try{
+    const t = "__test__";
+    window.localStorage.setItem(t, "1");
+    window.localStorage.removeItem(t);
+    return true;
+  }catch(e){ return false; }
+})();
+
+const storageMode = hasClaudeStorage ? "shared" : (hasLocalStorage ? "local" : "none");
+
+const storageAdapter = {
+  async get(key){
+    if(storageMode === "shared"){
+      const res = await window.storage.get(key, true);
+      return res ? res.value : null;
+    }
+    if(storageMode === "local"){
+      return window.localStorage.getItem(key);
+    }
+    return null;
+  },
+  async set(key, value){
+    if(storageMode === "shared"){
+      await window.storage.set(key, value, true);
+      return;
+    }
+    if(storageMode === "local"){
+      window.localStorage.setItem(key, value);
+      return;
+    }
+  }
+};
+
+let state = { sev:"todos", status:"todos" };
+
+function cardHTML(item){
+  return `
+    <div class="card ${item.area}-card" data-sev="${item.sev}" data-id="${item.id}" tabindex="0" role="button" aria-expanded="false">
+      <div class="card-top">
+        <span class="tag">${item.id}</span>
+        <span class="sev ${item.sev}"><span class="bars"><i></i><i></i><i></i></span>${SEV_LABEL[item.sev]}</span>
+      </div>
+      <h3>${item.title}${item.shared ? `<span class="shared">${item.shared}</span>` : ""}</h3>
+      <div class="status-row">
+        <select class="status-select" data-status="${item.status}" aria-label="Status de ${item.title}">
+          <option value="aberto" ${item.status==="aberto"?"selected":""}>Em aberto</option>
+          <option value="andamento" ${item.status==="andamento"?"selected":""}>Em andamento</option>
+          <option value="concluido" ${item.status==="concluido"?"selected":""}>Concluído</option>
+        </select>
+      </div>
+      <p class="snippet"><b>Hoje:</b> ${item.hoje.length > 92 ? item.hoje.slice(0,92) + "…" : item.hoje}</p>
+      <div class="detail">
+        <div class="detail-block">
+          <div class="detail-label">Como fazemos hoje</div>
+          <p class="detail-text">${item.hoje}</p>
+        </div>
+        <div class="detail-block">
+          <div class="detail-label">Sugestão de melhoria</div>
+          <p class="detail-text">${item.sugestao}</p>
+        </div>
+      </div>
+      <div style="text-align:right; margin-top:8px;"><span class="caret">▾ ver detalhes</span></div>
+    </div>
+  `;
+}
+
+function passesFilter(item){
+  const sevOk = state.sev === "todos" || item.sev === state.sev;
+  const stOk = state.status === "todos" || item.status === state.status;
+  return sevOk && stOk;
+}
+
+function render(){
+  const board = document.getElementById("board");
+  board.innerHTML = "";
+  AREAS.forEach(area => {
+    const items = DATA.filter(d => d.area === area.key && passesFilter(d));
+    const col = document.createElement("div");
+    col.className = `column ${area.cls}`;
+    col.innerHTML = `
+      <div class="col-head">
+        <span class="name"><span class="rail-dot"></span>${area.label}</span>
+        <span class="count">${items.length}</span>
+      </div>
+      <div class="col-body">${items.map(cardHTML).join("") || '<p class="snippet" style="padding:8px 2px;">Nenhum item nesse filtro.</p>'}</div>
+    `;
+    board.appendChild(col);
+  });
+
+  document.querySelectorAll(".card").forEach(card => {
+    card.addEventListener("click", () => toggleCard(card));
+    card.addEventListener("keydown", (e) => {
+      if(e.key === "Enter" || e.key === " "){ e.preventDefault(); toggleCard(card); }
+    });
+  });
+
+  document.querySelectorAll(".status-select").forEach(sel => {
+    sel.addEventListener("click", e => e.stopPropagation());
+    sel.addEventListener("mousedown", e => e.stopPropagation());
+    sel.addEventListener("change", (e) => {
+      e.stopPropagation();
+      const card = e.target.closest(".card");
+      const id = card.getAttribute("data-id");
+      updateStatus(id, e.target.value);
+    });
+  });
+
+  updateSummary();
+}
+
+function toggleCard(card){
+  const isOpen = card.classList.toggle("open");
+  card.setAttribute("aria-expanded", isOpen ? "true" : "false");
+}
+
+function updateSummary(){
+  document.getElementById("sum-total").textContent = DATA.length;
+  document.getElementById("sum-critica").textContent = DATA.filter(d=>d.sev==="critica").length;
+  document.getElementById("sum-alta").textContent = DATA.filter(d=>d.sev==="alta").length;
+  document.getElementById("sum-media").textContent = DATA.filter(d=>d.sev==="media").length;
+  document.getElementById("sum-st-aberto").textContent = DATA.filter(d=>d.status==="aberto").length;
+  document.getElementById("sum-st-andamento").textContent = DATA.filter(d=>d.status==="andamento").length;
+  document.getElementById("sum-st-concluido").textContent = DATA.filter(d=>d.status==="concluido").length;
+}
+
+async function updateStatus(id, value){
+  const item = DATA.find(d => d.id === id);
+  if(!item) return;
+  item.status = value;
+
+  const select = document.querySelector(`.card[data-id="${id}"] .status-select`);
+  if(select) select.setAttribute("data-status", value);
+  updateSummary();
+
+  try{
+    await storageAdapter.set(`status:${id}`, value);
+  }catch(err){
+    console.error("Falha ao salvar status:", err);
+  }
+}
+
+async function loadStatuses(){
+  const note = document.getElementById("storage-note");
+
+  if(storageMode === "none"){
+    note.textContent = "⚠ Armazenamento não disponível neste navegador — o status não será salvo ao recarregar a página.";
+    return;
+  }
+
+  try{
+    await Promise.all(DATA.map(async (item) => {
+      try{
+        const value = await storageAdapter.get(`status:${item.id}`);
+        if(value) item.status = value;
+      }catch(e){
+        // chave ainda não existe — mantém padrão "aberto"
+      }
+    }));
+    note.textContent = storageMode === "shared"
+      ? "☁ Status compartilhado — visível para todos que abrirem este board."
+      : "💾 Status salvo neste navegador — visível só para você, não sincroniza com outras pessoas.";
+  }catch(e){
+    note.textContent = "⚠ Não foi possível carregar status salvos anteriormente.";
+  }
+  render();
+}
+
+document.getElementById("filters-sev").addEventListener("click", (e) => {
+  const btn = e.target.closest(".filter-btn");
+  if(!btn) return;
+  document.querySelectorAll("#filters-sev .filter-btn").forEach(b => b.classList.remove("active"));
+  btn.classList.add("active");
+  state.sev = btn.dataset.filter;
+  render();
+});
+
+document.getElementById("filters-status").addEventListener("click", (e) => {
+  const btn = e.target.closest(".filter-btn");
+  if(!btn) return;
+  document.querySelectorAll("#filters-status .filter-btn").forEach(b => b.classList.remove("active"));
+  btn.classList.add("active");
+  state.status = btn.dataset.statusFilter;
+  render();
+});
+
+render();
+loadStatuses();
+</script>
+</body>
+</html>
