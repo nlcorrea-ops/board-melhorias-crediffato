@@ -486,13 +486,21 @@ const storageAdapter = {
   },
   async set(key, value){
     if(storageMode === "firebase"){
+      // Não usamos updateDoc com chave "statuses.<id>": o Firestore interpreta o "."
+      // como separador de campo aninhado, e nossos IDs (ex.: "1.1") também têm pontos,
+      // o que corrompe o documento. Em vez disso, reescrevemos o mapa "statuses" inteiro.
       if(key === "custom-items"){
-        await fsUpdateDoc(BOARD_DOC, { customItems: JSON.parse(value) });
+        const customItems = JSON.parse(value);
+        boardDocCache = { ...(boardDocCache || {}), customItems };
+        await fsSetDoc(BOARD_DOC, boardDocCache);
         return;
       }
       if(key.startsWith("status:")){
         const id = key.slice(7);
-        await fsUpdateDoc(BOARD_DOC, { [`statuses.${id}`]: value });
+        const statuses = { ...((boardDocCache && boardDocCache.statuses) || {}) };
+        if(value === ""){ delete statuses[id]; } else { statuses[id] = value; }
+        boardDocCache = { ...(boardDocCache || {}), statuses };
+        await fsSetDoc(BOARD_DOC, boardDocCache);
         return;
       }
       return;
