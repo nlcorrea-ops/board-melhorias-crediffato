@@ -558,7 +558,10 @@ function applyRemoteState(data){
     if(statuses[d.id] !== undefined && statuses[d.id] !== "") d.status = statuses[d.id];
     // Itens customizados já trazem "obs" embutido em customItems; só aplicamos o mapa
     // separado "observacoes" aos itens de base, que não têm outro lugar para persistir isso.
-    if(!d.custom && observacoes[d.id] !== undefined) d.obs = observacoes[d.id];
+    // Usamos "|| ''" (em vez de checar só "!== undefined") porque limpar uma observação
+    // remove a chave do mapa no Firestore — sem isso, quem recebe a atualização via
+    // onSnapshot nunca veria o campo voltar a ficar vazio.
+    if(!d.custom) d.obs = observacoes[d.id] || "";
   });
   render();
 }
