@@ -301,6 +301,25 @@
   .checkbox-list input{cursor:pointer;}
   .form-msg{font-size:12px; margin:10px 0 0; min-height:14px;}
 
+  .kpi-row{display:grid; grid-template-columns:repeat(5, 1fr); gap:14px; margin-bottom:28px;}
+  .kpi-card{background:var(--ink-1); border:1px solid var(--hairline); border-radius:var(--radius); padding:16px;}
+  .kpi-card .n{font-family:var(--font-mono); font-size:24px; font-weight:600; color:var(--text-hi);}
+  .kpi-card .l{font-size:11.5px; color:var(--text-low); text-transform:uppercase; letter-spacing:.08em; margin-top:4px;}
+  .overview-block{margin-bottom:28px;}
+  .bar-list{display:flex; flex-direction:column; gap:12px;}
+  .bar-row{background:var(--ink-1); border:1px solid var(--hairline); border-radius:12px; padding:14px 16px;}
+  .bar-head{display:flex; justify-content:space-between; align-items:center; gap:10px; font-size:12.5px; color:var(--text-low); margin-bottom:10px; flex-wrap:wrap;}
+  .bar-head .bar-name{display:flex; align-items:center; gap:8px; font-weight:600; color:var(--text-hi); font-size:13.5px;}
+  .bar-track{height:8px; border-radius:999px; background:var(--ink-2); overflow:hidden;}
+  .bar-fill{height:100%; border-radius:999px; transition:width .5s ease;}
+
+  @media (max-width:900px){
+    .kpi-row{grid-template-columns:repeat(2,1fr);}
+  }
+  @media (max-width:480px){
+    .kpi-row{grid-template-columns:1fr;}
+  }
+
   @media (max-width:800px){
     .admin-grid{grid-template-columns:1fr;}
   }
@@ -408,9 +427,25 @@
   </header>
 
   <div class="main-nav" id="main-nav" role="group" aria-label="Navegação principal">
+    <button type="button" data-tab="overview" id="nav-overview-btn" style="display:none;">Visão Geral</button>
     <button type="button" data-tab="board" class="active">Board</button>
     <button type="button" data-tab="backlog">Backlog</button>
     <button type="button" data-tab="admin" id="nav-admin-btn" style="display:none;">Criação</button>
+  </div>
+
+  <div class="tab-panel" id="overview-tab" style="display:none;">
+    <div class="tab-panel-head">
+      <h2>Visão geral da operação</h2>
+    </div>
+    <div class="kpi-row" id="overview-kpis"></div>
+    <div class="overview-block">
+      <div class="summary-label">Progresso por setor</div>
+      <div class="bar-list" id="overview-sectors"></div>
+    </div>
+    <div class="overview-block">
+      <div class="summary-label">Por responsável</div>
+      <div class="bar-list" id="overview-assignees"></div>
+    </div>
   </div>
 
   <div class="tab-panel" id="board-tab">
@@ -490,6 +525,10 @@
       <div class="admin-card">
         <h3>Novo acesso</h3>
         <form id="user-form">
+          <label class="field">
+            <span class="field-label">Nome do colaborador</span>
+            <input type="text" id="user-name-input" required maxlength="80" placeholder="Nome completo" />
+          </label>
           <label class="field">
             <span class="field-label">E-mail</span>
             <input type="email" id="user-email-input" required placeholder="pessoa@crediffato.com.br" />
@@ -664,7 +703,7 @@ async function loadOrBootstrapUserDoc(fbUser){
   if(snap.exists()) return snap.data();
   if((fbUser.email || "").toLowerCase() === BOOTSTRAP_ADMIN_EMAIL){
     const assignedAreas = SECTORS.map(s => s.key);
-    const doc = { email: fbUser.email, role: "admin", assignedAreas };
+    const doc = { email: fbUser.email, name: "", role: "admin", assignedAreas };
     await fsSetDoc(uref, doc);
     try{
       await fsUpdateDoc(BOARD_DOC, "directory", fsArrayUnion({ uid: fbUser.uid, email: fbUser.email, role: "admin", assignedAreas }));
@@ -923,7 +962,7 @@ function cardHTML(item){
       <div class="status-row">
         <select class="status-select assignee-select" data-assignee-id="${item.id}" aria-label="Responsável por ${item.title}">
           <option value="">Sem responsável</option>
-          ${assigneeOptions.map(u => `<option value="${u.email}" ${assignee===u.email?"selected":""}>${u.email}</option>`).join("")}
+          ${assigneeOptions.map(u => `<option value="${u.email}" ${assignee===u.email?"selected":""}>${u.name || u.email}</option>`).join("")}
         </select>
       </div>
       <p class="snippet"><b>Hoje:</b> ${(item.hoje && item.hoje.length > 92) ? item.hoje.slice(0,92) + "…" : (item.hoje || "Não descrito ainda.")}</p>
@@ -1120,7 +1159,7 @@ function renderAdminLists(){
   }
   const userList = document.getElementById("user-list");
   if(userList){
-    userList.innerHTML = DIRECTORY.map(u => `<div class="admin-list-item"><span>${u.email}</span><span>${ROLE_LABEL[u.role] || u.role}</span></div>`).join("")
+    userList.innerHTML = DIRECTORY.map(u => `<div class="admin-list-item"><span>${u.name ? `${u.name} · ${u.email}` : u.email}</span><span>${ROLE_LABEL[u.role] || u.role}</span></div>`).join("")
       || '<div class="admin-list-item">Nenhum acesso cadastrado ainda.</div>';
   }
 }
@@ -1146,27 +1185,124 @@ function refreshAssigneeOptionsForArea(){
   if(!areaSel || !sel) return;
   const area = areaSel.value;
   const options = DIRECTORY.filter(u => u.role === "admin" || (u.assignedAreas || []).includes(area));
-  sel.innerHTML = '<option value="">Sem responsável</option>' + options.map(u => `<option value="${u.email}">${u.email}</option>`).join("");
+  sel.innerHTML = '<option value="">Sem responsável</option>' + options.map(u => `<option value="${u.email}">${u.name || u.email}</option>`).join("");
+}
+
+function renderOverview(){
+  const kpiEl = document.getElementById("overview-kpis");
+  const sectorsEl = document.getElementById("overview-sectors");
+  const assigneesEl = document.getElementById("overview-assignees");
+  if(!kpiEl || !sectorsEl || !assigneesEl) return;
+
+  const scopeAreas = areasForUser();
+  const opData = DATA.filter(d => scopeAreas.includes(d.area));
+  const total = opData.length;
+  const concluidas = opData.filter(d => d.status === "concluido").length;
+  const andamento = opData.filter(d => d.status === "andamento").length;
+  const aberto = opData.filter(d => d.status === "aberto").length;
+  const backlogCount = opData.filter(d => itemStage(d) === "backlog").length;
+  const pctConcluidas = total ? Math.round((concluidas / total) * 100) : 0;
+
+  kpiEl.innerHTML = `
+    <div class="kpi-card"><div class="n">${total}</div><div class="l">Total de demandas</div></div>
+    <div class="kpi-card"><div class="n" style="color:var(--st-concluido);">${concluidas}</div><div class="l">Concluídas (${pctConcluidas}%)</div></div>
+    <div class="kpi-card"><div class="n" style="color:var(--st-andamento);">${andamento}</div><div class="l">Em andamento</div></div>
+    <div class="kpi-card"><div class="n" style="color:var(--st-aberto);">${aberto}</div><div class="l">Em aberto</div></div>
+    <div class="kpi-card"><div class="n" style="color:var(--text-low);">${backlogCount}</div><div class="l">No backlog</div></div>
+  `;
+
+  const scopedSectors = SECTORS.filter(s => scopeAreas.includes(s.key));
+  sectorsEl.innerHTML = scopedSectors.map(s => {
+    const items = opData.filter(d => d.area === s.key);
+    const done = items.filter(d => d.status === "concluido").length;
+    const p = items.length ? Math.round((done / items.length) * 100) : 0;
+    return `
+      <div class="bar-row">
+        <div class="bar-head">
+          <span class="bar-name"><span class="rail-dot" style="background:${sectorColor(s.key)};"></span>${s.label}</span>
+          <span>${done}/${items.length} concluídas</span>
+        </div>
+        <div class="bar-track"><div class="bar-fill" style="width:${p}%; background:${sectorColor(s.key)};"></div></div>
+      </div>
+    `;
+  }).join("") || '<p class="snippet">Nenhum setor sob sua gestão ainda.</p>';
+
+  const byAssignee = {};
+  opData.forEach(d => {
+    const a = itemAssignee(d);
+    if(!a) return;
+    if(!byAssignee[a]) byAssignee[a] = { total: 0, done: 0 };
+    byAssignee[a].total++;
+    if(d.status === "concluido") byAssignee[a].done++;
+  });
+  const rows = Object.entries(byAssignee).sort((a, b) => b[1].total - a[1].total).slice(0, 8);
+  assigneesEl.innerHTML = rows.map(([email, stats]) => {
+    const person = DIRECTORY.find(u => u.email === email);
+    const label = (person && person.name) ? person.name : email;
+    const p = stats.total ? Math.round((stats.done / stats.total) * 100) : 0;
+    return `
+      <div class="bar-row">
+        <div class="bar-head">
+          <span class="bar-name">${label}</span>
+          <span>${stats.done}/${stats.total} concluídas</span>
+        </div>
+        <div class="bar-track"><div class="bar-fill" style="width:${p}%; background:var(--brand-red);"></div></div>
+      </div>
+    `;
+  }).join("") || '<p class="snippet">Nenhuma demanda com responsável atribuído ainda.</p>';
+}
+
+function applyRoleLayout(){
+  const isOperador = currentUser && currentUser.role === "operador";
+  const mainNav = document.getElementById("main-nav");
+  const filtersRow = document.querySelector(".filters-row");
+  const storageNote = document.getElementById("storage-note");
+  const h1 = document.querySelector("#app-content h1");
+  const sub = document.querySelector("#app-content .sub");
+
+  document.querySelectorAll(".summary-group").forEach(el => { el.style.display = isOperador ? "none" : ""; });
+  if(mainNav) mainNav.style.display = isOperador ? "none" : "";
+  if(filtersRow) filtersRow.style.display = isOperador ? "none" : "";
+  if(storageNote) storageNote.style.display = isOperador ? "none" : "";
+
+  if(isOperador){
+    state.tab = "board";
+    state.view = "status";
+    if(h1) h1.textContent = "Minhas Demandas";
+    if(sub) sub.textContent = "Acompanhe suas demandas e mova cada cartão para o status certo conforme for avançando — os resultados aparecem em tempo real para a liderança.";
+  }else{
+    state.tab = "overview";
+    if(h1) h1.textContent = "Board de Melhorias";
+    if(sub) sub.textContent = "Guia de melhorias internas e institucionais, organizado por setor e por responsável. Clique em um cartão para ver o comparativo completo; use os campos de status e responsável para acompanhar o andamento.";
+  }
 }
 
 function renderTabs(){
+  const overviewTab = document.getElementById("overview-tab");
   const boardTab = document.getElementById("board-tab");
   const backlogTab = document.getElementById("backlog-tab");
   const adminTab = document.getElementById("admin-tab");
+  if(overviewTab) overviewTab.style.display = state.tab === "overview" ? "" : "none";
   if(boardTab) boardTab.style.display = state.tab === "board" ? "" : "none";
   if(backlogTab) backlogTab.style.display = state.tab === "backlog" ? "" : "none";
   if(adminTab) adminTab.style.display = state.tab === "admin" ? "" : "none";
 
+  const navOverviewBtn = document.getElementById("nav-overview-btn");
+  if(navOverviewBtn) navOverviewBtn.style.display = canManage() ? "" : "none";
   const navAdminBtn = document.getElementById("nav-admin-btn");
   if(navAdminBtn) navAdminBtn.style.display = canCreate() ? "" : "none";
-  if(state.tab === "admin" && !canCreate()){
-    state.tab = "board";
-    document.querySelectorAll("#main-nav button").forEach(b => b.classList.toggle("active", b.dataset.tab === "board"));
-    if(boardTab) boardTab.style.display = "";
-    if(adminTab) adminTab.style.display = "none";
-  }
 
-  if(state.tab === "board") render();
+  if(state.tab === "admin" && !canCreate()) state.tab = "board";
+  if(state.tab === "overview" && !canManage()) state.tab = "board";
+
+  document.querySelectorAll("#main-nav button[data-tab]").forEach(b => b.classList.toggle("active", b.dataset.tab === state.tab));
+  if(overviewTab) overviewTab.style.display = state.tab === "overview" ? "" : "none";
+  if(boardTab) boardTab.style.display = state.tab === "board" ? "" : "none";
+  if(backlogTab) backlogTab.style.display = state.tab === "backlog" ? "" : "none";
+  if(adminTab) adminTab.style.display = state.tab === "admin" ? "" : "none";
+
+  if(state.tab === "overview") renderOverview();
+  else if(state.tab === "board") render();
   else if(state.tab === "backlog") renderBacklog();
   else if(state.tab === "admin") renderAdminLists();
 
@@ -1424,8 +1560,7 @@ document.getElementById("main-nav").addEventListener("click", (e) => {
   const btn = e.target.closest("button[data-tab]");
   if(!btn) return;
   if(btn.dataset.tab === "admin" && !canCreate()) return;
-  document.querySelectorAll("#main-nav button").forEach(b => b.classList.remove("active"));
-  btn.classList.add("active");
+  if(btn.dataset.tab === "overview" && !canManage()) return;
   state.tab = btn.dataset.tab;
   renderTabs();
 });
@@ -1468,9 +1603,11 @@ document.getElementById("user-form").addEventListener("submit", async (e) => {
   e.preventDefault();
   const msgEl = document.getElementById("user-msg");
   msgEl.style.color = ""; msgEl.textContent = "";
+  const name = document.getElementById("user-name-input").value.trim();
   const email = document.getElementById("user-email-input").value.trim();
   const role = document.getElementById("user-role-input").value;
   const areas = Array.from(document.querySelectorAll('#user-areas-input input[type="checkbox"]:checked')).map(cb => cb.value);
+  if(!name){ msgEl.textContent = "Informe o nome do colaborador."; return; }
   if(!email){ msgEl.textContent = "Informe um e-mail."; return; }
   if(role !== "admin" && areas.length === 0){ msgEl.textContent = "Selecione ao menos um setor."; return; }
   if(!firebaseReady || storageMode !== "firebase"){ msgEl.textContent = "Indisponível no momento (sem conexão com o banco compartilhado)."; return; }
@@ -1479,9 +1616,9 @@ document.getElementById("user-form").addEventListener("submit", async (e) => {
     const tempPassword = randomTempPassword();
     const signUpResult = await restSignUp(email, tempPassword);
     const uid = signUpResult.localId;
-    await fsSetDoc(fsDoc(db, "users", uid), { email, role, assignedAreas });
-    await fsUpdateDoc(BOARD_DOC, "directory", fsArrayUnion({ uid, email, role, assignedAreas }));
-    DIRECTORY.push({ uid, email, role, assignedAreas });
+    await fsSetDoc(fsDoc(db, "users", uid), { email, name, role, assignedAreas });
+    await fsUpdateDoc(BOARD_DOC, "directory", fsArrayUnion({ uid, email, name, role, assignedAreas }));
+    DIRECTORY.push({ uid, email, name, role, assignedAreas });
     await restSendPasswordReset(email);
     refreshSectorDependentUI();
     document.getElementById("user-form").reset();
@@ -1527,9 +1664,10 @@ async function handleAuthedUser(fbUser){
       showDenied();
       return;
     }
-    currentUser = { uid: fbUser.uid, email: fbUser.email, role: userDoc.role, assignedAreas: userDoc.assignedAreas || [] };
-    document.getElementById("user-email").textContent = currentUser.email;
+    currentUser = { uid: fbUser.uid, email: fbUser.email, name: userDoc.name || "", role: userDoc.role, assignedAreas: userDoc.assignedAreas || [] };
+    document.getElementById("user-email").textContent = currentUser.name || currentUser.email;
     document.getElementById("user-role").textContent = ROLE_LABEL[currentUser.role] || currentUser.role;
+    applyRoleLayout();
     refreshSectorDependentUI();
     showApp();
     renderTabs();
@@ -1622,9 +1760,10 @@ document.getElementById("login-signout-denied").addEventListener("click", async 
   }else{
     // Sem Firebase: não há como autenticar, mas deixamos a plataforma acessível
     // localmente (modo de contingência) para não travar o uso em caso de falha de rede.
-    currentUser = { uid:"local", email:"modo local", role:"admin", assignedAreas:["op","ql","pa"] };
-    document.getElementById("user-email").textContent = currentUser.email;
+    currentUser = { uid:"local", email:"modo local", name:"", role:"admin", assignedAreas:["op","ql","pa"] };
+    document.getElementById("user-email").textContent = currentUser.name || currentUser.email;
     document.getElementById("user-role").textContent = ROLE_LABEL[currentUser.role] || currentUser.role;
+    applyRoleLayout();
     refreshSectorDependentUI();
     showApp();
     renderTabs();
