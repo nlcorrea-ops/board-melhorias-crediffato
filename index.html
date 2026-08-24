@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-<title>Board de Responsabilidades — Central de Monitoria Crediffato</title>
+<title>Crediffato - Gestão</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500;600&family=IBM+Plex+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
@@ -56,7 +56,7 @@
 
   header{
     display:flex; justify-content:space-between; align-items:flex-start; gap:24px; flex-wrap:wrap;
-    border-bottom:1px solid var(--hairline); padding-bottom:22px; margin-bottom:26px;
+    border-bottom:1px solid var(--hairline); padding-bottom:22px; margin-bottom:22px;
   }
   .brand-row{display:flex; align-items:center; gap:12px; margin-bottom:10px;}
   .brand-logo{height:30px; width:auto; border-radius:4px; box-shadow:0 0 0 1px var(--hairline);}
@@ -84,6 +84,13 @@
     cursor:pointer; text-decoration:underline; padding:0;
   }
   .logout-btn:hover{color:var(--text-hi);}
+
+  .main-nav{display:flex; gap:6px; background:var(--ink-1); border:1px solid var(--hairline); border-radius:999px; padding:4px; margin-bottom:24px; width:fit-content;}
+  .main-nav button{
+    font-family:var(--font-mono); font-size:12.5px; letter-spacing:.02em; color:var(--text-mid);
+    background:transparent; border:none; border-radius:999px; padding:8px 18px; cursor:pointer;
+  }
+  .main-nav button.active{background:var(--brand-red); color:#fff;}
 
   .summary-group{margin-bottom:18px;}
   .summary-label{
@@ -121,13 +128,10 @@
   .column.drag-over{border-color:var(--brand-red); box-shadow:0 0 0 1px var(--brand-red) inset;}
   .col-head{padding:16px 18px 14px; border-bottom:1px solid var(--hairline); display:flex; align-items:center; justify-content:space-between;}
   .col-head .name{font-weight:600; font-size:15px; display:flex; align-items:center; gap:9px;}
-  .rail-dot{width:9px;height:9px;border-radius:2px; flex-shrink:0;}
+  .rail-dot{width:9px;height:9px;border-radius:2px; flex-shrink:0; background:var(--text-low);}
   .col-head .count{font-family:var(--font-mono); font-size:12px; color:var(--text-low); background:var(--ink-2); border:1px solid var(--hairline); border-radius:999px; padding:2px 9px;}
   .col-body{padding:14px; display:flex; flex-direction:column; gap:12px; min-height:40px;}
 
-  .op .rail-dot{background:var(--op);}
-  .ql .rail-dot{background:var(--ql);}
-  .pa .rail-dot{background:var(--pa);}
   .st-aberto-col .rail-dot{background:var(--st-aberto);}
   .st-andamento-col .rail-dot{background:var(--st-andamento);}
   .st-concluido-col .rail-dot{background:var(--st-concluido);}
@@ -144,11 +148,7 @@
   .card.dragging{opacity:.4;}
   @keyframes rise{ to{opacity:1; transform:translateY(0);} }
 
-  .op-card{--rail:var(--op);}
-  .ql-card{--rail:var(--ql);}
-  .pa-card{--rail:var(--pa);}
-
-  .card-top{display:flex; align-items:center; justify-content:space-between; gap:10px; margin-bottom:8px;}
+  .card-top{display:flex; align-items:center; justify-content:space-between; gap:10px; margin-bottom:8px; flex-wrap:wrap;}
   .tag{font-family:var(--font-mono); font-size:11px; color:var(--text-low);}
   .area-tag{font-family:var(--font-mono); font-size:10px; text-transform:uppercase; letter-spacing:.04em; padding:1px 6px; border-radius:5px; border:1px solid var(--hairline); color:var(--text-low);}
   .sev{display:flex; align-items:center; gap:6px; font-family:var(--font-mono); font-size:10.5px; text-transform:uppercase; letter-spacing:.06em;}
@@ -164,7 +164,7 @@
   .card h3{font-size:14.5px; margin:0 0 8px; font-weight:600; line-height:1.35;}
   .shared{display:inline-block; font-family:var(--font-mono); font-size:10px; color:var(--text-low); border:1px solid var(--hairline); border-radius:5px; padding:1px 6px; margin-left:6px; vertical-align:middle;}
 
-  /* ---------- status select ---------- */
+  /* ---------- status / assignee select ---------- */
   .status-row{margin-bottom:10px;}
   .status-select{
     appearance:none; -webkit-appearance:none;
@@ -187,7 +187,7 @@
   .snippet b{color:var(--text-hi); font-weight:600;}
 
   .detail{max-height:0; overflow:hidden; transition:max-height .3s ease;}
-  .card.open .detail{max-height:640px; margin-top:10px;}
+  .card.open .detail{max-height:680px; margin-top:10px;}
   .detail-block{border-top:1px dashed var(--hairline); padding-top:10px; margin-top:2px;}
   .detail-block + .detail-block{margin-top:10px;}
   .detail-label{font-family:var(--font-mono); font-size:10px; text-transform:uppercase; letter-spacing:.08em; color:var(--text-low); margin-bottom:4px;}
@@ -201,14 +201,15 @@
     padding:9px 14px; margin-bottom:22px; display:flex; align-items:center; gap:8px;
   }
 
-  .add-btn{
-    margin-left:auto;
+  .add-btn, .move-btn{
     font-family:var(--font-mono); font-size:12px; font-weight:600; letter-spacing:.02em;
-    color:#fff; background:var(--brand-red); border:1px solid var(--brand-red);
     border-radius:999px; padding:7px 16px; cursor:pointer; transition:opacity .15s ease;
   }
+  .add-btn{margin-left:auto; color:#fff; background:var(--brand-red); border:1px solid var(--brand-red);}
   .add-btn:hover{opacity:.85;}
   .add-btn:focus-visible{outline:2px solid #6c8cff; outline-offset:2px;}
+  .move-btn{font-size:10.5px; padding:4px 10px; background:transparent; border:1px solid var(--brand-red); color:var(--brand-red);}
+  .move-btn:hover{background:var(--brand-red); color:#fff;}
 
   .view-toggle{display:flex; gap:6px; background:var(--ink-1); border:1px solid var(--hairline); border-radius:999px; padding:3px;}
   .view-toggle button{
@@ -279,6 +280,30 @@
   }
   .obs-save-btn:hover{color:var(--text-hi); border-color:var(--text-low);}
 
+  .tab-panel-head{display:flex; align-items:center; justify-content:space-between; gap:16px; margin-bottom:18px; flex-wrap:wrap;}
+  .tab-panel-head h2{font-size:16px; margin:0; font-weight:600;}
+  .backlog-list{display:flex; flex-direction:column; gap:12px; max-width:760px;}
+
+  .admin-grid{display:grid; grid-template-columns:1fr 1fr; gap:20px;}
+  .admin-card{background:var(--ink-1); border:1px solid var(--hairline); border-radius:16px; padding:20px;}
+  .admin-card h3{margin:0 0 14px; font-size:15px; font-weight:600;}
+  .admin-list{margin-top:16px; display:flex; flex-direction:column; gap:8px; max-height:280px; overflow-y:auto;}
+  .admin-list-item{
+    font-family:var(--font-mono); font-size:11.5px; color:var(--text-mid); background:var(--ink-2);
+    border:1px solid var(--hairline); border-radius:8px; padding:8px 10px; display:flex;
+    justify-content:space-between; gap:8px;
+  }
+  .checkbox-list{display:flex; flex-wrap:wrap; gap:8px; margin-top:4px;}
+  .checkbox-list label{
+    display:flex; align-items:center; gap:6px; font-size:12.5px; color:var(--text-mid);
+    background:var(--ink-2); border:1px solid var(--hairline); border-radius:999px; padding:5px 10px; cursor:pointer;
+  }
+  .checkbox-list input{cursor:pointer;}
+  .form-msg{font-size:12px; margin:10px 0 0; min-height:14px;}
+
+  @media (max-width:800px){
+    .admin-grid{grid-template-columns:1fr;}
+  }
   @media (max-width:480px){
     .field-row{grid-template-columns:1fr;}
     .add-btn{margin-left:0;}
@@ -337,8 +362,8 @@
 <div id="login-screen">
   <div class="login-card">
     <img src="logo.png" alt="Crediffato" />
-    <h2>Central de Monitoria Crediffato</h2>
-    <p class="login-sub">Entre com sua conta para acessar o board.</p>
+    <h2>Crediffato - Gestão</h2>
+    <p class="login-sub">Entre com sua conta para acessar a plataforma.</p>
     <form id="login-form">
       <label class="field">
         <span class="field-label">E-mail</span>
@@ -353,7 +378,7 @@
     </form>
     <button type="button" class="login-forgot" id="login-forgot">Esqueci minha senha</button>
     <div class="login-denied" id="login-denied">
-      Sua conta não tem uma permissão configurada neste board ainda. Fale com o administrador (Natanael) para liberar seu acesso.
+      Sua conta não tem uma permissão configurada nesta plataforma ainda. Fale com o administrador (Natanael) para liberar seu acesso.
       <br/><br/>
       <button type="button" class="login-forgot" id="login-signout-denied" style="margin-top:0;">Sair e tentar outra conta</button>
     </div>
@@ -366,10 +391,10 @@
     <div>
       <div class="brand-row">
         <img class="brand-logo" src="logo.png" alt="Crediffato" />
-        <p class="eyebrow"><span class="pulse"></span> Central de Monitoria Crediffato · Setor de Operações</p>
+        <p class="eyebrow"><span class="pulse"></span> Crediffato - Gestão</p>
       </div>
-      <h1>Board de Melhorias por Responsável</h1>
-      <p class="sub">Guia de melhorias internas e institucionais, organizado por quem executa cada ponto. Clique em um cartão para ver o comparativo completo; use o campo de status para marcar o andamento.</p>
+      <h1>Board de Melhorias</h1>
+      <p class="sub">Guia de melhorias internas e institucionais, organizado por setor e por responsável. Clique em um cartão para ver o comparativo completo; use os campos de status e responsável para acompanhar o andamento.</p>
     </div>
     <div class="meta">
       <div class="user-chip" id="user-chip">
@@ -378,55 +403,117 @@
         <button type="button" class="logout-btn" id="logout-btn">sair</button>
       </div>
       <div><b id="meta-total">7</b> pontos ativos</div>
-      <div id="meta-areas">3 áreas responsáveis</div>
-      <div>Atualizado 20/08/2026</div>
+      <div id="meta-areas">3 setores responsáveis</div>
     </div>
   </header>
 
-  <div class="summary-group">
-    <div class="summary-label">Por prioridade</div>
-    <div class="summary">
-      <div class="sumcard total"><div class="n" id="sum-total">7</div><div class="l">Total de pontos</div></div>
-      <div class="sumcard crit"><div class="n" id="sum-critica">0</div><div class="l">Prioridade crítica</div></div>
-      <div class="sumcard alta"><div class="n" id="sum-alta">4</div><div class="l">Prioridade alta</div></div>
-      <div class="sumcard media"><div class="n" id="sum-media">3</div><div class="l">Prioridade média</div></div>
-    </div>
+  <div class="main-nav" id="main-nav" role="group" aria-label="Navegação principal">
+    <button type="button" data-tab="board" class="active">Board</button>
+    <button type="button" data-tab="backlog">Backlog</button>
+    <button type="button" data-tab="admin" id="nav-admin-btn" style="display:none;">Criação</button>
   </div>
 
-  <div class="summary-group">
-    <div class="summary-label">Por status</div>
-    <div class="summary status">
-      <div class="sumcard st-aberto"><div class="n" id="sum-st-aberto">7</div><div class="l">Em aberto</div></div>
-      <div class="sumcard st-andamento"><div class="n" id="sum-st-andamento">0</div><div class="l">Em andamento</div></div>
-      <div class="sumcard st-concluido"><div class="n" id="sum-st-concluido">0</div><div class="l">Concluído</div></div>
+  <div class="tab-panel" id="board-tab">
+
+    <div class="summary-group">
+      <div class="summary-label">Por prioridade</div>
+      <div class="summary">
+        <div class="sumcard total"><div class="n" id="sum-total">7</div><div class="l">Total de pontos</div></div>
+        <div class="sumcard crit"><div class="n" id="sum-critica">0</div><div class="l">Prioridade crítica</div></div>
+        <div class="sumcard alta"><div class="n" id="sum-alta">4</div><div class="l">Prioridade alta</div></div>
+        <div class="sumcard media"><div class="n" id="sum-media">3</div><div class="l">Prioridade média</div></div>
+      </div>
     </div>
+
+    <div class="summary-group">
+      <div class="summary-label">Por status</div>
+      <div class="summary status">
+        <div class="sumcard st-aberto"><div class="n" id="sum-st-aberto">7</div><div class="l">Em aberto</div></div>
+        <div class="sumcard st-andamento"><div class="n" id="sum-st-andamento">0</div><div class="l">Em andamento</div></div>
+        <div class="sumcard st-concluido"><div class="n" id="sum-st-concluido">0</div><div class="l">Concluído</div></div>
+      </div>
+    </div>
+
+    <div class="filters-row">
+      <div class="filter-group" id="filters-sev">
+        <span class="fg-label">Prioridade:</span>
+        <button class="filter-btn active" data-filter="todos">Todos</button>
+        <button class="filter-btn" data-filter="critica">Crítica</button>
+        <button class="filter-btn" data-filter="alta">Alta</button>
+        <button class="filter-btn" data-filter="media">Média</button>
+      </div>
+      <div class="filter-group" id="filters-status">
+        <span class="fg-label">Status:</span>
+        <button class="filter-btn active" data-status-filter="todos">Todos</button>
+        <button class="filter-btn" data-status-filter="aberto">Em aberto</button>
+        <button class="filter-btn" data-status-filter="andamento">Em andamento</button>
+        <button class="filter-btn" data-status-filter="concluido">Concluído</button>
+      </div>
+      <div class="view-toggle" id="view-toggle" role="group" aria-label="Modo de visualização">
+        <button type="button" data-view="area" class="active">Por setor</button>
+        <button type="button" data-view="status">Kanban</button>
+      </div>
+      <button class="add-btn" id="open-add-modal">+ Nova demanda</button>
+    </div>
+
+    <div class="storage-note" id="storage-note">⏳ Carregando dados salvos…</div>
+
+    <div class="board" id="board"></div>
   </div>
 
-  <div class="filters-row">
-    <div class="filter-group" id="filters-sev">
-      <span class="fg-label">Prioridade:</span>
-      <button class="filter-btn active" data-filter="todos">Todos</button>
-      <button class="filter-btn" data-filter="critica">Crítica</button>
-      <button class="filter-btn" data-filter="alta">Alta</button>
-      <button class="filter-btn" data-filter="media">Média</button>
+  <div class="tab-panel" id="backlog-tab" style="display:none;">
+    <div class="tab-panel-head">
+      <h2>Backlog</h2>
+      <button class="add-btn" id="open-add-modal-backlog">+ Nova demanda</button>
     </div>
-    <div class="filter-group" id="filters-status">
-      <span class="fg-label">Status:</span>
-      <button class="filter-btn active" data-status-filter="todos">Todos</button>
-      <button class="filter-btn" data-status-filter="aberto">Em aberto</button>
-      <button class="filter-btn" data-status-filter="andamento">Em andamento</button>
-      <button class="filter-btn" data-status-filter="concluido">Concluído</button>
-    </div>
-    <div class="view-toggle" id="view-toggle" role="group" aria-label="Modo de visualização">
-      <button type="button" data-view="area" class="active">Por área</button>
-      <button type="button" data-view="status">Kanban (estilo Jira)</button>
-    </div>
-    <button class="add-btn" id="open-add-modal">+ Nova demanda</button>
+    <p class="sub" style="margin-bottom:18px;">Demandas ainda não priorizadas. Quem tem permissão de gestão pode movê-las para o Board quando estiverem prontas para entrar em andamento.</p>
+    <div class="backlog-list" id="backlog-list"></div>
   </div>
 
-  <div class="storage-note" id="storage-note">⏳ Carregando status salvos…</div>
-
-  <div class="board" id="board"></div>
+  <div class="tab-panel" id="admin-tab" style="display:none;">
+    <div class="tab-panel-head">
+      <h2>Criação de setores e acessos</h2>
+    </div>
+    <div class="admin-grid">
+      <div class="admin-card">
+        <h3>Novo setor</h3>
+        <form id="sector-form">
+          <label class="field">
+            <span class="field-label">Nome do setor</span>
+            <input type="text" id="sector-name" required maxlength="60" placeholder="Ex: Cobrança" />
+          </label>
+          <button type="submit" class="btn-primary">Criar setor</button>
+          <p class="form-msg" id="sector-msg"></p>
+        </form>
+        <div class="admin-list" id="sector-list"></div>
+      </div>
+      <div class="admin-card">
+        <h3>Novo acesso</h3>
+        <form id="user-form">
+          <label class="field">
+            <span class="field-label">E-mail</span>
+            <input type="email" id="user-email-input" required placeholder="pessoa@crediffato.com.br" />
+          </label>
+          <label class="field">
+            <span class="field-label">Papel</span>
+            <select id="user-role-input">
+              <option value="operador">Operador</option>
+              <option value="supervisor">Supervisor</option>
+              <option value="gestor">Gestor</option>
+              <option value="admin">Admin</option>
+            </select>
+          </label>
+          <label class="field">
+            <span class="field-label">Setores atribuídos</span>
+            <div class="checkbox-list" id="user-areas-input"></div>
+          </label>
+          <button type="submit" class="btn-primary">Criar acesso</button>
+          <p class="form-msg" id="user-msg"></p>
+        </form>
+        <div class="admin-list" id="user-list"></div>
+      </div>
+    </div>
+  </div>
 
   <div class="modal-overlay" id="modal-overlay">
     <div class="modal" role="dialog" aria-modal="true" aria-labelledby="modal-title">
@@ -441,12 +528,8 @@
         </label>
         <div class="field-row">
           <label class="field">
-            <span class="field-label">Área responsável *</span>
-            <select id="f-area" required>
-              <option value="op">Operações</option>
-              <option value="ql">Qualidade</option>
-              <option value="pa">PA Digital</option>
-            </select>
+            <span class="field-label">Setor responsável *</span>
+            <select id="f-area" required></select>
           </label>
           <label class="field">
             <span class="field-label">Prioridade *</span>
@@ -457,6 +540,10 @@
             </select>
           </label>
         </div>
+        <label class="field">
+          <span class="field-label">Responsável (opcional)</span>
+          <select id="f-assignee"><option value="">Sem responsável</option></select>
+        </label>
         <label class="field">
           <span class="field-label">Como fazemos hoje</span>
           <textarea id="f-hoje" rows="3" maxlength="400" placeholder="Descreva a situação atual (opcional)"></textarea>
@@ -479,14 +566,14 @@
 
   <footer>
     Este board não contém dados pessoais de clientes, em conformidade com a LGPD (Lei nº 13.709/2018).<br/>
-    Uso interno — Central de Monitoria Crediffato, Setor de Operações.
+    Uso interno — Crediffato - Gestão.
   </footer>
 
 </div>
 
 <script type="module">
 // Firebase é carregado dinamicamente (import() em vez de import estático) para que,
-// se o CDN falhar (rede bloqueada, ad-blocker etc.), o board continue funcionando
+// se o CDN falhar (rede bloqueada, ad-blocker etc.), a plataforma continue funcionando
 // normalmente com armazenamento local — nunca deve ficar em branco por causa disso.
 const firebaseConfig = {
   apiKey: "AIzaSyBt7bmMF1R8LPCudnU0Qfh5mR4TXAH79lg",
@@ -496,11 +583,11 @@ const firebaseConfig = {
   messagingSenderId: "1010277250901",
   appId: "1:1010277250901:web:99e214f915db73f4e161dc"
 };
+const FIREBASE_API_KEY = firebaseConfig.apiKey;
 
 // E-mail do administrador "bootstrap": a primeira vez que essa conta fizer login,
-// o board cria automaticamente o documento de permissão dela como admin (vê tudo).
-// Qualquer outra conta precisa ter um documento em users/{uid} criado previamente
-// (pelo admin, no console do Firebase) para conseguir entrar.
+// a plataforma cria automaticamente o documento de permissão dela como admin (vê tudo).
+// Qualquer outra conta é criada pela própria aba "Criação" (ou manualmente pelo admin).
 const BOOTSTRAP_ADMIN_EMAIL = "nlcorrea@crediffato.com.br";
 
 let db = null;
@@ -508,7 +595,7 @@ let auth = null;
 let firebaseReady = false;
 let BOARD_DOC = null;
 let boardDocCache = null;
-let fsDoc, fsGetDoc, fsSetDoc, fsUpdateDoc, fsOnSnapshot, fsFieldPath, fsDeleteField;
+let fsDoc, fsGetDoc, fsSetDoc, fsUpdateDoc, fsOnSnapshot, fsFieldPath, fsDeleteField, fsArrayUnion;
 let authSignIn, authOnState, authSignOut, authSendReset;
 
 let currentUser = null; // { uid, email, role, assignedAreas }
@@ -522,7 +609,7 @@ async function initFirebase(){
     ]);
     fsDoc = fsMod.doc; fsGetDoc = fsMod.getDoc; fsSetDoc = fsMod.setDoc;
     fsUpdateDoc = fsMod.updateDoc; fsOnSnapshot = fsMod.onSnapshot;
-    fsFieldPath = fsMod.FieldPath; fsDeleteField = fsMod.deleteField;
+    fsFieldPath = fsMod.FieldPath; fsDeleteField = fsMod.deleteField; fsArrayUnion = fsMod.arrayUnion;
     authSignIn = authMod.signInWithEmailAndPassword;
     authOnState = authMod.onAuthStateChanged;
     authSignOut = authMod.signOut;
@@ -538,17 +625,52 @@ async function initFirebase(){
   }
 }
 
+// ---------- REST auxiliar (Identity Toolkit) ----------
+// Usado para criar novas contas e disparar redefinição de senha SEM trocar a sessão
+// autenticada no navegador do admin (o SDK normal faz login automático na conta nova).
+async function restSignUp(email, password){
+  const res = await fetch(`https://identitytoolkit.googleapis.com/v1/accounts:signUp?key=${FIREBASE_API_KEY}`, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ email, password, returnSecureToken: true }),
+  });
+  const data = await res.json();
+  if(!res.ok){ throw new Error((data.error && data.error.message) || "Falha ao criar usuário"); }
+  return data;
+}
+async function restSendPasswordReset(email){
+  const res = await fetch(`https://identitytoolkit.googleapis.com/v1/accounts:sendOobCode?key=${FIREBASE_API_KEY}`, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ requestType: "PASSWORD_RESET", email }),
+  });
+  const data = await res.json();
+  if(!res.ok){ throw new Error((data.error && data.error.message) || "Falha ao enviar e-mail"); }
+  return data;
+}
+function randomTempPassword(){
+  const arr = new Uint8Array(24);
+  crypto.getRandomValues(arr);
+  return Array.from(arr).map(b => b.toString(36)).join("").slice(0, 24) + "Aa1!";
+}
+
 // ---------- Permissões: users/{uid} = { email, role, assignedAreas } ----------
 // role: "admin" | "gestor" | "supervisor" | "operador"
-// assignedAreas: lista de chaves de área ("op","ql","pa") que a conta pode ver/editar.
+// assignedAreas: lista de chaves de setor que a conta pode ver/editar.
 // Admin sempre enxerga tudo, independente de assignedAreas.
 async function loadOrBootstrapUserDoc(fbUser){
   const uref = fsDoc(db, "users", fbUser.uid);
   const snap = await fsGetDoc(uref);
   if(snap.exists()) return snap.data();
   if((fbUser.email || "").toLowerCase() === BOOTSTRAP_ADMIN_EMAIL){
-    const doc = { email: fbUser.email, role: "admin", assignedAreas: ["op","ql","pa"] };
+    const assignedAreas = SECTORS.map(s => s.key);
+    const doc = { email: fbUser.email, role: "admin", assignedAreas };
     await fsSetDoc(uref, doc);
+    try{
+      await fsUpdateDoc(BOARD_DOC, "directory", fsArrayUnion({ uid: fbUser.uid, email: fbUser.email, role: "admin", assignedAreas }));
+    }catch(e){
+      console.error("Falha ao registrar admin no diretório:", e);
+    }
     return doc;
   }
   return null; // sem permissão configurada
@@ -556,12 +678,16 @@ async function loadOrBootstrapUserDoc(fbUser){
 
 function areasForUser(){
   if(!currentUser) return [];
-  if(currentUser.role === "admin") return AREAS.map(a => a.key);
+  if(currentUser.role === "admin") return SECTORS.map(s => s.key);
   return currentUser.assignedAreas || [];
 }
 function canManage(){
-  // Admin e Gestor/Supervisor podem cadastrar/remover demandas; Operador só atualiza status/observações.
+  // Admin e Gestor/Supervisor podem cadastrar/remover demandas e mover itens; Operador só atualiza status/observações.
   return currentUser && (currentUser.role === "admin" || currentUser.role === "gestor" || currentUser.role === "supervisor");
+}
+function canCreate(){
+  // Só Admin e Gestor podem criar setores novos e acessos.
+  return currentUser && (currentUser.role === "admin" || currentUser.role === "gestor");
 }
 
 const DATA = [
@@ -588,11 +714,33 @@ const DATA = [
     sugestao:"Mensagem de fallback padrão antes do encerramento por inatividade, com aviso e despedida automática." },
 ];
 
-const AREAS = [
-  {key:"op", label:"Operações", cls:"op"},
-  {key:"ql", label:"Qualidade", cls:"ql"},
-  {key:"pa", label:"PA Digital", cls:"pa"},
+const DEFAULT_SECTORS = [
+  {key:"op", label:"Operações"},
+  {key:"ql", label:"Qualidade"},
+  {key:"pa", label:"PA Digital"},
 ];
+let SECTORS = DEFAULT_SECTORS.slice();
+let DIRECTORY = []; // [{uid, email, role, assignedAreas}]
+let stagesMap = {};    // itemId -> "backlog" | "board" (só para itens de base; itens novos guardam em item.stage)
+let assigneesMap = {}; // itemId -> email (só para itens de base; itens novos guardam em item.assignee)
+
+const SECTOR_PALETTE = ["#37b8a6","#d8a94a","#8b8dfb","#e2564f","#4ee2a0","#6c8cff","#e08a3c","#c792ea","#5ec8d8","#f2a65a"];
+function sectorColor(key){
+  const idx = SECTORS.findIndex(s => s.key === key);
+  return SECTOR_PALETTE[(idx >= 0 ? idx : 0) % SECTOR_PALETTE.length];
+}
+function sectorLabel(key){
+  const s = SECTORS.find(x => x.key === key);
+  return s ? s.label : key;
+}
+function itemStage(item){
+  if(item.custom) return item.stage || "backlog";
+  return stagesMap[item.id] || "board";
+}
+function itemAssignee(item){
+  if(item.custom) return item.assignee || "";
+  return assigneesMap[item.id] || "";
+}
 
 const STATUSES = [
   {key:"aberto", label:"Em aberto", cls:"st-aberto-col"},
@@ -601,8 +749,7 @@ const STATUSES = [
 ];
 
 const SEV_LABEL = {critica:"Crítica", alta:"Alta", media:"Média"};
-const STATUS_LABEL = {aberto:"Em aberto", andamento:"Em andamento", concluido:"Concluído"};
-const AREA_LABEL = {op:"Operações", ql:"Qualidade", pa:"PA Digital"};
+const ROLE_LABEL = {admin:"Admin", gestor:"Gestor", supervisor:"Supervisor", operador:"Operador"};
 
 // Adaptador de armazenamento:
 // 1) Se rodando dentro do Claude, usa window.storage (compartilhado entre todos que abrem o artefato).
@@ -623,7 +770,7 @@ let storageMode = hasClaudeStorage ? "shared" : (hasLocalStorage ? "local" : "no
 async function ensureBoardDoc(){
   const snap = await fsGetDoc(BOARD_DOC);
   if(!snap.exists()){
-    const initial = { statuses:{}, customItems:[], observacoes:{} };
+    const initial = { statuses:{}, customItems:[], observacoes:{}, sectors:DEFAULT_SECTORS.slice(), directory:[], stages:{}, assignees:{} };
     await fsSetDoc(BOARD_DOC, initial);
     return initial;
   }
@@ -657,14 +804,14 @@ const storageAdapter = {
   async set(key, value){
     if(storageMode === "firebase"){
       // IMPORTANTE: nunca usamos fsSetDoc(BOARD_DOC, boardDocCache) para gravar um campo
-      // individual (status ou observação) — isso reescreve o documento inteiro a partir do
-      // último snapshot que este navegador tinha em cache, e com várias pessoas usando o
-      // board ao mesmo tempo, quem grava por último apaga silenciosamente a mudança de
-      // quem gravou segundos antes (mesmo em itens diferentes). Por isso usamos updateDoc
-      // com FieldPath: ele grava só aquele campo específico no servidor, de forma atômica,
-      // sem depender do que este navegador tinha em cache. FieldPath também resolve o
-      // problema original do "." em IDs como "1.1", porque trata cada segmento (ex.:
-      // "statuses" e "1.1") como uma chave literal, sem interpretar o ponto como separador.
+      // individual — isso reescreve o documento inteiro a partir do último snapshot que este
+      // navegador tinha em cache, e com várias pessoas usando a plataforma ao mesmo tempo,
+      // quem grava por último apaga silenciosamente a mudança de quem gravou segundos antes
+      // (mesmo em itens diferentes). Por isso usamos updateDoc com FieldPath: ele grava só
+      // aquele campo específico no servidor, de forma atômica, sem depender do que este
+      // navegador tinha em cache. FieldPath também resolve o problema original do "." em IDs
+      // como "1.1", porque trata cada segmento como uma chave literal, sem interpretar o ponto
+      // como separador.
       if(key === "custom-items"){
         const customItems = JSON.parse(value);
         boardDocCache = { ...(boardDocCache || {}), customItems };
@@ -702,10 +849,27 @@ const storageAdapter = {
   }
 };
 
+async function updateFieldPathMap(field, mapRef, id, value){
+  // Helper genérico para os novos mapas "stages" e "assignees", seguindo o mesmo padrão
+  // atômico via FieldPath já usado para "statuses" e "observacoes".
+  mapRef[id] = value;
+  if(storageMode !== "firebase" || !firebaseReady){ return; }
+  try{
+    const path = new fsFieldPath(field, id);
+    await fsUpdateDoc(BOARD_DOC, path, value === "" ? fsDeleteField() : value);
+  }catch(err){
+    console.error(`Falha ao salvar ${field}:`, err);
+  }
+}
+
 function applyRemoteState(data){
   if(!data) return;
   const statuses = data.statuses || {};
   const observacoes = data.observacoes || {};
+  stagesMap = data.stages || {};
+  assigneesMap = data.assignees || {};
+  SECTORS = (data.sectors && data.sectors.length) ? data.sectors : DEFAULT_SECTORS.slice();
+  DIRECTORY = data.directory || [];
   const baseItems = DATA.filter(d => !d.custom);
   const customItems = (data.customItems || []).slice();
   DATA.length = 0;
@@ -720,25 +884,31 @@ function applyRemoteState(data){
     // onSnapshot nunca veria o campo voltar a ficar vazio.
     if(!d.custom) d.obs = observacoes[d.id] || "";
   });
-  render();
+  refreshSectorDependentUI();
+  renderTabs();
 }
 
-let state = { sev:"todos", status:"todos", view:"area" };
+let state = { sev:"todos", status:"todos", view:"area", tab:"board" };
+const openCardIds = new Set();
+const obsDrafts = {}; // id -> texto ainda não salvo, preservado entre re-renders
 
-function cardHTML(item, opts){
-  opts = opts || {};
+function cardHTML(item){
   const isOpen = openCardIds.has(item.id);
   const obsValue = Object.prototype.hasOwnProperty.call(obsDrafts, item.id) ? obsDrafts[item.id] : (item.obs || "");
-  const draggable = state.view === "status";
+  const draggable = state.tab === "board" && state.view === "status";
+  const stage = itemStage(item);
+  const assignee = itemAssignee(item);
+  const assigneeOptions = DIRECTORY.filter(u => u.role === "admin" || (u.assignedAreas || []).includes(item.area));
   return `
-    <div class="card ${item.area}-card${isOpen ? " open" : ""}" data-sev="${item.sev}" data-id="${item.id}" tabindex="0" role="button" aria-expanded="${isOpen ? "true" : "false"}" ${draggable ? 'draggable="true"' : ''}>
+    <div class="card" style="--rail:${sectorColor(item.area)};" data-sev="${item.sev}" data-id="${item.id}" tabindex="0" role="button" aria-expanded="${isOpen ? "true" : "false"}" ${draggable ? 'draggable="true"' : ''}>
       <div class="card-top">
-        <span style="display:flex; align-items:center; gap:6px;">
+        <span style="display:flex; align-items:center; gap:6px; flex-wrap:wrap;">
           <span class="tag">${item.id}</span>
-          ${state.view === "status" ? `<span class="area-tag">${AREA_LABEL[item.area] || item.area}</span>` : ""}
+          <span class="area-tag">${sectorLabel(item.area)}</span>
         </span>
-        <span style="display:flex; align-items:center; gap:8px;">
+        <span style="display:flex; align-items:center; gap:8px; flex-wrap:wrap;">
           <span class="sev ${item.sev}"><span class="bars"><i></i><i></i><i></i></span>${SEV_LABEL[item.sev]}</span>
+          ${canManage() ? `<button type="button" class="move-btn" data-move-id="${item.id}" data-move-to="${stage === "backlog" ? "board" : "backlog"}">${stage === "backlog" ? "→ Board" : "→ Backlog"}</button>` : ""}
           ${item.custom && canManage() ? `<button class="remove-btn" data-remove-id="${item.id}" aria-label="Remover demanda" title="Remover demanda">✕</button>` : ""}
         </span>
       </div>
@@ -748,6 +918,12 @@ function cardHTML(item, opts){
           <option value="aberto" ${item.status==="aberto"?"selected":""}>Em aberto</option>
           <option value="andamento" ${item.status==="andamento"?"selected":""}>Em andamento</option>
           <option value="concluido" ${item.status==="concluido"?"selected":""}>Concluído</option>
+        </select>
+      </div>
+      <div class="status-row">
+        <select class="status-select assignee-select" data-assignee-id="${item.id}" aria-label="Responsável por ${item.title}">
+          <option value="">Sem responsável</option>
+          ${assigneeOptions.map(u => `<option value="${u.email}" ${assignee===u.email?"selected":""}>${u.email}</option>`).join("")}
         </select>
       </div>
       <p class="snippet"><b>Hoje:</b> ${(item.hoje && item.hoje.length > 92) ? item.hoje.slice(0,92) + "…" : (item.hoje || "Não descrito ainda.")}</p>
@@ -781,51 +957,8 @@ function passesFilter(item){
   return sevOk && stOk && areaOk;
 }
 
-const openCardIds = new Set();
-const obsDrafts = {}; // id -> texto ainda não salvo, preservado entre re-renders
-
-function render(){
-  const board = document.getElementById("board");
-  if(!board) return;
-
-  // Preserva o rascunho de observação (texto digitado mas ainda não salvo) apenas do campo
-  // que está com foco no momento — assim uma atualização em tempo real (Firestore onSnapshot)
-  // ou o carregamento inicial não apaga o que a pessoa está digitando, mas também não usa um
-  // valor antigo/vazio de um campo que não está sendo editado para sobrescrever um dado que acabou
-  // de ser carregado do armazenamento.
-  const focusedObsId = (document.activeElement && document.activeElement.classList && document.activeElement.classList.contains("obs-textarea"))
-    ? document.activeElement.getAttribute("data-obs-id")
-    : null;
-  if(focusedObsId){
-    const ta = document.activeElement;
-    const item = DATA.find(d => d.id === focusedObsId);
-    if(item && ta.value !== (item.obs || "")) obsDrafts[focusedObsId] = ta.value;
-    else delete obsDrafts[focusedObsId];
-  }
-  const focusedSelectionStart = focusedObsId ? document.activeElement.selectionStart : null;
-  const focusedSelectionEnd = focusedObsId ? document.activeElement.selectionEnd : null;
-
-  board.innerHTML = "";
-
-  const groups = state.view === "status" ? STATUSES : AREAS;
-  groups.forEach(group => {
-    const items = state.view === "status"
-      ? DATA.filter(d => d.status === group.key && passesFilter(d))
-      : DATA.filter(d => d.area === group.key && passesFilter(d));
-    const col = document.createElement("div");
-    col.className = state.view === "status" ? `column ${group.cls}` : `column ${group.cls}`;
-    col.setAttribute("data-group-key", group.key);
-    col.innerHTML = `
-      <div class="col-head">
-        <span class="name"><span class="rail-dot"></span>${group.label}</span>
-        <span class="count">${items.length}</span>
-      </div>
-      <div class="col-body">${items.map(it => cardHTML(it)).join("") || '<p class="snippet" style="padding:8px 2px;">Nenhum item nesse filtro.</p>'}</div>
-    `;
-    board.appendChild(col);
-  });
-
-  document.querySelectorAll(".card").forEach(card => {
+function wireCardListeners(container){
+  container.querySelectorAll(".card").forEach(card => {
     card.addEventListener("click", () => toggleCard(card));
     card.addEventListener("keydown", (e) => {
       if(e.key === "Enter" || e.key === " "){ e.preventDefault(); toggleCard(card); }
@@ -840,6 +973,108 @@ function render(){
       card.addEventListener("dragend", () => card.classList.remove("dragging"));
     }
   });
+
+  container.querySelectorAll("select.status-select[data-status]").forEach(sel => {
+    sel.addEventListener("click", e => e.stopPropagation());
+    sel.addEventListener("mousedown", e => e.stopPropagation());
+    sel.addEventListener("change", (e) => {
+      e.stopPropagation();
+      const card = e.target.closest(".card");
+      updateStatus(card.getAttribute("data-id"), e.target.value);
+    });
+  });
+
+  container.querySelectorAll("select.assignee-select").forEach(sel => {
+    sel.addEventListener("click", e => e.stopPropagation());
+    sel.addEventListener("mousedown", e => e.stopPropagation());
+    sel.addEventListener("change", (e) => {
+      e.stopPropagation();
+      updateAssignee(e.target.getAttribute("data-assignee-id"), e.target.value);
+    });
+  });
+
+  container.querySelectorAll(".move-btn").forEach(btn => {
+    btn.addEventListener("click", (e) => {
+      e.stopPropagation();
+      updateStage(btn.getAttribute("data-move-id"), btn.getAttribute("data-move-to"));
+    });
+  });
+
+  container.querySelectorAll(".remove-btn").forEach(btn => {
+    btn.addEventListener("click", (e) => {
+      e.stopPropagation();
+      removeCustomItem(btn.getAttribute("data-remove-id"));
+    });
+  });
+
+  container.querySelectorAll(".obs-textarea").forEach(ta => {
+    ta.addEventListener("click", e => e.stopPropagation());
+    ta.addEventListener("mousedown", e => e.stopPropagation());
+    ta.addEventListener("keydown", e => e.stopPropagation());
+  });
+
+  container.querySelectorAll(".obs-save-btn").forEach(btn => {
+    btn.addEventListener("click", (e) => {
+      e.stopPropagation();
+      const id = btn.getAttribute("data-obs-save-id");
+      const ta = container.querySelector(`.obs-textarea[data-obs-id="${id}"]`);
+      updateObservacao(id, ta ? ta.value : "");
+    });
+  });
+}
+
+function preserveFocusedObsDraft(){
+  const focusedObsId = (document.activeElement && document.activeElement.classList && document.activeElement.classList.contains("obs-textarea"))
+    ? document.activeElement.getAttribute("data-obs-id")
+    : null;
+  if(focusedObsId){
+    const ta = document.activeElement;
+    const item = DATA.find(d => d.id === focusedObsId);
+    if(item && ta.value !== (item.obs || "")) obsDrafts[focusedObsId] = ta.value;
+    else delete obsDrafts[focusedObsId];
+  }
+  return {
+    focusedObsId,
+    start: focusedObsId ? document.activeElement.selectionStart : null,
+    end: focusedObsId ? document.activeElement.selectionEnd : null,
+  };
+}
+function restoreFocusedObs(focus){
+  if(!focus.focusedObsId) return;
+  const ta = document.querySelector(`.obs-textarea[data-obs-id="${focus.focusedObsId}"]`);
+  if(ta){
+    ta.focus();
+    try{ ta.setSelectionRange(focus.start, focus.end); }catch(e){}
+  }
+}
+
+function render(){
+  const board = document.getElementById("board");
+  if(!board) return;
+
+  const focus = preserveFocusedObsDraft();
+  board.innerHTML = "";
+
+  const groups = state.view === "status" ? STATUSES : SECTORS;
+  groups.forEach(group => {
+    const items = state.view === "status"
+      ? DATA.filter(d => itemStage(d) === "board" && d.status === group.key && passesFilter(d))
+      : DATA.filter(d => itemStage(d) === "board" && d.area === group.key && passesFilter(d));
+    const col = document.createElement("div");
+    col.className = state.view === "status" ? `column ${group.cls}` : "column";
+    col.setAttribute("data-group-key", group.key);
+    const dotStyle = state.view === "status" ? "" : ` style="background:${sectorColor(group.key)}"`;
+    col.innerHTML = `
+      <div class="col-head">
+        <span class="name"><span class="rail-dot"${dotStyle}></span>${group.label}</span>
+        <span class="count">${items.length}</span>
+      </div>
+      <div class="col-body">${items.map(it => cardHTML(it)).join("") || '<p class="snippet" style="padding:8px 2px;">Nenhum item nesse filtro.</p>'}</div>
+    `;
+    board.appendChild(col);
+  });
+
+  wireCardListeners(board);
 
   if(state.view === "status"){
     document.querySelectorAll(".column").forEach(col => {
@@ -858,50 +1093,82 @@ function render(){
     });
   }
 
-  document.querySelectorAll(".status-select").forEach(sel => {
-    sel.addEventListener("click", e => e.stopPropagation());
-    sel.addEventListener("mousedown", e => e.stopPropagation());
-    sel.addEventListener("change", (e) => {
-      e.stopPropagation();
-      const card = e.target.closest(".card");
-      const id = card.getAttribute("data-id");
-      updateStatus(id, e.target.value);
-    });
-  });
-
-  document.querySelectorAll(".remove-btn").forEach(btn => {
-    btn.addEventListener("click", (e) => {
-      e.stopPropagation();
-      const id = btn.getAttribute("data-remove-id");
-      removeCustomItem(id);
-    });
-  });
-
-  document.querySelectorAll(".obs-textarea").forEach(ta => {
-    ta.addEventListener("click", e => e.stopPropagation());
-    ta.addEventListener("mousedown", e => e.stopPropagation());
-    ta.addEventListener("keydown", e => e.stopPropagation());
-  });
-
-  document.querySelectorAll(".obs-save-btn").forEach(btn => {
-    btn.addEventListener("click", (e) => {
-      e.stopPropagation();
-      const id = btn.getAttribute("data-obs-save-id");
-      const ta = document.querySelector(`.obs-textarea[data-obs-id="${id}"]`);
-      updateObservacao(id, ta ? ta.value : "");
-    });
-  });
-
-  if(focusedObsId){
-    const ta = document.querySelector(`.obs-textarea[data-obs-id="${focusedObsId}"]`);
-    if(ta){
-      ta.focus();
-      try{ ta.setSelectionRange(focusedSelectionStart, focusedSelectionEnd); }catch(e){}
-    }
-  }
+  restoreFocusedObs(focus);
 
   const addBtn = document.getElementById("open-add-modal");
   if(addBtn) addBtn.style.display = canManage() ? "" : "none";
+
+  updateSummary();
+}
+
+function renderBacklog(){
+  const list = document.getElementById("backlog-list");
+  if(!list) return;
+  const focus = preserveFocusedObsDraft();
+  const items = DATA.filter(d => itemStage(d) === "backlog" && passesFilter(d));
+  list.innerHTML = items.map(it => cardHTML(it)).join("") || '<p class="snippet" style="padding:8px 2px;">Backlog vazio.</p>';
+  wireCardListeners(list);
+  restoreFocusedObs(focus);
+  const addBtn = document.getElementById("open-add-modal-backlog");
+  if(addBtn) addBtn.style.display = canManage() ? "" : "none";
+}
+
+function renderAdminLists(){
+  const sectorList = document.getElementById("sector-list");
+  if(sectorList){
+    sectorList.innerHTML = SECTORS.map(s => `<div class="admin-list-item"><span>${s.label}</span><span>${s.key}</span></div>`).join("");
+  }
+  const userList = document.getElementById("user-list");
+  if(userList){
+    userList.innerHTML = DIRECTORY.map(u => `<div class="admin-list-item"><span>${u.email}</span><span>${ROLE_LABEL[u.role] || u.role}</span></div>`).join("")
+      || '<div class="admin-list-item">Nenhum acesso cadastrado ainda.</div>';
+  }
+}
+
+function refreshSectorDependentUI(){
+  const fArea = document.getElementById("f-area");
+  if(fArea){
+    const current = fArea.value;
+    fArea.innerHTML = SECTORS.map(s => `<option value="${s.key}">${s.label}</option>`).join("");
+    if(SECTORS.some(s => s.key === current)) fArea.value = current;
+    refreshAssigneeOptionsForArea();
+  }
+  const areasInput = document.getElementById("user-areas-input");
+  if(areasInput){
+    areasInput.innerHTML = SECTORS.map(s => `<label><input type="checkbox" value="${s.key}"> ${s.label}</label>`).join("");
+  }
+  renderAdminLists();
+}
+
+function refreshAssigneeOptionsForArea(){
+  const areaSel = document.getElementById("f-area");
+  const sel = document.getElementById("f-assignee");
+  if(!areaSel || !sel) return;
+  const area = areaSel.value;
+  const options = DIRECTORY.filter(u => u.role === "admin" || (u.assignedAreas || []).includes(area));
+  sel.innerHTML = '<option value="">Sem responsável</option>' + options.map(u => `<option value="${u.email}">${u.email}</option>`).join("");
+}
+
+function renderTabs(){
+  const boardTab = document.getElementById("board-tab");
+  const backlogTab = document.getElementById("backlog-tab");
+  const adminTab = document.getElementById("admin-tab");
+  if(boardTab) boardTab.style.display = state.tab === "board" ? "" : "none";
+  if(backlogTab) backlogTab.style.display = state.tab === "backlog" ? "" : "none";
+  if(adminTab) adminTab.style.display = state.tab === "admin" ? "" : "none";
+
+  const navAdminBtn = document.getElementById("nav-admin-btn");
+  if(navAdminBtn) navAdminBtn.style.display = canCreate() ? "" : "none";
+  if(state.tab === "admin" && !canCreate()){
+    state.tab = "board";
+    document.querySelectorAll("#main-nav button").forEach(b => b.classList.toggle("active", b.dataset.tab === "board"));
+    if(boardTab) boardTab.style.display = "";
+    if(adminTab) adminTab.style.display = "none";
+  }
+
+  if(state.tab === "board") render();
+  else if(state.tab === "backlog") renderBacklog();
+  else if(state.tab === "admin") renderAdminLists();
 
   updateSummary();
 }
@@ -918,7 +1185,7 @@ function visibleData(){
 }
 
 function updateSummary(){
-  const vd = visibleData();
+  const vd = visibleData().filter(d => itemStage(d) === "board");
   document.getElementById("sum-total").textContent = vd.length;
   document.getElementById("sum-critica").textContent = vd.filter(d=>d.sev==="critica").length;
   document.getElementById("sum-alta").textContent = vd.filter(d=>d.sev==="alta").length;
@@ -927,9 +1194,9 @@ function updateSummary(){
   document.getElementById("sum-st-andamento").textContent = vd.filter(d=>d.status==="andamento").length;
   document.getElementById("sum-st-concluido").textContent = vd.filter(d=>d.status==="concluido").length;
   const metaTotal = document.getElementById("meta-total");
-  if(metaTotal) metaTotal.textContent = vd.length;
+  if(metaTotal) metaTotal.textContent = visibleData().length;
   const metaAreas = document.getElementById("meta-areas");
-  if(metaAreas) metaAreas.textContent = `${areasForUser().length} área(s) responsável(is)`;
+  if(metaAreas) metaAreas.textContent = `${areasForUser().length} setor(es) responsável(is)`;
 }
 
 async function updateStatus(id, value){
@@ -938,13 +1205,36 @@ async function updateStatus(id, value){
   item.status = value;
 
   updateSummary();
-  render();
+  if(state.tab === "board") render(); else if(state.tab === "backlog") renderBacklog();
 
   try{
     await storageAdapter.set(`status:${id}`, value);
   }catch(err){
     console.error("Falha ao salvar status:", err);
   }
+}
+
+async function updateAssignee(id, value){
+  const item = DATA.find(d => d.id === id);
+  if(!item) return;
+  if(item.custom){
+    item.assignee = value;
+    try{ await saveCustomItems(); }catch(err){ console.error("Falha ao salvar responsável:", err); }
+  }else{
+    try{ await updateFieldPathMap("assignees", assigneesMap, id, value); }catch(err){ console.error("Falha ao salvar responsável:", err); }
+  }
+}
+
+async function updateStage(id, value){
+  const item = DATA.find(d => d.id === id);
+  if(!item) return;
+  if(item.custom){
+    item.stage = value;
+    try{ await saveCustomItems(); }catch(err){ console.error("Falha ao mover item:", err); }
+  }else{
+    try{ await updateFieldPathMap("stages", stagesMap, id, value); }catch(err){ console.error("Falha ao mover item:", err); }
+  }
+  renderTabs();
 }
 
 async function updateObservacao(id, value){
@@ -991,7 +1281,7 @@ async function loadStatuses(){
 
   if(storageMode === "none"){
     note.textContent = "⚠ Armazenamento não disponível neste navegador — nada será salvo ao recarregar a página.";
-    render();
+    renderTabs();
     return;
   }
 
@@ -1005,12 +1295,12 @@ async function loadStatuses(){
       }
     }));
     note.textContent = storageMode === "shared"
-      ? "☁ Status e demandas compartilhados — visível para todos que abrirem este board."
-      : "💾 Status e demandas salvos neste navegador — visível só para você, não sincroniza com outras pessoas.";
+      ? "☁ Dados compartilhados — visível para todos que abrirem esta plataforma."
+      : "💾 Dados salvos neste navegador — visível só para você, não sincroniza com outras pessoas.";
   }catch(e){
     note.textContent = "⚠ Não foi possível carregar dados salvos anteriormente.";
   }
-  render();
+  renderTabs();
 }
 
 async function loadCustomItems(){
@@ -1040,7 +1330,7 @@ function nextCustomId(){
   return `N${customCount + 1}`;
 }
 
-async function addNewItem({title, area, sev, hoje, sugestao, obs}){
+async function addNewItem({title, area, sev, hoje, sugestao, obs, assignee}){
   const item = {
     id: nextCustomId(),
     area, sev,
@@ -1048,11 +1338,13 @@ async function addNewItem({title, area, sev, hoje, sugestao, obs}){
     hoje: hoje.trim(),
     sugestao: sugestao.trim(),
     obs: (obs || "").trim(),
+    assignee: assignee || "",
+    stage: "backlog",
     status: "aberto",
     custom: true,
   };
   DATA.push(item);
-  render();
+  renderTabs();
   await saveCustomItems();
 }
 
@@ -1060,12 +1352,13 @@ async function removeCustomItem(id){
   const idx = DATA.findIndex(d => d.id === id && d.custom);
   if(idx === -1) return;
   DATA.splice(idx, 1);
-  render();
+  renderTabs();
   await saveCustomItems();
   try{ await storageAdapter.set(`status:${id}`, ""); }catch(e){}
 }
 
 function openModal(){
+  refreshAssigneeOptionsForArea();
   document.getElementById("modal-overlay").classList.add("open");
   document.getElementById("f-title").focus();
 }
@@ -1075,6 +1368,7 @@ function closeModal(){
 }
 
 document.getElementById("open-add-modal").addEventListener("click", openModal);
+document.getElementById("open-add-modal-backlog").addEventListener("click", openModal);
 document.getElementById("modal-close").addEventListener("click", closeModal);
 document.getElementById("modal-cancel").addEventListener("click", closeModal);
 document.getElementById("modal-overlay").addEventListener("click", (e) => {
@@ -1083,6 +1377,7 @@ document.getElementById("modal-overlay").addEventListener("click", (e) => {
 document.addEventListener("keydown", (e) => {
   if(e.key === "Escape" && document.getElementById("modal-overlay").classList.contains("open")) closeModal();
 });
+document.getElementById("f-area").addEventListener("change", refreshAssigneeOptionsForArea);
 
 document.getElementById("add-form").addEventListener("submit", async (e) => {
   e.preventDefault();
@@ -1093,7 +1388,8 @@ document.getElementById("add-form").addEventListener("submit", async (e) => {
   const hoje = document.getElementById("f-hoje").value;
   const sugestao = document.getElementById("f-sugestao").value;
   const obs = document.getElementById("f-obs").value;
-  await addNewItem({title, area, sev, hoje, sugestao, obs});
+  const assignee = document.getElementById("f-assignee").value;
+  await addNewItem({title, area, sev, hoje, sugestao, obs, assignee});
   closeModal();
 });
 
@@ -1103,7 +1399,7 @@ document.getElementById("filters-sev").addEventListener("click", (e) => {
   document.querySelectorAll("#filters-sev .filter-btn").forEach(b => b.classList.remove("active"));
   btn.classList.add("active");
   state.sev = btn.dataset.filter;
-  render();
+  renderTabs();
 });
 
 document.getElementById("filters-status").addEventListener("click", (e) => {
@@ -1112,7 +1408,7 @@ document.getElementById("filters-status").addEventListener("click", (e) => {
   document.querySelectorAll("#filters-status .filter-btn").forEach(b => b.classList.remove("active"));
   btn.classList.add("active");
   state.status = btn.dataset.statusFilter;
-  render();
+  renderTabs();
 });
 
 document.getElementById("view-toggle").addEventListener("click", (e) => {
@@ -1122,6 +1418,79 @@ document.getElementById("view-toggle").addEventListener("click", (e) => {
   btn.classList.add("active");
   state.view = btn.dataset.view;
   render();
+});
+
+document.getElementById("main-nav").addEventListener("click", (e) => {
+  const btn = e.target.closest("button[data-tab]");
+  if(!btn) return;
+  if(btn.dataset.tab === "admin" && !canCreate()) return;
+  document.querySelectorAll("#main-nav button").forEach(b => b.classList.remove("active"));
+  btn.classList.add("active");
+  state.tab = btn.dataset.tab;
+  renderTabs();
+});
+
+// ---------- Criação de setores ----------
+function slugify(label){
+  return label.toLowerCase().normalize("NFD").replace(/[̀-ͯ]/g, "")
+    .replace(/[^a-z0-9]+/g, "-").replace(/(^-|-$)/g, "") || "setor";
+}
+function uniqueSectorKey(base){
+  let key = base, n = 2;
+  while(SECTORS.some(s => s.key === key)){ key = `${base}-${n}`; n++; }
+  return key;
+}
+
+document.getElementById("sector-form").addEventListener("submit", async (e) => {
+  e.preventDefault();
+  const msgEl = document.getElementById("sector-msg");
+  msgEl.style.color = ""; msgEl.textContent = "";
+  const nameInput = document.getElementById("sector-name");
+  const label = nameInput.value.trim();
+  if(!label){ msgEl.textContent = "Informe um nome para o setor."; return; }
+  if(!firebaseReady || storageMode !== "firebase"){ msgEl.textContent = "Indisponível no momento (sem conexão com o banco compartilhado)."; return; }
+  const key = uniqueSectorKey(slugify(label));
+  try{
+    await fsUpdateDoc(BOARD_DOC, "sectors", fsArrayUnion({ key, label }));
+    SECTORS.push({ key, label });
+    refreshSectorDependentUI();
+    nameInput.value = "";
+    msgEl.style.color = "var(--st-concluido)";
+    msgEl.textContent = `Setor "${label}" criado.`;
+  }catch(err){
+    console.error("Falha ao criar setor:", err);
+    msgEl.textContent = "Não foi possível criar o setor.";
+  }
+});
+
+// ---------- Criação de acessos ----------
+document.getElementById("user-form").addEventListener("submit", async (e) => {
+  e.preventDefault();
+  const msgEl = document.getElementById("user-msg");
+  msgEl.style.color = ""; msgEl.textContent = "";
+  const email = document.getElementById("user-email-input").value.trim();
+  const role = document.getElementById("user-role-input").value;
+  const areas = Array.from(document.querySelectorAll('#user-areas-input input[type="checkbox"]:checked')).map(cb => cb.value);
+  if(!email){ msgEl.textContent = "Informe um e-mail."; return; }
+  if(role !== "admin" && areas.length === 0){ msgEl.textContent = "Selecione ao menos um setor."; return; }
+  if(!firebaseReady || storageMode !== "firebase"){ msgEl.textContent = "Indisponível no momento (sem conexão com o banco compartilhado)."; return; }
+  try{
+    const assignedAreas = role === "admin" ? SECTORS.map(s => s.key) : areas;
+    const tempPassword = randomTempPassword();
+    const signUpResult = await restSignUp(email, tempPassword);
+    const uid = signUpResult.localId;
+    await fsSetDoc(fsDoc(db, "users", uid), { email, role, assignedAreas });
+    await fsUpdateDoc(BOARD_DOC, "directory", fsArrayUnion({ uid, email, role, assignedAreas }));
+    DIRECTORY.push({ uid, email, role, assignedAreas });
+    await restSendPasswordReset(email);
+    refreshSectorDependentUI();
+    document.getElementById("user-form").reset();
+    msgEl.style.color = "var(--st-concluido)";
+    msgEl.textContent = `Acesso criado! Enviamos um e-mail para ${email} definir a senha.`;
+  }catch(err){
+    console.error("Falha ao criar acesso:", err);
+    msgEl.textContent = "Não foi possível criar o acesso: " + (err.message || "erro desconhecido");
+  }
 });
 
 // ---------- Login / Autenticação ----------
@@ -1140,10 +1509,18 @@ function showDenied(){
   document.getElementById("login-denied").style.display = "block";
 }
 
-const ROLE_LABEL = {admin:"Admin", gestor:"Gestor", supervisor:"Supervisor", operador:"Operador"};
-
 async function handleAuthedUser(fbUser){
   try{
+    // Garante que o documento da plataforma (setores, diretório etc.) já existe antes de
+    // checar permissões, para que o bootstrap do admin já possa registrar a si mesmo.
+    try{
+      boardDocCache = await ensureBoardDoc();
+      SECTORS = (boardDocCache.sectors && boardDocCache.sectors.length) ? boardDocCache.sectors : DEFAULT_SECTORS.slice();
+      DIRECTORY = boardDocCache.directory || [];
+    }catch(e){
+      console.error("Não foi possível carregar o documento da plataforma antes do login:", e);
+    }
+
     const userDoc = await loadOrBootstrapUserDoc(fbUser);
     if(!userDoc){
       currentUser = null;
@@ -1153,13 +1530,13 @@ async function handleAuthedUser(fbUser){
     currentUser = { uid: fbUser.uid, email: fbUser.email, role: userDoc.role, assignedAreas: userDoc.assignedAreas || [] };
     document.getElementById("user-email").textContent = currentUser.email;
     document.getElementById("user-role").textContent = ROLE_LABEL[currentUser.role] || currentUser.role;
+    refreshSectorDependentUI();
     showApp();
-    render();
+    renderTabs();
 
     storageMode = "firebase";
     const note = document.getElementById("storage-note");
     try{
-      boardDocCache = await ensureBoardDoc();
       applyRemoteState(boardDocCache);
       fsOnSnapshot(BOARD_DOC, (snap) => {
         if(snap.exists()){
@@ -1169,7 +1546,7 @@ async function handleAuthedUser(fbUser){
       }, (err) => {
         console.error("Erro na sincronização em tempo real:", err);
       });
-      note.textContent = "☁ Conectado ao banco compartilhado — status e novas demandas sincronizados em tempo real para todos que acessam este link.";
+      note.textContent = "☁ Conectado ao banco compartilhado — dados sincronizados em tempo real para todos que acessam este link.";
     }catch(e){
       console.error("Firebase indisponível, usando armazenamento local como reserva:", e);
       storageMode = hasClaudeStorage ? "shared" : (hasLocalStorage ? "local" : "none");
@@ -1243,13 +1620,14 @@ document.getElementById("login-signout-denied").addEventListener("click", async 
       }
     });
   }else{
-    // Sem Firebase: não há como autenticar, mas deixamos o board acessível
+    // Sem Firebase: não há como autenticar, mas deixamos a plataforma acessível
     // localmente (modo de contingência) para não travar o uso em caso de falha de rede.
     currentUser = { uid:"local", email:"modo local", role:"admin", assignedAreas:["op","ql","pa"] };
     document.getElementById("user-email").textContent = currentUser.email;
     document.getElementById("user-role").textContent = ROLE_LABEL[currentUser.role] || currentUser.role;
+    refreshSectorDependentUI();
     showApp();
-    render();
+    renderTabs();
     await loadCustomItems();
     await loadObservacoes();
     await loadStatuses();
