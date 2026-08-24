@@ -30,6 +30,9 @@
     --st-andamento:#d8a94a;
     --st-concluido:#4ee2a0;
 
+    --brand-red:#d40f3a;
+    --brand-red-dim:#d40f3a33;
+
     --radius:14px;
     --font-display:'IBM Plex Sans', sans-serif;
     --font-mono:'IBM Plex Mono', monospace;
@@ -40,6 +43,7 @@
   body{
     background:
       radial-gradient(ellipse 900px 500px at 12% -10%, #16264a55, transparent),
+      radial-gradient(ellipse 900px 600px at 105% 5%, var(--brand-red-dim), transparent),
       radial-gradient(ellipse 700px 500px at 100% 0%, #1a1f3a55, transparent),
       var(--ink-0);
     color:var(--text-hi);
@@ -54,19 +58,32 @@
     display:flex; justify-content:space-between; align-items:flex-start; gap:24px; flex-wrap:wrap;
     border-bottom:1px solid var(--hairline); padding-bottom:22px; margin-bottom:26px;
   }
+  .brand-row{display:flex; align-items:center; gap:12px; margin-bottom:10px;}
+  .brand-logo{height:30px; width:auto; border-radius:4px; box-shadow:0 0 0 1px var(--hairline);}
   .eyebrow{
     font-family:var(--font-mono); font-size:12px; letter-spacing:.14em; text-transform:uppercase;
-    color:var(--text-low); display:flex; align-items:center; gap:8px; margin-bottom:10px;
+    color:var(--text-low); display:flex; align-items:center; gap:8px; margin:0;
   }
   .pulse{
-    width:7px;height:7px;border-radius:50%; background:#4ee2a0;
-    box-shadow:0 0 0 0 #4ee2a066; animation:pulse 2.4s infinite;
+    width:7px;height:7px;border-radius:50%; background:var(--brand-red);
+    box-shadow:0 0 0 0 var(--brand-red-dim); animation:pulse 2.4s infinite;
   }
-  @keyframes pulse{0%{box-shadow:0 0 0 0 #4ee2a055;}70%{box-shadow:0 0 0 8px #4ee2a000;}100%{box-shadow:0 0 0 0 #4ee2a000;}}
+  @keyframes pulse{0%{box-shadow:0 0 0 0 #d40f3a55;}70%{box-shadow:0 0 0 8px #d40f3a00;}100%{box-shadow:0 0 0 0 #d40f3a00;}}
   h1{font-size:26px; line-height:1.25; margin:0 0 6px; font-weight:600; letter-spacing:-.01em;}
   .sub{color:var(--text-mid); font-size:14.5px; max-width:52ch; margin:0;}
-  .meta{font-family:var(--font-mono); font-size:12px; color:var(--text-low); text-align:right; min-width:160px; line-height:1.7;}
+  .meta{font-family:var(--font-mono); font-size:12px; color:var(--text-low); text-align:right; min-width:160px; line-height:1.7; display:flex; flex-direction:column; align-items:flex-end; gap:2px;}
   .meta b{color:var(--text-mid); font-weight:500;}
+  .user-chip{
+    font-family:var(--font-mono); font-size:11px; color:var(--text-mid);
+    background:var(--ink-1); border:1px solid var(--hairline); border-radius:999px;
+    padding:4px 10px; display:flex; align-items:center; gap:8px; margin-bottom:4px;
+  }
+  .user-chip .role-tag{color:var(--brand-red); font-weight:600; text-transform:uppercase; letter-spacing:.04em;}
+  .logout-btn{
+    background:none; border:none; color:var(--text-low); font-family:var(--font-mono); font-size:11px;
+    cursor:pointer; text-decoration:underline; padding:0;
+  }
+  .logout-btn:hover{color:var(--text-hi);}
 
   .summary-group{margin-bottom:18px;}
   .summary-label{
@@ -96,19 +113,24 @@
   }
   .filter-btn:hover{border-color:var(--text-low); color:var(--text-hi);}
   .filter-btn.active{background:var(--text-hi); color:var(--ink-0); border-color:var(--text-hi);}
+  .filter-btn.active.brand{background:var(--brand-red); border-color:var(--brand-red); color:#fff;}
   .filter-btn:focus-visible{outline:2px solid #6c8cff; outline-offset:2px;}
 
   .board{display:grid; grid-template-columns:repeat(3, 1fr); gap:20px; align-items:start;}
   .column{background:var(--ink-1); border:1px solid var(--hairline); border-radius:18px; overflow:hidden;}
+  .column.drag-over{border-color:var(--brand-red); box-shadow:0 0 0 1px var(--brand-red) inset;}
   .col-head{padding:16px 18px 14px; border-bottom:1px solid var(--hairline); display:flex; align-items:center; justify-content:space-between;}
   .col-head .name{font-weight:600; font-size:15px; display:flex; align-items:center; gap:9px;}
   .rail-dot{width:9px;height:9px;border-radius:2px; flex-shrink:0;}
   .col-head .count{font-family:var(--font-mono); font-size:12px; color:var(--text-low); background:var(--ink-2); border:1px solid var(--hairline); border-radius:999px; padding:2px 9px;}
-  .col-body{padding:14px; display:flex; flex-direction:column; gap:12px;}
+  .col-body{padding:14px; display:flex; flex-direction:column; gap:12px; min-height:40px;}
 
   .op .rail-dot{background:var(--op);}
   .ql .rail-dot{background:var(--ql);}
   .pa .rail-dot{background:var(--pa);}
+  .st-aberto-col .rail-dot{background:var(--st-aberto);}
+  .st-andamento-col .rail-dot{background:var(--st-andamento);}
+  .st-concluido-col .rail-dot{background:var(--st-concluido);}
 
   .card{
     background:var(--ink-2); border:1px solid var(--hairline); border-left:3px solid var(--rail, var(--text-low));
@@ -118,6 +140,8 @@
   }
   .card:hover{background:var(--ink-3);}
   .card:focus-visible{outline:2px solid #6c8cff; outline-offset:2px;}
+  .card[draggable="true"]{cursor:grab;}
+  .card.dragging{opacity:.4;}
   @keyframes rise{ to{opacity:1; transform:translateY(0);} }
 
   .op-card{--rail:var(--op);}
@@ -126,6 +150,7 @@
 
   .card-top{display:flex; align-items:center; justify-content:space-between; gap:10px; margin-bottom:8px;}
   .tag{font-family:var(--font-mono); font-size:11px; color:var(--text-low);}
+  .area-tag{font-family:var(--font-mono); font-size:10px; text-transform:uppercase; letter-spacing:.04em; padding:1px 6px; border-radius:5px; border:1px solid var(--hairline); color:var(--text-low);}
   .sev{display:flex; align-items:center; gap:6px; font-family:var(--font-mono); font-size:10.5px; text-transform:uppercase; letter-spacing:.06em;}
   .sev .bars{display:flex; gap:2px;}
   .sev .bars i{width:4px; height:9px; border-radius:1px; background:var(--hairline); display:block;}
@@ -179,11 +204,18 @@
   .add-btn{
     margin-left:auto;
     font-family:var(--font-mono); font-size:12px; font-weight:600; letter-spacing:.02em;
-    color:var(--ink-0); background:var(--text-hi); border:1px solid var(--text-hi);
+    color:#fff; background:var(--brand-red); border:1px solid var(--brand-red);
     border-radius:999px; padding:7px 16px; cursor:pointer; transition:opacity .15s ease;
   }
   .add-btn:hover{opacity:.85;}
   .add-btn:focus-visible{outline:2px solid #6c8cff; outline-offset:2px;}
+
+  .view-toggle{display:flex; gap:6px; background:var(--ink-1); border:1px solid var(--hairline); border-radius:999px; padding:3px;}
+  .view-toggle button{
+    font-family:var(--font-mono); font-size:11px; letter-spacing:.02em; color:var(--text-mid);
+    background:transparent; border:none; border-radius:999px; padding:6px 12px; cursor:pointer;
+  }
+  .view-toggle button.active{background:var(--brand-red); color:#fff;}
 
   .modal-overlay{
     display:none; position:fixed; inset:0; background:#05070fcc; backdrop-filter:blur(2px);
@@ -208,7 +240,7 @@
     display:block; font-family:var(--font-mono); font-size:11px; text-transform:uppercase;
     letter-spacing:.06em; color:var(--text-low); margin-bottom:6px;
   }
-  .field input[type="text"], .field select, .field textarea{
+  .field input[type="text"], .field input[type="email"], .field input[type="password"], .field select, .field textarea{
     width:100%; background:var(--ink-2); border:1px solid var(--hairline); border-radius:8px;
     color:var(--text-hi); font-family:var(--font-display); font-size:13.5px;
     padding:9px 11px; resize:vertical;
@@ -225,7 +257,7 @@
   }
   .btn-secondary{background:transparent; color:var(--text-mid);}
   .btn-secondary:hover{color:var(--text-hi); border-color:var(--text-low);}
-  .btn-primary{background:var(--text-hi); color:var(--ink-0); border-color:var(--text-hi); font-weight:600;}
+  .btn-primary{background:var(--brand-red); color:#fff; border-color:var(--brand-red); font-weight:600;}
   .btn-primary:hover{opacity:.85;}
 
   .remove-btn{
@@ -259,7 +291,7 @@
     .summary{grid-template-columns:repeat(2,1fr);}
     .summary.status{grid-template-columns:repeat(3,1fr);}
     header{flex-direction:column;}
-    .meta{text-align:left;}
+    .meta{text-align:left; align-items:flex-start;}
   }
   @media (max-width:480px){
     .summary.status{grid-template-columns:1fr;}
@@ -270,20 +302,83 @@
     .pulse{animation:none;}
     *{transition:none !important;}
   }
+
+  /* ---------- login screen ---------- */
+  #login-screen{
+    position:fixed; inset:0; z-index:200; display:flex; align-items:center; justify-content:center;
+    background:
+      radial-gradient(ellipse 900px 600px at 15% -10%, #d40f3a2e, transparent),
+      radial-gradient(ellipse 800px 600px at 100% 100%, #d40f3a22, transparent),
+      var(--ink-0);
+    padding:20px;
+  }
+  #login-screen.hidden{display:none;}
+  .login-card{
+    width:100%; max-width:380px; background:var(--ink-1); border:1px solid var(--hairline);
+    border-radius:18px; padding:32px 28px; box-shadow:0 20px 60px #00000066;
+    text-align:center;
+  }
+  .login-card img{height:56px; width:auto; margin-bottom:18px; border-radius:6px;}
+  .login-card h2{font-size:17px; margin:0 0 4px; font-weight:600;}
+  .login-card .login-sub{font-size:12.5px; color:var(--text-low); margin:0 0 22px;}
+  .login-card .field{text-align:left;}
+  .login-card .btn-primary{width:100%; padding:10px; margin-top:4px;}
+  .login-error{color:var(--sev-critica); font-size:12px; margin:10px 0 0; min-height:14px;}
+  .login-forgot{background:none; border:none; color:var(--text-low); font-size:11.5px; text-decoration:underline; cursor:pointer; margin-top:14px; font-family:var(--font-mono);}
+  .login-forgot:hover{color:var(--text-hi);}
+  .login-denied{
+    display:none; text-align:left; font-size:12.5px; color:var(--text-mid); background:var(--ink-2);
+    border:1px solid var(--hairline); border-radius:8px; padding:10px 12px; margin-top:14px; line-height:1.5;
+  }
 </style>
 </head>
 <body>
-<div class="wrap">
+
+<div id="login-screen">
+  <div class="login-card">
+    <img src="logo.png" alt="Crediffato" />
+    <h2>Central de Monitoria Crediffato</h2>
+    <p class="login-sub">Entre com sua conta para acessar o board.</p>
+    <form id="login-form">
+      <label class="field">
+        <span class="field-label">E-mail</span>
+        <input type="email" id="login-email" required autocomplete="username" placeholder="voce@crediffato.com.br" />
+      </label>
+      <label class="field">
+        <span class="field-label">Senha</span>
+        <input type="password" id="login-password" required autocomplete="current-password" placeholder="••••••••" />
+      </label>
+      <button type="submit" class="btn-primary">Entrar</button>
+      <p class="login-error" id="login-error"></p>
+    </form>
+    <button type="button" class="login-forgot" id="login-forgot">Esqueci minha senha</button>
+    <div class="login-denied" id="login-denied">
+      Sua conta não tem uma permissão configurada neste board ainda. Fale com o administrador (Natanael) para liberar seu acesso.
+      <br/><br/>
+      <button type="button" class="login-forgot" id="login-signout-denied" style="margin-top:0;">Sair e tentar outra conta</button>
+    </div>
+  </div>
+</div>
+
+<div class="wrap" id="app-content" style="display:none;">
 
   <header>
     <div>
-      <div class="eyebrow"><span class="pulse"></span> Central de Monitoria Crediffato · Setor de Operações</div>
+      <div class="brand-row">
+        <img class="brand-logo" src="logo.png" alt="Crediffato" />
+        <p class="eyebrow"><span class="pulse"></span> Central de Monitoria Crediffato · Setor de Operações</p>
+      </div>
       <h1>Board de Melhorias por Responsável</h1>
       <p class="sub">Guia de melhorias internas e institucionais, organizado por quem executa cada ponto. Clique em um cartão para ver o comparativo completo; use o campo de status para marcar o andamento.</p>
     </div>
     <div class="meta">
-      <div><b>7</b> pontos ativos</div>
-      <div>3 áreas responsáveis</div>
+      <div class="user-chip" id="user-chip">
+        <span id="user-email">—</span>
+        <span class="role-tag" id="user-role">—</span>
+        <button type="button" class="logout-btn" id="logout-btn">sair</button>
+      </div>
+      <div><b id="meta-total">7</b> pontos ativos</div>
+      <div id="meta-areas">3 áreas responsáveis</div>
       <div>Atualizado 20/08/2026</div>
     </div>
   </header>
@@ -321,6 +416,10 @@
       <button class="filter-btn" data-status-filter="aberto">Em aberto</button>
       <button class="filter-btn" data-status-filter="andamento">Em andamento</button>
       <button class="filter-btn" data-status-filter="concluido">Concluído</button>
+    </div>
+    <div class="view-toggle" id="view-toggle" role="group" aria-label="Modo de visualização">
+      <button type="button" data-view="area" class="active">Por área</button>
+      <button type="button" data-view="status">Kanban (estilo Jira)</button>
     </div>
     <button class="add-btn" id="open-add-modal">+ Nova demanda</button>
   </div>
@@ -398,29 +497,71 @@ const firebaseConfig = {
   appId: "1:1010277250901:web:99e214f915db73f4e161dc"
 };
 
+// E-mail do administrador "bootstrap": a primeira vez que essa conta fizer login,
+// o board cria automaticamente o documento de permissão dela como admin (vê tudo).
+// Qualquer outra conta precisa ter um documento em users/{uid} criado previamente
+// (pelo admin, no console do Firebase) para conseguir entrar.
+const BOOTSTRAP_ADMIN_EMAIL = "nlcorrea@crediffato.com.br";
+
 let db = null;
+let auth = null;
 let firebaseReady = false;
 let BOARD_DOC = null;
 let boardDocCache = null;
 let fsDoc, fsGetDoc, fsSetDoc, fsUpdateDoc, fsOnSnapshot, fsFieldPath, fsDeleteField;
+let authSignIn, authOnState, authSignOut, authSendReset;
+
+let currentUser = null; // { uid, email, role, assignedAreas }
 
 async function initFirebase(){
   try{
-    const [{ initializeApp }, fsMod] = await Promise.all([
+    const [{ initializeApp }, fsMod, authMod] = await Promise.all([
       import("https://www.gstatic.com/firebasejs/10.14.1/firebase-app.js"),
       import("https://www.gstatic.com/firebasejs/10.14.1/firebase-firestore.js"),
+      import("https://www.gstatic.com/firebasejs/10.14.1/firebase-auth.js"),
     ]);
     fsDoc = fsMod.doc; fsGetDoc = fsMod.getDoc; fsSetDoc = fsMod.setDoc;
     fsUpdateDoc = fsMod.updateDoc; fsOnSnapshot = fsMod.onSnapshot;
     fsFieldPath = fsMod.FieldPath; fsDeleteField = fsMod.deleteField;
+    authSignIn = authMod.signInWithEmailAndPassword;
+    authOnState = authMod.onAuthStateChanged;
+    authSignOut = authMod.signOut;
+    authSendReset = authMod.sendPasswordResetEmail;
     const fbApp = initializeApp(firebaseConfig);
     db = fsMod.getFirestore(fbApp);
+    auth = authMod.getAuth(fbApp);
     BOARD_DOC = fsDoc(db, "boards", "crediffato");
     firebaseReady = true;
   }catch(e){
     console.error("Firebase indisponível — seguindo sem sincronização em nuvem:", e);
     firebaseReady = false;
   }
+}
+
+// ---------- Permissões: users/{uid} = { email, role, assignedAreas } ----------
+// role: "admin" | "gestor" | "supervisor" | "operador"
+// assignedAreas: lista de chaves de área ("op","ql","pa") que a conta pode ver/editar.
+// Admin sempre enxerga tudo, independente de assignedAreas.
+async function loadOrBootstrapUserDoc(fbUser){
+  const uref = fsDoc(db, "users", fbUser.uid);
+  const snap = await fsGetDoc(uref);
+  if(snap.exists()) return snap.data();
+  if((fbUser.email || "").toLowerCase() === BOOTSTRAP_ADMIN_EMAIL){
+    const doc = { email: fbUser.email, role: "admin", assignedAreas: ["op","ql","pa"] };
+    await fsSetDoc(uref, doc);
+    return doc;
+  }
+  return null; // sem permissão configurada
+}
+
+function areasForUser(){
+  if(!currentUser) return [];
+  if(currentUser.role === "admin") return AREAS.map(a => a.key);
+  return currentUser.assignedAreas || [];
+}
+function canManage(){
+  // Admin e Gestor/Supervisor podem cadastrar/remover demandas; Operador só atualiza status/observações.
+  return currentUser && (currentUser.role === "admin" || currentUser.role === "gestor" || currentUser.role === "supervisor");
 }
 
 const DATA = [
@@ -453,8 +594,15 @@ const AREAS = [
   {key:"pa", label:"PA Digital", cls:"pa"},
 ];
 
+const STATUSES = [
+  {key:"aberto", label:"Em aberto", cls:"st-aberto-col"},
+  {key:"andamento", label:"Em andamento", cls:"st-andamento-col"},
+  {key:"concluido", label:"Concluído", cls:"st-concluido-col"},
+];
+
 const SEV_LABEL = {critica:"Crítica", alta:"Alta", media:"Média"};
 const STATUS_LABEL = {aberto:"Em aberto", andamento:"Em andamento", concluido:"Concluído"};
+const AREA_LABEL = {op:"Operações", ql:"Qualidade", pa:"PA Digital"};
 
 // Adaptador de armazenamento:
 // 1) Se rodando dentro do Claude, usa window.storage (compartilhado entre todos que abrem o artefato).
@@ -575,18 +723,23 @@ function applyRemoteState(data){
   render();
 }
 
-let state = { sev:"todos", status:"todos" };
+let state = { sev:"todos", status:"todos", view:"area" };
 
-function cardHTML(item){
+function cardHTML(item, opts){
+  opts = opts || {};
   const isOpen = openCardIds.has(item.id);
   const obsValue = Object.prototype.hasOwnProperty.call(obsDrafts, item.id) ? obsDrafts[item.id] : (item.obs || "");
+  const draggable = state.view === "status";
   return `
-    <div class="card ${item.area}-card${isOpen ? " open" : ""}" data-sev="${item.sev}" data-id="${item.id}" tabindex="0" role="button" aria-expanded="${isOpen ? "true" : "false"}">
+    <div class="card ${item.area}-card${isOpen ? " open" : ""}" data-sev="${item.sev}" data-id="${item.id}" tabindex="0" role="button" aria-expanded="${isOpen ? "true" : "false"}" ${draggable ? 'draggable="true"' : ''}>
       <div class="card-top">
-        <span class="tag">${item.id}</span>
+        <span style="display:flex; align-items:center; gap:6px;">
+          <span class="tag">${item.id}</span>
+          ${state.view === "status" ? `<span class="area-tag">${AREA_LABEL[item.area] || item.area}</span>` : ""}
+        </span>
         <span style="display:flex; align-items:center; gap:8px;">
           <span class="sev ${item.sev}"><span class="bars"><i></i><i></i><i></i></span>${SEV_LABEL[item.sev]}</span>
-          ${item.custom ? `<button class="remove-btn" data-remove-id="${item.id}" aria-label="Remover demanda" title="Remover demanda">✕</button>` : ""}
+          ${item.custom && canManage() ? `<button class="remove-btn" data-remove-id="${item.id}" aria-label="Remover demanda" title="Remover demanda">✕</button>` : ""}
         </span>
       </div>
       <h3>${item.title}${item.shared ? `<span class="shared">${item.shared}</span>` : ""}${item.custom ? `<span class="shared">Nova</span>` : ""}</h3>
@@ -624,7 +777,8 @@ function cardHTML(item){
 function passesFilter(item){
   const sevOk = state.sev === "todos" || item.sev === state.sev;
   const stOk = state.status === "todos" || item.status === state.status;
-  return sevOk && stOk;
+  const areaOk = areasForUser().includes(item.area);
+  return sevOk && stOk && areaOk;
 }
 
 const openCardIds = new Set();
@@ -632,6 +786,7 @@ const obsDrafts = {}; // id -> texto ainda não salvo, preservado entre re-rende
 
 function render(){
   const board = document.getElementById("board");
+  if(!board) return;
 
   // Preserva o rascunho de observação (texto digitado mas ainda não salvo) apenas do campo
   // que está com foco no momento — assim uma atualização em tempo real (Firestore onSnapshot)
@@ -651,16 +806,21 @@ function render(){
   const focusedSelectionEnd = focusedObsId ? document.activeElement.selectionEnd : null;
 
   board.innerHTML = "";
-  AREAS.forEach(area => {
-    const items = DATA.filter(d => d.area === area.key && passesFilter(d));
+
+  const groups = state.view === "status" ? STATUSES : AREAS;
+  groups.forEach(group => {
+    const items = state.view === "status"
+      ? DATA.filter(d => d.status === group.key && passesFilter(d))
+      : DATA.filter(d => d.area === group.key && passesFilter(d));
     const col = document.createElement("div");
-    col.className = `column ${area.cls}`;
+    col.className = state.view === "status" ? `column ${group.cls}` : `column ${group.cls}`;
+    col.setAttribute("data-group-key", group.key);
     col.innerHTML = `
       <div class="col-head">
-        <span class="name"><span class="rail-dot"></span>${area.label}</span>
+        <span class="name"><span class="rail-dot"></span>${group.label}</span>
         <span class="count">${items.length}</span>
       </div>
-      <div class="col-body">${items.map(cardHTML).join("") || '<p class="snippet" style="padding:8px 2px;">Nenhum item nesse filtro.</p>'}</div>
+      <div class="col-body">${items.map(it => cardHTML(it)).join("") || '<p class="snippet" style="padding:8px 2px;">Nenhum item nesse filtro.</p>'}</div>
     `;
     board.appendChild(col);
   });
@@ -670,7 +830,33 @@ function render(){
     card.addEventListener("keydown", (e) => {
       if(e.key === "Enter" || e.key === " "){ e.preventDefault(); toggleCard(card); }
     });
+    if(card.getAttribute("draggable") === "true"){
+      card.addEventListener("dragstart", (e) => {
+        e.stopPropagation();
+        card.classList.add("dragging");
+        e.dataTransfer.setData("text/plain", card.getAttribute("data-id"));
+        e.dataTransfer.effectAllowed = "move";
+      });
+      card.addEventListener("dragend", () => card.classList.remove("dragging"));
+    }
   });
+
+  if(state.view === "status"){
+    document.querySelectorAll(".column").forEach(col => {
+      col.addEventListener("dragover", (e) => {
+        e.preventDefault();
+        col.classList.add("drag-over");
+      });
+      col.addEventListener("dragleave", () => col.classList.remove("drag-over"));
+      col.addEventListener("drop", (e) => {
+        e.preventDefault();
+        col.classList.remove("drag-over");
+        const id = e.dataTransfer.getData("text/plain");
+        const newStatus = col.getAttribute("data-group-key");
+        if(id) updateStatus(id, newStatus);
+      });
+    });
+  }
 
   document.querySelectorAll(".status-select").forEach(sel => {
     sel.addEventListener("click", e => e.stopPropagation());
@@ -714,6 +900,9 @@ function render(){
     }
   }
 
+  const addBtn = document.getElementById("open-add-modal");
+  if(addBtn) addBtn.style.display = canManage() ? "" : "none";
+
   updateSummary();
 }
 
@@ -724,14 +913,23 @@ function toggleCard(card){
   if(isOpen) openCardIds.add(id); else openCardIds.delete(id);
 }
 
+function visibleData(){
+  return DATA.filter(d => areasForUser().includes(d.area));
+}
+
 function updateSummary(){
-  document.getElementById("sum-total").textContent = DATA.length;
-  document.getElementById("sum-critica").textContent = DATA.filter(d=>d.sev==="critica").length;
-  document.getElementById("sum-alta").textContent = DATA.filter(d=>d.sev==="alta").length;
-  document.getElementById("sum-media").textContent = DATA.filter(d=>d.sev==="media").length;
-  document.getElementById("sum-st-aberto").textContent = DATA.filter(d=>d.status==="aberto").length;
-  document.getElementById("sum-st-andamento").textContent = DATA.filter(d=>d.status==="andamento").length;
-  document.getElementById("sum-st-concluido").textContent = DATA.filter(d=>d.status==="concluido").length;
+  const vd = visibleData();
+  document.getElementById("sum-total").textContent = vd.length;
+  document.getElementById("sum-critica").textContent = vd.filter(d=>d.sev==="critica").length;
+  document.getElementById("sum-alta").textContent = vd.filter(d=>d.sev==="alta").length;
+  document.getElementById("sum-media").textContent = vd.filter(d=>d.sev==="media").length;
+  document.getElementById("sum-st-aberto").textContent = vd.filter(d=>d.status==="aberto").length;
+  document.getElementById("sum-st-andamento").textContent = vd.filter(d=>d.status==="andamento").length;
+  document.getElementById("sum-st-concluido").textContent = vd.filter(d=>d.status==="concluido").length;
+  const metaTotal = document.getElementById("meta-total");
+  if(metaTotal) metaTotal.textContent = vd.length;
+  const metaAreas = document.getElementById("meta-areas");
+  if(metaAreas) metaAreas.textContent = `${areasForUser().length} área(s) responsável(is)`;
 }
 
 async function updateStatus(id, value){
@@ -739,9 +937,8 @@ async function updateStatus(id, value){
   if(!item) return;
   item.status = value;
 
-  const select = document.querySelector(`.card[data-id="${id}"] .status-select`);
-  if(select) select.setAttribute("data-status", value);
   updateSummary();
+  render();
 
   try{
     await storageAdapter.set(`status:${id}`, value);
@@ -918,12 +1115,47 @@ document.getElementById("filters-status").addEventListener("click", (e) => {
   render();
 });
 
-(async function init(){
-  render(); // board aparece imediatamente com os dados padrão, mesmo se a rede falhar
+document.getElementById("view-toggle").addEventListener("click", (e) => {
+  const btn = e.target.closest("button[data-view]");
+  if(!btn) return;
+  document.querySelectorAll("#view-toggle button").forEach(b => b.classList.remove("active"));
+  btn.classList.add("active");
+  state.view = btn.dataset.view;
+  render();
+});
 
-  await initFirebase();
+// ---------- Login / Autenticação ----------
+function showApp(){
+  document.getElementById("login-screen").classList.add("hidden");
+  document.getElementById("app-content").style.display = "";
+}
+function showLogin(){
+  document.getElementById("app-content").style.display = "none";
+  document.getElementById("login-screen").classList.remove("hidden");
+  document.getElementById("login-denied").style.display = "none";
+}
+function showDenied(){
+  document.getElementById("app-content").style.display = "none";
+  document.getElementById("login-screen").classList.remove("hidden");
+  document.getElementById("login-denied").style.display = "block";
+}
 
-  if(firebaseReady){
+const ROLE_LABEL = {admin:"Admin", gestor:"Gestor", supervisor:"Supervisor", operador:"Operador"};
+
+async function handleAuthedUser(fbUser){
+  try{
+    const userDoc = await loadOrBootstrapUserDoc(fbUser);
+    if(!userDoc){
+      currentUser = null;
+      showDenied();
+      return;
+    }
+    currentUser = { uid: fbUser.uid, email: fbUser.email, role: userDoc.role, assignedAreas: userDoc.assignedAreas || [] };
+    document.getElementById("user-email").textContent = currentUser.email;
+    document.getElementById("user-role").textContent = ROLE_LABEL[currentUser.role] || currentUser.role;
+    showApp();
+    render();
+
     storageMode = "firebase";
     const note = document.getElementById("storage-note");
     try{
@@ -938,16 +1170,90 @@ document.getElementById("filters-status").addEventListener("click", (e) => {
         console.error("Erro na sincronização em tempo real:", err);
       });
       note.textContent = "☁ Conectado ao banco compartilhado — status e novas demandas sincronizados em tempo real para todos que acessam este link.";
-      return;
     }catch(e){
       console.error("Firebase indisponível, usando armazenamento local como reserva:", e);
       storageMode = hasClaudeStorage ? "shared" : (hasLocalStorage ? "local" : "none");
+      await loadCustomItems();
+      await loadObservacoes();
+      await loadStatuses();
     }
+  }catch(e){
+    console.error("Falha ao carregar permissões do usuário:", e);
+    showDenied();
   }
+}
 
-  await loadCustomItems();
-  await loadObservacoes();
-  await loadStatuses();
+document.getElementById("login-form").addEventListener("submit", async (e) => {
+  e.preventDefault();
+  const email = document.getElementById("login-email").value.trim();
+  const password = document.getElementById("login-password").value;
+  const errEl = document.getElementById("login-error");
+  errEl.textContent = "";
+  if(!firebaseReady || !auth){
+    errEl.textContent = "Login indisponível no momento (sem conexão com o Firebase). Tente novamente em instantes.";
+    return;
+  }
+  try{
+    await authSignIn(auth, email, password);
+  }catch(err){
+    console.error("Falha no login:", err);
+    errEl.textContent = "E-mail ou senha incorretos.";
+  }
+});
+
+document.getElementById("login-forgot").addEventListener("click", async () => {
+  const email = document.getElementById("login-email").value.trim();
+  const errEl = document.getElementById("login-error");
+  if(!email){
+    errEl.textContent = "Digite seu e-mail acima e clique em \"Esqueci minha senha\" novamente.";
+    return;
+  }
+  if(!firebaseReady || !auth){
+    errEl.textContent = "Indisponível no momento. Tente novamente em instantes.";
+    return;
+  }
+  try{
+    await authSendReset(auth, email);
+    errEl.style.color = "var(--st-concluido)";
+    errEl.textContent = "Enviamos um e-mail com o link para redefinir sua senha.";
+  }catch(err){
+    console.error("Falha ao enviar e-mail de redefinição:", err);
+    errEl.style.color = "";
+    errEl.textContent = "Não foi possível enviar o e-mail de redefinição. Confira o endereço digitado.";
+  }
+});
+
+document.getElementById("logout-btn").addEventListener("click", async () => {
+  if(auth) await authSignOut(auth);
+});
+document.getElementById("login-signout-denied").addEventListener("click", async () => {
+  if(auth) await authSignOut(auth);
+});
+
+(async function init(){
+  await initFirebase();
+
+  if(firebaseReady && auth){
+    authOnState(auth, (fbUser) => {
+      if(fbUser){
+        handleAuthedUser(fbUser);
+      }else{
+        currentUser = null;
+        showLogin();
+      }
+    });
+  }else{
+    // Sem Firebase: não há como autenticar, mas deixamos o board acessível
+    // localmente (modo de contingência) para não travar o uso em caso de falha de rede.
+    currentUser = { uid:"local", email:"modo local", role:"admin", assignedAreas:["op","ql","pa"] };
+    document.getElementById("user-email").textContent = currentUser.email;
+    document.getElementById("user-role").textContent = ROLE_LABEL[currentUser.role] || currentUser.role;
+    showApp();
+    render();
+    await loadCustomItems();
+    await loadObservacoes();
+    await loadStatuses();
+  }
 })();
 </script>
 </body>
