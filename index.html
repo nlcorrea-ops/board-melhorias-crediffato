@@ -402,7 +402,7 @@ let db = null;
 let firebaseReady = false;
 let BOARD_DOC = null;
 let boardDocCache = null;
-let fsDoc, fsGetDoc, fsSetDoc, fsUpdateDoc, fsOnSnapshot;
+let fsDoc, fsGetDoc, fsSetDoc, fsUpdateDoc, fsOnSnapshot, fsFieldPath, fsDeleteField;
 
 async function initFirebase(){
   try{
@@ -412,6 +412,7 @@ async function initFirebase(){
     ]);
     fsDoc = fsMod.doc; fsGetDoc = fsMod.getDoc; fsSetDoc = fsMod.setDoc;
     fsUpdateDoc = fsMod.updateDoc; fsOnSnapshot = fsMod.onSnapshot;
+    fsFieldPath = fsMod.FieldPath; fsDeleteField = fsMod.deleteField;
     const fbApp = initializeApp(firebaseConfig);
     db = fsMod.getFirestore(fbApp);
     BOARD_DOC = fsDoc(db, "boards", "crediffato");
@@ -507,13 +508,19 @@ const storageAdapter = {
   },
   async set(key, value){
     if(storageMode === "firebase"){
-      // Não usamos updateDoc com chave "statuses.<id>": o Firestore interpreta o "."
-      // como separador de campo aninhado, e nossos IDs (ex.: "1.1") também têm pontos,
-      // o que corrompe o documento. Em vez disso, reescrevemos o mapa "statuses" inteiro.
+      // IMPORTANTE: nunca usamos fsSetDoc(BOARD_DOC, boardDocCache) para gravar um campo
+      // individual (status ou observação) — isso reescreve o documento inteiro a partir do
+      // último snapshot que este navegador tinha em cache, e com várias pessoas usando o
+      // board ao mesmo tempo, quem grava por último apaga silenciosamente a mudança de
+      // quem gravou segundos antes (mesmo em itens diferentes). Por isso usamos updateDoc
+      // com FieldPath: ele grava só aquele campo específico no servidor, de forma atômica,
+      // sem depender do que este navegador tinha em cache. FieldPath também resolve o
+      // problema original do "." em IDs como "1.1", porque trata cada segmento (ex.:
+      // "statuses" e "1.1") como uma chave literal, sem interpretar o ponto como separador.
       if(key === "custom-items"){
         const customItems = JSON.parse(value);
         boardDocCache = { ...(boardDocCache || {}), customItems };
-        await fsSetDoc(BOARD_DOC, boardDocCache);
+        await fsUpdateDoc(BOARD_DOC, "customItems", customItems);
         return;
       }
       if(key.startsWith("status:")){
@@ -521,7 +528,8 @@ const storageAdapter = {
         const statuses = { ...((boardDocCache && boardDocCache.statuses) || {}) };
         if(value === ""){ delete statuses[id]; } else { statuses[id] = value; }
         boardDocCache = { ...(boardDocCache || {}), statuses };
-        await fsSetDoc(BOARD_DOC, boardDocCache);
+        const path = new fsFieldPath("statuses", id);
+        await fsUpdateDoc(BOARD_DOC, path, value === "" ? fsDeleteField() : value);
         return;
       }
       if(key.startsWith("obs:")){
@@ -529,7 +537,8 @@ const storageAdapter = {
         const observacoes = { ...((boardDocCache && boardDocCache.observacoes) || {}) };
         if(value === ""){ delete observacoes[id]; } else { observacoes[id] = value; }
         boardDocCache = { ...(boardDocCache || {}), observacoes };
-        await fsSetDoc(BOARD_DOC, boardDocCache);
+        const path = new fsFieldPath("observacoes", id);
+        await fsUpdateDoc(BOARD_DOC, path, value === "" ? fsDeleteField() : value);
         return;
       }
       return;
