@@ -280,6 +280,19 @@
   }
   .obs-save-btn:hover{color:var(--text-hi); border-color:var(--text-low);}
 
+  .comments-list{display:flex; flex-direction:column; gap:8px; margin:2px 0 10px;}
+  .comment-item{
+    background:var(--ink-1); border:1px solid var(--hairline); border-left:2px solid var(--brand-red);
+    border-radius:0 8px 8px 0; padding:8px 10px;
+  }
+  .comment-meta{display:flex; justify-content:space-between; align-items:baseline; gap:10px; margin-bottom:3px;}
+  .comment-author{font-family:var(--font-mono); font-size:10.5px; color:var(--text-hi); font-weight:600;}
+  .comment-date{font-family:var(--font-mono); font-size:9.5px; color:var(--text-low); white-space:nowrap;}
+  .comment-text{font-size:13px; color:var(--text-mid); margin:0; white-space:pre-wrap; word-break:break-word;}
+  .comment-empty{font-size:12px; color:var(--text-low); margin:0 0 8px;}
+
+  .welcome-name{color:var(--brand-red);}
+
   .tab-panel-head{display:flex; align-items:center; justify-content:space-between; gap:16px; margin-bottom:18px; flex-wrap:wrap;}
   .tab-panel-head h2{font-size:16px; margin:0; font-weight:600;}
   .backlog-list{display:flex; flex-direction:column; gap:12px; max-width:760px;}
@@ -425,8 +438,8 @@
         <img class="brand-logo" src="logo.png" alt="Crediffato" />
         <p class="eyebrow"><span class="pulse"></span> Crediffato - Gestão</p>
       </div>
-      <h1>Board de Melhorias</h1>
-      <p class="sub">Guia de melhorias internas e institucionais, organizado por setor e por responsável. Clique em um cartão para ver o comparativo completo; use os campos de status e responsável para acompanhar o andamento.</p>
+      <h1 id="app-title">Board de Melhorias</h1>
+      <p class="sub" id="app-sub">Guia de melhorias internas e institucionais, organizado por setor e por responsável. Clique em um cartão para ver o comparativo completo; use os campos de status e responsável para acompanhar o andamento.</p>
     </div>
     <div class="meta">
       <div class="user-chip" id="user-chip">
@@ -600,12 +613,12 @@
           <select id="f-assignee"><option value="">Sem responsável</option></select>
         </label>
         <label class="field">
-          <span class="field-label">Como fazemos hoje</span>
-          <textarea id="f-hoje" rows="3" maxlength="400" placeholder="Descreva a situação atual (opcional)"></textarea>
+          <span class="field-label">Descrição do problema *</span>
+          <textarea id="f-hoje" rows="3" maxlength="400" required placeholder="Descreva o problema ou a situação atual"></textarea>
         </label>
         <label class="field">
-          <span class="field-label">Sugestão de melhoria</span>
-          <textarea id="f-sugestao" rows="3" maxlength="400" placeholder="Descreva a melhoria proposta (opcional)"></textarea>
+          <span class="field-label">Requisitos para conclusão *</span>
+          <textarea id="f-sugestao" rows="3" maxlength="400" required placeholder="Descreva o que precisa acontecer para considerar essa demanda concluída"></textarea>
         </label>
         <label class="field">
           <span class="field-label">Observações</span>
@@ -826,7 +839,7 @@ let storageMode = hasClaudeStorage ? "shared" : (hasLocalStorage ? "local" : "no
 async function ensureBoardDoc(){
   const snap = await fsGetDoc(BOARD_DOC);
   if(!snap.exists()){
-    const initial = { statuses:{}, customItems:[], observacoes:{}, sectors:DEFAULT_SECTORS.slice(), directory:[], stages:{}, assignees:{} };
+    const initial = { statuses:{}, customItems:[], observacoes:{}, comentarios:{}, sectors:DEFAULT_SECTORS.slice(), directory:[], stages:{}, assignees:{} };
     await fsSetDoc(BOARD_DOC, initial);
     return initial;
   }
@@ -922,6 +935,7 @@ function applyRemoteState(data){
   if(!data) return;
   const statuses = data.statuses || {};
   const observacoes = data.observacoes || {};
+  const comentarios = data.comentarios || {};
   stagesMap = data.stages || {};
   assigneesMap = data.assignees || {};
   SECTORS = (data.sectors && data.sectors.length) ? data.sectors : DEFAULT_SECTORS.slice();
@@ -933,12 +947,21 @@ function applyRemoteState(data){
   customItems.forEach(d => DATA.push(d));
   DATA.forEach(d => {
     if(statuses[d.id] !== undefined && statuses[d.id] !== "") d.status = statuses[d.id];
-    // Itens customizados já trazem "obs" embutido em customItems; só aplicamos o mapa
-    // separado "observacoes" aos itens de base, que não têm outro lugar para persistir isso.
-    // Usamos "|| ''" (em vez de checar só "!== undefined") porque limpar uma observação
-    // remove a chave do mapa no Firestore — sem isso, quem recebe a atualização via
-    // onSnapshot nunca veria o campo voltar a ficar vazio.
-    if(!d.custom) d.obs = observacoes[d.id] || "";
+    // Observações agora funcionam como comentários (lista de {text, authorName, authorEmail, at}),
+    // imutáveis depois de publicados. Itens customizados trazem "comentarios" embutido em
+    // customItems; itens de base usam o mapa separado "comentarios" do documento da plataforma.
+    if(!d.custom){
+      if(comentarios[d.id] && comentarios[d.id].length){
+        d.comentarios = comentarios[d.id];
+      }else if(!d.comentarios || !d.comentarios.length){
+        // compatibilidade com a observação antiga (texto único, sem autor/data): se existir e
+        // ainda não tiver sido migrada para o formato de comentários, exibimos como o primeiro
+        // registro da lista, para não perder o que já foi escrito (ex.: pelo Marcos).
+        d.comentarios = observacoes[d.id] ? [{ text: observacoes[d.id], authorName: "", authorEmail: "", at: null }] : [];
+      }
+    }else if((!d.comentarios || !d.comentarios.length) && d.obs){
+      d.comentarios = [{ text: d.obs, authorName: "", authorEmail: "", at: null }];
+    }
   });
   refreshSectorDependentUI();
   renderTabs();
@@ -950,13 +973,13 @@ const obsDrafts = {}; // id -> texto ainda não salvo, preservado entre re-rende
 
 function cardHTML(item){
   const isOpen = openCardIds.has(item.id);
-  const obsValue = Object.prototype.hasOwnProperty.call(obsDrafts, item.id) ? obsDrafts[item.id] : (item.obs || "");
+  const obsValue = Object.prototype.hasOwnProperty.call(obsDrafts, item.id) ? obsDrafts[item.id] : "";
   const draggable = state.tab === "board" && state.view === "status";
   const stage = itemStage(item);
   const assignee = itemAssignee(item);
   const assigneeOptions = DIRECTORY.filter(u => (!u.disabled || u.email === assignee) && (u.role === "admin" || (u.assignedAreas || []).includes(item.area)));
   return `
-    <div class="card" style="--rail:${sectorColor(item.area)};" data-sev="${item.sev}" data-id="${item.id}" tabindex="0" role="button" aria-expanded="${isOpen ? "true" : "false"}" ${draggable ? 'draggable="true"' : ''}>
+    <div class="card${isOpen ? " open" : ""}" style="--rail:${sectorColor(item.area)};" data-sev="${item.sev}" data-id="${item.id}" tabindex="0" role="button" aria-expanded="${isOpen ? "true" : "false"}" ${draggable ? 'draggable="true"' : ''}>
       <div class="card-top">
         <span style="display:flex; align-items:center; gap:6px; flex-wrap:wrap;">
           <span class="tag">${item.id}</span>
@@ -982,22 +1005,33 @@ function cardHTML(item){
           ${assigneeOptions.map(u => `<option value="${u.email}" ${assignee===u.email?"selected":""}>${u.name || u.email}</option>`).join("")}
         </select>
       </div>
-      <p class="snippet"><b>Hoje:</b> ${(item.hoje && item.hoje.length > 92) ? item.hoje.slice(0,92) + "…" : (item.hoje || "Não descrito ainda.")}</p>
+      <p class="snippet"><b>Problema:</b> ${(item.hoje && item.hoje.length > 92) ? item.hoje.slice(0,92) + "…" : (item.hoje || "Não descrito ainda.")}</p>
       <div class="detail">
         <div class="detail-block">
-          <div class="detail-label">Como fazemos hoje</div>
+          <div class="detail-label">Descrição do problema</div>
           <p class="detail-text">${item.hoje || "Não descrito ainda."}</p>
         </div>
         <div class="detail-block">
-          <div class="detail-label">Sugestão de melhoria</div>
+          <div class="detail-label">Requisitos para conclusão</div>
           <p class="detail-text">${item.sugestao || "Não descrito ainda."}</p>
         </div>
         <div class="detail-block">
           <div class="detail-label">Observações</div>
-          <textarea class="obs-textarea" data-obs-id="${item.id}" rows="2" maxlength="500" placeholder="Adicionar observação (opcional)">${obsValue}</textarea>
+          <div class="comments-list">
+            ${(item.comentarios && item.comentarios.length) ? item.comentarios.map(c => `
+              <div class="comment-item">
+                <div class="comment-meta">
+                  <span class="comment-author">${escapeHtml(c.authorName || c.authorEmail || "Observação anterior")}</span>
+                  <span class="comment-date">${formatCommentDate(c.at)}</span>
+                </div>
+                <p class="comment-text">${escapeHtml(c.text)}</p>
+              </div>
+            `).join("") : '<p class="comment-empty">Nenhuma observação registrada ainda.</p>'}
+          </div>
+          <textarea class="obs-textarea" data-obs-id="${item.id}" rows="2" maxlength="500" placeholder="Adicionar uma nova observação (fica registrada como comentário e não pode ser alterada depois)">${obsValue}</textarea>
           <div class="obs-save-row">
-            <span class="obs-saved-hint" data-obs-hint-id="${item.id}" style="font-family:var(--font-mono); font-size:10px; color:var(--st-concluido); opacity:0;">Salvo ✓</span>
-            <button type="button" class="obs-save-btn" data-obs-save-id="${item.id}">Salvar observação</button>
+            <span class="obs-saved-hint" data-obs-hint-id="${item.id}" style="font-family:var(--font-mono); font-size:10px; color:var(--st-concluido); opacity:0;">Publicado ✓</span>
+            <button type="button" class="obs-save-btn" data-obs-save-id="${item.id}">Publicar observação</button>
           </div>
         </div>
       </div>
@@ -1074,7 +1108,7 @@ function wireCardListeners(container){
       e.stopPropagation();
       const id = btn.getAttribute("data-obs-save-id");
       const ta = container.querySelector(`.obs-textarea[data-obs-id="${id}"]`);
-      updateObservacao(id, ta ? ta.value : "");
+      addComentario(id, ta ? ta.value : "");
     });
   });
 }
@@ -1085,8 +1119,7 @@ function preserveFocusedObsDraft(){
     : null;
   if(focusedObsId){
     const ta = document.activeElement;
-    const item = DATA.find(d => d.id === focusedObsId);
-    if(item && ta.value !== (item.obs || "")) obsDrafts[focusedObsId] = ta.value;
+    if(ta.value !== "") obsDrafts[focusedObsId] = ta.value;
     else delete obsDrafts[focusedObsId];
   }
   return {
@@ -1111,7 +1144,7 @@ function render(){
   const focus = preserveFocusedObsDraft();
   board.innerHTML = "";
 
-  const groups = state.view === "status" ? STATUSES : SECTORS;
+  const groups = state.view === "status" ? STATUSES : SECTORS.filter(s => areasForUser().includes(s.key));
   groups.forEach(group => {
     const items = state.view === "status"
       ? DATA.filter(d => itemStage(d) === "board" && d.status === group.key && passesFilter(d))
@@ -1269,8 +1302,9 @@ function refreshSectorDependentUI(){
   const fArea = document.getElementById("f-area");
   if(fArea){
     const current = fArea.value;
-    fArea.innerHTML = SECTORS.map(s => `<option value="${s.key}">${s.label}</option>`).join("");
-    if(SECTORS.some(s => s.key === current)) fArea.value = current;
+    const fAreaOptions = SECTORS.filter(s => areasForUser().includes(s.key));
+    fArea.innerHTML = fAreaOptions.map(s => `<option value="${s.key}">${s.label}</option>`).join("");
+    if(fAreaOptions.some(s => s.key === current)) fArea.value = current;
     refreshAssigneeOptionsForArea();
   }
   const areasInput = document.getElementById("user-areas-input");
@@ -1353,28 +1387,48 @@ function renderOverview(){
   }).join("") || '<p class="snippet">Nenhuma demanda com responsável atribuído ainda.</p>';
 }
 
+function greetingByHour(){
+  const h = new Date().getHours();
+  if(h < 5) return "Boa madrugada";
+  if(h < 12) return "Bom dia";
+  if(h < 18) return "Boa tarde";
+  return "Boa noite";
+}
+function firstName(){
+  const name = (currentUser && currentUser.name) ? currentUser.name.trim() : "";
+  if(name) return name.split(/\s+/)[0];
+  const email = (currentUser && currentUser.email) || "";
+  return email.split("@")[0] || "";
+}
+const ROLE_WELCOME_SUB = {
+  admin: "Você tem visão completa da operação. Acompanhe o progresso de todos os setores, gerencie acessos e ajude cada equipe a avançar.",
+  gestor: "Aqui está o panorama dos setores sob sua gestão. Clique em um cartão para ver o comparativo completo e acompanhar o andamento.",
+  supervisor: "Aqui está o panorama do seu setor. Clique em um cartão para ver o comparativo completo e acompanhar o andamento da equipe.",
+  operador: "Acompanhe suas demandas e mova cada cartão para o status certo conforme for avançando — os resultados aparecem em tempo real para a liderança.",
+};
+
 function applyRoleLayout(){
   const isOperador = currentUser && currentUser.role === "operador";
   const mainNav = document.getElementById("main-nav");
   const filtersRow = document.querySelector(".filters-row");
   const storageNote = document.getElementById("storage-note");
-  const h1 = document.querySelector("#app-content h1");
-  const sub = document.querySelector("#app-content .sub");
+  const h1 = document.getElementById("app-title");
+  const sub = document.getElementById("app-sub");
 
   document.querySelectorAll(".summary-group").forEach(el => { el.style.display = isOperador ? "none" : ""; });
   if(mainNav) mainNav.style.display = isOperador ? "none" : "";
   if(filtersRow) filtersRow.style.display = isOperador ? "none" : "";
   if(storageNote) storageNote.style.display = isOperador ? "none" : "";
 
+  const name = firstName();
+  if(h1) h1.innerHTML = name ? `${greetingByHour()}, <span class="welcome-name">${name}</span>!` : "Board de Melhorias";
+  if(sub) sub.textContent = (currentUser && ROLE_WELCOME_SUB[currentUser.role]) || "Bem-vindo(a) à plataforma de gestão de melhorias da Crediffato.";
+
   if(isOperador){
     state.tab = "board";
     state.view = "status";
-    if(h1) h1.textContent = "Minhas Demandas";
-    if(sub) sub.textContent = "Acompanhe suas demandas e mova cada cartão para o status certo conforme for avançando — os resultados aparecem em tempo real para a liderança.";
   }else{
     state.tab = "overview";
-    if(h1) h1.textContent = "Board de Melhorias";
-    if(sub) sub.textContent = "Guia de melhorias internas e institucionais, organizado por setor e por responsável. Clique em um cartão para ver o comparativo completo; use os campos de status e responsável para acompanhar o andamento.";
   }
 }
 
@@ -1474,19 +1528,47 @@ async function updateStage(id, value){
   renderTabs();
 }
 
-async function updateObservacao(id, value){
+function escapeHtml(str){
+  return String(str || "").replace(/[&<>"']/g, ch => ({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[ch]));
+}
+function formatCommentDate(at){
+  if(!at) return "";
+  try{
+    const d = new Date(at);
+    if(isNaN(d.getTime())) return "";
+    return d.toLocaleString("pt-BR", { day:"2-digit", month:"2-digit", year:"2-digit", hour:"2-digit", minute:"2-digit" });
+  }catch(e){ return ""; }
+}
+
+// As observações funcionam como comentários: uma vez publicada, uma observação fica registrada
+// com autor e data e não pode mais ser editada ou apagada por ninguém (nem pelo próprio autor)
+// — assim ninguém corre o risco de ver algo que um colega registrou ser alterado depois.
+async function addComentario(id, text){
   const item = DATA.find(d => d.id === id);
   if(!item) return;
-  item.obs = value;
-  delete obsDrafts[id]; // já foi salvo, não é mais um rascunho pendente
+  const trimmed = (text || "").trim();
+  if(!trimmed) return;
+
+  const comment = {
+    text: trimmed,
+    authorName: (currentUser && currentUser.name) || "",
+    authorEmail: (currentUser && currentUser.email) || "",
+    at: new Date().toISOString(),
+  };
+  item.comentarios = [...(item.comentarios || []), comment];
+  delete obsDrafts[id]; // já foi publicado, não é mais um rascunho pendente
+  renderTabs();
 
   const hint = document.querySelector(`.obs-saved-hint[data-obs-hint-id="${id}"]`);
 
   try{
     if(item.custom){
       await saveCustomItems();
+    }else if(storageMode === "firebase" && firebaseReady){
+      const path = new fsFieldPath("comentarios", id);
+      await fsUpdateDoc(BOARD_DOC, path, fsArrayUnion(comment));
     }else{
-      await storageAdapter.set(`obs:${id}`, value);
+      await storageAdapter.set(`comentarios:${id}`, JSON.stringify(item.comentarios));
     }
     if(hint){
       hint.style.opacity = "1";
@@ -1494,6 +1576,8 @@ async function updateObservacao(id, value){
     }
   }catch(err){
     console.error("Falha ao salvar observação:", err);
+    item.comentarios = item.comentarios.filter(c => c !== comment);
+    renderTabs();
   }
 }
 
@@ -1502,8 +1586,11 @@ async function loadObservacoes(){
   try{
     await Promise.all(DATA.filter(d => !d.custom).map(async (item) => {
       try{
-        const value = await storageAdapter.get(`obs:${item.id}`);
-        if(value) item.obs = value;
+        const raw = await storageAdapter.get(`comentarios:${item.id}`);
+        if(raw){ item.comentarios = JSON.parse(raw); return; }
+        // compatibilidade com observações antigas (texto único, sem autor/data registrados)
+        const legacy = await storageAdapter.get(`obs:${item.id}`);
+        if(legacy) item.comentarios = [{ text: legacy, authorName: "", authorEmail: "", at: null }];
       }catch(e){
         // ainda não existe observação salva para este item
       }
@@ -1568,13 +1655,19 @@ function nextCustomId(){
 }
 
 async function addNewItem({title, area, sev, hoje, sugestao, obs, assignee}){
+  const trimmedObs = (obs || "").trim();
   const item = {
     id: nextCustomId(),
     area, sev,
     title: title.trim(),
     hoje: hoje.trim(),
     sugestao: sugestao.trim(),
-    obs: (obs || "").trim(),
+    comentarios: trimmedObs ? [{
+      text: trimmedObs,
+      authorName: (currentUser && currentUser.name) || "",
+      authorEmail: (currentUser && currentUser.email) || "",
+      at: new Date().toISOString(),
+    }] : [],
     assignee: assignee || "",
     stage: "backlog",
     status: "aberto",
@@ -1619,11 +1712,11 @@ document.getElementById("f-area").addEventListener("change", refreshAssigneeOpti
 document.getElementById("add-form").addEventListener("submit", async (e) => {
   e.preventDefault();
   const title = document.getElementById("f-title").value;
-  if(!title.trim()) return;
-  const area = document.getElementById("f-area").value;
-  const sev = document.getElementById("f-sev").value;
   const hoje = document.getElementById("f-hoje").value;
   const sugestao = document.getElementById("f-sugestao").value;
+  if(!title.trim() || !hoje.trim() || !sugestao.trim()) return;
+  const area = document.getElementById("f-area").value;
+  const sev = document.getElementById("f-sev").value;
   const obs = document.getElementById("f-obs").value;
   const assignee = document.getElementById("f-assignee").value;
   await addNewItem({title, area, sev, hoje, sugestao, obs, assignee});
