@@ -1227,7 +1227,7 @@ function cardHTML(item){
           <span class="tag">${item.id}</span>
           <span class="area-tag">${sectorLabel(item.area)}</span>
           ${due.state === "atrasado" ? '<span class="overdue-badge">⚠ Atrasado</span>' : ""}
-          ${(item.attachments && item.attachments.length) ? `<span class="attachment-count-badge">📎 ${item.attachments.length}</span>` : ""}
+          ${(ATTACHMENTS_ENABLED && item.attachments && item.attachments.length) ? `<span class="attachment-count-badge">📎 ${item.attachments.length}</span>` : ""}
         </span>
         <span style="display:flex; align-items:center; gap:8px; flex-wrap:wrap;">
           <span class="sev ${item.sev}"><span class="bars"><i></i><i></i><i></i></span>${SEV_LABEL[item.sev]}</span>
@@ -1277,6 +1277,7 @@ function cardHTML(item){
             `).join("") : '<p class="history-empty">Nenhuma mudança de status registrada ainda.</p>'}
           </div>
         </div>
+        ${ATTACHMENTS_ENABLED ? `
         <div class="detail-block">
           <div class="detail-label">Anexos</div>
           <div class="attachments-list">
@@ -1288,13 +1289,14 @@ function cardHTML(item){
               </div>
             `).join("") : '<p class="attachment-empty">Nenhum anexo ainda.</p>'}
           </div>
-          ${(ATTACHMENTS_ENABLED && storageMode === "firebase" && firebaseReady) ? `
+          ${(storageMode === "firebase" && firebaseReady) ? `
             <div class="attachment-upload-row">
               <input type="file" class="attachment-input" data-att-upload-id="${item.id}" aria-label="Anexar arquivo a ${item.title}" />
               <span class="attachment-upload-hint" data-att-hint-id="${item.id}"></span>
             </div>
           ` : '<p class="attachment-empty">Anexos ainda não disponíveis nesta plataforma.</p>'}
         </div>
+        ` : ""}
         <div class="detail-block">
           <div class="detail-label">Observações</div>
           <div class="comments-list">
