@@ -52,7 +52,8 @@
     padding:32px 20px 60px;
   }
 
-  .wrap{max-width:1180px;margin:0 auto;}
+  .wrap{max-width:1180px;margin:0 auto; animation:appFadeIn .45s ease;}
+  @keyframes appFadeIn{from{opacity:0;} to{opacity:1;}}
 
   header{
     display:flex; justify-content:space-between; align-items:flex-start; gap:24px; flex-wrap:wrap;
@@ -89,6 +90,7 @@
   .main-nav button{
     font-family:var(--font-mono); font-size:12.5px; letter-spacing:.02em; color:var(--text-mid);
     background:transparent; border:none; border-radius:999px; padding:8px 18px; cursor:pointer;
+    transition:background-color .2s ease, color .2s ease;
   }
   .main-nav button.active{background:var(--brand-red); color:#fff;}
 
@@ -110,7 +112,8 @@
   .sumcard.st-andamento .n{color:var(--st-andamento);}
   .sumcard.st-concluido .n{color:var(--st-concluido);}
 
-  .filters-row{display:flex; gap:22px; flex-wrap:wrap; align-items:center; margin-bottom:26px;}
+  .filters-row, .board-toolbar{display:flex; gap:22px; flex-wrap:wrap; align-items:center; margin-bottom:26px;}
+  .filters-hint{font-family:var(--font-mono); font-size:11.5px; color:var(--text-low);}
   .filter-group{display:flex; gap:8px; flex-wrap:wrap; align-items:center;}
   .filter-group .fg-label{font-family:var(--font-mono); font-size:11px; color:var(--text-low); margin-right:2px;}
   .filter-btn{
@@ -123,6 +126,29 @@
   .filter-btn.active.brand{background:var(--brand-red); border-color:var(--brand-red); color:#fff;}
   .filter-btn:focus-visible{outline:2px solid #6c8cff; outline-offset:2px;}
 
+  .filters-toggle-btn{
+    font-family:var(--font-mono); font-size:12px; letter-spacing:.03em; color:var(--text-mid);
+    background:var(--ink-1); border:1px solid var(--hairline); border-radius:999px; padding:7px 16px;
+    cursor:pointer; transition:all .15s ease; display:flex; align-items:center; gap:8px;
+  }
+  .filters-toggle-btn:hover{border-color:var(--text-low); color:var(--text-hi);}
+  .filters-toggle-btn.active{background:var(--text-hi); color:var(--ink-0); border-color:var(--text-hi);}
+  .filters-toggle-btn:focus-visible{outline:2px solid #6c8cff; outline-offset:2px;}
+  .filters-toggle-btn .filters-caret{transition:transform .2s ease;}
+  .filters-toggle-btn.active .filters-caret{transform:rotate(180deg);}
+  .filters-badge{
+    font-family:var(--font-mono); font-size:10px; font-weight:600; background:var(--brand-red); color:#fff;
+    border-radius:999px; padding:1px 6px; min-width:16px; text-align:center; line-height:1.5;
+  }
+  .filters-panel{
+    display:none; gap:20px 28px; flex-wrap:wrap; align-items:center;
+    background:var(--ink-1); border:1px solid var(--hairline); border-radius:14px;
+    padding:16px 18px; margin-bottom:22px;
+  }
+  .filters-panel.open{display:flex; animation:tabFadeIn .22s ease;}
+  .filters-panel .btn-secondary{padding:7px 14px; font-size:11.5px; margin-left:auto;}
+  .filter-select{width:auto; min-width:190px; padding:6px 26px 6px 10px;}
+
   .board{display:grid; grid-template-columns:repeat(3, 1fr); gap:20px; align-items:start;}
   .column{background:var(--ink-1); border:1px solid var(--hairline); border-radius:18px; overflow:hidden;}
   .column.drag-over{border-color:var(--brand-red); box-shadow:0 0 0 1px var(--brand-red) inset;}
@@ -130,7 +156,15 @@
   .col-head .name{font-weight:600; font-size:15px; display:flex; align-items:center; gap:9px;}
   .rail-dot{width:9px;height:9px;border-radius:2px; flex-shrink:0; background:var(--text-low);}
   .col-head .count{font-family:var(--font-mono); font-size:12px; color:var(--text-low); background:var(--ink-2); border:1px solid var(--hairline); border-radius:999px; padding:2px 9px;}
-  .col-body{padding:14px; display:flex; flex-direction:column; gap:12px; min-height:40px;}
+  .col-body{
+    padding:14px; display:flex; flex-direction:column; gap:12px; min-height:40px;
+    max-height:clamp(280px, calc(100vh - 320px), 1100px); overflow-y:auto;
+    scrollbar-width:thin; scrollbar-color:var(--hairline) transparent;
+  }
+  .col-body::-webkit-scrollbar{width:6px;}
+  .col-body::-webkit-scrollbar-track{background:transparent;}
+  .col-body::-webkit-scrollbar-thumb{background:var(--hairline); border-radius:999px;}
+  .col-body::-webkit-scrollbar-thumb:hover{background:var(--text-low);}
 
   .st-aberto-col .rail-dot{background:var(--st-aberto);}
   .st-andamento-col .rail-dot{background:var(--st-andamento);}
@@ -183,11 +217,37 @@
   .status-select[data-status="concluido"]{background-color:#4ee2a01f; color:var(--st-concluido); border-color:var(--st-concluido);}
   .status-select[data-status="aberto"]{background-color:var(--ink-1); color:var(--text-mid); border-color:var(--hairline);}
 
+  .due-row{margin-bottom:8px;}
+  .due-input{
+    width:100%; font-family:var(--font-mono); font-size:11px; letter-spacing:.02em;
+    padding:6px 10px; border-radius:7px; border:1px solid var(--hairline);
+    background-color:var(--ink-1); color:var(--text-mid); cursor:pointer;
+    color-scheme:dark;
+    transition:background-color .15s ease, color .15s ease, border-color .15s ease;
+  }
+  .due-input:focus-visible{outline:2px solid #6c8cff; outline-offset:2px;}
+  .due-input[data-due-state="atrasado"]{background-color:#e2564f1f; color:var(--sev-critica); border-color:var(--sev-critica);}
+  .due-input[data-due-state="proximo"]{background-color:#e08a3c1f; color:var(--sev-alta); border-color:var(--sev-alta);}
+  .due-input[data-due-state="concluido"]{opacity:.65;}
+  .due-hint{display:block; margin-top:5px; font-family:var(--font-mono); font-size:10.5px; letter-spacing:.02em;}
+  .due-hint.atrasado{color:var(--sev-critica);}
+  .due-hint.proximo{color:var(--sev-alta);}
+  .overdue-badge{
+    font-family:var(--font-mono); font-size:10px; font-weight:600; text-transform:uppercase; letter-spacing:.04em;
+    background:#e2564f22; color:var(--sev-critica); border:1px solid #e2564f55; border-radius:999px; padding:1px 7px;
+  }
+  .completed-badge{
+    font-family:var(--font-mono); font-size:10.5px; color:var(--st-concluido);
+    background:#4ee2a01a; border:1px solid #4ee2a055; border-radius:8px;
+    padding:6px 10px; margin-bottom:10px;
+  }
+  .completed-badge b{color:var(--st-concluido); font-weight:600;}
+
   .snippet{font-size:12.5px; color:var(--text-mid); line-height:1.5; margin:0;}
   .snippet b{color:var(--text-hi); font-weight:600;}
 
   .detail{max-height:0; overflow:hidden; transition:max-height .3s ease;}
-  .card.open .detail{max-height:680px; margin-top:10px;}
+  .card.open .detail{max-height:1400px; margin-top:10px;}
   .detail-block{border-top:1px dashed var(--hairline); padding-top:10px; margin-top:2px;}
   .detail-block + .detail-block{margin-top:10px;}
   .detail-label{font-family:var(--font-mono); font-size:10px; text-transform:uppercase; letter-spacing:.08em; color:var(--text-low); margin-bottom:4px;}
@@ -215,6 +275,7 @@
   .view-toggle button{
     font-family:var(--font-mono); font-size:11px; letter-spacing:.02em; color:var(--text-mid);
     background:transparent; border:none; border-radius:999px; padding:6px 12px; cursor:pointer;
+    transition:background-color .2s ease, color .2s ease;
   }
   .view-toggle button.active{background:var(--brand-red); color:#fff;}
 
@@ -222,12 +283,15 @@
     display:none; position:fixed; inset:0; background:#05070fcc; backdrop-filter:blur(2px);
     align-items:center; justify-content:center; z-index:100; padding:20px;
   }
-  .modal-overlay.open{display:flex;}
+  .modal-overlay.open{display:flex; animation:overlayFadeIn .2s ease;}
+  @keyframes overlayFadeIn{from{opacity:0;} to{opacity:1;}}
   .modal{
     background:var(--ink-1); border:1px solid var(--hairline); border-radius:16px;
     width:100%; max-width:480px; max-height:90vh; overflow-y:auto;
     padding:22px 24px 24px; box-shadow:0 20px 60px #00000066;
+    animation:modalPopIn .25s cubic-bezier(.2,.9,.3,1.2);
   }
+  @keyframes modalPopIn{from{opacity:0; transform:translateY(10px) scale(.97);} to{opacity:1; transform:translateY(0) scale(1);}}
   .modal-head{display:flex; align-items:center; justify-content:space-between; margin-bottom:16px;}
   .modal-head h2{font-size:17px; margin:0; font-weight:600;}
   .modal-close{
@@ -241,10 +305,10 @@
     display:block; font-family:var(--font-mono); font-size:11px; text-transform:uppercase;
     letter-spacing:.06em; color:var(--text-low); margin-bottom:6px;
   }
-  .field input[type="text"], .field input[type="email"], .field input[type="password"], .field select, .field textarea{
+  .field input[type="text"], .field input[type="email"], .field input[type="password"], .field input[type="date"], .field select, .field textarea{
     width:100%; background:var(--ink-2); border:1px solid var(--hairline); border-radius:8px;
     color:var(--text-hi); font-family:var(--font-display); font-size:13.5px;
-    padding:9px 11px; resize:vertical;
+    padding:9px 11px; resize:vertical; color-scheme:dark;
   }
   .field input:focus-visible, .field select:focus-visible, .field textarea:focus-visible{
     outline:2px solid #6c8cff; outline-offset:1px;
@@ -291,6 +355,50 @@
   .comment-text{font-size:13px; color:var(--text-mid); margin:0; white-space:pre-wrap; word-break:break-word;}
   .comment-empty{font-size:12px; color:var(--text-low); margin:0 0 8px;}
 
+  .history-list{display:flex; flex-direction:column; gap:6px;}
+  .history-item{
+    display:flex; align-items:center; gap:8px; flex-wrap:wrap;
+    background:var(--ink-1); border:1px solid var(--hairline); border-radius:8px; padding:6px 10px;
+  }
+  .history-pill{
+    font-family:var(--font-mono); font-size:10px; text-transform:uppercase; letter-spacing:.03em;
+    padding:2px 7px; border-radius:999px; border:1px solid var(--hairline); color:var(--text-mid);
+  }
+  .history-pill[data-st="aberto"]{color:var(--st-aberto); border-color:var(--hairline);}
+  .history-pill[data-st="andamento"]{color:var(--st-andamento); border-color:var(--st-andamento); background:#d8a94a1f;}
+  .history-pill[data-st="concluido"]{color:var(--st-concluido); border-color:var(--st-concluido); background:#4ee2a01f;}
+  .history-arrow{color:var(--text-low); font-size:11px;}
+  .history-meta{font-family:var(--font-mono); font-size:10px; color:var(--text-low); margin-left:auto; white-space:nowrap;}
+  .history-empty{font-size:12px; color:var(--text-low); margin:0;}
+
+  .attachment-count-badge{
+    font-family:var(--font-mono); font-size:10px; color:var(--text-low);
+    background:var(--ink-2); border:1px solid var(--hairline); border-radius:999px; padding:1px 7px;
+  }
+  .attachments-list{display:flex; flex-direction:column; gap:6px; margin-bottom:8px;}
+  .attachment-item{
+    display:flex; align-items:center; gap:8px; flex-wrap:wrap;
+    background:var(--ink-1); border:1px solid var(--hairline); border-radius:8px; padding:6px 10px;
+  }
+  .attachment-link{
+    font-size:12.5px; color:var(--text-hi); text-decoration:none; font-weight:600;
+    max-width:220px; overflow:hidden; text-overflow:ellipsis; white-space:nowrap;
+  }
+  .attachment-link:hover{color:var(--brand-red); text-decoration:underline;}
+  .attachment-meta{font-family:var(--font-mono); font-size:10px; color:var(--text-low); margin-left:auto; white-space:nowrap;}
+  .attachment-remove-btn{
+    background:none; border:none; color:var(--text-low); font-size:12px; cursor:pointer;
+    padding:2px 4px; line-height:1; border-radius:4px; flex-shrink:0;
+  }
+  .attachment-remove-btn:hover{color:var(--sev-critica); background:#e2564f1a;}
+  .attachment-empty{font-size:12px; color:var(--text-low); margin:0 0 8px;}
+  .attachment-upload-row{display:flex; align-items:center; gap:10px; flex-wrap:wrap;}
+  .attachment-input{
+    font-family:var(--font-display); font-size:12px; color:var(--text-mid);
+    max-width:100%;
+  }
+  .attachment-upload-hint{font-family:var(--font-mono); font-size:10.5px; color:var(--text-low);}
+
   .welcome-name{color:var(--brand-red);}
 
   .tab-panel-head{display:flex; align-items:center; justify-content:space-between; gap:16px; margin-bottom:18px; flex-wrap:wrap;}
@@ -327,17 +435,47 @@
   .toggle-access-btn:hover{color:var(--text-hi); border-color:var(--text-low);}
   .toggle-access-btn.reactivate{color:var(--st-concluido); border-color:#4ee2a055;}
 
-  .kpi-row{display:grid; grid-template-columns:repeat(5, 1fr); gap:14px; margin-bottom:28px;}
+  .kpi-row{display:grid; grid-template-columns:repeat(6, 1fr); gap:14px; margin-bottom:28px;}
   .kpi-card{background:var(--ink-1); border:1px solid var(--hairline); border-radius:var(--radius); padding:16px;}
+  .kpi-card.kpi-alert{border-color:#e2564f66; background:#e2564f0f;}
   .kpi-card .n{font-family:var(--font-mono); font-size:24px; font-weight:600; color:var(--text-hi);}
   .kpi-card .l{font-size:11.5px; color:var(--text-low); text-transform:uppercase; letter-spacing:.08em; margin-top:4px;}
   .overview-block{margin-bottom:28px;}
   .bar-list{display:flex; flex-direction:column; gap:12px;}
-  .bar-row{background:var(--ink-1); border:1px solid var(--hairline); border-radius:12px; padding:14px 16px;}
+  .bar-row{
+    background:var(--ink-1); border:1px solid var(--hairline); border-radius:12px; padding:14px 16px;
+    opacity:0; transform:translateY(8px); animation:rise .45s ease forwards; animation-delay:calc(var(--i, 0) * .06s);
+  }
   .bar-head{display:flex; justify-content:space-between; align-items:center; gap:10px; font-size:12.5px; color:var(--text-low); margin-bottom:10px; flex-wrap:wrap;}
   .bar-head .bar-name{display:flex; align-items:center; gap:8px; font-weight:600; color:var(--text-hi); font-size:13.5px;}
   .bar-track{height:8px; border-radius:999px; background:var(--ink-2); overflow:hidden;}
-  .bar-fill{height:100%; border-radius:999px; transition:width .5s ease;}
+  .bar-track.stacked{display:flex;}
+  .bar-fill, .bar-seg{height:100%; transition:width .5s ease;}
+  .bar-fill{border-radius:999px;}
+  .bar-seg:first-child{border-radius:999px 0 0 999px;}
+  .bar-seg:last-child{border-radius:0 999px 999px 0;}
+  .bar-track.stacked .bar-seg:only-child{border-radius:999px;}
+
+  .leaderboard{display:flex; flex-direction:column; gap:10px;}
+  .leaderboard-item{
+    display:flex; align-items:center; gap:16px; background:var(--ink-1); border:1px solid var(--hairline);
+    border-radius:12px; padding:12px 16px;
+    opacity:0; transform:translateY(8px); animation:rise .45s ease forwards; animation-delay:calc(var(--i, 0) * .06s);
+  }
+  .lb-rank{
+    width:32px; height:32px; border-radius:50%; display:flex; align-items:center; justify-content:center;
+    font-family:var(--font-mono); font-weight:700; font-size:14px; background:var(--ink-2); color:var(--text-mid);
+    flex-shrink:0;
+  }
+  .leaderboard-item.rank-1 .lb-rank{background:#f2c14e2e; font-size:18px;}
+  .leaderboard-item.rank-2 .lb-rank{background:#c9d3e02e; font-size:18px;}
+  .leaderboard-item.rank-3 .lb-rank{background:#d98a4f2e; font-size:18px;}
+  .lb-info{flex:1; min-width:0;}
+  .lb-name{font-size:13.5px; font-weight:600; color:var(--text-hi); margin-bottom:7px;}
+  .lb-track{height:6px; border-radius:999px; background:var(--ink-2); overflow:hidden;}
+  .lb-fill{height:100%; border-radius:999px; background:var(--brand-red); transition:width .5s ease;}
+  .lb-stats{font-family:var(--font-mono); font-size:16px; color:var(--text-hi); white-space:nowrap; flex-shrink:0; text-align:right;}
+  .lb-stats span{color:var(--text-low); font-size:11px; font-weight:400;}
 
   @media (max-width:900px){
     .kpi-row{grid-template-columns:repeat(2,1fr);}
@@ -370,8 +508,17 @@
   @media (prefers-reduced-motion: reduce){
     .card{animation:none; opacity:1; transform:none;}
     .pulse{animation:none;}
+    .tab-panel{animation:none;}
+    .wrap{animation:none;}
+    .modal-overlay.open{animation:none;}
+    .modal{animation:none;}
+    .filters-panel.open{animation:none;}
+    .bar-row, .leaderboard-item{animation:none; opacity:1; transform:none;}
     *{transition:none !important;}
   }
+
+  .tab-panel{animation:tabFadeIn .32s ease;}
+  @keyframes tabFadeIn{from{opacity:0; transform:translateY(6px);} to{opacity:1; transform:translateY(0);}}
 
   /* ---------- login screen ---------- */
   #login-screen{
@@ -396,6 +543,10 @@
   .login-error{color:var(--sev-critica); font-size:12px; margin:10px 0 0; min-height:14px;}
   .login-forgot{background:none; border:none; color:var(--text-low); font-size:11.5px; text-decoration:underline; cursor:pointer; margin-top:14px; font-family:var(--font-mono);}
   .login-forgot:hover{color:var(--text-hi);}
+  .login-credit{
+    font-family:var(--font-mono); font-size:10.5px; letter-spacing:.04em; color:var(--text-low);
+    margin:22px 0 0; opacity:.7;
+  }
   .login-denied{
     display:none; text-align:left; font-size:12.5px; color:var(--text-mid); background:var(--ink-2);
     border:1px solid var(--hairline); border-radius:8px; padding:10px 12px; margin-top:14px; line-height:1.5;
@@ -427,6 +578,7 @@
       <br/><br/>
       <button type="button" class="login-forgot" id="login-signout-denied" style="margin-top:0;">Sair e tentar outra conta</button>
     </div>
+    <p class="login-credit">Created by — Natanael Correa</p>
   </div>
 </div>
 
@@ -447,8 +599,6 @@
         <span class="role-tag" id="user-role">—</span>
         <button type="button" class="logout-btn" id="logout-btn">sair</button>
       </div>
-      <div><b id="meta-total">7</b> pontos ativos</div>
-      <div id="meta-areas">3 setores responsáveis</div>
     </div>
   </header>
 
@@ -457,6 +607,44 @@
     <button type="button" data-tab="board" class="active">Board</button>
     <button type="button" data-tab="backlog">Backlog</button>
     <button type="button" data-tab="admin" id="nav-admin-btn" style="display:none;">Criação</button>
+  </div>
+
+  <div class="filters-row" id="global-filters-row">
+    <button type="button" class="filters-toggle-btn" id="filters-toggle" aria-expanded="false" aria-controls="filters-panel">
+      Filtros
+      <span class="filters-badge" id="filters-badge" style="display:none;">0</span>
+      <span class="caret filters-caret">▾</span>
+    </button>
+    <span class="filters-hint" id="filters-hint"></span>
+  </div>
+
+  <div class="filters-panel" id="filters-panel">
+    <div class="filter-group" id="filters-sev">
+      <span class="fg-label">Prioridade:</span>
+      <button class="filter-btn active" data-filter="todos">Todos</button>
+      <button class="filter-btn" data-filter="critica">Crítica</button>
+      <button class="filter-btn" data-filter="alta">Alta</button>
+      <button class="filter-btn" data-filter="media">Média</button>
+    </div>
+    <div class="filter-group" id="filters-status">
+      <span class="fg-label">Status:</span>
+      <button class="filter-btn active" data-status-filter="todos">Todos</button>
+      <button class="filter-btn" data-status-filter="aberto">Em aberto</button>
+      <button class="filter-btn" data-status-filter="andamento">Em andamento</button>
+      <button class="filter-btn" data-status-filter="concluido">Concluído</button>
+    </div>
+    <div class="filter-group" id="filters-area">
+      <span class="fg-label">Setor:</span>
+      <button class="filter-btn active" data-area-filter="todos">Todos</button>
+    </div>
+    <div class="filter-group">
+      <span class="fg-label">Responsável:</span>
+      <select class="status-select filter-select" id="filter-assignee" aria-label="Filtrar por responsável">
+        <option value="todos">Todos</option>
+        <option value="">Sem responsável</option>
+      </select>
+    </div>
+    <button type="button" class="btn-secondary" id="filters-clear">Limpar filtros</button>
   </div>
 
   <div class="tab-panel" id="overview-tab" style="display:none;">
@@ -469,8 +657,8 @@
       <div class="bar-list" id="overview-sectors"></div>
     </div>
     <div class="overview-block">
-      <div class="summary-label">Por responsável</div>
-      <div class="bar-list" id="overview-assignees"></div>
+      <div class="summary-label">🏆 Ranking de responsáveis</div>
+      <div class="leaderboard" id="overview-assignees"></div>
     </div>
   </div>
 
@@ -495,21 +683,7 @@
       </div>
     </div>
 
-    <div class="filters-row">
-      <div class="filter-group" id="filters-sev">
-        <span class="fg-label">Prioridade:</span>
-        <button class="filter-btn active" data-filter="todos">Todos</button>
-        <button class="filter-btn" data-filter="critica">Crítica</button>
-        <button class="filter-btn" data-filter="alta">Alta</button>
-        <button class="filter-btn" data-filter="media">Média</button>
-      </div>
-      <div class="filter-group" id="filters-status">
-        <span class="fg-label">Status:</span>
-        <button class="filter-btn active" data-status-filter="todos">Todos</button>
-        <button class="filter-btn" data-status-filter="aberto">Em aberto</button>
-        <button class="filter-btn" data-status-filter="andamento">Em andamento</button>
-        <button class="filter-btn" data-status-filter="concluido">Concluído</button>
-      </div>
+    <div class="board-toolbar">
       <div class="view-toggle" id="view-toggle" role="group" aria-label="Modo de visualização">
         <button type="button" data-view="area" class="active">Por setor</button>
         <button type="button" data-view="status">Kanban</button>
@@ -608,10 +782,16 @@
             </select>
           </label>
         </div>
-        <label class="field">
-          <span class="field-label">Responsável (opcional)</span>
-          <select id="f-assignee"><option value="">Sem responsável</option></select>
-        </label>
+        <div class="field-row">
+          <label class="field">
+            <span class="field-label">Responsável (opcional)</span>
+            <select id="f-assignee"><option value="">Sem responsável</option></select>
+          </label>
+          <label class="field">
+            <span class="field-label">Prazo (opcional)</span>
+            <input type="date" id="f-due" />
+          </label>
+        </div>
         <label class="field">
           <span class="field-label">Descrição do problema *</span>
           <textarea id="f-hoje" rows="3" maxlength="400" required placeholder="Descreva o problema ou a situação atual"></textarea>
@@ -660,32 +840,39 @@ const BOOTSTRAP_ADMIN_EMAIL = "nlcorrea@crediffato.com.br";
 
 let db = null;
 let auth = null;
+let fbStorage = null;
 let firebaseReady = false;
 let BOARD_DOC = null;
 let boardDocCache = null;
-let fsDoc, fsGetDoc, fsSetDoc, fsUpdateDoc, fsOnSnapshot, fsFieldPath, fsDeleteField, fsArrayUnion;
+let fsDoc, fsGetDoc, fsSetDoc, fsUpdateDoc, fsOnSnapshot, fsFieldPath, fsDeleteField, fsArrayUnion, fsArrayRemove;
 let authSignIn, authOnState, authSignOut, authSendReset;
+let stRef, stUploadBytes, stGetDownloadURL, stDeleteObject;
 
 let currentUser = null; // { uid, email, role, assignedAreas }
 let editingUid = null; // uid do acesso sendo editado no formulário "Novo acesso", ou null em modo de criação
 
 async function initFirebase(){
   try{
-    const [{ initializeApp }, fsMod, authMod] = await Promise.all([
+    const [{ initializeApp }, fsMod, authMod, storageMod] = await Promise.all([
       import("https://www.gstatic.com/firebasejs/10.14.1/firebase-app.js"),
       import("https://www.gstatic.com/firebasejs/10.14.1/firebase-firestore.js"),
       import("https://www.gstatic.com/firebasejs/10.14.1/firebase-auth.js"),
+      import("https://www.gstatic.com/firebasejs/10.14.1/firebase-storage.js"),
     ]);
     fsDoc = fsMod.doc; fsGetDoc = fsMod.getDoc; fsSetDoc = fsMod.setDoc;
     fsUpdateDoc = fsMod.updateDoc; fsOnSnapshot = fsMod.onSnapshot;
-    fsFieldPath = fsMod.FieldPath; fsDeleteField = fsMod.deleteField; fsArrayUnion = fsMod.arrayUnion;
+    fsFieldPath = fsMod.FieldPath; fsDeleteField = fsMod.deleteField;
+    fsArrayUnion = fsMod.arrayUnion; fsArrayRemove = fsMod.arrayRemove;
     authSignIn = authMod.signInWithEmailAndPassword;
     authOnState = authMod.onAuthStateChanged;
     authSignOut = authMod.signOut;
     authSendReset = authMod.sendPasswordResetEmail;
+    stRef = storageMod.ref; stUploadBytes = storageMod.uploadBytes;
+    stGetDownloadURL = storageMod.getDownloadURL; stDeleteObject = storageMod.deleteObject;
     const fbApp = initializeApp(firebaseConfig);
     db = fsMod.getFirestore(fbApp);
     auth = authMod.getAuth(fbApp);
+    fbStorage = storageMod.getStorage(fbApp);
     BOARD_DOC = fsDoc(db, "boards", "crediffato");
     firebaseReady = true;
   }catch(e){
@@ -790,8 +977,9 @@ const DEFAULT_SECTORS = [
 ];
 let SECTORS = DEFAULT_SECTORS.slice();
 let DIRECTORY = []; // [{uid, email, role, assignedAreas}]
-let stagesMap = {};    // itemId -> "backlog" | "board" (só para itens de base; itens novos guardam em item.stage)
-let assigneesMap = {}; // itemId -> email (só para itens de base; itens novos guardam em item.assignee)
+let stagesMap = {};    // itemId -> "backlog" | "board", para todos os itens (base e customizados)
+let assigneesMap = {}; // itemId -> email, para todos os itens (base e customizados)
+let dueDatesMap = {};  // itemId -> "AAAA-MM-DD" (data prevista), para todos os itens
 
 const SECTOR_PALETTE = ["#37b8a6","#d8a94a","#8b8dfb","#e2564f","#4ee2a0","#6c8cff","#e08a3c","#c792ea","#5ec8d8","#f2a65a"];
 function sectorColor(key){
@@ -803,12 +991,33 @@ function sectorLabel(key){
   return s ? s.label : key;
 }
 function itemStage(item){
-  if(item.custom) return item.stage || "backlog";
-  return stagesMap[item.id] || "board";
+  // stagesMap manda para todo mundo (base e customizado). Antes, itens customizados liam
+  // item.stage embutido no próprio array customItems, gravado via reescrita do array inteiro —
+  // isso fazia o card "voltar" ao Backlog sozinho quando chegava uma atualização em tempo real
+  // com dados um pouco desatualizados (o registro atômico em stagesMap sempre vence).
+  if(stagesMap[item.id] !== undefined) return stagesMap[item.id];
+  return item.custom ? "backlog" : "board";
 }
 function itemAssignee(item){
-  if(item.custom) return item.assignee || "";
-  return assigneesMap[item.id] || "";
+  if(assigneesMap[item.id] !== undefined) return assigneesMap[item.id];
+  return item.custom ? (item.assignee || "") : "";
+}
+function itemDueDate(item){
+  return dueDatesMap[item.id] || "";
+}
+function dueInfo(item){
+  const value = itemDueDate(item);
+  if(!value) return { value:"", state:"sem-prazo", hint:"" };
+  if(item.status === "concluido") return { value, state:"concluido", hint:"" };
+  const due = new Date(value + "T23:59:59");
+  const diffDays = Math.ceil((due - new Date()) / 86400000);
+  if(diffDays < 0){
+    const d = Math.abs(diffDays);
+    return { value, state:"atrasado", hint:`Atrasado há ${d} dia${d > 1 ? "s" : ""}` };
+  }
+  if(diffDays === 0) return { value, state:"proximo", hint:"Vence hoje" };
+  if(diffDays <= 3) return { value, state:"proximo", hint:`Vence em ${diffDays} dia${diffDays > 1 ? "s" : ""}` };
+  return { value, state:"ok", hint:"" };
 }
 
 const STATUSES = [
@@ -816,6 +1025,21 @@ const STATUSES = [
   {key:"andamento", label:"Em andamento", cls:"st-andamento-col"},
   {key:"concluido", label:"Concluído", cls:"st-concluido-col"},
 ];
+function statusLabel(key){
+  const s = STATUSES.find(x => x.key === key);
+  return s ? s.label : (key || "—");
+}
+// "Concluído por" não é um campo que se edita — é sempre derivado da última transição para
+// "concluido" dentro do histórico de status (que é só-acréscimo). Assim ninguém, nem admin,
+// tem como digitar/alterar quem concluiu: só reflete o que realmente aconteceu no board.
+function completedByInfo(item){
+  if(item.status !== "concluido") return null;
+  const hist = item.statusHistory || [];
+  for(let i = hist.length - 1; i >= 0; i--){
+    if(hist[i].to === "concluido") return hist[i];
+  }
+  return null;
+}
 
 const SEV_LABEL = {critica:"Crítica", alta:"Alta", media:"Média"};
 const ROLE_LABEL = {admin:"Admin", gestor:"Gestor", supervisor:"Supervisor", operador:"Operador"};
@@ -839,7 +1063,7 @@ let storageMode = hasClaudeStorage ? "shared" : (hasLocalStorage ? "local" : "no
 async function ensureBoardDoc(){
   const snap = await fsGetDoc(BOARD_DOC);
   if(!snap.exists()){
-    const initial = { statuses:{}, customItems:[], observacoes:{}, comentarios:{}, sectors:DEFAULT_SECTORS.slice(), directory:[], stages:{}, assignees:{} };
+    const initial = { statuses:{}, customItems:[], observacoes:{}, comentarios:{}, sectors:DEFAULT_SECTORS.slice(), directory:[], stages:{}, assignees:{}, dueDates:{}, statusHistory:{}, attachments:{} };
     await fsSetDoc(BOARD_DOC, initial);
     return initial;
   }
@@ -918,11 +1142,19 @@ const storageAdapter = {
   }
 };
 
+const FIELD_MAP_LOCAL_PREFIX = { stages:"stage", assignees:"assignee", dueDates:"dueDate" };
+
 async function updateFieldPathMap(field, mapRef, id, value){
-  // Helper genérico para os novos mapas "stages" e "assignees", seguindo o mesmo padrão
+  // Helper genérico para os mapas "stages", "assignees" e "dueDates", seguindo o mesmo padrão
   // atômico via FieldPath já usado para "statuses" e "observacoes".
   mapRef[id] = value;
-  if(storageMode !== "firebase" || !firebaseReady){ return; }
+  if(storageMode !== "firebase" || !firebaseReady){
+    // Sem Firebase (contingência local/compartilhada): persiste em uma chave simples, do
+    // mesmo jeito que "status:" já funciona, para não perder o dado ao recarregar.
+    const prefix = FIELD_MAP_LOCAL_PREFIX[field] || field;
+    try{ await storageAdapter.set(`${prefix}:${id}`, value); }catch(err){ console.error(`Falha ao salvar ${field}:`, err); }
+    return;
+  }
   try{
     const path = new fsFieldPath(field, id);
     await fsUpdateDoc(BOARD_DOC, path, value === "" ? fsDeleteField() : value);
@@ -936,8 +1168,11 @@ function applyRemoteState(data){
   const statuses = data.statuses || {};
   const observacoes = data.observacoes || {};
   const comentarios = data.comentarios || {};
+  const statusHistory = data.statusHistory || {};
+  const attachments = data.attachments || {};
   stagesMap = data.stages || {};
   assigneesMap = data.assignees || {};
+  dueDatesMap = data.dueDates || {};
   SECTORS = (data.sectors && data.sectors.length) ? data.sectors : DEFAULT_SECTORS.slice();
   DIRECTORY = data.directory || [];
   const baseItems = DATA.filter(d => !d.custom);
@@ -947,27 +1182,27 @@ function applyRemoteState(data){
   customItems.forEach(d => DATA.push(d));
   DATA.forEach(d => {
     if(statuses[d.id] !== undefined && statuses[d.id] !== "") d.status = statuses[d.id];
-    // Observações agora funcionam como comentários (lista de {text, authorName, authorEmail, at}),
-    // imutáveis depois de publicados. Itens customizados trazem "comentarios" embutido em
-    // customItems; itens de base usam o mapa separado "comentarios" do documento da plataforma.
-    if(!d.custom){
-      if(comentarios[d.id] && comentarios[d.id].length){
-        d.comentarios = comentarios[d.id];
-      }else if(!d.comentarios || !d.comentarios.length){
-        // compatibilidade com a observação antiga (texto único, sem autor/data): se existir e
-        // ainda não tiver sido migrada para o formato de comentários, exibimos como o primeiro
-        // registro da lista, para não perder o que já foi escrito (ex.: pelo Marcos).
-        d.comentarios = observacoes[d.id] ? [{ text: observacoes[d.id], authorName: "", authorEmail: "", at: null }] : [];
-      }
-    }else if((!d.comentarios || !d.comentarios.length) && d.obs){
-      d.comentarios = [{ text: d.obs, authorName: "", authorEmail: "", at: null }];
+    d.statusHistory = statusHistory[d.id] || [];
+    d.attachments = attachments[d.id] || [];
+    // Observações funcionam como comentários (lista de {text, authorName, authorEmail, at}),
+    // imutáveis depois de publicados, guardadas no mapa compartilhado "comentarios" — pra
+    // base e customizado por igual, sem reescrever o array customItems inteiro.
+    if(comentarios[d.id] && comentarios[d.id].length){
+      d.comentarios = comentarios[d.id];
+    }else if(!d.comentarios || !d.comentarios.length){
+      // Compatibilidade com formatos antigos: observação de texto único sem autor/data (itens
+      // de base) ou o campo ".obs" que ficava embutido em itens customizados antes deste mapa
+      // existir. Se existir e ainda não tiver sido migrado, exibimos como primeiro registro,
+      // para não perder o que já foi escrito.
+      const legacyText = observacoes[d.id] || d.obs;
+      d.comentarios = legacyText ? [{ text: legacyText, authorName: "", authorEmail: "", at: null }] : [];
     }
   });
   refreshSectorDependentUI();
   renderTabs();
 }
 
-let state = { sev:"todos", status:"todos", view:"area", tab:"board" };
+let state = { sev:"todos", status:"todos", area:"todos", assignee:"todos", view:"area", tab:"board" };
 const openCardIds = new Set();
 const obsDrafts = {}; // id -> texto ainda não salvo, preservado entre re-renders
 
@@ -978,12 +1213,16 @@ function cardHTML(item){
   const stage = itemStage(item);
   const assignee = itemAssignee(item);
   const assigneeOptions = DIRECTORY.filter(u => (!u.disabled || u.email === assignee) && (u.role === "admin" || (u.assignedAreas || []).includes(item.area)));
+  const due = dueInfo(item);
+  const completed = completedByInfo(item);
   return `
     <div class="card${isOpen ? " open" : ""}" style="--rail:${sectorColor(item.area)};" data-sev="${item.sev}" data-id="${item.id}" tabindex="0" role="button" aria-expanded="${isOpen ? "true" : "false"}" ${draggable ? 'draggable="true"' : ''}>
       <div class="card-top">
         <span style="display:flex; align-items:center; gap:6px; flex-wrap:wrap;">
           <span class="tag">${item.id}</span>
           <span class="area-tag">${sectorLabel(item.area)}</span>
+          ${due.state === "atrasado" ? '<span class="overdue-badge">⚠ Atrasado</span>' : ""}
+          ${(item.attachments && item.attachments.length) ? `<span class="attachment-count-badge">📎 ${item.attachments.length}</span>` : ""}
         </span>
         <span style="display:flex; align-items:center; gap:8px; flex-wrap:wrap;">
           <span class="sev ${item.sev}"><span class="bars"><i></i><i></i><i></i></span>${SEV_LABEL[item.sev]}</span>
@@ -999,11 +1238,16 @@ function cardHTML(item){
           <option value="concluido" ${item.status==="concluido"?"selected":""}>Concluído</option>
         </select>
       </div>
+      ${completed ? `<div class="completed-badge">✓ Concluído por <b>${escapeHtml(completed.authorName || completed.authorEmail || "—")}</b> · ${formatCommentDate(completed.at)}</div>` : ""}
       <div class="status-row">
         <select class="status-select assignee-select" data-assignee-id="${item.id}" aria-label="Responsável por ${item.title}">
           <option value="">Sem responsável</option>
           ${assigneeOptions.map(u => `<option value="${u.email}" ${assignee===u.email?"selected":""}>${u.name || u.email}</option>`).join("")}
         </select>
+      </div>
+      <div class="status-row due-row">
+        <input type="date" class="due-input" data-due-id="${item.id}" data-due-state="${due.state}" value="${due.value}" aria-label="Prazo de ${item.title}" />
+        ${due.hint ? `<span class="due-hint ${due.state}">${due.hint}</span>` : ""}
       </div>
       <p class="snippet"><b>Problema:</b> ${(item.hoje && item.hoje.length > 92) ? item.hoje.slice(0,92) + "…" : (item.hoje || "Não descrito ainda.")}</p>
       <div class="detail">
@@ -1014,6 +1258,37 @@ function cardHTML(item){
         <div class="detail-block">
           <div class="detail-label">Requisitos para conclusão</div>
           <p class="detail-text">${item.sugestao || "Não descrito ainda."}</p>
+        </div>
+        <div class="detail-block">
+          <div class="detail-label">Histórico de status</div>
+          <div class="history-list">
+            ${(item.statusHistory && item.statusHistory.length) ? item.statusHistory.map(h => `
+              <div class="history-item">
+                <span class="history-pill" data-st="${h.from}">${statusLabel(h.from)}</span>
+                <span class="history-arrow">→</span>
+                <span class="history-pill" data-st="${h.to}">${statusLabel(h.to)}</span>
+                <span class="history-meta">${escapeHtml(h.authorName || h.authorEmail || "—")} · ${formatCommentDate(h.at)}</span>
+              </div>
+            `).join("") : '<p class="history-empty">Nenhuma mudança de status registrada ainda.</p>'}
+          </div>
+        </div>
+        <div class="detail-block">
+          <div class="detail-label">Anexos</div>
+          <div class="attachments-list">
+            ${(item.attachments && item.attachments.length) ? item.attachments.map(a => `
+              <div class="attachment-item">
+                <a href="${a.url}" target="_blank" rel="noopener noreferrer" class="attachment-link" title="${escapeHtml(a.name)}">📎 ${escapeHtml(a.name)}</a>
+                <span class="attachment-meta">${formatFileSize(a.size)} · ${escapeHtml(a.authorName || a.authorEmail || "—")} · ${formatCommentDate(a.at)}</span>
+                ${canManage() ? `<button type="button" class="attachment-remove-btn" data-att-remove-id="${item.id}" data-att-id="${a.id}" aria-label="Remover anexo">✕</button>` : ""}
+              </div>
+            `).join("") : '<p class="attachment-empty">Nenhum anexo ainda.</p>'}
+          </div>
+          ${(storageMode === "firebase" && firebaseReady) ? `
+            <div class="attachment-upload-row">
+              <input type="file" class="attachment-input" data-att-upload-id="${item.id}" aria-label="Anexar arquivo a ${item.title}" />
+              <span class="attachment-upload-hint" data-att-hint-id="${item.id}"></span>
+            </div>
+          ` : '<p class="attachment-empty">Anexos exigem conexão com o banco compartilhado.</p>'}
         </div>
         <div class="detail-block">
           <div class="detail-label">Observações</div>
@@ -1043,8 +1318,35 @@ function cardHTML(item){
 function passesFilter(item){
   const sevOk = state.sev === "todos" || item.sev === state.sev;
   const stOk = state.status === "todos" || item.status === state.status;
+  const areaFilterOk = state.area === "todos" || item.area === state.area;
+  const assigneeOk = state.assignee === "todos" || itemAssignee(item) === state.assignee;
   const areaOk = areasForUser().includes(item.area);
-  return sevOk && stOk && areaOk;
+  return sevOk && stOk && areaFilterOk && assigneeOk && areaOk;
+}
+
+function updateFiltersBadge(){
+  const count = [state.sev, state.status, state.area].filter(v => v !== "todos").length
+    + (state.assignee !== "todos" ? 1 : 0);
+  const badge = document.getElementById("filters-badge");
+  if(badge){
+    badge.style.display = count > 0 ? "" : "none";
+    badge.textContent = String(count);
+  }
+  const hint = document.getElementById("filters-hint");
+  if(hint){
+    const parts = [];
+    if(state.area !== "todos") parts.push(sectorLabel(state.area));
+    if(state.assignee !== "todos"){
+      if(state.assignee === "") parts.push("sem responsável");
+      else{
+        const person = DIRECTORY.find(u => u.email === state.assignee);
+        parts.push(person ? (person.name || person.email) : state.assignee);
+      }
+    }
+    if(state.sev !== "todos") parts.push(SEV_LABEL[state.sev]);
+    if(state.status !== "todos") parts.push((STATUSES.find(s => s.key === state.status) || {}).label || state.status);
+    hint.textContent = parts.length ? `Mostrando: ${parts.join(" · ")}` : "";
+  }
 }
 
 function wireCardListeners(container){
@@ -1083,6 +1385,15 @@ function wireCardListeners(container){
     });
   });
 
+  container.querySelectorAll(".due-input").forEach(inp => {
+    inp.addEventListener("click", e => e.stopPropagation());
+    inp.addEventListener("mousedown", e => e.stopPropagation());
+    inp.addEventListener("change", (e) => {
+      e.stopPropagation();
+      updateDueDate(e.target.getAttribute("data-due-id"), e.target.value);
+    });
+  });
+
   container.querySelectorAll(".move-btn").forEach(btn => {
     btn.addEventListener("click", (e) => {
       e.stopPropagation();
@@ -1109,6 +1420,33 @@ function wireCardListeners(container){
       const id = btn.getAttribute("data-obs-save-id");
       const ta = container.querySelector(`.obs-textarea[data-obs-id="${id}"]`);
       addComentario(id, ta ? ta.value : "");
+    });
+  });
+
+  container.querySelectorAll(".attachment-remove-btn").forEach(btn => {
+    btn.addEventListener("click", (e) => {
+      e.stopPropagation();
+      deleteAttachment(btn.getAttribute("data-att-remove-id"), btn.getAttribute("data-att-id"));
+    });
+  });
+
+  container.querySelectorAll(".attachment-input").forEach(inp => {
+    inp.addEventListener("click", e => e.stopPropagation());
+    inp.addEventListener("mousedown", e => e.stopPropagation());
+    inp.addEventListener("change", async (e) => {
+      e.stopPropagation();
+      const id = inp.getAttribute("data-att-upload-id");
+      const file = inp.files && inp.files[0];
+      inp.value = "";
+      if(!file) return;
+      const hint = document.querySelector(`.attachment-upload-hint[data-att-hint-id="${id}"]`);
+      if(hint){ hint.style.color = ""; hint.textContent = "Enviando…"; }
+      try{
+        await uploadAttachment(id, file);
+      }catch(err){
+        console.error("Falha ao enviar anexo:", err);
+        if(hint){ hint.style.color = "var(--sev-critica)"; hint.textContent = err.message || "Falha ao enviar arquivo."; }
+      }
     });
   });
 }
@@ -1144,7 +1482,7 @@ function render(){
   const focus = preserveFocusedObsDraft();
   board.innerHTML = "";
 
-  const groups = state.view === "status" ? STATUSES : SECTORS.filter(s => areasForUser().includes(s.key));
+  const groups = state.view === "status" ? STATUSES : SECTORS.filter(s => areasForUser().includes(s.key) && (state.area === "todos" || s.key === state.area));
   groups.forEach(group => {
     const items = state.view === "status"
       ? DATA.filter(d => itemStage(d) === "board" && d.status === group.key && passesFilter(d))
@@ -1311,7 +1649,32 @@ function refreshSectorDependentUI(){
   if(areasInput){
     areasInput.innerHTML = SECTORS.map(s => `<label><input type="checkbox" value="${s.key}"> ${s.label}</label>`).join("");
   }
+  refreshFilterPanelOptions();
   renderAdminLists();
+}
+
+function refreshFilterPanelOptions(){
+  // Setor e Responsável dependem de SECTORS/DIRECTORY, que mudam em tempo real (setor novo
+  // criado, acesso novo cadastrado, etc.) — por isso são regenerados aqui, junto com o resto
+  // da UI que depende de setores, em vez de ficarem fixos no HTML.
+  const areaFilterGroup = document.getElementById("filters-area");
+  if(areaFilterGroup){
+    const options = SECTORS.filter(s => areasForUser().includes(s.key));
+    if(state.area !== "todos" && !options.some(s => s.key === state.area)) state.area = "todos";
+    areaFilterGroup.innerHTML = '<span class="fg-label">Setor:</span>'
+      + `<button class="filter-btn${state.area === "todos" ? " active" : ""}" data-area-filter="todos">Todos</button>`
+      + options.map(s => `<button class="filter-btn${state.area === s.key ? " active" : ""}" data-area-filter="${s.key}">${s.label}</button>`).join("");
+  }
+  const assigneeSel = document.getElementById("filter-assignee");
+  if(assigneeSel){
+    const scopeAreas = areasForUser();
+    const people = DIRECTORY.filter(u => u.role === "admin" || (u.assignedAreas || []).some(a => scopeAreas.includes(a)));
+    if(state.assignee !== "todos" && state.assignee !== "" && !people.some(u => u.email === state.assignee)) state.assignee = "todos";
+    assigneeSel.innerHTML = '<option value="todos">Todos</option><option value="">Sem responsável</option>'
+      + people.map(u => `<option value="${u.email}">${u.name || u.email}${u.disabled ? " (inativo)" : ""}</option>`).join("");
+    assigneeSel.value = state.assignee;
+  }
+  updateFiltersBadge();
 }
 
 function refreshAssigneeOptionsForArea(){
@@ -1329,13 +1692,16 @@ function renderOverview(){
   const assigneesEl = document.getElementById("overview-assignees");
   if(!kpiEl || !sectorsEl || !assigneesEl) return;
 
+  // Vale o mesmo recorte de filtros (setor/responsável/prioridade/status) usado no Board e no
+  // Backlog: escolher "Setor: Operações" aqui mostra os gráficos só daquele setor, por exemplo.
   const scopeAreas = areasForUser();
-  const opData = DATA.filter(d => scopeAreas.includes(d.area));
+  const opData = DATA.filter(d => passesFilter(d));
   const total = opData.length;
   const concluidas = opData.filter(d => d.status === "concluido").length;
   const andamento = opData.filter(d => d.status === "andamento").length;
   const aberto = opData.filter(d => d.status === "aberto").length;
   const backlogCount = opData.filter(d => itemStage(d) === "backlog").length;
+  const atrasadas = opData.filter(d => dueInfo(d).state === "atrasado").length;
   const pctConcluidas = total ? Math.round((concluidas / total) * 100) : 0;
 
   kpiEl.innerHTML = `
@@ -1344,20 +1710,28 @@ function renderOverview(){
     <div class="kpi-card"><div class="n" style="color:var(--st-andamento);">${andamento}</div><div class="l">Em andamento</div></div>
     <div class="kpi-card"><div class="n" style="color:var(--st-aberto);">${aberto}</div><div class="l">Em aberto</div></div>
     <div class="kpi-card"><div class="n" style="color:var(--text-low);">${backlogCount}</div><div class="l">No backlog</div></div>
+    <div class="kpi-card${atrasadas ? " kpi-alert" : ""}"><div class="n" style="color:var(--sev-critica);">${atrasadas}</div><div class="l">Atrasadas</div></div>
   `;
 
-  const scopedSectors = SECTORS.filter(s => scopeAreas.includes(s.key));
-  sectorsEl.innerHTML = scopedSectors.map(s => {
+  const scopedSectors = SECTORS.filter(s => scopeAreas.includes(s.key) && (state.area === "todos" || s.key === state.area));
+  sectorsEl.innerHTML = scopedSectors.map((s, i) => {
     const items = opData.filter(d => d.area === s.key);
-    const done = items.filter(d => d.status === "concluido").length;
-    const p = items.length ? Math.round((done / items.length) * 100) : 0;
+    const doneN = items.filter(d => d.status === "concluido").length;
+    const andN = items.filter(d => d.status === "andamento").length;
+    const abN = items.filter(d => d.status === "aberto").length;
+    const n = items.length || 1;
+    const p = items.length ? Math.round((doneN / items.length) * 100) : 0;
     return `
-      <div class="bar-row">
+      <div class="bar-row" style="--i:${i};">
         <div class="bar-head">
           <span class="bar-name"><span class="rail-dot" style="background:${sectorColor(s.key)};"></span>${s.label}</span>
-          <span>${done}/${items.length} concluídas</span>
+          <span>${doneN}/${items.length} concluídas · ${p}%</span>
         </div>
-        <div class="bar-track"><div class="bar-fill" style="width:${p}%; background:${sectorColor(s.key)};"></div></div>
+        <div class="bar-track stacked">
+          <div class="bar-seg" style="width:${abN/n*100}%; background:var(--st-aberto);" title="Em aberto: ${abN}"></div>
+          <div class="bar-seg" style="width:${andN/n*100}%; background:var(--st-andamento);" title="Em andamento: ${andN}"></div>
+          <div class="bar-seg" style="width:${doneN/n*100}%; background:var(--st-concluido);" title="Concluído: ${doneN}"></div>
+        </div>
       </div>
     `;
   }).join("") || '<p class="snippet">Nenhum setor sob sua gestão ainda.</p>';
@@ -1370,18 +1744,20 @@ function renderOverview(){
     byAssignee[a].total++;
     if(d.status === "concluido") byAssignee[a].done++;
   });
-  const rows = Object.entries(byAssignee).sort((a, b) => b[1].total - a[1].total).slice(0, 8);
-  assigneesEl.innerHTML = rows.map(([email, stats]) => {
+  const rows = Object.entries(byAssignee).sort((a, b) => (b[1].done - a[1].done) || (b[1].total - a[1].total)).slice(0, 8);
+  const MEDALS = ["🥇", "🥈", "🥉"];
+  assigneesEl.innerHTML = rows.map(([email, stats], i) => {
     const person = DIRECTORY.find(u => u.email === email);
     const label = ((person && person.name) ? person.name : email) + (person && person.disabled ? " (inativo)" : "");
     const p = stats.total ? Math.round((stats.done / stats.total) * 100) : 0;
     return `
-      <div class="bar-row">
-        <div class="bar-head">
-          <span class="bar-name">${label}</span>
-          <span>${stats.done}/${stats.total} concluídas</span>
+      <div class="leaderboard-item rank-${i+1}" style="--i:${i};">
+        <div class="lb-rank">${MEDALS[i] || (i+1)}</div>
+        <div class="lb-info">
+          <div class="lb-name">${label}</div>
+          <div class="lb-track"><div class="lb-fill" style="width:${p}%;"></div></div>
         </div>
-        <div class="bar-track"><div class="bar-fill" style="width:${p}%; background:var(--brand-red);"></div></div>
+        <div class="lb-stats"><b>${stats.done}</b><span>/${stats.total} concluídas</span></div>
       </div>
     `;
   }).join("") || '<p class="snippet">Nenhuma demanda com responsável atribuído ainda.</p>';
@@ -1410,7 +1786,9 @@ const ROLE_WELCOME_SUB = {
 function applyRoleLayout(){
   const isOperador = currentUser && currentUser.role === "operador";
   const mainNav = document.getElementById("main-nav");
-  const filtersRow = document.querySelector(".filters-row");
+  const filtersRow = document.getElementById("global-filters-row");
+  const filtersPanel = document.getElementById("filters-panel");
+  const boardToolbar = document.querySelector(".board-toolbar");
   const storageNote = document.getElementById("storage-note");
   const h1 = document.getElementById("app-title");
   const sub = document.getElementById("app-sub");
@@ -1418,6 +1796,8 @@ function applyRoleLayout(){
   document.querySelectorAll(".summary-group").forEach(el => { el.style.display = isOperador ? "none" : ""; });
   if(mainNav) mainNav.style.display = isOperador ? "none" : "";
   if(filtersRow) filtersRow.style.display = isOperador ? "none" : "";
+  if(filtersPanel && isOperador) filtersPanel.classList.remove("open");
+  if(boardToolbar) boardToolbar.style.display = isOperador ? "none" : "";
   if(storageNote) storageNote.style.display = isOperador ? "none" : "";
 
   const name = firstName();
@@ -1437,10 +1817,6 @@ function renderTabs(){
   const boardTab = document.getElementById("board-tab");
   const backlogTab = document.getElementById("backlog-tab");
   const adminTab = document.getElementById("admin-tab");
-  if(overviewTab) overviewTab.style.display = state.tab === "overview" ? "" : "none";
-  if(boardTab) boardTab.style.display = state.tab === "board" ? "" : "none";
-  if(backlogTab) backlogTab.style.display = state.tab === "backlog" ? "" : "none";
-  if(adminTab) adminTab.style.display = state.tab === "admin" ? "" : "none";
 
   const navOverviewBtn = document.getElementById("nav-overview-btn");
   if(navOverviewBtn) navOverviewBtn.style.display = canManage() ? "" : "none";
@@ -1449,6 +1825,12 @@ function renderTabs(){
 
   if(state.tab === "admin" && !canCreate()) state.tab = "board";
   if(state.tab === "overview" && !canManage()) state.tab = "board";
+
+  const isOperador = currentUser && currentUser.role === "operador";
+  const globalFiltersRow = document.getElementById("global-filters-row");
+  const filtersPanelEl = document.getElementById("filters-panel");
+  if(globalFiltersRow) globalFiltersRow.style.display = (isOperador || state.tab === "admin") ? "none" : "";
+  if(filtersPanelEl && (isOperador || state.tab === "admin")) filtersPanelEl.classList.remove("open");
 
   document.querySelectorAll("#main-nav button[data-tab]").forEach(b => b.classList.toggle("active", b.dataset.tab === state.tab));
   if(overviewTab) overviewTab.style.display = state.tab === "overview" ? "" : "none";
@@ -1484,16 +1866,27 @@ function updateSummary(){
   document.getElementById("sum-st-aberto").textContent = vd.filter(d=>d.status==="aberto").length;
   document.getElementById("sum-st-andamento").textContent = vd.filter(d=>d.status==="andamento").length;
   document.getElementById("sum-st-concluido").textContent = vd.filter(d=>d.status==="concluido").length;
-  const metaTotal = document.getElementById("meta-total");
-  if(metaTotal) metaTotal.textContent = visibleData().length;
-  const metaAreas = document.getElementById("meta-areas");
-  if(metaAreas) metaAreas.textContent = `${areasForUser().length} setor(es) responsável(is)`;
 }
 
 async function updateStatus(id, value){
   const item = DATA.find(d => d.id === id);
   if(!item) return;
+  const previousStatus = item.status;
   item.status = value;
+
+  // O registro em memória do histórico precisa acontecer ANTES do render() abaixo — senão o
+  // card é redesenhado com o histórico ainda desatualizado (falta a transição que acabou de
+  // acontecer), e ela só aparece na tela na próxima mudança de status, uma a uma atrasada.
+  let historyEntry = null;
+  if(previousStatus !== value){
+    historyEntry = {
+      from: previousStatus, to: value,
+      authorName: (currentUser && currentUser.name) || "",
+      authorEmail: (currentUser && currentUser.email) || "",
+      at: new Date().toISOString(),
+    };
+    item.statusHistory = [...(item.statusHistory || []), historyEntry];
+  }
 
   updateSummary();
   if(state.tab === "board") render(); else if(state.tab === "backlog") renderBacklog();
@@ -1503,28 +1896,56 @@ async function updateStatus(id, value){
   }catch(err){
     console.error("Falha ao salvar status:", err);
   }
+
+  if(historyEntry) await persistStatusHistoryEntry(id, historyEntry);
+}
+
+// Histórico de status: um log só de append (nunca editado nem apagado), guardado no mapa
+// compartilhado "statusHistory" — igual em espírito ao "comentarios", mas sem repetir a
+// fragilidade que "comentarios" tem hoje para itens customizados (reescrever o array
+// customItems inteiro). Aqui base e customizado sempre passam pelo mesmo caminho atômico.
+async function persistStatusHistoryEntry(id, entry){
+  if(storageMode === "firebase" && firebaseReady){
+    try{
+      const path = new fsFieldPath("statusHistory", id);
+      await fsUpdateDoc(BOARD_DOC, path, fsArrayUnion(entry));
+    }catch(err){
+      console.error("Falha ao salvar histórico de status:", err);
+    }
+  }else{
+    try{
+      const raw = await storageAdapter.get(`statusHistory:${id}`);
+      const list = raw ? JSON.parse(raw) : [];
+      list.push(entry);
+      await storageAdapter.set(`statusHistory:${id}`, JSON.stringify(list));
+    }catch(err){
+      console.error("Falha ao salvar histórico de status:", err);
+    }
+  }
 }
 
 async function updateAssignee(id, value){
   const item = DATA.find(d => d.id === id);
   if(!item) return;
-  if(item.custom){
-    item.assignee = value;
-    try{ await saveCustomItems(); }catch(err){ console.error("Falha ao salvar responsável:", err); }
-  }else{
-    try{ await updateFieldPathMap("assignees", assigneesMap, id, value); }catch(err){ console.error("Falha ao salvar responsável:", err); }
-  }
+  // stagesMap/assigneesMap usam gravação atômica por campo (FieldPath), tanto para itens de
+  // base quanto para itens customizados — nunca reescrevem o array customItems inteiro, então
+  // uma mudança feita por outra pessoa segundos antes não é apagada silenciosamente.
+  try{ await updateFieldPathMap("assignees", assigneesMap, id, value); }catch(err){ console.error("Falha ao salvar responsável:", err); }
 }
 
 async function updateStage(id, value){
   const item = DATA.find(d => d.id === id);
   if(!item) return;
-  if(item.custom){
-    item.stage = value;
-    try{ await saveCustomItems(); }catch(err){ console.error("Falha ao mover item:", err); }
-  }else{
-    try{ await updateFieldPathMap("stages", stagesMap, id, value); }catch(err){ console.error("Falha ao mover item:", err); }
-  }
+  try{ await updateFieldPathMap("stages", stagesMap, id, value); }catch(err){ console.error("Falha ao mover item:", err); }
+  renderTabs();
+}
+
+async function updateDueDate(id, value){
+  const item = DATA.find(d => d.id === id);
+  if(!item) return;
+  try{ await updateFieldPathMap("dueDates", dueDatesMap, id, value); }catch(err){ console.error("Falha ao salvar prazo:", err); }
+  // Diferente do responsável, o prazo muda a cor/aviso do próprio card na hora — precisa
+  // redesenhar para o card não ficar com o selo de atraso desatualizado.
   renderTabs();
 }
 
@@ -1562,9 +1983,11 @@ async function addComentario(id, text){
   const hint = document.querySelector(`.obs-saved-hint[data-obs-hint-id="${id}"]`);
 
   try{
-    if(item.custom){
-      await saveCustomItems();
-    }else if(storageMode === "firebase" && firebaseReady){
+    // Mesmo caminho atômico pra base e customizado — antes, itens customizados salvavam
+    // comentário reescrevendo o array customItems inteiro (a mesma fragilidade já corrigida
+    // pra stage/assignee/prazo: quem grava por último apaga o comentário de quem gravou
+    // segundos antes, em qualquer item customizado, não só no mesmo).
+    if(storageMode === "firebase" && firebaseReady){
       const path = new fsFieldPath("comentarios", id);
       await fsUpdateDoc(BOARD_DOC, path, fsArrayUnion(comment));
     }else{
@@ -1578,6 +2001,71 @@ async function addComentario(id, text){
     console.error("Falha ao salvar observação:", err);
     item.comentarios = item.comentarios.filter(c => c !== comment);
     renderTabs();
+  }
+}
+
+const ATTACHMENT_MAX_BYTES = 10 * 1024 * 1024; // 10MB
+
+function formatFileSize(bytes){
+  if(!bytes && bytes !== 0) return "";
+  if(bytes < 1024) return `${bytes} B`;
+  if(bytes < 1024 * 1024) return `${(bytes / 1024).toFixed(1)} KB`;
+  return `${(bytes / (1024 * 1024)).toFixed(1)} MB`;
+}
+
+// Anexos dependem do Firebase Storage (bucket já configurado no projeto, só nunca tinha sido
+// usado) — por isso só funcionam com storageMode "firebase". Guardamos o arquivo no Storage e
+// só o metadado (nome, link, quem enviou) no mesmo mapa atômico por item já usado pra
+// comentários/histórico, então a lista nunca é perdida por reescrita de array inteiro.
+async function uploadAttachment(id, file){
+  if(storageMode !== "firebase" || !firebaseReady){
+    throw new Error("Anexos exigem conexão com o banco compartilhado (sem sincronização em nuvem no momento).");
+  }
+  if(file.size > ATTACHMENT_MAX_BYTES){
+    throw new Error(`Arquivo muito grande (máx. ${formatFileSize(ATTACHMENT_MAX_BYTES)}).`);
+  }
+  const safeName = file.name.replace(/[^a-zA-Z0-9._-]/g, "_");
+  const path = `attachments/${id}/${Date.now()}-${safeName}`;
+  const fileRef = stRef(fbStorage, path);
+  await stUploadBytes(fileRef, file);
+  const url = await stGetDownloadURL(fileRef);
+  const meta = {
+    id: `${Date.now()}-${Math.random().toString(36).slice(2, 8)}`,
+    name: file.name,
+    size: file.size,
+    type: file.type || "",
+    url, path,
+    authorName: (currentUser && currentUser.name) || "",
+    authorEmail: (currentUser && currentUser.email) || "",
+    at: new Date().toISOString(),
+  };
+  const item = DATA.find(d => d.id === id);
+  if(item) item.attachments = [...(item.attachments || []), meta];
+  renderTabs();
+  const fpPath = new fsFieldPath("attachments", id);
+  await fsUpdateDoc(BOARD_DOC, fpPath, fsArrayUnion(meta));
+}
+
+async function deleteAttachment(id, attachmentId){
+  const item = DATA.find(d => d.id === id);
+  if(!item) return;
+  const att = (item.attachments || []).find(a => a.id === attachmentId);
+  if(!att) return;
+  if(!confirm(`Remover o anexo "${att.name}"?`)) return;
+
+  item.attachments = item.attachments.filter(a => a.id !== attachmentId);
+  renderTabs();
+
+  try{
+    if(att.path) await stDeleteObject(stRef(fbStorage, att.path));
+  }catch(err){
+    console.error("Falha ao remover arquivo do Storage:", err);
+  }
+  try{
+    const fpPath = new fsFieldPath("attachments", id);
+    await fsUpdateDoc(BOARD_DOC, fpPath, fsArrayRemove(att));
+  }catch(err){
+    console.error("Falha ao atualizar lista de anexos:", err);
   }
 }
 
@@ -1640,6 +2128,32 @@ async function loadCustomItems(){
   }
 }
 
+async function loadItemFieldMaps(){
+  if(storageMode === "none") return;
+  try{
+    await Promise.all(DATA.map(async (item) => {
+      try{
+        const stage = await storageAdapter.get(`stage:${item.id}`);
+        if(stage) stagesMap[item.id] = stage;
+      }catch(e){}
+      try{
+        const assignee = await storageAdapter.get(`assignee:${item.id}`);
+        if(assignee) assigneesMap[item.id] = assignee;
+      }catch(e){}
+      try{
+        const dueDate = await storageAdapter.get(`dueDate:${item.id}`);
+        if(dueDate) dueDatesMap[item.id] = dueDate;
+      }catch(e){}
+      try{
+        const rawHistory = await storageAdapter.get(`statusHistory:${item.id}`);
+        if(rawHistory) item.statusHistory = JSON.parse(rawHistory);
+      }catch(e){}
+    }));
+  }catch(e){
+    console.error("Falha ao carregar stage/responsável/prazo/histórico:", e);
+  }
+}
+
 async function saveCustomItems(){
   const custom = DATA.filter(d => d.custom);
   try{
@@ -1654,20 +2168,14 @@ function nextCustomId(){
   return `N${customCount + 1}`;
 }
 
-async function addNewItem({title, area, sev, hoje, sugestao, obs, assignee}){
-  const trimmedObs = (obs || "").trim();
+async function addNewItem({title, area, sev, hoje, sugestao, obs, assignee, due}){
   const item = {
     id: nextCustomId(),
     area, sev,
     title: title.trim(),
     hoje: hoje.trim(),
     sugestao: sugestao.trim(),
-    comentarios: trimmedObs ? [{
-      text: trimmedObs,
-      authorName: (currentUser && currentUser.name) || "",
-      authorEmail: (currentUser && currentUser.email) || "",
-      at: new Date().toISOString(),
-    }] : [],
+    comentarios: [],
     assignee: assignee || "",
     stage: "backlog",
     status: "aberto",
@@ -1676,15 +2184,41 @@ async function addNewItem({title, area, sev, hoje, sugestao, obs, assignee}){
   DATA.push(item);
   renderTabs();
   await saveCustomItems();
+  if(due) await updateDueDate(item.id, due);
+  // A observação inicial (se preenchida) passa pelo mesmo addComentario() de qualquer outro
+  // comentário, em vez de vir embutida no item — assim ela também entra no mapa compartilhado
+  // "comentarios" desde o primeiro momento, sem precisar de um caminho de gravação separado.
+  const trimmedObs = (obs || "").trim();
+  if(trimmedObs) await addComentario(item.id, trimmedObs);
 }
 
 async function removeCustomItem(id){
   const idx = DATA.findIndex(d => d.id === id && d.custom);
   if(idx === -1) return;
+  const removedItem = DATA[idx];
   DATA.splice(idx, 1);
   renderTabs();
   await saveCustomItems();
+  // Limpa também stage/assignee: como os IDs de itens customizados são reaproveitados
+  // (N1, N2, ...), sem isso um item novo criado depois poderia herdar por engano o
+  // stage/assignee de um item já removido que tinha o mesmo ID.
   try{ await storageAdapter.set(`status:${id}`, ""); }catch(e){}
+  try{ await updateFieldPathMap("stages", stagesMap, id, ""); }catch(e){}
+  try{ await updateFieldPathMap("assignees", assigneesMap, id, ""); }catch(e){}
+  try{ await updateFieldPathMap("dueDates", dueDatesMap, id, ""); }catch(e){}
+  try{
+    if(storageMode === "firebase" && firebaseReady){
+      await fsUpdateDoc(BOARD_DOC, new fsFieldPath("statusHistory", id), fsDeleteField());
+    }else{
+      await storageAdapter.set(`statusHistory:${id}`, "");
+    }
+  }catch(e){}
+  if((removedItem.attachments || []).length && storageMode === "firebase" && firebaseReady){
+    for(const att of removedItem.attachments){
+      try{ if(att.path) await stDeleteObject(stRef(fbStorage, att.path)); }catch(e){}
+    }
+    try{ await fsUpdateDoc(BOARD_DOC, new fsFieldPath("attachments", id), fsDeleteField()); }catch(e){}
+  }
 }
 
 function openModal(){
@@ -1719,7 +2253,8 @@ document.getElementById("add-form").addEventListener("submit", async (e) => {
   const sev = document.getElementById("f-sev").value;
   const obs = document.getElementById("f-obs").value;
   const assignee = document.getElementById("f-assignee").value;
-  await addNewItem({title, area, sev, hoje, sugestao, obs, assignee});
+  const due = document.getElementById("f-due").value;
+  await addNewItem({title, area, sev, hoje, sugestao, obs, assignee, due});
   closeModal();
 });
 
@@ -1729,6 +2264,7 @@ document.getElementById("filters-sev").addEventListener("click", (e) => {
   document.querySelectorAll("#filters-sev .filter-btn").forEach(b => b.classList.remove("active"));
   btn.classList.add("active");
   state.sev = btn.dataset.filter;
+  updateFiltersBadge();
   renderTabs();
 });
 
@@ -1738,6 +2274,41 @@ document.getElementById("filters-status").addEventListener("click", (e) => {
   document.querySelectorAll("#filters-status .filter-btn").forEach(b => b.classList.remove("active"));
   btn.classList.add("active");
   state.status = btn.dataset.statusFilter;
+  updateFiltersBadge();
+  renderTabs();
+});
+
+document.getElementById("filters-area").addEventListener("click", (e) => {
+  const btn = e.target.closest(".filter-btn");
+  if(!btn) return;
+  document.querySelectorAll("#filters-area .filter-btn").forEach(b => b.classList.remove("active"));
+  btn.classList.add("active");
+  state.area = btn.dataset.areaFilter;
+  updateFiltersBadge();
+  renderTabs();
+});
+
+document.getElementById("filter-assignee").addEventListener("change", (e) => {
+  state.assignee = e.target.value;
+  updateFiltersBadge();
+  renderTabs();
+});
+
+document.getElementById("filters-toggle").addEventListener("click", () => {
+  const panel = document.getElementById("filters-panel");
+  const btn = document.getElementById("filters-toggle");
+  const isOpen = panel.classList.toggle("open");
+  btn.classList.toggle("active", isOpen);
+  btn.setAttribute("aria-expanded", isOpen ? "true" : "false");
+});
+
+document.getElementById("filters-clear").addEventListener("click", () => {
+  state.sev = "todos"; state.status = "todos"; state.area = "todos"; state.assignee = "todos";
+  document.querySelectorAll("#filters-sev .filter-btn, #filters-status .filter-btn, #filters-area .filter-btn").forEach(b => {
+    b.classList.toggle("active", b.dataset.filter === "todos" || b.dataset.statusFilter === "todos" || b.dataset.areaFilter === "todos");
+  });
+  document.getElementById("filter-assignee").value = "todos";
+  updateFiltersBadge();
   renderTabs();
 });
 
@@ -1911,6 +2482,7 @@ async function handleAuthedUser(fbUser){
       console.error("Firebase indisponível, usando armazenamento local como reserva:", e);
       storageMode = hasClaudeStorage ? "shared" : (hasLocalStorage ? "local" : "none");
       await loadCustomItems();
+      await loadItemFieldMaps();
       await loadObservacoes();
       await loadStatuses();
     }
@@ -1990,6 +2562,7 @@ document.getElementById("login-signout-denied").addEventListener("click", async 
     showApp();
     renderTabs();
     await loadCustomItems();
+    await loadItemFieldMaps();
     await loadObservacoes();
     await loadStatuses();
   }
