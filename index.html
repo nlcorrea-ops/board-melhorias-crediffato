@@ -804,6 +804,11 @@
           <span class="field-label">Observações</span>
           <textarea id="f-obs" rows="2" maxlength="500" placeholder="Observações adicionais (opcional)"></textarea>
         </label>
+        <label class="field" id="f-attachment-field">
+          <span class="field-label">Anexo (opcional)</span>
+          <input type="file" id="f-attachment" class="attachment-input" />
+          <span class="attachment-upload-hint" id="f-attachment-hint"></span>
+        </label>
         <div class="modal-actions">
           <button type="button" class="btn-secondary" id="modal-cancel">Cancelar</button>
           <button type="submit" class="btn-primary">Adicionar demanda</button>
@@ -1283,12 +1288,12 @@ function cardHTML(item){
               </div>
             `).join("") : '<p class="attachment-empty">Nenhum anexo ainda.</p>'}
           </div>
-          ${(storageMode === "firebase" && firebaseReady) ? `
+          ${(ATTACHMENTS_ENABLED && storageMode === "firebase" && firebaseReady) ? `
             <div class="attachment-upload-row">
               <input type="file" class="attachment-input" data-att-upload-id="${item.id}" aria-label="Anexar arquivo a ${item.title}" />
               <span class="attachment-upload-hint" data-att-hint-id="${item.id}"></span>
             </div>
-          ` : '<p class="attachment-empty">Anexos exigem conexão com o banco compartilhado.</p>'}
+          ` : '<p class="attachment-empty">Anexos ainda não disponíveis nesta plataforma.</p>'}
         </div>
         <div class="detail-block">
           <div class="detail-label">Observações</div>
@@ -2004,6 +2009,11 @@ async function addComentario(id, text){
   }
 }
 
+// Anexos exigem o plano Blaze (pago por uso) no Firebase — o projeto está no plano gratuito
+// Spark, que não provisiona bucket de Storage nenhum, então qualquer upload fica pendurado
+// pra sempre sem erro nem sucesso. Desligado aqui até decidirem fazer o upgrade do projeto;
+// o resto do código já está pronto, é só virar esta chave pra "true" quando for a hora.
+const ATTACHMENTS_ENABLED = false;
 const ATTACHMENT_MAX_BYTES = 10 * 1024 * 1024; // 10MB
 
 function formatFileSize(bytes){
@@ -2018,6 +2028,9 @@ function formatFileSize(bytes){
 // só o metadado (nome, link, quem enviou) no mesmo mapa atômico por item já usado pra
 // comentários/histórico, então a lista nunca é perdida por reescrita de array inteiro.
 async function uploadAttachment(id, file){
+  if(!ATTACHMENTS_ENABLED){
+    throw new Error("Anexos ainda não disponíveis nesta plataforma.");
+  }
   if(storageMode !== "firebase" || !firebaseReady){
     throw new Error("Anexos exigem conexão com o banco compartilhado (sem sincronização em nuvem no momento).");
   }
@@ -2027,8 +2040,18 @@ async function uploadAttachment(id, file){
   const safeName = file.name.replace(/[^a-zA-Z0-9._-]/g, "_");
   const path = `attachments/${id}/${Date.now()}-${safeName}`;
   const fileRef = stRef(fbStorage, path);
-  await stUploadBytes(fileRef, file);
-  const url = await stGetDownloadURL(fileRef);
+  let url;
+  try{
+    await stUploadBytes(fileRef, file);
+    url = await stGetDownloadURL(fileRef);
+  }catch(err){
+    // Erros do Storage vêm com um "code" (ex.: storage/unauthorized quando as regras de
+    // segurança do bucket bloqueiam a escrita) que costuma dizer mais que a mensagem padrão —
+    // por isso repassamos os dois juntos, pra dar pra diagnosticar direto pela mensagem exibida.
+    console.error("Falha ao enviar arquivo para o Storage:", err);
+    const code = err && err.code ? ` (${err.code})` : "";
+    throw new Error(`Não foi possível enviar o arquivo${code}. Verifique a conexão ou tente novamente.`);
+  }
   const meta = {
     id: `${Date.now()}-${Math.random().toString(36).slice(2, 8)}`,
     name: file.name,
@@ -2190,6 +2213,7 @@ async function addNewItem({title, area, sev, hoje, sugestao, obs, assignee, due}
   // "comentarios" desde o primeiro momento, sem precisar de um caminho de gravação separado.
   const trimmedObs = (obs || "").trim();
   if(trimmedObs) await addComentario(item.id, trimmedObs);
+  return item.id;
 }
 
 async function removeCustomItem(id){
@@ -2223,6 +2247,10 @@ async function removeCustomItem(id){
 
 function openModal(){
   refreshAssigneeOptionsForArea();
+  const attField = document.getElementById("f-attachment-field");
+  if(attField) attField.style.display = (ATTACHMENTS_ENABLED && storageMode === "firebase" && firebaseReady) ? "" : "none";
+  const attHint = document.getElementById("f-attachment-hint");
+  if(attHint){ attHint.textContent = ""; attHint.style.color = ""; }
   document.getElementById("modal-overlay").classList.add("open");
   document.getElementById("f-title").focus();
 }
@@ -2254,7 +2282,19 @@ document.getElementById("add-form").addEventListener("submit", async (e) => {
   const obs = document.getElementById("f-obs").value;
   const assignee = document.getElementById("f-assignee").value;
   const due = document.getElementById("f-due").value;
-  await addNewItem({title, area, sev, hoje, sugestao, obs, assignee, due});
+  const attInput = document.getElementById("f-attachment");
+  const file = attInput && attInput.files && attInput.files[0];
+  const newId = await addNewItem({title, area, sev, hoje, sugestao, obs, assignee, due});
+  if(file){
+    const hint = document.getElementById("f-attachment-hint");
+    if(hint){ hint.style.color = ""; hint.textContent = "Enviando anexo…"; }
+    try{
+      await uploadAttachment(newId, file);
+    }catch(err){
+      console.error("Falha ao enviar anexo na criação:", err);
+      alert(`Demanda criada, mas o anexo não pôde ser enviado: ${err.message || "erro desconhecido"}. Você pode tentar anexar de novo abrindo a demanda.`);
+    }
+  }
   closeModal();
 });
 
