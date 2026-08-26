@@ -142,6 +142,20 @@
   }
   .shutdown-btn:hover{background:var(--sev-critica); color:#fff;}
   .online-age{font-family:var(--font-mono); font-size:10.5px; color:var(--text-low); margin-left:6px;}
+  .role-badge{
+    font-family:var(--font-mono); font-size:9.5px; font-weight:700; text-transform:uppercase;
+    letter-spacing:.04em; padding:2px 7px; border-radius:999px; vertical-align:1px;
+    display:inline-flex; align-items:center; gap:3px;
+  }
+  .role-badge-operador{background:#7382a81f; color:var(--sev-media); border:1px solid #7382a855;}
+  .role-badge-supervisor{background:#8b8dfb1f; color:var(--pa); border:1px solid #8b8dfb55;}
+  .role-badge-gestor{background:#e08a3c1f; color:var(--sev-alta); border:1px solid #e08a3c55;}
+  .role-badge-admin{
+    background:linear-gradient(135deg, var(--brand-red), #a30c2c); color:#fff; border:1px solid var(--brand-red);
+    font-size:10.5px; padding:3px 9px; box-shadow:0 0 0 3px var(--brand-red-dim);
+  }
+  .role-badge-admin svg{width:11px; height:11px; color:#f2c14e;}
+  .online-item-admin{border-color:var(--brand-red-dim);}
   .theme-switcher{display:flex; gap:7px; align-items:center;}
   .theme-swatch{
     width:19px; height:19px; border-radius:50%; border:2px solid var(--hairline); cursor:pointer; padding:0;
@@ -1200,7 +1214,7 @@
 // que a comparação ">"/"<" abaixo saiba qual versão é mais nova) — é a única forma de o mecanismo
 // perceber que existe uma versão nova. Só funciona pra quem está conectado ao Firestore (modo de
 // contingência sem Firebase não tem sincronização em tempo real de nada, essa checagem incluída).
-const APP_VERSION = "2026-08-26T20:15:00Z";
+const APP_VERSION = "2026-08-26T20:30:00Z";
 
 // Desloga e recarrega — usado tanto pela verificação de versão nova quanto pelos sinais de
 // desconexão manual (shutdown geral ou alguém sendo desconectado individualmente).
@@ -1317,11 +1331,14 @@ function renderOnlineList(){
   };
   el.innerHTML = rows.map(r => {
     const sessionMs = now - new Date(r.since || r.at).getTime();
-    // Ninguém desconecta um admin pela lista — nem mostra o botão pra essa linha.
-    const targetIsAdmin = (DIRECTORY.find(u => u.uid === r.uid) || {}).role === "admin";
+    const role = (DIRECTORY.find(u => u.uid === r.uid) || {}).role || "";
+    const targetIsAdmin = role === "admin";
+    const roleBadge = role
+      ? `<span class="role-badge role-badge-${role}">${targetIsAdmin ? ICON_CROWN : ""}${ROLE_LABEL[role] || role}</span>`
+      : "";
     return `
-    <div class="admin-list-item">
-      <span>${escapeHtml(r.name ? `${r.name} · ${r.email}` : r.email)} <span class="online-age">logado há ${fmtDuration(sessionMs)}</span></span>
+    <div class="admin-list-item${targetIsAdmin ? " online-item-admin" : ""}">
+      <span>${escapeHtml(r.name || r.email)} ${roleBadge} <span class="online-age">logado há ${fmtDuration(sessionMs)}</span></span>
       ${(canCreate() && currentUser && r.uid !== currentUser.uid && !targetIsAdmin) ? `<button type="button" class="toggle-access-btn" data-kick-uid="${r.uid}">Desconectar</button>` : ""}
     </div>
   `;
