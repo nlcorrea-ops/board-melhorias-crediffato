@@ -307,6 +307,10 @@
     padding:6px 10px; margin-bottom:10px;
   }
   .completed-badge b{color:var(--st-concluido); font-weight:600;}
+  .completed-reason{
+    font-family:var(--font-display); font-size:11.5px; color:var(--text-mid);
+    margin-top:5px; padding-top:5px; border-top:1px solid #4ee2a033; line-height:1.4;
+  }
   .validated-badge{
     font-family:var(--font-mono); font-size:10.5px; color:var(--pa);
     background:#8b8dfb1a; border:1px solid #8b8dfb55; border-radius:8px;
@@ -1722,13 +1726,13 @@ function cardHTML(item){
       </div>
       <h3>${item.title}${item.shared ? `<span class="shared">${item.shared}</span>` : ""}${item.custom ? `<span class="shared">Nova</span>` : ""}</h3>
       <div class="status-row">
-        <select class="status-select" data-status="${item.status}" aria-label="Status de ${item.title}">
+        <select class="status-select" data-status="${item.status}" aria-label="Status de ${item.title}" ${(validation && !canManage()) ? `disabled title="Demanda já validada — só quem tem permissão de gestão pode reabri-la."` : ""}>
           <option value="aberto" ${item.status==="aberto"?"selected":""}>Em aberto</option>
           <option value="andamento" ${item.status==="andamento"?"selected":""}>Em andamento</option>
           <option value="concluido" ${item.status==="concluido"?"selected":""}>Concluído</option>
         </select>
       </div>
-      ${completed ? `<div class="completed-badge">${ICON_CHECK} Concluído por <b>${escapeHtml(completed.authorName || completed.authorEmail || "—")}</b> · ${formatCommentDate(completed.at)}</div>` : ""}
+      ${completed ? `<div class="completed-badge">${ICON_CHECK} Concluído por <b>${escapeHtml(completed.authorName || completed.authorEmail || "—")}</b> · ${formatCommentDate(completed.at)}${completed.reason ? `<div class="completed-reason">"${escapeHtml(completed.reason)}"</div>` : ""}</div>` : ""}
       ${(item.status === "concluido" && canManage()) ? (validation
         ? `<div class="validated-badge">${ICON_CHECK} Validado por <b>${escapeHtml(validation.authorName || validation.authorEmail || "—")}</b> · ${formatCommentDate(validation.at)}</div>`
         : `<button type="button" class="validate-btn" data-validate-id="${item.id}">${ICON_CHECK} Validar conclusão</button>`
@@ -1903,6 +1907,11 @@ function wireCardListeners(container){
       const previousValue = e.target.getAttribute("data-status");
       if(e.target.value === "concluido" && previousValue !== "concluido" && !canManage()){
         openConclusionModal(id);
+        return;
+      }
+      const item = DATA.find(d => d.id === id);
+      if(item && previousValue === "concluido" && e.target.value !== "concluido" && validationInfo(item) && !canManage()){
+        e.target.value = previousValue;
         return;
       }
       updateStatus(id, e.target.value);
