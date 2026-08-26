@@ -1178,31 +1178,37 @@
 // ---------- Verificação de versão publicada ----------
 // Quem já está com a aba aberta continua rodando o código antigo em memória até fechar/recarregar
 // — o que pode gerar comportamento inconsistente com quem já pegou a versão nova (formatos de
-// dado diferentes, bugs já corrigidos etc.). Por isso, verificamos periodicamente se o HTML
-// publicado mudou de versão; se mudou, desconecta e recarrega a página, forçando todo mundo pra
-// versão mais recente (a pessoa só precisa fazer login de novo).
-// IMPORTANTE: mude o valor de APP_VERSION a cada publicação — é a única forma de o mecanismo
-// perceber que existe uma versão nova.
-const APP_VERSION = "2026-08-26.2";
+// dado diferentes, bugs já corrigidos etc.). Em vez de ficar checando de tempos em tempos (o que
+// sempre teria um atraso), aproveitamos o mesmo listener em tempo real do Firestore que a
+// plataforma já usa pra sincronizar dados: o primeiro cliente a carregar a versão nova anuncia
+// isso no campo "appVersion" do documento compartilhado, e todo mundo que já estava conectado
+// recebe esse anúncio na hora (é o mesmo mecanismo de tempo real, não um polling) — desconecta e
+// recarrega, a pessoa só precisa fazer login de novo já na versão certa.
+// IMPORTANTE: mude o valor de APP_VERSION a cada publicação, usando um timestamp ISO (garante
+// que a comparação ">"/"<" abaixo saiba qual versão é mais nova) — é a única forma de o mecanismo
+// perceber que existe uma versão nova. Só funciona pra quem está conectado ao Firestore (modo de
+// contingência sem Firebase não tem sincronização em tempo real de nada, essa checagem incluída).
+const APP_VERSION = "2026-08-26T18:40:00Z";
 
-async function checkForNewVersion(){
-  try{
-    const res = await fetch(location.origin + location.pathname, { cache: "no-store" });
-    const text = await res.text();
-    const match = text.match(/const APP_VERSION = "([^"]+)"/);
-    if(match && match[1] && match[1] !== APP_VERSION){
-      console.warn(`Nova versão publicada (${match[1]} ≠ ${APP_VERSION}) — reconectando...`);
+function checkFirestoreVersion(data){
+  if(!data) return;
+  const remoteVersion = data.appVersion || "";
+  if(remoteVersion === APP_VERSION) return;
+  if(remoteVersion > APP_VERSION){
+    // Alguém já anunciou uma versão mais nova que a minha — estou desatualizado, reconecto.
+    console.warn(`Nova versão publicada (${remoteVersion} > ${APP_VERSION}) — reconectando...`);
+    (async () => {
       if(auth && auth.currentUser){
         try{ await authSignOut(auth); }catch(e){}
       }
       try{ alert("Uma atualização da plataforma foi publicada. A página vai recarregar — só entrar de novo."); }catch(e){}
       location.reload();
-    }
-  }catch(e){
-    // Falha de rede não deve incomodar quem está usando — tenta de novo no próximo ciclo.
+    })();
+  }else if(BOARD_DOC && fsUpdateDoc){
+    // Sou a versão mais nova (ou ninguém ainda anunciou) — aviso pros outros conectados.
+    fsUpdateDoc(BOARD_DOC, "appVersion", APP_VERSION).catch(() => {});
   }
 }
-setInterval(checkForNewVersion, 3 * 60 * 1000);
 
 // Firebase é carregado dinamicamente (import() em vez de import estático) para que,
 // se o CDN falhar (rede bloqueada, ad-blocker etc.), a plataforma continue funcionando
@@ -3448,6 +3454,7 @@ async function handleAuthedUser(fbUser){
         if(snap.exists()){
           boardDocCache = snap.data();
           applyRemoteState(boardDocCache);
+          checkFirestoreVersion(boardDocCache);
           const me = currentUser && DIRECTORY.find(u => u.uid === currentUser.uid);
           if(me && me.disabled){
             currentUser = null;
