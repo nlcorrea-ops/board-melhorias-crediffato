@@ -1188,7 +1188,7 @@
 // que a comparação ">"/"<" abaixo saiba qual versão é mais nova) — é a única forma de o mecanismo
 // perceber que existe uma versão nova. Só funciona pra quem está conectado ao Firestore (modo de
 // contingência sem Firebase não tem sincronização em tempo real de nada, essa checagem incluída).
-const APP_VERSION = "2026-08-26T19:15:00Z";
+const APP_VERSION = "2026-08-26T19:30:00Z";
 
 function checkFirestoreVersion(data){
   if(!data) return;
@@ -3420,6 +3420,20 @@ function showDenied(){
 }
 
 async function handleAuthedUser(fbUser){
+  // A sessão do Firebase sobrevive a um F5 normal — sem essa checagem, quem só recarrega a
+  // página (em vez de sair e entrar de novo) reautentica sozinho na hora, sem nunca passar
+  // pelo login de novo, mesmo depois de uma atualização publicada. Comparamos com a versão
+  // que essa pessoa usou da última vez que realmente fez login neste navegador; se for
+  // diferente da versão que acabou de carregar agora, força um login novo em vez de reentrar
+  // direto (o próprio formulário de login já grava a versão certa assim que o login acontece).
+  let lastLoginVersion = "";
+  try{ lastLoginVersion = localStorage.getItem("appLoginVersion") || ""; }catch(e){}
+  if(lastLoginVersion !== APP_VERSION){
+    currentUser = null;
+    showLogin();
+    if(auth){ try{ await authSignOut(auth); }catch(e){} }
+    return;
+  }
   try{
     // Garante que o documento da plataforma (setores, diretório etc.) já existe antes de
     // checar permissões, para que o bootstrap do admin já possa registrar a si mesmo.
@@ -3504,6 +3518,10 @@ document.getElementById("login-form").addEventListener("submit", async (e) => {
   }
   try{
     await authSignIn(auth, email, password);
+    // Login feito na mão (e não uma sessão antiga sendo restaurada sozinha pelo Firebase)
+    // sempre conta como "já na versão certa" — evita o gate de versão logo abaixo recusar o
+    // próprio login que acabou de acontecer.
+    try{ localStorage.setItem("appLoginVersion", APP_VERSION); }catch(e){}
   }catch(err){
     console.error("Falha no login:", err);
     errEl.textContent = "E-mail ou senha incorretos.";
