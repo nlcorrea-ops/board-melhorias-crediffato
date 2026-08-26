@@ -565,6 +565,38 @@
   }
   .toggle-access-btn:hover{color:var(--text-hi); border-color:var(--text-low);}
   .toggle-access-btn.reactivate{color:var(--st-concluido); border-color:#4ee2a055;}
+  .toggle-access-btn.danger{color:var(--sev-critica); border-color:#e2564f55;}
+  .toggle-access-btn.danger:hover{background:var(--sev-critica); color:#fff;}
+
+  .access-row{
+    display:flex; align-items:center; gap:12px; background:var(--ink-2); border:1px solid var(--hairline);
+    border-radius:12px; padding:10px 14px; transition:border-color .15s ease, opacity .15s ease;
+  }
+  .access-row:hover{border-color:var(--text-low);}
+  .access-row.access-row-disabled{opacity:.5;}
+  .access-avatar{
+    width:34px; height:34px; border-radius:50%; flex-shrink:0; display:flex; align-items:center; justify-content:center;
+    font-family:var(--font-mono); font-size:12px; font-weight:700; color:#fff; box-shadow:0 2px 8px #00000033;
+  }
+  .access-avatar-operador{background:linear-gradient(135deg, #7382a8, #4e5a7d);}
+  .access-avatar-supervisor{background:linear-gradient(135deg, #8b8dfb, #5c5edb);}
+  .access-avatar-gestor{background:linear-gradient(135deg, #e08a3c, #b8691f);}
+  .access-avatar-admin{background:linear-gradient(135deg, var(--brand-red), #a30c2c);}
+  .access-info{flex:1; min-width:0;}
+  .access-name{font-size:13px; font-weight:600; color:var(--text-hi); white-space:nowrap; overflow:hidden; text-overflow:ellipsis;}
+  .access-you{font-family:var(--font-mono); font-size:9px; color:var(--text-low); font-weight:400; text-transform:uppercase; letter-spacing:.03em; margin-left:5px;}
+  .access-email{font-family:var(--font-mono); font-size:11px; color:var(--text-low); white-space:nowrap; overflow:hidden; text-overflow:ellipsis;}
+  .access-status{
+    font-family:var(--font-mono); font-size:9px; text-transform:uppercase; letter-spacing:.04em;
+    padding:2px 8px; border-radius:999px; flex-shrink:0;
+  }
+  .access-status-active{background:#4ee2a01a; color:var(--st-concluido); border:1px solid #4ee2a055;}
+  .access-status-inactive{background:#8892ab1a; color:var(--text-low); border:1px solid var(--hairline);}
+  .access-actions{display:flex; align-items:center; gap:6px; flex-shrink:0;}
+  @media (max-width:620px){
+    .access-row{flex-wrap:wrap;}
+    .access-info{min-width:140px;}
+  }
 
   .kpi-row{display:grid; grid-template-columns:repeat(7, 1fr); gap:14px; margin-bottom:28px;}
   .kpi-card{background:var(--ink-1); border:1px solid var(--hairline); border-radius:var(--radius); padding:16px; transition:border-color .2s ease, background-color .2s ease;}
@@ -1214,7 +1246,7 @@
 // que a comparação ">"/"<" abaixo saiba qual versão é mais nova) — é a única forma de o mecanismo
 // perceber que existe uma versão nova. Só funciona pra quem está conectado ao Firestore (modo de
 // contingência sem Firebase não tem sincronização em tempo real de nada, essa checagem incluída).
-const APP_VERSION = "2026-08-26T21:00:00Z";
+const APP_VERSION = "2026-08-26T21:15:00Z";
 
 // Desloga e recarrega — usado tanto pela verificação de versão nova quanto pelos sinais de
 // desconexão manual (shutdown geral ou alguém sendo desconectado individualmente).
@@ -1475,7 +1507,7 @@ let PRESENCE_DOC = null;
 let onlineMap = {}; // uid -> {name, email, at}
 let presenceHeartbeatTimer = null;
 let onlineListRerenderTimer = null;
-let fsDoc, fsGetDoc, fsSetDoc, fsUpdateDoc, fsOnSnapshot, fsFieldPath, fsDeleteField, fsArrayUnion, fsArrayRemove;
+let fsDoc, fsGetDoc, fsSetDoc, fsUpdateDoc, fsDeleteDoc, fsOnSnapshot, fsFieldPath, fsDeleteField, fsArrayUnion, fsArrayRemove;
 let authSignIn, authOnState, authSignOut, authSendReset, authVerifyResetCode, authConfirmReset;
 let authVerifyBeforeUpdateEmail;
 let stRef, stUploadBytes, stGetDownloadURL, stDeleteObject;
@@ -1492,7 +1524,7 @@ async function initFirebase(){
       import("https://www.gstatic.com/firebasejs/10.14.1/firebase-storage.js"),
     ]);
     fsDoc = fsMod.doc; fsGetDoc = fsMod.getDoc; fsSetDoc = fsMod.setDoc;
-    fsUpdateDoc = fsMod.updateDoc; fsOnSnapshot = fsMod.onSnapshot;
+    fsUpdateDoc = fsMod.updateDoc; fsDeleteDoc = fsMod.deleteDoc; fsOnSnapshot = fsMod.onSnapshot;
     fsFieldPath = fsMod.FieldPath; fsDeleteField = fsMod.deleteField;
     fsArrayUnion = fsMod.arrayUnion; fsArrayRemove = fsMod.arrayRemove;
     authSignIn = authMod.signInWithEmailAndPassword;
@@ -2362,16 +2394,27 @@ function renderAdminLists(){
       .filter(u => state.userStatusFilter === "todos" || (state.userStatusFilter === "inativo" ? !!u.disabled : !u.disabled))
       .filter(u => state.userRoleFilter === "todos" || u.role === state.userRoleFilter);
     const hasActiveFilter = !!query || state.userStatusFilter !== "todos" || state.userRoleFilter !== "todos";
-    userList.innerHTML = filteredUsers.map(u => `
-      <div class="admin-list-item${u.disabled ? " disabled-user" : ""}">
-        <span>${u.name ? `${u.name} · ${u.email}` : u.email}${u.disabled ? '<span class="inactive-badge">Inativo</span>' : ""}</span>
-        <span class="user-actions">
-          ${ROLE_LABEL[u.role] || u.role}
+    userList.innerHTML = filteredUsers.map(u => {
+      const isSelf = currentUser && u.uid === currentUser.uid;
+      const isAdmin = u.role === "admin";
+      const canDelete = currentUser && currentUser.role === "admin" && !isSelf && !isAdmin;
+      return `
+      <div class="access-row${u.disabled ? " access-row-disabled" : ""}">
+        <div class="access-avatar access-avatar-${u.role}">${escapeHtml(initialsFromName(u.name || u.email))}</div>
+        <div class="access-info">
+          <div class="access-name">${escapeHtml(u.name || u.email)}${isSelf ? '<span class="access-you">você</span>' : ""}</div>
+          ${u.name ? `<div class="access-email">${escapeHtml(u.email)}</div>` : ""}
+        </div>
+        <span class="role-badge role-badge-${u.role}">${isAdmin ? ICON_CROWN : ""}${ROLE_LABEL[u.role] || u.role}</span>
+        <span class="access-status ${u.disabled ? "access-status-inactive" : "access-status-active"}">${u.disabled ? "Inativo" : "Ativo"}</span>
+        <div class="access-actions">
           ${canCreate() ? `<button type="button" class="toggle-access-btn" data-edit-uid="${u.uid}">Editar</button>` : ""}
-          ${(canCreate() && currentUser && u.uid !== currentUser.uid) ? `<button type="button" class="toggle-access-btn${u.disabled ? " reactivate" : ""}" data-toggle-uid="${u.uid}" data-toggle-to="${u.disabled ? "" : "1"}">${u.disabled ? "Reativar" : "Desativar"}</button>` : ""}
-        </span>
+          ${(canCreate() && !isSelf) ? `<button type="button" class="toggle-access-btn${u.disabled ? " reactivate" : ""}" data-toggle-uid="${u.uid}" data-toggle-to="${u.disabled ? "" : "1"}">${u.disabled ? "Reativar" : "Desativar"}</button>` : ""}
+          ${canDelete ? `<button type="button" class="toggle-access-btn danger" data-delete-uid="${u.uid}">Excluir</button>` : ""}
+        </div>
       </div>
-    `).join("")
+    `;
+    }).join("")
       || `<div class="admin-list-item">${hasActiveFilter ? "Nenhum acesso encontrado para essa busca/filtro." : "Nenhum acesso cadastrado ainda."}</div>`;
 
     userList.querySelectorAll(".toggle-access-btn[data-toggle-uid]").forEach(btn => {
@@ -2384,6 +2427,11 @@ function renderAdminLists(){
     userList.querySelectorAll("[data-edit-uid]").forEach(btn => {
       btn.addEventListener("click", () => {
         startEditUser(btn.getAttribute("data-edit-uid"));
+      });
+    });
+    userList.querySelectorAll("[data-delete-uid]").forEach(btn => {
+      btn.addEventListener("click", () => {
+        deleteUserAccess(btn.getAttribute("data-delete-uid"));
       });
     });
   }
@@ -2452,6 +2500,42 @@ async function toggleUserAccess(uid, disable){
     user.disabled = !disable; // reverte em caso de falha
     setMsg("Não foi possível atualizar o acesso.", false);
     renderAdminLists();
+  }
+}
+
+// Exclui de vez (não é só desativar): some da lista de acessos e ninguém consegue mais entrar
+// com essa conta, porque o app nega o acesso pra quem não tem mais um documento em "users/{uid}"
+// (mesma checagem de sempre, em loadOrBootstrapUserDoc). Só admin exclui, e nem admin exclui
+// outro admin ou a própria conta — evita se trancar pra fora ou apagar sem querer quem também
+// tem esse nível de acesso.
+async function deleteUserAccess(uid){
+  if(!currentUser || currentUser.role !== "admin") return;
+  const user = DIRECTORY.find(u => u.uid === uid);
+  if(!user) return;
+  if(user.role === "admin" || uid === currentUser.uid) return;
+  const msgEl = document.getElementById("user-msg");
+  const setMsg = (text, ok) => { if(msgEl){ msgEl.style.color = ok ? "var(--st-concluido)" : ""; msgEl.textContent = text; } };
+  if(!firebaseReady || storageMode !== "firebase"){
+    setMsg("Indisponível no momento (sem conexão com o banco compartilhado).", false);
+    return;
+  }
+  const label = user.name || user.email;
+  if(!confirm(`Excluir o acesso de ${label} de vez? Isso não pode ser desfeito — diferente de desativar, some da base e não dá pra reativar depois.`)){
+    return;
+  }
+  try{
+    const newDirectory = DIRECTORY.filter(u => u.uid !== uid);
+    await fsUpdateDoc(BOARD_DOC, "directory", newDirectory);
+    await fsDeleteDoc(fsDoc(db, "users", uid));
+    if(PRESENCE_DOC){
+      try{ await fsUpdateDoc(PRESENCE_DOC, new fsFieldPath("online", uid), fsDeleteField()); }catch(e){}
+    }
+    DIRECTORY = newDirectory;
+    renderAdminLists();
+    setMsg(`Acesso de ${label} excluído.`, true);
+  }catch(err){
+    console.error("Falha ao excluir acesso:", err);
+    setMsg("Não foi possível excluir o acesso.", false);
   }
 }
 
