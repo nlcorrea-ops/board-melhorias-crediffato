@@ -585,13 +585,26 @@
   .resolution-bar-value{width:64px; flex-shrink:0; text-align:right; font-family:var(--font-mono); font-size:12.5px; color:var(--text-hi);}
 
   .vbar-chart{
-    display:flex; align-items:flex-end; justify-content:center; gap:36px;
+    position:relative; display:flex; align-items:flex-end; justify-content:center; gap:36px;
     min-height:180px; padding-top:8px; border-bottom:1px solid var(--hairline);
   }
+  .vbar-grid{
+    position:absolute; left:0; right:0; bottom:30px; height:140px; pointer-events:none; z-index:0;
+    background-image:repeating-linear-gradient(to top, var(--hairline) 0, var(--hairline) 1px, transparent 1px, transparent 25%);
+    opacity:.5;
+  }
   .vbar-item{
-    flex:0 1 76px; display:flex; flex-direction:column; align-items:center;
+    position:relative; z-index:1; flex:0 1 76px; display:flex; flex-direction:column; align-items:center;
     opacity:0; transform:translateY(8px); animation:rise .45s ease forwards; animation-delay:calc(var(--i, 0) * .08s);
   }
+  .vbar-crown{color:#f2c14e; margin-bottom:1px; animation:crownFloat 2.4s ease-in-out infinite;}
+  @keyframes crownFloat{0%,100%{transform:translateY(0);} 50%{transform:translateY(-2px);}}
+  .vbar-avatar{
+    width:32px; height:32px; border-radius:50%; display:flex; align-items:center; justify-content:center;
+    font-family:var(--font-mono); font-size:11.5px; font-weight:700; color:#fff; margin-bottom:8px;
+    background:linear-gradient(135deg, var(--brand-red), #a30c2c); box-shadow:0 3px 10px #00000033;
+  }
+  .vbar-item.top-1 .vbar-avatar{background:linear-gradient(135deg, #f7d576, #d99f2b); color:#4a3300;}
   .vbar-value{font-family:var(--font-mono); font-size:13px; font-weight:700; color:var(--text-hi); margin-bottom:8px;}
   .vbar-track{width:100%; max-width:48px; display:flex; align-items:flex-end; justify-content:center;}
   .vbar-fill{
@@ -641,7 +654,7 @@
     .modal-overlay.open{animation:none;}
     .modal{animation:none;}
     .filters-panel.open{animation:none;}
-    .resolution-bar-row, .donut-multiple-item, .vbar-item{animation:none; opacity:1; transform:none;}
+    .resolution-bar-row, .donut-multiple-item, .vbar-item, .vbar-crown{animation:none; opacity:1; transform:none;}
     .donut-chart svg circle{transition:none;}
     *{transition:none !important;}
   }
@@ -928,8 +941,8 @@
       <div class="summary-label">Tempo médio de resolução</div>
       <div class="resolution-block" id="overview-resolution"></div>
     </div>
-    <div class="overview-block">
-      <div class="summary-label">Top 5 — quem mais concluiu</div>
+    <div class="overview-block donut-block">
+      <div class="summary-label">Top 5 demandas concluídas</div>
       <div class="vbar-chart" id="overview-top-assignees"></div>
     </div>
   </div>
@@ -1501,6 +1514,14 @@ function isArchived(item){
 const ICON_CHECK = '<svg width="12" height="12" viewBox="0 0 16 16" fill="none" style="vertical-align:-1px;" aria-hidden="true"><path d="M13.5 4.5L6 12L2.5 8.5" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>';
 const ICON_WARNING = '<svg width="12" height="12" viewBox="0 0 16 16" fill="none" style="vertical-align:-1px;" aria-hidden="true"><path d="M8 1.5L15 14H1L8 1.5Z" stroke="currentColor" stroke-width="1.5" stroke-linejoin="round"/><path d="M8 6.5V9.5" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/><circle cx="8" cy="11.8" r="0.9" fill="currentColor"/></svg>';
 const ICON_MONITOR = '<svg width="13" height="13" viewBox="0 0 16 16" fill="none" style="vertical-align:-2px;" aria-hidden="true"><rect x="1.5" y="2.5" width="13" height="9" rx="1" stroke="currentColor" stroke-width="1.4"/><path d="M5.5 14.5H10.5M8 11.5V14.5" stroke="currentColor" stroke-width="1.4" stroke-linecap="round"/></svg>';
+const ICON_CROWN = '<svg width="16" height="16" viewBox="0 0 16 16" fill="none" aria-hidden="true"><path d="M2 12.5L1 5.3L4.6 7.9L8 3L11.4 7.9L15 5.3L14 12.5H2Z" fill="currentColor" fill-opacity=".22" stroke="currentColor" stroke-width="1.3" stroke-linejoin="round"/></svg>';
+
+function initialsFromName(name){
+  const parts = (name || "").trim().split(/\s+/).filter(Boolean);
+  if(!parts.length) return "?";
+  if(parts.length === 1) return parts[0].slice(0, 2).toUpperCase();
+  return (parts[0][0] + parts[parts.length - 1][0]).toUpperCase();
+}
 
 const SEV_LABEL = {critica:"Crítica", alta:"Alta", media:"Média"};
 const ROLE_LABEL = {admin:"Admin", gestor:"Gestor", supervisor:"Supervisor", operador:"Operador"};
@@ -2430,23 +2451,31 @@ function renderOverview(){
     .slice(0, 5)
     .map(([email, count]) => {
       const person = DIRECTORY.find(u => u.email === email);
-      const label = ((person && person.name) ? person.name : email) + (person && person.disabled ? " (inativo)" : "");
-      return { label, count };
+      const name = (person && person.name) ? person.name : email;
+      const label = name + (person && person.disabled ? " (inativo)" : "");
+      return { name, label, count };
     });
   if(!topRows.length){
     topAssigneesEl.innerHTML = '<p class="snippet">Nenhuma demanda concluída com responsável atribuído ainda.</p>';
   }else{
     const maxCount = Math.max(...topRows.map(r => r.count));
+    // MAX_BAR_PX precisa bater com a altura de .vbar-grid no CSS — é o que faz as linhas de
+    // grade ficarem alinhadas com a área real onde as barras crescem.
     const MAX_BAR_PX = 140;
-    topAssigneesEl.innerHTML = topRows.map((r, i) => `
-      <div class="vbar-item${i === 0 ? " top-1" : ""}" style="--i:${i};">
-        <div class="vbar-value">${r.count}</div>
-        <div class="vbar-track" style="height:${MAX_BAR_PX}px;">
-          <div class="vbar-fill" style="height:${Math.max(6, Math.round((r.count / maxCount) * MAX_BAR_PX))}px;"></div>
+    topAssigneesEl.innerHTML = `
+      <div class="vbar-grid"></div>
+      ${topRows.map((r, i) => `
+        <div class="vbar-item${i === 0 ? " top-1" : ""}" style="--i:${i};">
+          ${i === 0 ? `<div class="vbar-crown">${ICON_CROWN}</div>` : ""}
+          <div class="vbar-avatar">${escapeHtml(initialsFromName(r.name))}</div>
+          <div class="vbar-value">${r.count}</div>
+          <div class="vbar-track" style="height:${MAX_BAR_PX}px;">
+            <div class="vbar-fill" style="height:${Math.max(6, Math.round((r.count / maxCount) * MAX_BAR_PX))}px;"></div>
+          </div>
+          <div class="vbar-label" title="${escapeHtml(r.label)}">${escapeHtml(r.label)}</div>
         </div>
-        <div class="vbar-label" title="${escapeHtml(r.label)}">${escapeHtml(r.label)}</div>
-      </div>
-    `).join("");
+      `).join("")}
+    `;
   }
 }
 
