@@ -1178,6 +1178,35 @@
 </div>
 
 <script type="module">
+// ---------- Verificação de versão publicada ----------
+// Quem já está com a aba aberta continua rodando o código antigo em memória até fechar/recarregar
+// — o que pode gerar comportamento inconsistente com quem já pegou a versão nova (formatos de
+// dado diferentes, bugs já corrigidos etc.). Por isso, verificamos periodicamente se o HTML
+// publicado mudou de versão; se mudou, desconecta e recarrega a página, forçando todo mundo pra
+// versão mais recente (a pessoa só precisa fazer login de novo).
+// IMPORTANTE: mude o valor de APP_VERSION a cada publicação — é a única forma de o mecanismo
+// perceber que existe uma versão nova.
+const APP_VERSION = "2026-08-26.1";
+
+async function checkForNewVersion(){
+  try{
+    const res = await fetch(location.origin + location.pathname, { cache: "no-store" });
+    const text = await res.text();
+    const match = text.match(/const APP_VERSION = "([^"]+)"/);
+    if(match && match[1] && match[1] !== APP_VERSION){
+      console.warn(`Nova versão publicada (${match[1]} ≠ ${APP_VERSION}) — reconectando...`);
+      if(auth && auth.currentUser){
+        try{ await authSignOut(auth); }catch(e){}
+      }
+      try{ alert("Uma atualização da plataforma foi publicada. A página vai recarregar — só entrar de novo."); }catch(e){}
+      location.reload();
+    }
+  }catch(e){
+    // Falha de rede não deve incomodar quem está usando — tenta de novo no próximo ciclo.
+  }
+}
+setInterval(checkForNewVersion, 3 * 60 * 1000);
+
 // Firebase é carregado dinamicamente (import() em vez de import estático) para que,
 // se o CDN falhar (rede bloqueada, ad-blocker etc.), a plataforma continue funcionando
 // normalmente com armazenamento local — nunca deve ficar em branco por causa disso.
