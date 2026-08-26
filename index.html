@@ -4,6 +4,15 @@
 <meta charset="UTF-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1.0" />
 <title>Crediffato - Gestão</title>
+<link rel="icon" href="logo.png" type="image/png" />
+<script>
+  // Aplica o tema salvo ANTES da página desenhar, senão dá pra ver um flash da tela escura
+  // padrão antes de trocar pro tema claro (ou vice-versa) alguns milissegundos depois.
+  try{
+    var savedTheme = localStorage.getItem("theme");
+    if(savedTheme && savedTheme !== "escuro") document.documentElement.setAttribute("data-theme", savedTheme);
+  }catch(e){}
+</script>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500;600&family=IBM+Plex+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
@@ -36,6 +45,42 @@
     --radius:14px;
     --font-display:'IBM Plex Sans', sans-serif;
     --font-mono:'IBM Plex Mono', monospace;
+    color-scheme:dark;
+  }
+
+  /* ---------- temas ---------- */
+  /* "Escuro" (acima, no :root) é o padrão. Os outros só reescrevem a escala de fundo/texto —
+     as cores de severidade/status/setor ficam praticamente as mesmas em todos os temas de
+     propósito, porque o SIGNIFICADO delas (crítico = vermelho, concluído = verde...) precisa
+     continuar reconhecível não importa o tema escolhido. */
+  :root[data-theme="claro"]{
+    --ink-0:#f3f4f8;
+    --ink-1:#ffffff;
+    --ink-2:#eef0f6;
+    --ink-3:#e3e6f0;
+    --hairline:#dbdfea;
+    --text-hi:#161d2e;
+    --text-mid:#4c5670;
+    --text-low:#77809a;
+
+    --sev-media:#5c6a8a;
+    --st-aberto:#5c6a8a;
+    --st-concluido:#0f9d63;
+
+    --brand-red-dim:#d40f3a1f;
+    color-scheme:light;
+  }
+
+  :root[data-theme="vermelho"]{
+    --ink-0:#170a0d;
+    --ink-1:#210d13;
+    --ink-2:#2c141a;
+    --ink-3:#3b1b23;
+    --hairline:#4a232b;
+    --text-hi:#fbeef0;
+    --text-mid:#d8a9af;
+    --text-low:#a97c82;
+    color-scheme:dark;
   }
 
   *{box-sizing:border-box;}
@@ -92,6 +137,17 @@
   }
   .presentation-toggle-btn:hover{border-color:var(--text-low); color:var(--text-hi);}
   .presentation-toggle-btn.active{background:var(--brand-red); border-color:var(--brand-red); color:#fff;}
+  .theme-switcher{display:flex; gap:7px; align-items:center;}
+  .theme-swatch{
+    width:19px; height:19px; border-radius:50%; border:2px solid var(--hairline); cursor:pointer; padding:0;
+    transition:transform .15s ease, border-color .15s ease, box-shadow .15s ease;
+  }
+  .theme-swatch:hover{transform:scale(1.15);}
+  .theme-swatch:focus-visible{outline:2px solid #6c8cff; outline-offset:2px;}
+  .theme-swatch.active{border-color:var(--brand-red); box-shadow:0 0 0 2px var(--brand-red-dim);}
+  .theme-swatch[data-theme-choice="escuro"]{background:#0b1220;}
+  .theme-swatch[data-theme-choice="claro"]{background:#f3f4f8;}
+  .theme-swatch[data-theme-choice="vermelho"]{background:#170a0d;}
 
   .main-nav{display:flex; gap:6px; background:var(--ink-1); border:1px solid var(--hairline); border-radius:999px; padding:4px; margin-bottom:24px; width:fit-content;}
   .main-nav button{
@@ -180,10 +236,11 @@
   .card{
     background:var(--ink-2); border:1px solid var(--hairline); border-left:3px solid var(--rail, var(--text-low));
     border-radius:10px; padding:14px 14px 13px; cursor:pointer;
-    transition:transform .15s ease, background .15s ease, border-color .15s ease;
+    transition:transform .15s ease, background .15s ease, border-color .15s ease, box-shadow .15s ease;
     opacity:0; transform:translateY(8px); animation:rise .5s ease forwards;
   }
-  .card:hover{background:var(--ink-3);}
+  .card:hover{background:var(--ink-3); transform:translateY(-2px); box-shadow:0 8px 20px #00000030;}
+  .card.open:hover{transform:none;}
   .card:focus-visible{outline:2px solid #6c8cff; outline-offset:2px;}
   .card[draggable="true"]{cursor:grab;}
   .card.dragging{opacity:.4;}
@@ -484,8 +541,11 @@
   .toggle-access-btn.reactivate{color:var(--st-concluido); border-color:#4ee2a055;}
 
   .kpi-row{display:grid; grid-template-columns:repeat(7, 1fr); gap:14px; margin-bottom:28px;}
-  .kpi-card{background:var(--ink-1); border:1px solid var(--hairline); border-radius:var(--radius); padding:16px;}
+  .kpi-card{background:var(--ink-1); border:1px solid var(--hairline); border-radius:var(--radius); padding:16px; transition:border-color .2s ease, background-color .2s ease;}
   .kpi-card.kpi-alert{border-color:#e2564f66; background:#e2564f0f;}
+  .kpi-card.kpi-alert-pa{border-color:#8b8dfb66; background:#8b8dfb14;}
+  .kpi-card.kpi-primary{border-color:var(--brand-red); background:var(--brand-red-dim);}
+  .kpi-card.kpi-primary .n{font-size:27px;}
   .kpi-card .n{font-family:var(--font-mono); font-size:24px; font-weight:600; color:var(--text-hi);}
   .kpi-card .l{font-size:11.5px; color:var(--text-low); text-transform:uppercase; letter-spacing:.08em; margin-top:4px;}
   .overview-block{margin-bottom:28px;}
@@ -494,7 +554,8 @@
   .donut-chart{display:flex; align-items:center; gap:16px; flex-wrap:wrap;}
   .donut-chart svg circle{transition:stroke-dasharray .6s ease;}
   .donut-legend{display:flex; flex-direction:column; gap:7px; flex:1; min-width:0;}
-  .donut-legend-item{display:flex; align-items:center; gap:8px; font-size:12px; color:var(--text-mid); white-space:nowrap;}
+  .donut-legend-item{display:flex; align-items:center; gap:8px; font-size:12px; color:var(--text-mid); min-width:0;}
+  .donut-legend-item .dl-label{overflow:hidden; text-overflow:ellipsis; white-space:nowrap; min-width:0;}
   .donut-legend-dot{width:9px; height:9px; border-radius:2px; flex-shrink:0;}
   .donut-legend-item b{color:var(--text-hi); margin-left:auto; font-family:var(--font-mono); font-weight:600; padding-left:10px;}
   .donut-multiples{display:grid; grid-template-columns:repeat(auto-fill, minmax(150px, 1fr)); gap:14px;}
@@ -672,7 +733,12 @@
         <span class="role-tag" id="user-role">—</span>
         <button type="button" class="logout-btn" id="logout-btn">sair</button>
       </div>
-      <button type="button" class="presentation-toggle-btn" id="presentation-toggle" style="display:none;">🖥 Modo apresentação</button>
+      <button type="button" class="presentation-toggle-btn" id="presentation-toggle" style="display:none;"><svg width="13" height="13" viewBox="0 0 16 16" fill="none" style="vertical-align:-2px;" aria-hidden="true"><rect x="1.5" y="2.5" width="13" height="9" rx="1" stroke="currentColor" stroke-width="1.4"/><path d="M5.5 14.5H10.5M8 11.5V14.5" stroke="currentColor" stroke-width="1.4" stroke-linecap="round"/></svg> Modo apresentação</button>
+      <div class="theme-switcher" id="theme-switcher" role="group" aria-label="Escolher tema">
+        <button type="button" class="theme-swatch" data-theme-choice="escuro" title="Tema escuro" aria-label="Tema escuro"></button>
+        <button type="button" class="theme-swatch" data-theme-choice="claro" title="Tema claro" aria-label="Tema claro"></button>
+        <button type="button" class="theme-swatch" data-theme-choice="vermelho" title="Tema vermelho Crediffato" aria-label="Tema vermelho Crediffato"></button>
+      </div>
     </div>
   </header>
 
@@ -1193,6 +1259,14 @@ function isArchived(item){
   return item.status === "concluido" && !!validationInfo(item);
 }
 
+// Ícones em SVG inline (currentColor = herda a cor do texto ao redor), no lugar de emoji pra
+// avisos/confirmações — emoji renderiza diferente em cada sistema operacional e destoa do
+// resto da interface, que é toda desenhada (fontes, paleta). Medalhas do ranking continuam
+// emoji de propósito: ali o tom é mais lúdico, não é um ícone de sistema.
+const ICON_CHECK = '<svg width="12" height="12" viewBox="0 0 16 16" fill="none" style="vertical-align:-1px;" aria-hidden="true"><path d="M13.5 4.5L6 12L2.5 8.5" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>';
+const ICON_WARNING = '<svg width="12" height="12" viewBox="0 0 16 16" fill="none" style="vertical-align:-1px;" aria-hidden="true"><path d="M8 1.5L15 14H1L8 1.5Z" stroke="currentColor" stroke-width="1.5" stroke-linejoin="round"/><path d="M8 6.5V9.5" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/><circle cx="8" cy="11.8" r="0.9" fill="currentColor"/></svg>';
+const ICON_MONITOR = '<svg width="13" height="13" viewBox="0 0 16 16" fill="none" style="vertical-align:-2px;" aria-hidden="true"><rect x="1.5" y="2.5" width="13" height="9" rx="1" stroke="currentColor" stroke-width="1.4"/><path d="M5.5 14.5H10.5M8 11.5V14.5" stroke="currentColor" stroke-width="1.4" stroke-linecap="round"/></svg>';
+
 const SEV_LABEL = {critica:"Crítica", alta:"Alta", media:"Média"};
 const ROLE_LABEL = {admin:"Admin", gestor:"Gestor", supervisor:"Supervisor", operador:"Operador"};
 
@@ -1381,7 +1455,7 @@ function cardHTML(item){
         <span style="display:flex; align-items:center; gap:6px; flex-wrap:wrap;">
           <span class="tag">${item.id}</span>
           <span class="area-tag">${sectorLabel(item.area)}</span>
-          ${due.state === "atrasado" ? '<span class="overdue-badge">⚠ Atrasado</span>' : ""}
+          ${due.state === "atrasado" ? `<span class="overdue-badge">${ICON_WARNING} Atrasado</span>` : ""}
           ${(ATTACHMENTS_ENABLED && item.attachments && item.attachments.length) ? `<span class="attachment-count-badge">📎 ${item.attachments.length}</span>` : ""}
         </span>
         <span style="display:flex; align-items:center; gap:8px; flex-wrap:wrap;">
@@ -1398,10 +1472,10 @@ function cardHTML(item){
           <option value="concluido" ${item.status==="concluido"?"selected":""}>Concluído</option>
         </select>
       </div>
-      ${completed ? `<div class="completed-badge">✓ Concluído por <b>${escapeHtml(completed.authorName || completed.authorEmail || "—")}</b> · ${formatCommentDate(completed.at)}</div>` : ""}
+      ${completed ? `<div class="completed-badge">${ICON_CHECK} Concluído por <b>${escapeHtml(completed.authorName || completed.authorEmail || "—")}</b> · ${formatCommentDate(completed.at)}</div>` : ""}
       ${(item.status === "concluido" && canManage()) ? (validation
-        ? `<div class="validated-badge">✓ Validado por <b>${escapeHtml(validation.authorName || validation.authorEmail || "—")}</b> · ${formatCommentDate(validation.at)}</div>`
-        : `<button type="button" class="validate-btn" data-validate-id="${item.id}">✓ Validar conclusão</button>`
+        ? `<div class="validated-badge">${ICON_CHECK} Validado por <b>${escapeHtml(validation.authorName || validation.authorEmail || "—")}</b> · ${formatCommentDate(validation.at)}</div>`
+        : `<button type="button" class="validate-btn" data-validate-id="${item.id}">${ICON_CHECK} Validar conclusão</button>`
       ) : ""}
       <div class="status-row">
         <select class="status-select assignee-select" data-assignee-id="${item.id}" aria-label="Responsável por ${item.title}">
@@ -1954,13 +2028,13 @@ function renderOverview(){
   const pctConcluidas = total ? Math.round((concluidas / total) * 100) : 0;
 
   kpiEl.innerHTML = `
-    <div class="kpi-card"><div class="n">${total}</div><div class="l">Total de demandas</div></div>
+    <div class="kpi-card kpi-primary"><div class="n">${total}</div><div class="l">Total de demandas</div></div>
     <div class="kpi-card"><div class="n" style="color:var(--st-concluido);">${concluidas}</div><div class="l">Concluídas (${pctConcluidas}%)</div></div>
     <div class="kpi-card"><div class="n" style="color:var(--st-andamento);">${andamento}</div><div class="l">Em andamento</div></div>
     <div class="kpi-card"><div class="n" style="color:var(--st-aberto);">${aberto}</div><div class="l">Em aberto</div></div>
     <div class="kpi-card"><div class="n" style="color:var(--text-low);">${backlogCount}</div><div class="l">No backlog</div></div>
     <div class="kpi-card${atrasadas ? " kpi-alert" : ""}"><div class="n" style="color:var(--sev-critica);">${atrasadas}</div><div class="l">Atrasadas</div></div>
-    <div class="kpi-card"><div class="n" style="color:var(--pa);">${pendentesValidacao}</div><div class="l">Pendentes de validação</div></div>
+    <div class="kpi-card${pendentesValidacao ? " kpi-alert-pa" : ""}"><div class="n" style="color:var(--pa);">${pendentesValidacao}</div><div class="l">Pendentes de validação</div></div>
   `;
 
   // Status e prioridade: rosca simples de proporção — o total de demandas do recorte atual
@@ -2037,7 +2111,7 @@ function renderOverview(){
         const person = DIRECTORY.find(u => u.email === r.email);
         const label = ((person && person.name) ? person.name : r.email) + (person && person.disabled ? " (inativo)" : "");
         const level = r.load >= 6 ? "alta" : r.load >= 3 ? "media" : "normal";
-        return `<div class="donut-legend-item"><span class="donut-legend-dot" style="background:${SECTOR_PALETTE[i % SECTOR_PALETTE.length]};"></span>${label}${level === "alta" ? ' <span class="overdue-badge">⚠</span>' : ""}<b>${r.load}</b></div>`;
+        return `<div class="donut-legend-item"><span class="donut-legend-dot" style="background:${SECTOR_PALETTE[i % SECTOR_PALETTE.length]};"></span><span class="dl-label" title="${escapeHtml(label)}">${escapeHtml(label)}</span>${level === "alta" ? ` <span class="overdue-badge">${ICON_WARNING}</span>` : ""}<b>${r.load}</b></div>`;
       }).join("")}
     </div>
   ` : '<p class="snippet">Nenhuma demanda ativa com responsável atribuído.</p>';
@@ -3008,8 +3082,27 @@ document.getElementById("logout-btn").addEventListener("click", async () => {
 document.getElementById("presentation-toggle").addEventListener("click", (e) => {
   const active = document.body.classList.toggle("presentation-mode");
   e.target.classList.toggle("active", active);
-  e.target.textContent = active ? "Sair do modo apresentação" : "🖥 Modo apresentação";
+  e.target.innerHTML = active ? "Sair do modo apresentação" : `${ICON_MONITOR} Modo apresentação`;
 });
+
+// Tema é preferência pessoal de quem está usando, não um dado da equipe — por isso fica só no
+// localStorage do navegador de cada um (não sincroniza pelo Firestore), igual ao padrão de
+// "conveniência por pessoa" já usado no resto da plataforma.
+function applyTheme(theme){
+  if(theme === "escuro") document.documentElement.removeAttribute("data-theme");
+  else document.documentElement.setAttribute("data-theme", theme);
+  document.querySelectorAll(".theme-swatch").forEach(btn => {
+    btn.classList.toggle("active", btn.getAttribute("data-theme-choice") === theme);
+  });
+}
+document.querySelectorAll(".theme-swatch").forEach(btn => {
+  btn.addEventListener("click", () => {
+    const theme = btn.getAttribute("data-theme-choice");
+    try{ localStorage.setItem("theme", theme); }catch(e){}
+    applyTheme(theme);
+  });
+});
+applyTheme((() => { try{ return localStorage.getItem("theme") || "escuro"; }catch(e){ return "escuro"; } })());
 document.getElementById("login-signout-denied").addEventListener("click", async () => {
   if(auth) await authSignOut(auth);
 });
