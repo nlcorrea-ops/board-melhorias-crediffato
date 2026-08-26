@@ -105,10 +105,8 @@
     border-bottom:1px solid var(--hairline); padding-bottom:22px; margin-bottom:22px;
   }
   .brand-row{display:flex; align-items:center; gap:12px; margin-bottom:10px;}
-  .brand-logo{
-    height:30px; width:auto; border-radius:4px; box-shadow:0 0 0 1px var(--hairline);
-    background:#121b30; padding:5px 9px; box-sizing:content-box;
-  }
+  .brand-logo{height:30px; width:auto;}
+  :root[data-theme="claro"] .brand-logo{filter:invert(1);}
   .eyebrow{
     font-family:var(--font-mono); font-size:12px; letter-spacing:.14em; text-transform:uppercase;
     color:var(--text-low); display:flex; align-items:center; gap:8px; margin:0;
@@ -680,10 +678,10 @@
     to{ opacity:1; transform:translateY(0) scale(1); }
   }
   .login-card img{
-    height:56px; width:auto; margin-bottom:18px; border-radius:8px;
-    background:#121b30; padding:10px 16px; box-sizing:content-box;
+    height:56px; width:auto; margin-bottom:18px;
     animation:loginLogoIn .7s .1s cubic-bezier(.16,1,.3,1) both;
   }
+  :root[data-theme="claro"] .login-card img{filter:invert(1);}
   @keyframes loginLogoIn{
     from{ opacity:0; transform:scale(.8) rotate(-4deg); }
     to{ opacity:1; transform:scale(1) rotate(0); }
