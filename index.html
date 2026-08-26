@@ -584,6 +584,30 @@
   .resolution-bar-fill{display:block; height:100%; border-radius:999px; background:var(--brand-red);}
   .resolution-bar-value{width:64px; flex-shrink:0; text-align:right; font-family:var(--font-mono); font-size:12.5px; color:var(--text-hi);}
 
+  .vbar-chart{
+    display:flex; align-items:flex-end; justify-content:center; gap:36px;
+    min-height:180px; padding-top:8px; border-bottom:1px solid var(--hairline);
+  }
+  .vbar-item{
+    flex:0 1 76px; display:flex; flex-direction:column; align-items:center;
+    opacity:0; transform:translateY(8px); animation:rise .45s ease forwards; animation-delay:calc(var(--i, 0) * .08s);
+  }
+  .vbar-value{font-family:var(--font-mono); font-size:13px; font-weight:700; color:var(--text-hi); margin-bottom:8px;}
+  .vbar-track{width:100%; max-width:48px; display:flex; align-items:flex-end; justify-content:center;}
+  .vbar-fill{
+    width:100%; background:linear-gradient(180deg, var(--brand-red), #a30c2c);
+    border-radius:10px 10px 3px 3px; min-height:6px;
+    box-shadow:0 6px 16px #d40f3a2e;
+    transition:transform .18s ease, box-shadow .18s ease;
+  }
+  .vbar-item:hover .vbar-fill{transform:scaleX(1.12); box-shadow:0 8px 20px #d40f3a45;}
+  .vbar-item.top-1 .vbar-fill{background:linear-gradient(180deg, #f7d576, #d99f2b); box-shadow:0 6px 16px #f2c14e33;}
+  .vbar-item.top-1:hover .vbar-fill{box-shadow:0 8px 20px #f2c14e55;}
+  .vbar-label{
+    margin-top:10px; font-size:11.5px; color:var(--text-mid); text-align:center;
+    max-width:100%; overflow:hidden; text-overflow:ellipsis; white-space:nowrap;
+  }
+
   @media (max-width:900px){
     .kpi-row{grid-template-columns:repeat(2,1fr);}
   }
@@ -617,7 +641,7 @@
     .modal-overlay.open{animation:none;}
     .modal{animation:none;}
     .filters-panel.open{animation:none;}
-    .resolution-bar-row, .donut-multiple-item{animation:none; opacity:1; transform:none;}
+    .resolution-bar-row, .donut-multiple-item, .vbar-item{animation:none; opacity:1; transform:none;}
     .donut-chart svg circle{transition:none;}
     *{transition:none !important;}
   }
@@ -903,6 +927,10 @@
     <div class="overview-block">
       <div class="summary-label">Tempo médio de resolução</div>
       <div class="resolution-block" id="overview-resolution"></div>
+    </div>
+    <div class="overview-block">
+      <div class="summary-label">Top 5 — quem mais concluiu</div>
+      <div class="vbar-chart" id="overview-top-assignees"></div>
     </div>
   </div>
 
@@ -2231,7 +2259,8 @@ function renderOverview(){
   const workloadDonutEl = document.getElementById("overview-workload-donut");
   const sectorsEl = document.getElementById("overview-sectors");
   const resolutionEl = document.getElementById("overview-resolution");
-  if(!kpiEl || !statusDonutEl || !priorityDonutEl || !workloadDonutEl || !sectorsEl || !resolutionEl) return;
+  const topAssigneesEl = document.getElementById("overview-top-assignees");
+  if(!kpiEl || !statusDonutEl || !priorityDonutEl || !workloadDonutEl || !sectorsEl || !resolutionEl || !topAssigneesEl) return;
 
   // Vale o mesmo recorte de filtros (setor/responsável/prioridade/status) usado no Board e no
   // Backlog: escolher "Setor: Operações" aqui mostra os gráficos só daquele setor, por exemplo.
@@ -2384,6 +2413,40 @@ function renderOverview(){
         `).join("")}
       </div>
     `;
+  }
+
+  // Ranking unificado (não separado por setor) de quem mais concluiu, como barras verticais —
+  // no lugar do antigo card com medalha + mini-rosca de % + fração, que misturava representações
+  // diferentes do mesmo dado e podia contradizer a própria ordenação da lista.
+  const doneByAssignee = {};
+  opData.forEach(d => {
+    if(d.status !== "concluido") return;
+    const a = itemAssignee(d);
+    if(!a) return;
+    doneByAssignee[a] = (doneByAssignee[a] || 0) + 1;
+  });
+  const topRows = Object.entries(doneByAssignee)
+    .sort((a, b) => b[1] - a[1])
+    .slice(0, 5)
+    .map(([email, count]) => {
+      const person = DIRECTORY.find(u => u.email === email);
+      const label = ((person && person.name) ? person.name : email) + (person && person.disabled ? " (inativo)" : "");
+      return { label, count };
+    });
+  if(!topRows.length){
+    topAssigneesEl.innerHTML = '<p class="snippet">Nenhuma demanda concluída com responsável atribuído ainda.</p>';
+  }else{
+    const maxCount = Math.max(...topRows.map(r => r.count));
+    const MAX_BAR_PX = 140;
+    topAssigneesEl.innerHTML = topRows.map((r, i) => `
+      <div class="vbar-item${i === 0 ? " top-1" : ""}" style="--i:${i};">
+        <div class="vbar-value">${r.count}</div>
+        <div class="vbar-track" style="height:${MAX_BAR_PX}px;">
+          <div class="vbar-fill" style="height:${Math.max(6, Math.round((r.count / maxCount) * MAX_BAR_PX))}px;"></div>
+        </div>
+        <div class="vbar-label" title="${escapeHtml(r.label)}">${escapeHtml(r.label)}</div>
+      </div>
+    `).join("");
   }
 }
 
