@@ -660,26 +660,76 @@
   /* ---------- login screen ---------- */
   #login-screen{
     position:fixed; inset:0; z-index:200; display:flex; align-items:center; justify-content:center;
-    background:
-      radial-gradient(ellipse 900px 600px at 15% -10%, #d40f3a2e, transparent),
-      radial-gradient(ellipse 800px 600px at 100% 100%, #d40f3a22, transparent),
-      var(--ink-0);
-    padding:20px;
+    background:var(--ink-0);
+    padding:20px; overflow:hidden;
   }
   #login-screen.hidden{display:none;}
+  #login-network{position:absolute; inset:0; display:block;}
   .login-card{
-    width:100%; max-width:380px; background:var(--ink-1); border:1px solid var(--hairline);
-    border-radius:18px; padding:32px 28px; box-shadow:0 20px 60px #00000066;
+    position:relative; z-index:1;
+    width:100%; max-width:380px;
+    background:color-mix(in srgb, var(--ink-1) 78%, transparent);
+    backdrop-filter:blur(18px); -webkit-backdrop-filter:blur(18px);
+    border:1px solid var(--hairline); border-radius:18px; padding:32px 28px;
+    box-shadow:0 24px 70px #00000070, 0 0 0 1px var(--brand-red-dim);
     text-align:center;
+    animation:loginCardIn .6s cubic-bezier(.16,1,.3,1) both;
+  }
+  @keyframes loginCardIn{
+    from{ opacity:0; transform:translateY(22px) scale(.96); }
+    to{ opacity:1; transform:translateY(0) scale(1); }
   }
   .login-card img{
     height:56px; width:auto; margin-bottom:18px; border-radius:8px;
     background:#121b30; padding:10px 16px; box-sizing:content-box;
+    animation:loginLogoIn .7s .1s cubic-bezier(.16,1,.3,1) both;
+  }
+  @keyframes loginLogoIn{
+    from{ opacity:0; transform:scale(.8) rotate(-4deg); }
+    to{ opacity:1; transform:scale(1) rotate(0); }
   }
   .login-card h2{font-size:17px; margin:0 0 4px; font-weight:600;}
   .login-card .login-sub{font-size:12.5px; color:var(--text-low); margin:0 0 22px;}
   .login-card .field{text-align:left;}
-  .login-card .btn-primary{width:100%; padding:10px; margin-top:4px;}
+  .login-input-wrap{position:relative; display:block;}
+  .login-input-icon{
+    position:absolute; left:11px; top:50%; transform:translateY(-50%);
+    width:16px; height:16px; color:var(--text-low); pointer-events:none;
+    transition:color .18s ease;
+  }
+  .login-card .field input{
+    padding-left:34px !important; transition:border-color .18s ease, box-shadow .18s ease, background-color .18s ease;
+  }
+  .login-card .field input:focus{
+    outline:none; border-color:var(--brand-red) !important;
+    box-shadow:0 0 0 3px var(--brand-red-dim);
+    background:var(--ink-1);
+  }
+  .login-input-wrap:focus-within .login-input-icon{
+    color:var(--brand-red);
+  }
+  .login-toggle-pass{
+    position:absolute; right:8px; top:50%; transform:translateY(-50%);
+    width:26px; height:26px; display:flex; align-items:center; justify-content:center;
+    background:none; border:none; border-radius:6px; color:var(--text-low); cursor:pointer;
+    transition:color .18s ease, background-color .18s ease;
+  }
+  .login-toggle-pass:hover{color:var(--text-hi); background:var(--ink-2);}
+  .login-toggle-pass svg{width:16px; height:16px;}
+  .login-toggle-pass .icon-eye-off{display:none;}
+  .login-toggle-pass.is-visible .icon-eye{display:none;}
+  .login-toggle-pass.is-visible .icon-eye-off{display:block;}
+  .login-card .btn-primary{
+    width:100%; padding:11px; margin-top:4px; position:relative; overflow:hidden;
+    background:linear-gradient(135deg, var(--brand-red), #a30c2c);
+    border:none; font-size:13.5px; letter-spacing:.02em;
+    transition:transform .15s ease, box-shadow .15s ease, opacity .15s ease;
+  }
+  .login-card .btn-primary:hover{
+    transform:translateY(-2px); opacity:1;
+    box-shadow:0 10px 24px #d40f3a4d;
+  }
+  .login-card .btn-primary:active{transform:translateY(0) scale(.98);}
   .login-error{color:var(--sev-critica); font-size:12px; margin:10px 0 0; min-height:14px;}
   .login-forgot{background:none; border:none; color:var(--text-low); font-size:11.5px; text-decoration:underline; cursor:pointer; margin-top:14px; font-family:var(--font-mono);}
   .login-forgot:hover{color:var(--text-hi);}
@@ -696,6 +746,7 @@
 <body>
 
 <div id="login-screen">
+  <canvas id="login-network" aria-hidden="true"></canvas>
   <div class="login-card">
     <img src="logo.png" alt="Crediffato" />
     <h2>Crediffato - Gestão</h2>
@@ -703,11 +754,21 @@
     <form id="login-form">
       <label class="field">
         <span class="field-label">E-mail</span>
-        <input type="email" id="login-email" required autocomplete="username" placeholder="voce@crediffato.com.br" />
+        <span class="login-input-wrap">
+          <svg class="login-input-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M3 6.5A2.5 2.5 0 0 1 5.5 4h13A2.5 2.5 0 0 1 21 6.5v11A2.5 2.5 0 0 1 18.5 20h-13A2.5 2.5 0 0 1 3 17.5v-11Z"/><path d="m4 6 8 6.5L20 6"/></svg>
+          <input type="email" id="login-email" required autocomplete="username" placeholder="voce@crediffato.com.br" />
+        </span>
       </label>
       <label class="field">
         <span class="field-label">Senha</span>
-        <input type="password" id="login-password" required autocomplete="current-password" placeholder="••••••••" />
+        <span class="login-input-wrap">
+          <svg class="login-input-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="4.5" y="10.5" width="15" height="9.5" rx="2.2"/><path d="M8 10.5V7.8a4 4 0 0 1 8 0v2.7"/></svg>
+          <input type="password" id="login-password" required autocomplete="current-password" placeholder="••••••••" style="padding-right:34px !important;" />
+          <button type="button" class="login-toggle-pass" id="login-toggle-pass" aria-label="Mostrar senha">
+            <svg class="icon-eye" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M2 12s3.5-7 10-7 10 7 10 7-3.5 7-10 7-10-7-10-7Z"/><circle cx="12" cy="12" r="3"/></svg>
+            <svg class="icon-eye-off" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M3 3l18 18"/><path d="M10.6 5.2A10.6 10.6 0 0 1 12 5c6.5 0 10 7 10 7a15.6 15.6 0 0 1-3.4 4.3M6.6 6.6C4 8.3 2 12 2 12s3.5 7 10 7a9.7 9.7 0 0 0 4.4-1"/><path d="M9.9 9.9a3 3 0 0 0 4.2 4.2"/></svg>
+          </button>
+        </span>
       </label>
       <button type="submit" class="btn-primary">Entrar</button>
       <p class="login-error" id="login-error"></p>
@@ -1036,6 +1097,76 @@ const firebaseConfig = {
   appId: "1:1010277250901:web:99e214f915db73f4e161dc"
 };
 const FIREBASE_API_KEY = firebaseConfig.apiKey;
+
+// Fundo animado da tela de login: pontos conectados por linhas, se movendo bem devagar.
+// Roda direto (não espera Firebase) já que a tela de login aparece antes de qualquer
+// autenticação. Pausa sozinho quando a tela de login fica escondida (poupar CPU) e
+// respeita "reduzir movimento" desenhando só um quadro estático em vez de animar.
+(function initLoginNetwork(){
+  const canvas = document.getElementById("login-network");
+  const ctx = canvas.getContext("2d");
+  const screenEl = document.getElementById("login-screen");
+  const reduceMotion = window.matchMedia && window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+  const dpr = Math.min(window.devicePixelRatio || 1, 2);
+  let particles = [];
+  let raf = null;
+
+  function resize(){
+    const w = window.innerWidth, h = window.innerHeight;
+    canvas.width = w * dpr; canvas.height = h * dpr;
+    canvas.style.width = w + "px"; canvas.style.height = h + "px";
+    ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+    const count = Math.min(90, Math.round((w * h) / 18000));
+    particles = Array.from({ length: count }, () => ({
+      x: Math.random() * w, y: Math.random() * h,
+      vx: (Math.random() - 0.5) * 0.25, vy: (Math.random() - 0.5) * 0.25,
+    }));
+  }
+
+  function step(){
+    const w = window.innerWidth, h = window.innerHeight;
+    ctx.clearRect(0, 0, w, h);
+    for(const p of particles){
+      p.x += p.vx; p.y += p.vy;
+      if(p.x < 0 || p.x > w) p.vx *= -1;
+      if(p.y < 0 || p.y > h) p.vy *= -1;
+    }
+    const maxDist = 130;
+    for(let i = 0; i < particles.length; i++){
+      for(let j = i + 1; j < particles.length; j++){
+        const a = particles[i], b = particles[j];
+        const dx = a.x - b.x, dy = a.y - b.y;
+        const dist = Math.sqrt(dx * dx + dy * dy);
+        if(dist < maxDist){
+          ctx.strokeStyle = `rgba(212,15,58,${(1 - dist / maxDist) * 0.35})`;
+          ctx.lineWidth = 1;
+          ctx.beginPath();
+          ctx.moveTo(a.x, a.y); ctx.lineTo(b.x, b.y);
+          ctx.stroke();
+        }
+      }
+    }
+    for(const p of particles){
+      ctx.fillStyle = "rgba(212,15,58,.75)";
+      ctx.beginPath();
+      ctx.arc(p.x, p.y, 1.6, 0, Math.PI * 2);
+      ctx.fill();
+    }
+    raf = (!screenEl.classList.contains("hidden") && !reduceMotion) ? requestAnimationFrame(step) : null;
+  }
+
+  function start(){
+    if(screenEl.classList.contains("hidden") || raf) return;
+    raf = requestAnimationFrame(step);
+  }
+
+  window.addEventListener("resize", () => { resize(); if(reduceMotion) step(); });
+  resize();
+  if(reduceMotion){ step(); } else { start(); }
+
+  // Volta a animar quando a tela de login reaparece (ex.: depois de um logout).
+  new MutationObserver(() => { if(!reduceMotion) start(); }).observe(screenEl, { attributes: true, attributeFilter: ["class"] });
+})();
 
 // E-mail do administrador "bootstrap": a primeira vez que essa conta fizer login,
 // a plataforma cria automaticamente o documento de permissão dela como admin (vê tudo).
@@ -3101,6 +3232,15 @@ async function handleAuthedUser(fbUser){
     showDenied();
   }
 }
+
+document.getElementById("login-toggle-pass").addEventListener("click", () => {
+  const input = document.getElementById("login-password");
+  const btn = document.getElementById("login-toggle-pass");
+  const showing = input.type === "text";
+  input.type = showing ? "password" : "text";
+  btn.classList.toggle("is-visible", !showing);
+  btn.setAttribute("aria-label", showing ? "Mostrar senha" : "Ocultar senha");
+});
 
 document.getElementById("login-form").addEventListener("submit", async (e) => {
   e.preventDefault();
