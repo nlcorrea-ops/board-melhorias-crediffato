@@ -570,24 +570,19 @@
   }
   .donut-multiple-item .dm-name{font-size:12.5px; font-weight:600; color:var(--text-hi); display:flex; align-items:center; gap:6px;}
   .donut-multiple-item .dm-sub{font-family:var(--font-mono); font-size:10.5px; color:var(--text-low);}
-  .leaderboard{display:flex; flex-direction:column; gap:10px;}
-  .leaderboard-item{
-    display:flex; align-items:center; gap:16px; background:var(--ink-1); border:1px solid var(--hairline);
-    border-radius:12px; padding:12px 16px;
+  .resolution-block{display:flex; flex-direction:column; gap:18px;}
+  .resolution-headline{display:flex; align-items:baseline; gap:10px; flex-wrap:wrap;}
+  .resolution-headline .n{font-family:var(--font-mono); font-size:32px; font-weight:700; color:var(--text-hi);}
+  .resolution-headline .l{font-size:12.5px; color:var(--text-low);}
+  .resolution-bars{display:flex; flex-direction:column; gap:10px;}
+  .resolution-bar-row{
+    display:flex; align-items:center; gap:12px;
     opacity:0; transform:translateY(8px); animation:rise .45s ease forwards; animation-delay:calc(var(--i, 0) * .06s);
   }
-  .lb-rank{
-    width:32px; height:32px; border-radius:50%; display:flex; align-items:center; justify-content:center;
-    font-family:var(--font-mono); font-weight:700; font-size:14px; background:var(--ink-2); color:var(--text-mid);
-    flex-shrink:0;
-  }
-  .leaderboard-item.rank-1 .lb-rank{background:#f2c14e2e; font-size:18px;}
-  .leaderboard-item.rank-2 .lb-rank{background:#c9d3e02e; font-size:18px;}
-  .leaderboard-item.rank-3 .lb-rank{background:#d98a4f2e; font-size:18px;}
-  .lb-info{flex:1; min-width:0;}
-  .lb-name{font-size:13.5px; font-weight:600; color:var(--text-hi);}
-  .lb-stats{font-family:var(--font-mono); font-size:16px; color:var(--text-hi); white-space:nowrap; flex-shrink:0; text-align:right;}
-  .lb-stats span{color:var(--text-low); font-size:11px; font-weight:400;}
+  .resolution-bar-label{width:110px; flex-shrink:0; font-size:12.5px; color:var(--text-mid);}
+  .resolution-bar-track{flex:1; height:10px; border-radius:999px; background:var(--ink-2); overflow:hidden;}
+  .resolution-bar-fill{display:block; height:100%; border-radius:999px; background:var(--brand-red);}
+  .resolution-bar-value{width:64px; flex-shrink:0; text-align:right; font-family:var(--font-mono); font-size:12.5px; color:var(--text-hi);}
 
   @media (max-width:900px){
     .kpi-row{grid-template-columns:repeat(2,1fr);}
@@ -622,7 +617,7 @@
     .modal-overlay.open{animation:none;}
     .modal{animation:none;}
     .filters-panel.open{animation:none;}
-    .leaderboard-item, .donut-multiple-item{animation:none; opacity:1; transform:none;}
+    .resolution-bar-row, .donut-multiple-item{animation:none; opacity:1; transform:none;}
     .donut-chart svg circle{transition:none;}
     *{transition:none !important;}
   }
@@ -906,8 +901,8 @@
       <div class="donut-multiples" id="overview-sectors"></div>
     </div>
     <div class="overview-block">
-      <div class="summary-label">🏆 Ranking de responsáveis</div>
-      <div class="leaderboard" id="overview-assignees"></div>
+      <div class="summary-label">Tempo médio de resolução</div>
+      <div class="resolution-block" id="overview-resolution"></div>
     </div>
   </div>
 
@@ -2235,8 +2230,8 @@ function renderOverview(){
   const priorityDonutEl = document.getElementById("overview-priority-donut");
   const workloadDonutEl = document.getElementById("overview-workload-donut");
   const sectorsEl = document.getElementById("overview-sectors");
-  const assigneesEl = document.getElementById("overview-assignees");
-  if(!kpiEl || !statusDonutEl || !priorityDonutEl || !workloadDonutEl || !sectorsEl || !assigneesEl) return;
+  const resolutionEl = document.getElementById("overview-resolution");
+  if(!kpiEl || !statusDonutEl || !priorityDonutEl || !workloadDonutEl || !sectorsEl || !resolutionEl) return;
 
   // Vale o mesmo recorte de filtros (setor/responsável/prioridade/status) usado no Board e no
   // Backlog: escolher "Setor: Operações" aqui mostra os gráficos só daquele setor, por exemplo.
@@ -2340,31 +2335,56 @@ function renderOverview(){
     </div>
   ` : '<p class="snippet">Nenhuma demanda ativa com responsável atribuído.</p>';
 
-  const byAssignee = {};
+  // Não existe timestamp de criação da demanda (itens seed nunca tiveram data, e itens novos
+  // também não guardam uma) — a melhor aproximação com o dado que realmente existe é medir da
+  // primeira mudança de status registrada até a entrada mais recente em "Concluído". Deixamos
+  // isso explícito no rótulo em vez de fingir que é o tempo de vida completo da demanda.
+  const resolutionSamples = [];
   opData.forEach(d => {
-    const a = itemAssignee(d);
-    if(!a) return;
-    if(!byAssignee[a]) byAssignee[a] = { total: 0, done: 0 };
-    byAssignee[a].total++;
-    if(d.status === "concluido") byAssignee[a].done++;
+    if(d.status !== "concluido") return;
+    const history = d.statusHistory || [];
+    if(!history.length) return;
+    const concludedEntries = history.filter(h => h.to === "concluido");
+    if(!concludedEntries.length) return;
+    const startAt = new Date(history[0].at).getTime();
+    const endAt = new Date(concludedEntries[concludedEntries.length - 1].at).getTime();
+    if(!isFinite(startAt) || !isFinite(endAt) || endAt < startAt) return;
+    resolutionSamples.push({ area: d.area, days: (endAt - startAt) / 86400000 });
   });
-  const rows = Object.entries(byAssignee).sort((a, b) => (b[1].done - a[1].done) || (b[1].total - a[1].total)).slice(0, 8);
-  const MEDALS = ["🥇", "🥈", "🥉"];
-  assigneesEl.innerHTML = rows.map(([email, stats], i) => {
-    const person = DIRECTORY.find(u => u.email === email);
-    const label = ((person && person.name) ? person.name : email) + (person && person.disabled ? " (inativo)" : "");
-    const p = stats.total ? Math.round((stats.done / stats.total) * 100) : 0;
-    return `
-      <div class="leaderboard-item rank-${i+1}" style="--i:${i};">
-        <div class="lb-rank">${MEDALS[i] || (i+1)}</div>
-        ${donutSVG([{ value: stats.done, color: "var(--st-concluido)" }, { value: stats.total - stats.done, color: "var(--ink-2)" }], { size: 46, stroke: 7, centerLabel: `${p}%` })}
-        <div class="lb-info">
-          <div class="lb-name">${label}</div>
-        </div>
-        <div class="lb-stats"><b>${stats.done}</b><span>/${stats.total} concluídas</span></div>
+
+  if(!resolutionSamples.length){
+    resolutionEl.innerHTML = '<p class="snippet">Ainda não há demandas concluídas com histórico suficiente pra calcular o tempo de resolução.</p>';
+  }else{
+    const overallAvg = resolutionSamples.reduce((s, r) => s + r.days, 0) / resolutionSamples.length;
+    const bySector = {};
+    resolutionSamples.forEach(r => {
+      if(!bySector[r.area]) bySector[r.area] = [];
+      bySector[r.area].push(r.days);
+    });
+    const sectorRows = Object.entries(bySector)
+      .map(([area, days]) => ({
+        label: (SECTORS.find(s => s.key === area) || {}).label || area,
+        avg: days.reduce((s, dd) => s + dd, 0) / days.length,
+      }))
+      .sort((a, b) => a.avg - b.avg);
+    const maxAvg = Math.max(...sectorRows.map(r => r.avg), 0.001);
+    const fmtDays = (n) => n < 1 ? `${Math.round(n * 24)}h` : `${n.toFixed(1)}d`;
+    resolutionEl.innerHTML = `
+      <div class="resolution-headline">
+        <span class="n">${fmtDays(overallAvg)}</span>
+        <span class="l">em média, da primeira atualização até a conclusão (${resolutionSamples.length} demanda${resolutionSamples.length === 1 ? "" : "s"})</span>
+      </div>
+      <div class="resolution-bars">
+        ${sectorRows.map((r, i) => `
+          <div class="resolution-bar-row" style="--i:${i};">
+            <span class="resolution-bar-label" title="${escapeHtml(r.label)}">${escapeHtml(r.label)}</span>
+            <span class="resolution-bar-track"><span class="resolution-bar-fill" style="width:${Math.max(4, (r.avg / maxAvg) * 100)}%;"></span></span>
+            <span class="resolution-bar-value">${fmtDays(r.avg)}</span>
+          </div>
+        `).join("")}
       </div>
     `;
-  }).join("") || '<p class="snippet">Nenhuma demanda com responsável atribuído ainda.</p>';
+  }
 }
 
 function greetingByHour(){
