@@ -1214,7 +1214,7 @@
 // que a comparação ">"/"<" abaixo saiba qual versão é mais nova) — é a única forma de o mecanismo
 // perceber que existe uma versão nova. Só funciona pra quem está conectado ao Firestore (modo de
 // contingência sem Firebase não tem sincronização em tempo real de nada, essa checagem incluída).
-const APP_VERSION = "2026-08-26T20:45:00Z";
+const APP_VERSION = "2026-08-26T21:00:00Z";
 
 // Desloga e recarrega — usado tanto pela verificação de versão nova quanto pelos sinais de
 // desconexão manual (shutdown geral ou alguém sendo desconectado individualmente).
@@ -1477,6 +1477,7 @@ let presenceHeartbeatTimer = null;
 let onlineListRerenderTimer = null;
 let fsDoc, fsGetDoc, fsSetDoc, fsUpdateDoc, fsOnSnapshot, fsFieldPath, fsDeleteField, fsArrayUnion, fsArrayRemove;
 let authSignIn, authOnState, authSignOut, authSendReset, authVerifyResetCode, authConfirmReset;
+let authVerifyBeforeUpdateEmail;
 let stRef, stUploadBytes, stGetDownloadURL, stDeleteObject;
 
 let currentUser = null; // { uid, email, role, assignedAreas }
@@ -1500,6 +1501,7 @@ async function initFirebase(){
     authSendReset = authMod.sendPasswordResetEmail;
     authVerifyResetCode = authMod.verifyPasswordResetCode;
     authConfirmReset = authMod.confirmPasswordReset;
+    authVerifyBeforeUpdateEmail = authMod.verifyBeforeUpdateEmail;
     stRef = storageMod.ref; stUploadBytes = storageMod.uploadBytes;
     stGetDownloadURL = storageMod.getDownloadURL; stDeleteObject = storageMod.deleteObject;
     const fbApp = initializeApp(firebaseConfig);
@@ -2396,8 +2398,12 @@ function startEditUser(uid){
   document.getElementById("user-name-input").value = user.name || "";
   const emailInput = document.getElementById("user-email-input");
   emailInput.value = user.email || "";
-  emailInput.readOnly = true;
-  emailInput.title = "O e-mail de login não pode ser alterado por aqui.";
+  // O e-mail de login só pode ser trocado pela própria conta (é uma restrição do Firebase Auth,
+  // não dá pra um admin trocar o e-mail de login de outra conta direto por aqui) — e mesmo assim
+  // só se for admin. Pra qualquer outro caso o campo continua bloqueado.
+  const canEditOwnEmail = currentUser && currentUser.role === "admin" && uid === currentUser.uid;
+  emailInput.readOnly = !canEditOwnEmail;
+  emailInput.title = canEditOwnEmail ? "" : "O e-mail de login só pode ser alterado pela própria conta admin.";
   document.getElementById("user-role-input").value = user.role;
   document.querySelectorAll('#user-areas-input input[type="checkbox"]').forEach(cb => {
     cb.checked = (user.assignedAreas || []).includes(cb.value);
@@ -3566,16 +3572,36 @@ document.getElementById("user-form").addEventListener("submit", async (e) => {
     const uid = editingUid;
     const user = DIRECTORY.find(u => u.uid === uid);
     if(!user){ msgEl.textContent = "Acesso não encontrado."; return; }
+    const emailChanged = email.toLowerCase() !== (user.email || "").toLowerCase();
+    if(emailChanged && !(currentUser && currentUser.role === "admin" && uid === currentUser.uid)){
+      msgEl.textContent = "O e-mail de login só pode ser alterado pela própria conta admin.";
+      return;
+    }
     try{
       const assignedAreas = role === "admin" ? SECTORS.map(s => s.key) : areas;
       await fsUpdateDoc(fsDoc(db, "users", uid), { name, role, assignedAreas });
       user.name = name; user.role = role; user.assignedAreas = assignedAreas;
       const newDirectory = DIRECTORY.map(u => ({ ...u }));
       await fsUpdateDoc(BOARD_DOC, "directory", newDirectory);
+      let emailMsg = "";
+      if(emailChanged){
+        // O e-mail do diretório/Firestore só é atualizado depois que a pessoa confirmar o link
+        // (ver a sincronização automática no login, em handleAuthedUser) — mudar aqui na hora
+        // deixaria Auth e Firestore descombinados até lá.
+        try{
+          await authVerifyBeforeUpdateEmail(auth.currentUser, email);
+          emailMsg = ` Enviamos um link de verificação para ${email} — seu login continua sendo ${user.email} até você confirmar por lá.`;
+        }catch(err){
+          console.error("Falha ao iniciar troca de e-mail:", err);
+          emailMsg = err.code === "auth/requires-recent-login"
+            ? " O e-mail não foi alterado: por segurança, saia e entre de novo, depois tente mudar o e-mail na hora em seguida."
+            : ` O e-mail não foi alterado: ${err.message || "erro desconhecido"}.`;
+        }
+      }
       cancelEditUser();
       refreshSectorDependentUI();
       msgEl.style.color = "var(--st-concluido)";
-      msgEl.textContent = `Acesso de ${name} atualizado.`;
+      msgEl.textContent = `Acesso de ${name} atualizado.${emailMsg}`;
     }catch(err){
       console.error("Falha ao atualizar acesso:", err);
       msgEl.textContent = "Não foi possível salvar as alterações: " + (err.message || "erro desconhecido");
@@ -3651,6 +3677,20 @@ async function handleAuthedUser(fbUser){
       return;
     }
     currentUser = { uid: fbUser.uid, email: fbUser.email, name: userDoc.name || "", role: userDoc.role, assignedAreas: userDoc.assignedAreas || [] };
+    // Alterar o e-mail de login (verifyBeforeUpdateEmail) só confirma no Auth quando a pessoa
+    // clica no link mandado pro e-mail novo — não tem como essa confirmação avisar o resto da
+    // plataforma na hora. Em vez disso, todo login/sessão restaurada compara o e-mail atual do
+    // Auth com o que está salvo no Firestore e corrige sozinho se estiverem diferentes.
+    if(fbUser.email && userDoc.email !== fbUser.email){
+      try{
+        await fsUpdateDoc(fsDoc(db, "users", fbUser.uid), "email", fbUser.email);
+        const newDirectory = DIRECTORY.map(u => u.uid === fbUser.uid ? { ...u, email: fbUser.email } : u);
+        await fsUpdateDoc(BOARD_DOC, "directory", newDirectory);
+        DIRECTORY = newDirectory;
+      }catch(e){
+        console.error("Falha ao sincronizar e-mail atualizado:", e);
+      }
+    }
     document.getElementById("user-email").textContent = currentUser.name || currentUser.email;
     document.getElementById("user-role").textContent = ROLE_LABEL[currentUser.role] || currentUser.role;
     applyRoleLayout();
