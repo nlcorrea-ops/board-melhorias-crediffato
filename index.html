@@ -249,6 +249,18 @@
     padding:6px 10px; margin-bottom:10px;
   }
   .completed-badge b{color:var(--st-concluido); font-weight:600;}
+  .validated-badge{
+    font-family:var(--font-mono); font-size:10.5px; color:var(--pa);
+    background:#8b8dfb1a; border:1px solid #8b8dfb55; border-radius:8px;
+    padding:6px 10px; margin-bottom:10px;
+  }
+  .validated-badge b{color:var(--pa); font-weight:600;}
+  .validate-btn{
+    display:block; width:100%; font-family:var(--font-mono); font-size:11px; font-weight:600;
+    color:var(--pa); background:#8b8dfb1a; border:1px solid #8b8dfb55; border-radius:8px;
+    padding:6px 10px; margin-bottom:10px; cursor:pointer; transition:background .15s ease;
+  }
+  .validate-btn:hover{background:#8b8dfb33;}
 
   .snippet{font-size:12.5px; color:var(--text-mid); line-height:1.5; margin:0;}
   .snippet b{color:var(--text-hi); font-weight:600;}
@@ -466,7 +478,7 @@
   .toggle-access-btn:hover{color:var(--text-hi); border-color:var(--text-low);}
   .toggle-access-btn.reactivate{color:var(--st-concluido); border-color:#4ee2a055;}
 
-  .kpi-row{display:grid; grid-template-columns:repeat(6, 1fr); gap:14px; margin-bottom:28px;}
+  .kpi-row{display:grid; grid-template-columns:repeat(7, 1fr); gap:14px; margin-bottom:28px;}
   .kpi-card{background:var(--ink-1); border:1px solid var(--hairline); border-radius:var(--radius); padding:16px;}
   .kpi-card.kpi-alert{border-color:#e2564f66; background:#e2564f0f;}
   .kpi-card .n{font-family:var(--font-mono); font-size:24px; font-weight:600; color:var(--text-hi);}
@@ -571,7 +583,8 @@
   body.presentation-mode .related-add-row,
   body.presentation-mode .related-remove-btn,
   body.presentation-mode .attachment-remove-btn,
-  body.presentation-mode .attachment-upload-row{
+  body.presentation-mode .attachment-upload-row,
+  body.presentation-mode .validate-btn{
     display:none !important;
   }
 
@@ -1105,6 +1118,13 @@ function completedByInfo(item){
   }
   return null;
 }
+// Diferente de "Concluído por" (quem mudou o status), a validação é uma checagem separada de
+// quem gerencia (admin/gestor/supervisor) confirmando que aquela conclusão está correta. Só
+// vale enquanto a demanda continuar concluída — some sozinha se ela for reaberta.
+function validationInfo(item){
+  if(item.status !== "concluido") return null;
+  return item.validated || null;
+}
 
 const SEV_LABEL = {critica:"Crítica", alta:"Alta", media:"Média"};
 const ROLE_LABEL = {admin:"Admin", gestor:"Gestor", supervisor:"Supervisor", operador:"Operador"};
@@ -1128,7 +1148,7 @@ let storageMode = hasClaudeStorage ? "shared" : (hasLocalStorage ? "local" : "no
 async function ensureBoardDoc(){
   const snap = await fsGetDoc(BOARD_DOC);
   if(!snap.exists()){
-    const initial = { statuses:{}, customItems:[], observacoes:{}, comentarios:{}, sectors:DEFAULT_SECTORS.slice(), directory:[], stages:{}, assignees:{}, dueDates:{}, statusHistory:{}, attachments:{}, related:{} };
+    const initial = { statuses:{}, customItems:[], observacoes:{}, comentarios:{}, sectors:DEFAULT_SECTORS.slice(), directory:[], stages:{}, assignees:{}, dueDates:{}, statusHistory:{}, attachments:{}, related:{}, validated:{} };
     await fsSetDoc(BOARD_DOC, initial);
     return initial;
   }
@@ -1236,6 +1256,7 @@ function applyRemoteState(data){
   const statusHistory = data.statusHistory || {};
   const attachments = data.attachments || {};
   const related = data.related || {};
+  const validated = data.validated || {};
   stagesMap = data.stages || {};
   assigneesMap = data.assignees || {};
   dueDatesMap = data.dueDates || {};
@@ -1251,6 +1272,7 @@ function applyRemoteState(data){
     d.statusHistory = statusHistory[d.id] || [];
     d.attachments = attachments[d.id] || [];
     d.related = related[d.id] || [];
+    d.validated = validated[d.id] || null;
     // Observações funcionam como comentários (lista de {text, authorName, authorEmail, at}),
     // imutáveis depois de publicados, guardadas no mapa compartilhado "comentarios" — pra
     // base e customizado por igual, sem reescrever o array customItems inteiro.
@@ -1282,6 +1304,7 @@ function cardHTML(item){
   const assigneeOptions = DIRECTORY.filter(u => (!u.disabled || u.email === assignee) && (u.role === "admin" || (u.assignedAreas || []).includes(item.area)));
   const due = dueInfo(item);
   const completed = completedByInfo(item);
+  const validation = validationInfo(item);
   const relatedIds = item.related || [];
   const relatedItems = relatedIds.map(rid => DATA.find(d => d.id === rid)).filter(Boolean);
   const relatedCandidates = DATA.filter(d => d.id !== item.id && !relatedIds.includes(d.id) && areasForUser().includes(d.area));
@@ -1305,10 +1328,14 @@ function cardHTML(item){
         <select class="status-select" data-status="${item.status}" aria-label="Status de ${item.title}">
           <option value="aberto" ${item.status==="aberto"?"selected":""}>Em aberto</option>
           <option value="andamento" ${item.status==="andamento"?"selected":""}>Em andamento</option>
-          <option value="concluido" ${item.status==="concluido"?"selected":""} ${!canManage() ? "disabled" : ""}>Concluído${!canManage() ? " (requer gestão)" : ""}</option>
+          <option value="concluido" ${item.status==="concluido"?"selected":""}>Concluído</option>
         </select>
       </div>
       ${completed ? `<div class="completed-badge">✓ Concluído por <b>${escapeHtml(completed.authorName || completed.authorEmail || "—")}</b> · ${formatCommentDate(completed.at)}</div>` : ""}
+      ${(item.status === "concluido" && canManage()) ? (validation
+        ? `<div class="validated-badge">✓ Validado por <b>${escapeHtml(validation.authorName || validation.authorEmail || "—")}</b> · ${formatCommentDate(validation.at)}</div>`
+        : `<button type="button" class="validate-btn" data-validate-id="${item.id}">✓ Validar conclusão</button>`
+      ) : ""}
       <div class="status-row">
         <select class="status-select assignee-select" data-assignee-id="${item.id}" aria-label="Responsável por ${item.title}">
           <option value="">Sem responsável</option>
@@ -1464,13 +1491,6 @@ function wireCardListeners(container){
     sel.addEventListener("mousedown", e => e.stopPropagation());
     sel.addEventListener("change", (e) => {
       e.stopPropagation();
-      // A opção "Concluído" já vem desabilitada no HTML pra quem não tem permissão de gestão,
-      // mas isso é reforço: se algo mudar o valor por outro caminho, a conclusão não passa.
-      if(e.target.value === "concluido" && !canManage()){
-        e.target.value = e.target.getAttribute("data-status");
-        alert("Só quem tem permissão de gestão pode marcar uma demanda como Concluída.");
-        return;
-      }
       const card = e.target.closest(".card");
       updateStatus(card.getAttribute("data-id"), e.target.value);
     });
@@ -1566,6 +1586,13 @@ function wireCardListeners(container){
       const targetId = e.target.value;
       e.target.value = "";
       if(targetId) addRelatedItem(id, targetId);
+    });
+  });
+
+  container.querySelectorAll(".validate-btn").forEach(btn => {
+    btn.addEventListener("click", (e) => {
+      e.stopPropagation();
+      markValidated(btn.getAttribute("data-validate-id"));
     });
   });
 }
@@ -1822,6 +1849,7 @@ function renderOverview(){
   const aberto = opData.filter(d => d.status === "aberto").length;
   const backlogCount = opData.filter(d => itemStage(d) === "backlog").length;
   const atrasadas = opData.filter(d => dueInfo(d).state === "atrasado").length;
+  const pendentesValidacao = opData.filter(d => d.status === "concluido" && !validationInfo(d)).length;
   const pctConcluidas = total ? Math.round((concluidas / total) * 100) : 0;
 
   kpiEl.innerHTML = `
@@ -1831,6 +1859,7 @@ function renderOverview(){
     <div class="kpi-card"><div class="n" style="color:var(--st-aberto);">${aberto}</div><div class="l">Em aberto</div></div>
     <div class="kpi-card"><div class="n" style="color:var(--text-low);">${backlogCount}</div><div class="l">No backlog</div></div>
     <div class="kpi-card${atrasadas ? " kpi-alert" : ""}"><div class="n" style="color:var(--sev-critica);">${atrasadas}</div><div class="l">Atrasadas</div></div>
+    <div class="kpi-card"><div class="n" style="color:var(--pa);">${pendentesValidacao}</div><div class="l">Pendentes de validação</div></div>
   `;
 
   const scopedSectors = SECTORS.filter(s => scopeAreas.includes(s.key) && (state.area === "todos" || s.key === state.area));
@@ -2043,6 +2072,12 @@ async function updateStatus(id, value){
     item.statusHistory = [...(item.statusHistory || []), historyEntry];
   }
 
+  // Cada conclusão é uma "rodada" nova de validação: se a demanda foi reaberta e concluída de
+  // novo, a validação anterior não vale mais pra essa nova rodada — precisa ser confirmada de
+  // novo por quem gerencia, senão o selo "Validado" ficaria mostrando uma checagem antiga.
+  const enteringConcluido = value === "concluido" && previousStatus !== "concluido";
+  if(enteringConcluido) item.validated = null;
+
   updateSummary();
   if(state.tab === "board") render(); else if(state.tab === "backlog") renderBacklog();
 
@@ -2053,6 +2088,7 @@ async function updateStatus(id, value){
   }
 
   if(historyEntry) await persistStatusHistoryEntry(id, historyEntry);
+  if(enteringConcluido) await resetValidation(id);
 }
 
 // Histórico de status: um log só de append (nunca editado nem apagado), guardado no mapa
@@ -2286,6 +2322,41 @@ async function removeRelatedItem(id, targetId){
   }
 }
 
+async function persistValidated(id, entry){
+  if(storageMode === "firebase" && firebaseReady){
+    const fpPath = new fsFieldPath("validated", id);
+    await fsUpdateDoc(BOARD_DOC, fpPath, entry || fsDeleteField());
+  }else{
+    await storageAdapter.set(`validated:${id}`, entry ? JSON.stringify(entry) : "");
+  }
+}
+
+async function markValidated(id){
+  if(!canManage()) return;
+  const item = DATA.find(d => d.id === id);
+  if(!item || item.status !== "concluido") return;
+  const entry = {
+    authorName: (currentUser && currentUser.name) || "",
+    authorEmail: (currentUser && currentUser.email) || "",
+    at: new Date().toISOString(),
+  };
+  item.validated = entry;
+  renderTabs();
+  try{
+    await persistValidated(id, entry);
+  }catch(err){
+    console.error("Falha ao salvar validação:", err);
+  }
+}
+
+async function resetValidation(id){
+  try{
+    await persistValidated(id, null);
+  }catch(err){
+    console.error("Falha ao resetar validação:", err);
+  }
+}
+
 async function loadObservacoes(){
   if(storageMode === "none") return;
   try{
@@ -2368,6 +2439,10 @@ async function loadItemFieldMaps(){
       try{
         const rawRelated = await storageAdapter.get(`related:${item.id}`);
         if(rawRelated) item.related = JSON.parse(rawRelated);
+      }catch(e){}
+      try{
+        const rawValidated = await storageAdapter.get(`validated:${item.id}`);
+        if(rawValidated) item.validated = JSON.parse(rawValidated);
       }catch(e){}
     }));
   }catch(e){
@@ -2452,6 +2527,7 @@ async function removeCustomItem(id){
     }
   }
   try{ await persistRelated(id, []); }catch(e){}
+  try{ await persistValidated(id, null); }catch(e){}
 }
 
 function openModal(){
