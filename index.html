@@ -1280,7 +1280,7 @@
 // que a comparação ">"/"<" abaixo saiba qual versão é mais nova) — é a única forma de o mecanismo
 // perceber que existe uma versão nova. Só funciona pra quem está conectado ao Firestore (modo de
 // contingência sem Firebase não tem sincronização em tempo real de nada, essa checagem incluída).
-const APP_VERSION = "2026-08-26T21:30:00Z";
+const APP_VERSION = "2026-08-26T22:45:00Z";
 
 // Desloga e recarrega — usado tanto pela verificação de versão nova quanto pelos sinais de
 // desconexão manual (shutdown geral ou alguém sendo desconectado individualmente).
@@ -3697,7 +3697,6 @@ document.getElementById("user-form").addEventListener("submit", async (e) => {
     const uid = signUpResult.localId;
     await fsSetDoc(fsDoc(db, "users", uid), { email, name, role, assignedAreas, disabled: false });
     await fsUpdateDoc(BOARD_DOC, "directory", fsArrayUnion({ uid, email, name, role, assignedAreas, disabled: false }));
-    DIRECTORY.push({ uid, email, name, role, assignedAreas, disabled: false });
     await restSendPasswordReset(email);
     refreshSectorDependentUI();
     document.getElementById("user-form").reset();
