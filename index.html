@@ -511,7 +511,7 @@
   }
   .archive-search:focus-visible{outline:2px solid #6c8cff; outline-offset:1px;}
 
-  .admin-grid{display:grid; grid-template-columns:1fr 1fr; gap:20px;}
+  .admin-grid{display:grid; grid-template-columns:1fr; gap:20px; max-width:620px;}
   .admin-card{background:var(--ink-1); border:1px solid var(--hairline); border-radius:16px; padding:20px;}
   .admin-card h3{margin:0 0 14px; font-size:15px; font-weight:600;}
   .admin-list{margin-top:16px; display:flex; flex-direction:column; gap:8px; max-height:280px; overflow-y:auto;}
@@ -593,9 +593,6 @@
     .kpi-row{grid-template-columns:1fr;}
   }
 
-  @media (max-width:800px){
-    .admin-grid{grid-template-columns:1fr;}
-  }
   @media (max-width:480px){
     .field-row{grid-template-columns:1fr;}
     .add-btn{margin-left:0;}
@@ -974,9 +971,13 @@
   <div class="tab-panel" id="admin-tab" style="display:none;">
     <div class="tab-panel-head">
       <h2>Criação de setores e acessos</h2>
+      <div class="view-toggle" id="admin-view-toggle" role="group" aria-label="O que criar">
+        <button type="button" data-admin-view="users" class="active">Colaboradores</button>
+        <button type="button" data-admin-view="sectors">Setores</button>
+      </div>
     </div>
     <div class="admin-grid">
-      <div class="admin-card">
+      <div class="admin-card" id="admin-card-sectors" style="display:none;">
         <h3>Novo setor</h3>
         <form id="sector-form">
           <label class="field">
@@ -988,7 +989,7 @@
         </form>
         <div class="admin-list" id="sector-list"></div>
       </div>
-      <div class="admin-card">
+      <div class="admin-card" id="admin-card-users">
         <h3 id="user-form-title">Novo acesso</h3>
         <form id="user-form">
           <label class="field">
@@ -1018,6 +1019,7 @@
           </div>
           <p class="form-msg" id="user-msg"></p>
         </form>
+        <input type="text" class="archive-search" id="user-search" style="margin-top:18px;" placeholder="Pesquisar por nome ou e-mail..." aria-label="Pesquisar acessos" />
         <div class="admin-list" id="user-list"></div>
       </div>
     </div>
@@ -1617,7 +1619,7 @@ function applyRemoteState(data){
   renderTabs();
 }
 
-let state = { sev:"todos", status:"todos", area:"todos", assignee:"todos", view:"area", tab:"board", archiveSearch:"" };
+let state = { sev:"todos", status:"todos", area:"todos", assignee:"todos", view:"area", tab:"board", archiveSearch:"", userSearch:"" };
 const openCardIds = new Set();
 const obsDrafts = {}; // id -> texto ainda não salvo, preservado entre re-renders
 
@@ -2057,7 +2059,11 @@ function renderAdminLists(){
   }
   const userList = document.getElementById("user-list");
   if(userList){
-    userList.innerHTML = DIRECTORY.map(u => `
+    const query = state.userSearch.trim().toLowerCase();
+    const filteredUsers = DIRECTORY.filter(u => !query
+      || (u.name || "").toLowerCase().includes(query)
+      || (u.email || "").toLowerCase().includes(query));
+    userList.innerHTML = filteredUsers.map(u => `
       <div class="admin-list-item${u.disabled ? " disabled-user" : ""}">
         <span>${u.name ? `${u.name} · ${u.email}` : u.email}${u.disabled ? '<span class="inactive-badge">Inativo</span>' : ""}</span>
         <span class="user-actions">
@@ -2067,7 +2073,7 @@ function renderAdminLists(){
         </span>
       </div>
     `).join("")
-      || '<div class="admin-list-item">Nenhum acesso cadastrado ainda.</div>';
+      || `<div class="admin-list-item">${query ? "Nenhum acesso encontrado para essa busca." : "Nenhum acesso cadastrado ainda."}</div>`;
 
     userList.querySelectorAll(".toggle-access-btn[data-toggle-uid]").forEach(btn => {
       btn.addEventListener("click", () => {
@@ -3084,6 +3090,16 @@ document.getElementById("view-toggle").addEventListener("click", (e) => {
   render();
 });
 
+document.getElementById("admin-view-toggle").addEventListener("click", (e) => {
+  const btn = e.target.closest("button[data-admin-view]");
+  if(!btn) return;
+  document.querySelectorAll("#admin-view-toggle button").forEach(b => b.classList.remove("active"));
+  btn.classList.add("active");
+  const showUsers = btn.dataset.adminView === "users";
+  document.getElementById("admin-card-users").style.display = showUsers ? "" : "none";
+  document.getElementById("admin-card-sectors").style.display = showUsers ? "none" : "";
+});
+
 document.getElementById("main-nav").addEventListener("click", (e) => {
   const btn = e.target.closest("button[data-tab]");
   if(!btn) return;
@@ -3097,6 +3113,11 @@ document.getElementById("main-nav").addEventListener("click", (e) => {
 document.getElementById("archive-search").addEventListener("input", (e) => {
   state.archiveSearch = e.target.value;
   renderArchive();
+});
+
+document.getElementById("user-search").addEventListener("input", (e) => {
+  state.userSearch = e.target.value;
+  renderAdminLists();
 });
 
 // ---------- Criação de setores ----------
