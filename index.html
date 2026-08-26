@@ -105,7 +105,10 @@
     border-bottom:1px solid var(--hairline); padding-bottom:22px; margin-bottom:22px;
   }
   .brand-row{display:flex; align-items:center; gap:12px; margin-bottom:10px;}
-  .brand-logo{height:30px; width:auto; border-radius:4px; box-shadow:0 0 0 1px var(--hairline);}
+  .brand-logo{
+    height:30px; width:auto; border-radius:4px; box-shadow:0 0 0 1px var(--hairline);
+    background:#121b30; padding:5px 9px; box-sizing:content-box;
+  }
   .eyebrow{
     font-family:var(--font-mono); font-size:12px; letter-spacing:.14em; text-transform:uppercase;
     color:var(--text-low); display:flex; align-items:center; gap:8px; margin:0;
@@ -669,7 +672,10 @@
     border-radius:18px; padding:32px 28px; box-shadow:0 20px 60px #00000066;
     text-align:center;
   }
-  .login-card img{height:56px; width:auto; margin-bottom:18px; border-radius:6px;}
+  .login-card img{
+    height:56px; width:auto; margin-bottom:18px; border-radius:8px;
+    background:#121b30; padding:10px 16px; box-sizing:content-box;
+  }
   .login-card h2{font-size:17px; margin:0 0 4px; font-weight:600;}
   .login-card .login-sub{font-size:12.5px; color:var(--text-low); margin:0 0 22px;}
   .login-card .field{text-align:left;}
@@ -985,6 +991,26 @@
         <div class="modal-actions">
           <button type="button" class="btn-secondary" id="modal-cancel">Cancelar</button>
           <button type="submit" class="btn-primary">Adicionar demanda</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <div class="modal-overlay" id="conclusion-modal-overlay">
+    <div class="modal" role="dialog" aria-modal="true" aria-labelledby="conclusion-modal-title">
+      <div class="modal-head">
+        <h2 id="conclusion-modal-title">Justificar conclusão</h2>
+        <button class="modal-close" id="conclusion-modal-close" aria-label="Fechar">✕</button>
+      </div>
+      <form id="conclusion-form">
+        <p class="sub" style="margin-bottom:14px;">Antes de marcar como Concluída, explique rapidamente o que foi feito — isso fica registrado e ajuda quem for validar depois.</p>
+        <label class="field">
+          <span class="field-label">Justificativa *</span>
+          <textarea id="conclusion-reason" rows="3" maxlength="400" required placeholder="Descreva o que foi feito para considerar essa demanda concluída"></textarea>
+        </label>
+        <div class="modal-actions">
+          <button type="button" class="btn-secondary" id="conclusion-modal-cancel">Cancelar</button>
+          <button type="submit" class="btn-primary">Confirmar conclusão</button>
         </div>
       </form>
     </div>
@@ -1643,7 +1669,13 @@ function wireCardListeners(container){
     sel.addEventListener("change", (e) => {
       e.stopPropagation();
       const card = e.target.closest(".card");
-      updateStatus(card.getAttribute("data-id"), e.target.value);
+      const id = card.getAttribute("data-id");
+      const previousValue = e.target.getAttribute("data-status");
+      if(e.target.value === "concluido" && previousValue !== "concluido" && !canManage()){
+        openConclusionModal(id);
+        return;
+      }
+      updateStatus(id, e.target.value);
     });
   });
 
@@ -2265,7 +2297,7 @@ function updateSummary(){
   document.getElementById("sum-st-concluido").textContent = vd.filter(d=>d.status==="concluido").length;
 }
 
-async function updateStatus(id, value){
+async function updateStatus(id, value, reason){
   const item = DATA.find(d => d.id === id);
   if(!item) return;
   const previousStatus = item.status;
@@ -2282,6 +2314,7 @@ async function updateStatus(id, value){
       authorEmail: (currentUser && currentUser.email) || "",
       at: new Date().toISOString(),
     };
+    if(reason) historyEntry.reason = reason;
     item.statusHistory = [...(item.statusHistory || []), historyEntry];
   }
 
@@ -2766,6 +2799,39 @@ document.getElementById("modal-overlay").addEventListener("click", (e) => {
 });
 document.addEventListener("keydown", (e) => {
   if(e.key === "Escape" && document.getElementById("modal-overlay").classList.contains("open")) closeModal();
+  if(e.key === "Escape" && document.getElementById("conclusion-modal-overlay").classList.contains("open")) cancelConclusionModal();
+});
+
+let pendingConclusionId = null;
+function openConclusionModal(id){
+  pendingConclusionId = id;
+  const reasonInput = document.getElementById("conclusion-reason");
+  reasonInput.value = "";
+  document.getElementById("conclusion-modal-overlay").classList.add("open");
+  reasonInput.focus();
+}
+function cancelConclusionModal(){
+  document.getElementById("conclusion-modal-overlay").classList.remove("open");
+  document.getElementById("conclusion-form").reset();
+  if(pendingConclusionId){
+    pendingConclusionId = null;
+    if(state.tab === "board") render(); else if(state.tab === "backlog") renderBacklog();
+  }
+}
+document.getElementById("conclusion-modal-close").addEventListener("click", cancelConclusionModal);
+document.getElementById("conclusion-modal-cancel").addEventListener("click", cancelConclusionModal);
+document.getElementById("conclusion-modal-overlay").addEventListener("click", (e) => {
+  if(e.target.id === "conclusion-modal-overlay") cancelConclusionModal();
+});
+document.getElementById("conclusion-form").addEventListener("submit", async (e) => {
+  e.preventDefault();
+  const reason = document.getElementById("conclusion-reason").value.trim();
+  if(!reason || !pendingConclusionId) return;
+  const id = pendingConclusionId;
+  pendingConclusionId = null;
+  document.getElementById("conclusion-modal-overlay").classList.remove("open");
+  document.getElementById("conclusion-form").reset();
+  await updateStatus(id, "concluido", reason);
 });
 document.getElementById("f-area").addEventListener("change", refreshAssigneeOptionsForArea);
 
