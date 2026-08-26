@@ -1072,7 +1072,7 @@
     </div>
     <div class="admin-grid" id="admin-view-users">
       <div class="admin-card">
-        <h3 id="user-form-title">Novo acesso</h3>
+        <h3>Novo acesso</h3>
         <form id="user-form">
           <label class="field">
             <span class="field-label">Nome do colaborador</span>
@@ -1095,10 +1095,7 @@
             <span class="field-label">Setores atribuídos</span>
             <div class="checkbox-list" id="user-areas-input"></div>
           </label>
-          <div style="display:flex; gap:8px; align-items:center; flex-wrap:wrap;">
-            <button type="submit" class="btn-primary" id="user-form-submit-btn">Criar acesso</button>
-            <button type="button" class="btn-secondary" id="user-cancel-edit-btn" style="display:none;">Cancelar edição</button>
-          </div>
+          <button type="submit" class="btn-primary" id="user-form-submit-btn">Criar acesso</button>
           <p class="form-msg" id="user-msg"></p>
         </form>
       </div>
@@ -1225,6 +1222,43 @@
     </div>
   </div>
 
+  <div class="modal-overlay" id="edit-access-modal-overlay">
+    <div class="modal" role="dialog" aria-modal="true" aria-labelledby="edit-access-modal-title">
+      <div class="modal-head">
+        <h2 id="edit-access-modal-title">Editar acesso</h2>
+        <button class="modal-close" id="edit-access-modal-close" aria-label="Fechar">✕</button>
+      </div>
+      <form id="edit-access-form">
+        <label class="field">
+          <span class="field-label">Nome do colaborador</span>
+          <input type="text" id="edit-access-name" required maxlength="80" placeholder="Nome completo" />
+        </label>
+        <label class="field">
+          <span class="field-label">E-mail</span>
+          <input type="email" id="edit-access-email" required />
+        </label>
+        <label class="field">
+          <span class="field-label">Papel</span>
+          <select id="edit-access-role">
+            <option value="operador">Operador</option>
+            <option value="supervisor">Supervisor</option>
+            <option value="gestor">Gestor</option>
+            <option value="admin">Admin</option>
+          </select>
+        </label>
+        <label class="field">
+          <span class="field-label">Setores atribuídos</span>
+          <div class="checkbox-list" id="edit-access-areas"></div>
+        </label>
+        <div class="modal-actions">
+          <button type="button" class="btn-secondary" id="edit-access-modal-cancel">Cancelar</button>
+          <button type="submit" class="btn-primary">Salvar alterações</button>
+        </div>
+        <p class="form-msg" id="edit-access-msg"></p>
+      </form>
+    </div>
+  </div>
+
   <footer>
     Este board não contém dados pessoais de clientes, em conformidade com a LGPD (Lei nº 13.709/2018).<br/>
     Uso interno — Crediffato - Gestão.
@@ -1246,7 +1280,7 @@
 // que a comparação ">"/"<" abaixo saiba qual versão é mais nova) — é a única forma de o mecanismo
 // perceber que existe uma versão nova. Só funciona pra quem está conectado ao Firestore (modo de
 // contingência sem Firebase não tem sincronização em tempo real de nada, essa checagem incluída).
-const APP_VERSION = "2026-08-26T21:15:00Z";
+const APP_VERSION = "2026-08-26T21:30:00Z";
 
 // Desloga e recarrega — usado tanto pela verificação de versão nova quanto pelos sinais de
 // desconexão manual (shutdown geral ou alguém sendo desconectado individualmente).
@@ -2442,9 +2476,8 @@ function startEditUser(uid){
   const user = DIRECTORY.find(u => u.uid === uid);
   if(!user) return;
   editingUid = uid;
-  document.getElementById("user-form-title").textContent = "Editar acesso";
-  document.getElementById("user-name-input").value = user.name || "";
-  const emailInput = document.getElementById("user-email-input");
+  document.getElementById("edit-access-name").value = user.name || "";
+  const emailInput = document.getElementById("edit-access-email");
   emailInput.value = user.email || "";
   // O e-mail de login só pode ser trocado pela própria conta (é uma restrição do Firebase Auth,
   // não dá pra um admin trocar o e-mail de login de outra conta direto por aqui) — e mesmo assim
@@ -2452,28 +2485,28 @@ function startEditUser(uid){
   const canEditOwnEmail = currentUser && currentUser.role === "admin" && uid === currentUser.uid;
   emailInput.readOnly = !canEditOwnEmail;
   emailInput.title = canEditOwnEmail ? "" : "O e-mail de login só pode ser alterado pela própria conta admin.";
-  document.getElementById("user-role-input").value = user.role;
-  document.querySelectorAll('#user-areas-input input[type="checkbox"]').forEach(cb => {
+  const roleSelect = document.getElementById("edit-access-role");
+  roleSelect.value = user.role;
+  const adminOption = roleSelect.querySelector('option[value="admin"]');
+  if(adminOption) adminOption.disabled = !(currentUser && currentUser.role === "admin");
+  document.querySelectorAll('#edit-access-areas input[type="checkbox"]').forEach(cb => {
     cb.checked = (user.assignedAreas || []).includes(cb.value);
   });
-  document.getElementById("user-form-submit-btn").textContent = "Salvar alterações";
-  document.getElementById("user-cancel-edit-btn").style.display = "";
-  document.getElementById("user-msg").textContent = "";
-  document.getElementById("user-form").scrollIntoView({ behavior: "smooth", block: "center" });
+  document.getElementById("edit-access-msg").textContent = "";
+  document.getElementById("edit-access-modal-overlay").classList.add("open");
 }
 
-function cancelEditUser(){
+function closeEditAccessModal(){
   editingUid = null;
-  document.getElementById("user-form-title").textContent = "Novo acesso";
-  const emailInput = document.getElementById("user-email-input");
-  emailInput.readOnly = false;
-  emailInput.title = "";
-  document.getElementById("user-form-submit-btn").textContent = "Criar acesso";
-  document.getElementById("user-cancel-edit-btn").style.display = "none";
-  document.getElementById("user-form").reset();
-  document.getElementById("user-msg").textContent = "";
+  document.getElementById("edit-access-modal-overlay").classList.remove("open");
+  document.getElementById("edit-access-form").reset();
+  document.getElementById("edit-access-msg").textContent = "";
 }
-document.getElementById("user-cancel-edit-btn").addEventListener("click", cancelEditUser);
+document.getElementById("edit-access-modal-cancel").addEventListener("click", closeEditAccessModal);
+document.getElementById("edit-access-modal-close").addEventListener("click", closeEditAccessModal);
+document.getElementById("edit-access-modal-overlay").addEventListener("click", (e) => {
+  if(e.target.id === "edit-access-modal-overlay") closeEditAccessModal();
+});
 
 async function toggleUserAccess(uid, disable){
   const user = DIRECTORY.find(u => u.uid === uid);
@@ -2551,6 +2584,10 @@ function refreshSectorDependentUI(){
   const areasInput = document.getElementById("user-areas-input");
   if(areasInput){
     areasInput.innerHTML = SECTORS.map(s => `<label><input type="checkbox" value="${s.key}"> ${s.label}</label>`).join("");
+  }
+  const editAreasInput = document.getElementById("edit-access-areas");
+  if(editAreasInput){
+    editAreasInput.innerHTML = SECTORS.map(s => `<label><input type="checkbox" value="${s.key}"> ${s.label}</label>`).join("");
   }
   refreshFilterPanelOptions();
   renderAdminLists();
@@ -3431,6 +3468,7 @@ document.getElementById("modal-overlay").addEventListener("click", (e) => {
 document.addEventListener("keydown", (e) => {
   if(e.key === "Escape" && document.getElementById("modal-overlay").classList.contains("open")) closeModal();
   if(e.key === "Escape" && document.getElementById("conclusion-modal-overlay").classList.contains("open")) cancelConclusionModal();
+  if(e.key === "Escape" && document.getElementById("edit-access-modal-overlay").classList.contains("open")) closeEditAccessModal();
 });
 
 let pendingConclusionId = null;
@@ -3652,47 +3690,6 @@ document.getElementById("user-form").addEventListener("submit", async (e) => {
   if(role === "admin" && (!currentUser || currentUser.role !== "admin")){ msgEl.textContent = "Só uma conta admin pode criar ou promover outra conta para admin."; return; }
   if(!firebaseReady || storageMode !== "firebase"){ msgEl.textContent = "Indisponível no momento (sem conexão com o banco compartilhado)."; return; }
 
-  if(editingUid){
-    const uid = editingUid;
-    const user = DIRECTORY.find(u => u.uid === uid);
-    if(!user){ msgEl.textContent = "Acesso não encontrado."; return; }
-    const emailChanged = email.toLowerCase() !== (user.email || "").toLowerCase();
-    if(emailChanged && !(currentUser && currentUser.role === "admin" && uid === currentUser.uid)){
-      msgEl.textContent = "O e-mail de login só pode ser alterado pela própria conta admin.";
-      return;
-    }
-    try{
-      const assignedAreas = role === "admin" ? SECTORS.map(s => s.key) : areas;
-      await fsUpdateDoc(fsDoc(db, "users", uid), { name, role, assignedAreas });
-      user.name = name; user.role = role; user.assignedAreas = assignedAreas;
-      const newDirectory = DIRECTORY.map(u => ({ ...u }));
-      await fsUpdateDoc(BOARD_DOC, "directory", newDirectory);
-      let emailMsg = "";
-      if(emailChanged){
-        // O e-mail do diretório/Firestore só é atualizado depois que a pessoa confirmar o link
-        // (ver a sincronização automática no login, em handleAuthedUser) — mudar aqui na hora
-        // deixaria Auth e Firestore descombinados até lá.
-        try{
-          await authVerifyBeforeUpdateEmail(auth.currentUser, email);
-          emailMsg = ` Enviamos um link de verificação para ${email} — seu login continua sendo ${user.email} até você confirmar por lá.`;
-        }catch(err){
-          console.error("Falha ao iniciar troca de e-mail:", err);
-          emailMsg = err.code === "auth/requires-recent-login"
-            ? " O e-mail não foi alterado: por segurança, saia e entre de novo, depois tente mudar o e-mail na hora em seguida."
-            : ` O e-mail não foi alterado: ${err.message || "erro desconhecido"}.`;
-        }
-      }
-      cancelEditUser();
-      refreshSectorDependentUI();
-      msgEl.style.color = "var(--st-concluido)";
-      msgEl.textContent = `Acesso de ${name} atualizado.${emailMsg}`;
-    }catch(err){
-      console.error("Falha ao atualizar acesso:", err);
-      msgEl.textContent = "Não foi possível salvar as alterações: " + (err.message || "erro desconhecido");
-    }
-    return;
-  }
-
   try{
     const assignedAreas = role === "admin" ? SECTORS.map(s => s.key) : areas;
     const tempPassword = randomTempPassword();
@@ -3709,6 +3706,61 @@ document.getElementById("user-form").addEventListener("submit", async (e) => {
   }catch(err){
     console.error("Falha ao criar acesso:", err);
     msgEl.textContent = "Não foi possível criar o acesso: " + (err.message || "erro desconhecido");
+  }
+});
+
+// ---------- Edição de acessos (modal) ----------
+document.getElementById("edit-access-form").addEventListener("submit", async (e) => {
+  e.preventDefault();
+  const msgEl = document.getElementById("edit-access-msg");
+  msgEl.style.color = ""; msgEl.textContent = "";
+  const uid = editingUid;
+  const user = uid && DIRECTORY.find(u => u.uid === uid);
+  if(!user){ msgEl.textContent = "Acesso não encontrado."; return; }
+  const name = document.getElementById("edit-access-name").value.trim();
+  const email = document.getElementById("edit-access-email").value.trim();
+  const role = document.getElementById("edit-access-role").value;
+  const areas = Array.from(document.querySelectorAll('#edit-access-areas input[type="checkbox"]:checked')).map(cb => cb.value);
+  if(!name){ msgEl.textContent = "Informe o nome do colaborador."; return; }
+  if(!email){ msgEl.textContent = "Informe um e-mail."; return; }
+  if(role !== "admin" && areas.length === 0){ msgEl.textContent = "Selecione ao menos um setor."; return; }
+  if(role === "admin" && (!currentUser || currentUser.role !== "admin")){ msgEl.textContent = "Só uma conta admin pode promover uma conta para admin."; return; }
+  const emailChanged = email.toLowerCase() !== (user.email || "").toLowerCase();
+  if(emailChanged && !(currentUser && currentUser.role === "admin" && uid === currentUser.uid)){
+    msgEl.textContent = "O e-mail de login só pode ser alterado pela própria conta admin.";
+    return;
+  }
+  if(!firebaseReady || storageMode !== "firebase"){ msgEl.textContent = "Indisponível no momento (sem conexão com o banco compartilhado)."; return; }
+
+  try{
+    const assignedAreas = role === "admin" ? SECTORS.map(s => s.key) : areas;
+    await fsUpdateDoc(fsDoc(db, "users", uid), { name, role, assignedAreas });
+    user.name = name; user.role = role; user.assignedAreas = assignedAreas;
+    const newDirectory = DIRECTORY.map(u => ({ ...u }));
+    await fsUpdateDoc(BOARD_DOC, "directory", newDirectory);
+    let emailMsg = "";
+    if(emailChanged){
+      // O e-mail do diretório/Firestore só é atualizado depois que a pessoa confirmar o link
+      // (ver a sincronização automática no login, em handleAuthedUser) — mudar aqui na hora
+      // deixaria Auth e Firestore descombinados até lá.
+      try{
+        await authVerifyBeforeUpdateEmail(auth.currentUser, email);
+        emailMsg = ` Enviamos um link de verificação para ${email} — seu login continua sendo ${user.email} até você confirmar por lá.`;
+      }catch(err){
+        console.error("Falha ao iniciar troca de e-mail:", err);
+        emailMsg = err.code === "auth/requires-recent-login"
+          ? " O e-mail não foi alterado: por segurança, saia e entre de novo, depois tente mudar o e-mail na hora em seguida."
+          : ` O e-mail não foi alterado: ${err.message || "erro desconhecido"}.`;
+      }
+    }
+    closeEditAccessModal();
+    refreshSectorDependentUI();
+    const listMsgEl = document.getElementById("user-msg");
+    listMsgEl.style.color = "var(--st-concluido)";
+    listMsgEl.textContent = `Acesso de ${name} atualizado.${emailMsg}`;
+  }catch(err){
+    console.error("Falha ao atualizar acesso:", err);
+    msgEl.textContent = "Não foi possível salvar as alterações: " + (err.message || "erro desconhecido");
   }
 });
 
