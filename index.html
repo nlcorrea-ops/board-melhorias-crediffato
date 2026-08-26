@@ -447,6 +447,11 @@
   .tab-panel-head{display:flex; align-items:center; justify-content:space-between; gap:16px; margin-bottom:18px; flex-wrap:wrap;}
   .tab-panel-head h2{font-size:16px; margin:0; font-weight:600;}
   .backlog-list{display:flex; flex-direction:column; gap:12px; max-width:760px;}
+  .archive-search{
+    width:100%; max-width:420px; display:block; background:var(--ink-2); border:1px solid var(--hairline);
+    border-radius:8px; color:var(--text-hi); font-family:var(--font-display); font-size:13.5px; padding:9px 11px;
+  }
+  .archive-search:focus-visible{outline:2px solid #6c8cff; outline-offset:1px;}
 
   .admin-grid{display:grid; grid-template-columns:1fr 1fr; gap:20px;}
   .admin-card{background:var(--ink-1); border:1px solid var(--hairline); border-radius:16px; padding:20px;}
@@ -484,21 +489,22 @@
   .kpi-card .n{font-family:var(--font-mono); font-size:24px; font-weight:600; color:var(--text-hi);}
   .kpi-card .l{font-size:11.5px; color:var(--text-low); text-transform:uppercase; letter-spacing:.08em; margin-top:4px;}
   .overview-block{margin-bottom:28px;}
-  .bar-list{display:flex; flex-direction:column; gap:12px;}
-  .bar-row{
-    background:var(--ink-1); border:1px solid var(--hairline); border-radius:12px; padding:14px 16px;
+  .donut-row{display:grid; grid-template-columns:repeat(auto-fit, minmax(240px, 1fr)); gap:14px; margin-bottom:14px;}
+  .donut-block{background:var(--ink-1); border:1px solid var(--hairline); border-radius:var(--radius); padding:16px; margin-bottom:0;}
+  .donut-chart{display:flex; align-items:center; gap:16px; flex-wrap:wrap;}
+  .donut-chart svg circle{transition:stroke-dasharray .6s ease;}
+  .donut-legend{display:flex; flex-direction:column; gap:7px; flex:1; min-width:0;}
+  .donut-legend-item{display:flex; align-items:center; gap:8px; font-size:12px; color:var(--text-mid); white-space:nowrap;}
+  .donut-legend-dot{width:9px; height:9px; border-radius:2px; flex-shrink:0;}
+  .donut-legend-item b{color:var(--text-hi); margin-left:auto; font-family:var(--font-mono); font-weight:600; padding-left:10px;}
+  .donut-multiples{display:grid; grid-template-columns:repeat(auto-fill, minmax(150px, 1fr)); gap:14px;}
+  .donut-multiple-item{
+    display:flex; flex-direction:column; align-items:center; gap:8px; text-align:center;
+    background:var(--ink-1); border:1px solid var(--hairline); border-radius:12px; padding:16px 12px;
     opacity:0; transform:translateY(8px); animation:rise .45s ease forwards; animation-delay:calc(var(--i, 0) * .06s);
   }
-  .bar-head{display:flex; justify-content:space-between; align-items:center; gap:10px; font-size:12.5px; color:var(--text-low); margin-bottom:10px; flex-wrap:wrap;}
-  .bar-head .bar-name{display:flex; align-items:center; gap:8px; font-weight:600; color:var(--text-hi); font-size:13.5px;}
-  .bar-track{height:8px; border-radius:999px; background:var(--ink-2); overflow:hidden;}
-  .bar-track.stacked{display:flex;}
-  .bar-fill, .bar-seg{height:100%; transition:width .5s ease;}
-  .bar-fill{border-radius:999px;}
-  .bar-seg:first-child{border-radius:999px 0 0 999px;}
-  .bar-seg:last-child{border-radius:0 999px 999px 0;}
-  .bar-track.stacked .bar-seg:only-child{border-radius:999px;}
-
+  .donut-multiple-item .dm-name{font-size:12.5px; font-weight:600; color:var(--text-hi); display:flex; align-items:center; gap:6px;}
+  .donut-multiple-item .dm-sub{font-family:var(--font-mono); font-size:10.5px; color:var(--text-low);}
   .leaderboard{display:flex; flex-direction:column; gap:10px;}
   .leaderboard-item{
     display:flex; align-items:center; gap:16px; background:var(--ink-1); border:1px solid var(--hairline);
@@ -514,9 +520,7 @@
   .leaderboard-item.rank-2 .lb-rank{background:#c9d3e02e; font-size:18px;}
   .leaderboard-item.rank-3 .lb-rank{background:#d98a4f2e; font-size:18px;}
   .lb-info{flex:1; min-width:0;}
-  .lb-name{font-size:13.5px; font-weight:600; color:var(--text-hi); margin-bottom:7px;}
-  .lb-track{height:6px; border-radius:999px; background:var(--ink-2); overflow:hidden;}
-  .lb-fill{height:100%; border-radius:999px; background:var(--brand-red); transition:width .5s ease;}
+  .lb-name{font-size:13.5px; font-weight:600; color:var(--text-hi);}
   .lb-stats{font-family:var(--font-mono); font-size:16px; color:var(--text-hi); white-space:nowrap; flex-shrink:0; text-align:right;}
   .lb-stats span{color:var(--text-low); font-size:11px; font-weight:400;}
 
@@ -556,7 +560,8 @@
     .modal-overlay.open{animation:none;}
     .modal{animation:none;}
     .filters-panel.open{animation:none;}
-    .bar-row, .leaderboard-item{animation:none; opacity:1; transform:none;}
+    .leaderboard-item, .donut-multiple-item{animation:none; opacity:1; transform:none;}
+    .donut-chart svg circle{transition:none;}
     *{transition:none !important;}
   }
 
@@ -675,6 +680,8 @@
     <button type="button" data-tab="overview" id="nav-overview-btn" style="display:none;">Visão Geral</button>
     <button type="button" data-tab="board" class="active">Board</button>
     <button type="button" data-tab="backlog">Backlog</button>
+    <button type="button" data-tab="validations" id="nav-validations-btn" style="display:none;">Validações</button>
+    <button type="button" data-tab="archive">Arquivo</button>
     <button type="button" data-tab="admin" id="nav-admin-btn" style="display:none;">Criação</button>
   </div>
 
@@ -721,13 +728,23 @@
       <h2>Visão geral da operação</h2>
     </div>
     <div class="kpi-row" id="overview-kpis"></div>
-    <div class="overview-block">
-      <div class="summary-label">Progresso por setor</div>
-      <div class="bar-list" id="overview-sectors"></div>
+    <div class="donut-row">
+      <div class="overview-block donut-block">
+        <div class="summary-label">Distribuição por status</div>
+        <div class="donut-chart" id="overview-status-donut"></div>
+      </div>
+      <div class="overview-block donut-block">
+        <div class="summary-label">Distribuição por prioridade</div>
+        <div class="donut-chart" id="overview-priority-donut"></div>
+      </div>
+      <div class="overview-block donut-block">
+        <div class="summary-label">Carga de trabalho</div>
+        <div class="donut-chart" id="overview-workload-donut"></div>
+      </div>
     </div>
     <div class="overview-block">
-      <div class="summary-label">Carga de trabalho (demandas ativas por pessoa)</div>
-      <div class="bar-list" id="overview-workload"></div>
+      <div class="summary-label">Progresso por setor</div>
+      <div class="donut-multiples" id="overview-sectors"></div>
     </div>
     <div class="overview-block">
       <div class="summary-label">🏆 Ranking de responsáveis</div>
@@ -776,6 +793,23 @@
     </div>
     <p class="sub" style="margin-bottom:18px;">Demandas ainda não priorizadas. Quem tem permissão de gestão pode movê-las para o Board quando estiverem prontas para entrar em andamento.</p>
     <div class="backlog-list" id="backlog-list"></div>
+  </div>
+
+  <div class="tab-panel" id="validations-tab" style="display:none;">
+    <div class="tab-panel-head">
+      <h2>Validações pendentes</h2>
+    </div>
+    <p class="sub" style="margin-bottom:18px;">Demandas já concluídas aguardando confirmação de quem gerencia. Depois de validada, a demanda sai daqui e do Board — só fica disponível na aba Arquivo.</p>
+    <div class="backlog-list" id="validations-list"></div>
+  </div>
+
+  <div class="tab-panel" id="archive-tab" style="display:none;">
+    <div class="tab-panel-head">
+      <h2>Arquivo</h2>
+    </div>
+    <p class="sub" style="margin-bottom:14px;">Demandas concluídas e já validadas — fora do Board, mas sempre disponíveis pra consulta.</p>
+    <input type="text" class="archive-search" id="archive-search" placeholder="Pesquisar por título ou ID..." aria-label="Pesquisar no arquivo" />
+    <div class="backlog-list" id="archive-list" style="margin-top:14px;"></div>
   </div>
 
   <div class="tab-panel" id="admin-tab" style="display:none;">
@@ -1068,6 +1102,33 @@ function sectorLabel(key){
   const s = SECTORS.find(x => x.key === key);
   return s ? s.label : key;
 }
+
+// Gráfico de rosca em SVG puro (sem biblioteca): cada fatia é um arco de círculo desenhado
+// via stroke-dasharray, girado pra começar no topo. `segments` é [{value, color}], o total vai
+// escrito no centro. Usado em todos os gráficos da Visão Geral, no lugar das barrinhas de CSS.
+function donutSVG(segments, opts){
+  const size = (opts && opts.size) || 120;
+  const stroke = (opts && opts.stroke) || 16;
+  const r = (size - stroke) / 2;
+  const c = size / 2;
+  const circumference = 2 * Math.PI * r;
+  const total = segments.reduce((s, x) => s + x.value, 0);
+  let offset = 0;
+  const arcs = segments.filter(seg => seg.value > 0).map(seg => {
+    const frac = total ? seg.value / total : 0;
+    const dash = frac * circumference;
+    const gap = circumference - dash;
+    const rotation = total ? (offset / total) * 360 - 90 : -90;
+    offset += seg.value;
+    return `<circle cx="${c}" cy="${c}" r="${r}" fill="none" stroke="${seg.color}" stroke-width="${stroke}" stroke-dasharray="${dash} ${gap}" transform="rotate(${rotation} ${c} ${c})"><title>${seg.label || ""}: ${seg.value}</title></circle>`;
+  }).join("");
+  const centerLabel = (opts && opts.centerLabel !== undefined) ? opts.centerLabel : total;
+  return `<svg viewBox="0 0 ${size} ${size}" width="${size}" height="${size}" role="img" aria-label="${(opts && opts.ariaLabel) || "gráfico de rosca"}">
+    <circle cx="${c}" cy="${c}" r="${r}" fill="none" stroke="var(--ink-2)" stroke-width="${stroke}"></circle>
+    ${arcs}
+    <text x="${c}" y="${c}" text-anchor="middle" dominant-baseline="central" font-family="var(--font-mono)" font-size="${Math.round(size * 0.16)}" fill="var(--text-hi)" font-weight="600">${centerLabel}</text>
+  </svg>`;
+}
 function itemStage(item){
   // stagesMap manda para todo mundo (base e customizado). Antes, itens customizados liam
   // item.stage embutido no próprio array customItems, gravado via reescrita do array inteiro —
@@ -1124,6 +1185,12 @@ function completedByInfo(item){
 function validationInfo(item){
   if(item.status !== "concluido") return null;
   return item.validated || null;
+}
+// Demanda concluída E validada sai do quadro ativo (Kanban/Backlog) pra todo mundo — o board
+// fica só com trabalho que ainda está em andamento ou aguardando validação. Ela não desaparece
+// de verdade: passa a viver só na aba Arquivo, pesquisável a qualquer momento.
+function isArchived(item){
+  return item.status === "concluido" && !!validationInfo(item);
 }
 
 const SEV_LABEL = {critica:"Crítica", alta:"Alta", media:"Média"};
@@ -1291,7 +1358,7 @@ function applyRemoteState(data){
   renderTabs();
 }
 
-let state = { sev:"todos", status:"todos", area:"todos", assignee:"todos", view:"area", tab:"board" };
+let state = { sev:"todos", status:"todos", area:"todos", assignee:"todos", view:"area", tab:"board", archiveSearch:"" };
 const openCardIds = new Set();
 const obsDrafts = {}; // id -> texto ainda não salvo, preservado entre re-renders
 
@@ -1319,7 +1386,7 @@ function cardHTML(item){
         </span>
         <span style="display:flex; align-items:center; gap:8px; flex-wrap:wrap;">
           <span class="sev ${item.sev}"><span class="bars"><i></i><i></i><i></i></span>${SEV_LABEL[item.sev]}</span>
-          ${canManage() ? `<button type="button" class="move-btn" data-move-id="${item.id}" data-move-to="${stage === "backlog" ? "board" : "backlog"}">${stage === "backlog" ? "→ Board" : "→ Backlog"}</button>` : ""}
+          ${(canManage() && !isArchived(item)) ? `<button type="button" class="move-btn" data-move-id="${item.id}" data-move-to="${stage === "backlog" ? "board" : "backlog"}">${stage === "backlog" ? "→ Board" : "→ Backlog"}</button>` : ""}
           ${item.custom && canManage() ? `<button class="remove-btn" data-remove-id="${item.id}" aria-label="Remover demanda" title="Remover demanda">✕</button>` : ""}
         </span>
       </div>
@@ -1356,6 +1423,7 @@ function cardHTML(item){
           <div class="detail-label">Requisitos para conclusão</div>
           <p class="detail-text">${item.sugestao || "Não descrito ainda."}</p>
         </div>
+        ${canManage() ? `
         <div class="detail-block">
           <div class="detail-label">Histórico de status</div>
           <div class="history-list">
@@ -1377,19 +1445,18 @@ function cardHTML(item){
                 <span class="related-pill" style="border-color:${sectorColor(r.area)};">${r.id}</span>
                 <span class="related-title">${escapeHtml(r.title)}</span>
                 <span class="related-status" data-st="${r.status}">${statusLabel(r.status)}</span>
-                ${canManage() ? `<button type="button" class="related-remove-btn" data-rel-remove-id="${item.id}" data-rel-target="${r.id}" aria-label="Desvincular">✕</button>` : ""}
+                <button type="button" class="related-remove-btn" data-rel-remove-id="${item.id}" data-rel-target="${r.id}" aria-label="Desvincular">✕</button>
               </div>
             `).join("") : '<p class="related-empty">Nenhum item relacionado ainda.</p>'}
           </div>
-          ${canManage() ? `
-            <div class="related-add-row">
-              <select class="status-select related-select" data-rel-add-id="${item.id}" aria-label="Vincular a outra demanda">
-                <option value="">+ Vincular a outra demanda...</option>
-                ${relatedCandidates.map(d => `<option value="${d.id}">${d.id} · ${escapeHtml(d.title)}</option>`).join("")}
-              </select>
-            </div>
-          ` : ""}
+          <div class="related-add-row">
+            <select class="status-select related-select" data-rel-add-id="${item.id}" aria-label="Vincular a outra demanda">
+              <option value="">+ Vincular a outra demanda...</option>
+              ${relatedCandidates.map(d => `<option value="${d.id}">${d.id} · ${escapeHtml(d.title)}</option>`).join("")}
+            </select>
+          </div>
         </div>
+        ` : ""}
         ${ATTACHMENTS_ENABLED ? `
         <div class="detail-block">
           <div class="detail-label">Anexos</div>
@@ -1442,6 +1509,16 @@ function passesFilter(item){
   const assigneeOk = state.assignee === "todos" || itemAssignee(item) === state.assignee;
   const areaOk = areasForUser().includes(item.area);
   return sevOk && stOk && areaFilterOk && assigneeOk && areaOk;
+}
+// Validações e Arquivo já são, por definição, só demandas concluídas — aplicar o filtro de
+// Status em cima (ex.: alguém deixou "Em aberto" selecionado ao navegar vindo do Board) faria
+// essas abas parecerem vazias sem motivo aparente. Setor/responsável/prioridade continuam valendo.
+function passesFilterIgnoringStatus(item){
+  const sevOk = state.sev === "todos" || item.sev === state.sev;
+  const areaFilterOk = state.area === "todos" || item.area === state.area;
+  const assigneeOk = state.assignee === "todos" || itemAssignee(item) === state.assignee;
+  const areaOk = areasForUser().includes(item.area);
+  return sevOk && areaFilterOk && assigneeOk && areaOk;
 }
 
 function updateFiltersBadge(){
@@ -1631,8 +1708,8 @@ function render(){
   const groups = state.view === "status" ? STATUSES : SECTORS.filter(s => areasForUser().includes(s.key) && (state.area === "todos" || s.key === state.area));
   groups.forEach(group => {
     const items = state.view === "status"
-      ? DATA.filter(d => itemStage(d) === "board" && d.status === group.key && passesFilter(d))
-      : DATA.filter(d => itemStage(d) === "board" && d.area === group.key && passesFilter(d));
+      ? DATA.filter(d => itemStage(d) === "board" && d.status === group.key && !isArchived(d) && passesFilter(d))
+      : DATA.filter(d => itemStage(d) === "board" && d.area === group.key && !isArchived(d) && passesFilter(d));
     const col = document.createElement("div");
     col.className = state.view === "status" ? `column ${group.cls}` : "column";
     col.setAttribute("data-group-key", group.key);
@@ -1678,12 +1755,34 @@ function renderBacklog(){
   const list = document.getElementById("backlog-list");
   if(!list) return;
   const focus = preserveFocusedObsDraft();
-  const items = DATA.filter(d => itemStage(d) === "backlog" && passesFilter(d));
+  const items = DATA.filter(d => itemStage(d) === "backlog" && !isArchived(d) && passesFilter(d));
   list.innerHTML = items.map(it => cardHTML(it)).join("") || '<p class="snippet" style="padding:8px 2px;">Backlog vazio.</p>';
   wireCardListeners(list);
   restoreFocusedObs(focus);
   const addBtn = document.getElementById("open-add-modal-backlog");
   if(addBtn) addBtn.style.display = canManage() ? "" : "none";
+}
+
+function renderValidations(){
+  const list = document.getElementById("validations-list");
+  if(!list) return;
+  const focus = preserveFocusedObsDraft();
+  const items = DATA.filter(d => d.status === "concluido" && !validationInfo(d) && passesFilterIgnoringStatus(d));
+  list.innerHTML = items.map(it => cardHTML(it)).join("") || '<p class="snippet" style="padding:8px 2px;">Nada pendente de validação no momento.</p>';
+  wireCardListeners(list);
+  restoreFocusedObs(focus);
+}
+
+function renderArchive(){
+  const list = document.getElementById("archive-list");
+  if(!list) return;
+  const focus = preserveFocusedObsDraft();
+  const query = state.archiveSearch.trim().toLowerCase();
+  const items = DATA.filter(d => isArchived(d) && passesFilterIgnoringStatus(d))
+    .filter(d => !query || d.title.toLowerCase().includes(query) || d.id.toLowerCase().includes(query));
+  list.innerHTML = items.map(it => cardHTML(it)).join("") || '<p class="snippet" style="padding:8px 2px;">Nenhuma demanda arquivada encontrada.</p>';
+  wireCardListeners(list);
+  restoreFocusedObs(focus);
 }
 
 function renderAdminLists(){
@@ -1834,10 +1933,12 @@ function refreshAssigneeOptionsForArea(){
 
 function renderOverview(){
   const kpiEl = document.getElementById("overview-kpis");
+  const statusDonutEl = document.getElementById("overview-status-donut");
+  const priorityDonutEl = document.getElementById("overview-priority-donut");
+  const workloadDonutEl = document.getElementById("overview-workload-donut");
   const sectorsEl = document.getElementById("overview-sectors");
-  const workloadEl = document.getElementById("overview-workload");
   const assigneesEl = document.getElementById("overview-assignees");
-  if(!kpiEl || !sectorsEl || !workloadEl || !assigneesEl) return;
+  if(!kpiEl || !statusDonutEl || !priorityDonutEl || !workloadDonutEl || !sectorsEl || !assigneesEl) return;
 
   // Vale o mesmo recorte de filtros (setor/responsável/prioridade/status) usado no Board e no
   // Backlog: escolher "Setor: Operações" aqui mostra os gráficos só daquele setor, por exemplo.
@@ -1862,32 +1963,61 @@ function renderOverview(){
     <div class="kpi-card"><div class="n" style="color:var(--pa);">${pendentesValidacao}</div><div class="l">Pendentes de validação</div></div>
   `;
 
+  // Status e prioridade: rosca simples de proporção — o total de demandas do recorte atual
+  // vai escrito no centro do anel.
+  statusDonutEl.innerHTML = `
+    ${donutSVG([
+      { value: aberto, color: "var(--st-aberto)", label: "Em aberto" },
+      { value: andamento, color: "var(--st-andamento)", label: "Em andamento" },
+      { value: concluidas, color: "var(--st-concluido)", label: "Concluído" },
+    ], { ariaLabel: "Distribuição por status" })}
+    <div class="donut-legend">
+      <div class="donut-legend-item"><span class="donut-legend-dot" style="background:var(--st-aberto);"></span>Em aberto<b>${aberto}</b></div>
+      <div class="donut-legend-item"><span class="donut-legend-dot" style="background:var(--st-andamento);"></span>Em andamento<b>${andamento}</b></div>
+      <div class="donut-legend-item"><span class="donut-legend-dot" style="background:var(--st-concluido);"></span>Concluído<b>${concluidas}</b></div>
+    </div>
+  `;
+
+  const critica = opData.filter(d => d.sev === "critica").length;
+  const alta = opData.filter(d => d.sev === "alta").length;
+  const media = opData.filter(d => d.sev === "media").length;
+  priorityDonutEl.innerHTML = `
+    ${donutSVG([
+      { value: critica, color: "var(--sev-critica)", label: "Crítica" },
+      { value: alta, color: "var(--sev-alta)", label: "Alta" },
+      { value: media, color: "var(--sev-media)", label: "Média" },
+    ], { ariaLabel: "Distribuição por prioridade" })}
+    <div class="donut-legend">
+      <div class="donut-legend-item"><span class="donut-legend-dot" style="background:var(--sev-critica);"></span>Crítica<b>${critica}</b></div>
+      <div class="donut-legend-item"><span class="donut-legend-dot" style="background:var(--sev-alta);"></span>Alta<b>${alta}</b></div>
+      <div class="donut-legend-item"><span class="donut-legend-dot" style="background:var(--sev-media);"></span>Média<b>${media}</b></div>
+    </div>
+  `;
+
+  // Progresso por setor: uma rosca pequena por setor (aberto/andamento/concluído), lado a lado.
   const scopedSectors = SECTORS.filter(s => scopeAreas.includes(s.key) && (state.area === "todos" || s.key === state.area));
   sectorsEl.innerHTML = scopedSectors.map((s, i) => {
     const items = opData.filter(d => d.area === s.key);
     const doneN = items.filter(d => d.status === "concluido").length;
     const andN = items.filter(d => d.status === "andamento").length;
     const abN = items.filter(d => d.status === "aberto").length;
-    const n = items.length || 1;
     const p = items.length ? Math.round((doneN / items.length) * 100) : 0;
     return `
-      <div class="bar-row" style="--i:${i};">
-        <div class="bar-head">
-          <span class="bar-name"><span class="rail-dot" style="background:${sectorColor(s.key)};"></span>${s.label}</span>
-          <span>${doneN}/${items.length} concluídas · ${p}%</span>
-        </div>
-        <div class="bar-track stacked">
-          <div class="bar-seg" style="width:${abN/n*100}%; background:var(--st-aberto);" title="Em aberto: ${abN}"></div>
-          <div class="bar-seg" style="width:${andN/n*100}%; background:var(--st-andamento);" title="Em andamento: ${andN}"></div>
-          <div class="bar-seg" style="width:${doneN/n*100}%; background:var(--st-concluido);" title="Concluído: ${doneN}"></div>
-        </div>
+      <div class="donut-multiple-item" style="--i:${i};">
+        ${donutSVG([
+          { value: abN, color: "var(--st-aberto)", label: "Em aberto" },
+          { value: andN, color: "var(--st-andamento)", label: "Em andamento" },
+          { value: doneN, color: "var(--st-concluido)", label: "Concluído" },
+        ], { size: 92, stroke: 12, ariaLabel: `Progresso de ${s.label}` })}
+        <div class="dm-name"><span class="rail-dot" style="background:${sectorColor(s.key)};"></span>${s.label}</div>
+        <div class="dm-sub">${doneN}/${items.length} concluídas · ${p}%</div>
       </div>
     `;
   }).join("") || '<p class="snippet">Nenhum setor sob sua gestão ainda.</p>';
 
-  // Carga de trabalho: quantas demandas cada pessoa tem ATIVAS agora (aberto + andamento),
-  // não quantas já concluiu — complementa o ranking abaixo, que é sobre desempenho histórico,
-  // com uma visão de quem está sobrecarregado neste exato momento.
+  // Carga de trabalho: uma única rosca com a fatia de cada pessoa no total de demandas ATIVAS
+  // (aberto + andamento) — mostra de relance quem está carregando a maior parte do trabalho
+  // agora, diferente do ranking abaixo, que é sobre desempenho histórico (quem já concluiu mais).
   const byWorkload = {};
   opData.forEach(d => {
     if(d.status === "concluido") return;
@@ -1899,23 +2029,18 @@ function renderOverview(){
   const workloadRows = Object.entries(byWorkload)
     .map(([email, c]) => ({ email, c, load: c.aberto + c.andamento }))
     .sort((a, b) => b.load - a.load);
-  const maxLoad = workloadRows.length ? Math.max(...workloadRows.map(r => r.load)) : 0;
-  workloadEl.innerHTML = workloadRows.map(({ email, c, load }, i) => {
-    const person = DIRECTORY.find(u => u.email === email);
-    const label = ((person && person.name) ? person.name : email) + (person && person.disabled ? " (inativo)" : "");
-    const level = load >= 6 ? "alta" : load >= 3 ? "media" : "normal";
-    const barColor = level === "alta" ? "var(--sev-critica)" : level === "media" ? "var(--sev-alta)" : "var(--brand-red)";
-    const pct = maxLoad ? Math.round((load / maxLoad) * 100) : 0;
-    return `
-      <div class="bar-row" style="--i:${i};">
-        <div class="bar-head">
-          <span class="bar-name">${label}${level === "alta" ? ' <span class="overdue-badge">⚠ Carga alta</span>' : ""}</span>
-          <span>${load} ativa${load === 1 ? "" : "s"} · ${c.andamento} em andamento</span>
-        </div>
-        <div class="bar-track"><div class="bar-fill" style="width:${pct}%; background:${barColor};"></div></div>
-      </div>
-    `;
-  }).join("") || '<p class="snippet">Nenhuma demanda ativa com responsável atribuído.</p>';
+  const totalWorkload = workloadRows.reduce((s, r) => s + r.load, 0);
+  workloadDonutEl.innerHTML = workloadRows.length ? `
+    ${donutSVG(workloadRows.map((r, i) => ({ value: r.load, color: SECTOR_PALETTE[i % SECTOR_PALETTE.length] })), { ariaLabel: "Carga de trabalho por pessoa" })}
+    <div class="donut-legend">
+      ${workloadRows.map((r, i) => {
+        const person = DIRECTORY.find(u => u.email === r.email);
+        const label = ((person && person.name) ? person.name : r.email) + (person && person.disabled ? " (inativo)" : "");
+        const level = r.load >= 6 ? "alta" : r.load >= 3 ? "media" : "normal";
+        return `<div class="donut-legend-item"><span class="donut-legend-dot" style="background:${SECTOR_PALETTE[i % SECTOR_PALETTE.length]};"></span>${label}${level === "alta" ? ' <span class="overdue-badge">⚠</span>' : ""}<b>${r.load}</b></div>`;
+      }).join("")}
+    </div>
+  ` : '<p class="snippet">Nenhuma demanda ativa com responsável atribuído.</p>';
 
   const byAssignee = {};
   opData.forEach(d => {
@@ -1934,9 +2059,9 @@ function renderOverview(){
     return `
       <div class="leaderboard-item rank-${i+1}" style="--i:${i};">
         <div class="lb-rank">${MEDALS[i] || (i+1)}</div>
+        ${donutSVG([{ value: stats.done, color: "var(--st-concluido)" }, { value: stats.total - stats.done, color: "var(--ink-2)" }], { size: 46, stroke: 7, centerLabel: `${p}%` })}
         <div class="lb-info">
           <div class="lb-name">${label}</div>
-          <div class="lb-track"><div class="lb-fill" style="width:${p}%;"></div></div>
         </div>
         <div class="lb-stats"><b>${stats.done}</b><span>/${stats.total} concluídas</span></div>
       </div>
@@ -1975,7 +2100,12 @@ function applyRoleLayout(){
   const sub = document.getElementById("app-sub");
 
   document.querySelectorAll(".summary-group").forEach(el => { el.style.display = isOperador ? "none" : ""; });
-  if(mainNav) mainNav.style.display = isOperador ? "none" : "";
+  // O menu inteiro fica visível mesmo pro operador agora — ele só não vê Backlog (fila ainda não
+  // priorizada, não é trabalho dele) nem as abas de gestão (Visão Geral/Validações/Criação, já
+  // escondidas à parte). Board e Arquivo continuam navegáveis pra ele.
+  if(mainNav) mainNav.style.display = "";
+  const backlogNavBtn = document.querySelector('#main-nav button[data-tab="backlog"]');
+  if(backlogNavBtn) backlogNavBtn.style.display = isOperador ? "none" : "";
   if(filtersRow) filtersRow.style.display = isOperador ? "none" : "";
   if(filtersPanel && isOperador) filtersPanel.classList.remove("open");
   if(boardToolbar) boardToolbar.style.display = isOperador ? "none" : "";
@@ -2000,15 +2130,20 @@ function renderTabs(){
   const overviewTab = document.getElementById("overview-tab");
   const boardTab = document.getElementById("board-tab");
   const backlogTab = document.getElementById("backlog-tab");
+  const validationsTab = document.getElementById("validations-tab");
+  const archiveTab = document.getElementById("archive-tab");
   const adminTab = document.getElementById("admin-tab");
 
   const navOverviewBtn = document.getElementById("nav-overview-btn");
   if(navOverviewBtn) navOverviewBtn.style.display = canManage() ? "" : "none";
+  const navValidationsBtn = document.getElementById("nav-validations-btn");
+  if(navValidationsBtn) navValidationsBtn.style.display = canManage() ? "" : "none";
   const navAdminBtn = document.getElementById("nav-admin-btn");
   if(navAdminBtn) navAdminBtn.style.display = canCreate() ? "" : "none";
 
   if(state.tab === "admin" && !canCreate()) state.tab = "board";
   if(state.tab === "overview" && !canManage()) state.tab = "board";
+  if(state.tab === "validations" && !canManage()) state.tab = "board";
 
   const isOperador = currentUser && currentUser.role === "operador";
   const globalFiltersRow = document.getElementById("global-filters-row");
@@ -2020,11 +2155,15 @@ function renderTabs(){
   if(overviewTab) overviewTab.style.display = state.tab === "overview" ? "" : "none";
   if(boardTab) boardTab.style.display = state.tab === "board" ? "" : "none";
   if(backlogTab) backlogTab.style.display = state.tab === "backlog" ? "" : "none";
+  if(validationsTab) validationsTab.style.display = state.tab === "validations" ? "" : "none";
+  if(archiveTab) archiveTab.style.display = state.tab === "archive" ? "" : "none";
   if(adminTab) adminTab.style.display = state.tab === "admin" ? "" : "none";
 
   if(state.tab === "overview") renderOverview();
   else if(state.tab === "board") render();
   else if(state.tab === "backlog") renderBacklog();
+  else if(state.tab === "validations") renderValidations();
+  else if(state.tab === "archive") renderArchive();
   else if(state.tab === "admin") renderAdminLists();
 
   updateSummary();
@@ -2042,7 +2181,7 @@ function visibleData(){
 }
 
 function updateSummary(){
-  const vd = visibleData().filter(d => itemStage(d) === "board");
+  const vd = visibleData().filter(d => itemStage(d) === "board" && !isArchived(d));
   document.getElementById("sum-total").textContent = vd.length;
   document.getElementById("sum-critica").textContent = vd.filter(d=>d.sev==="critica").length;
   document.getElementById("sum-alta").textContent = vd.filter(d=>d.sev==="alta").length;
@@ -2651,8 +2790,14 @@ document.getElementById("main-nav").addEventListener("click", (e) => {
   if(!btn) return;
   if(btn.dataset.tab === "admin" && !canCreate()) return;
   if(btn.dataset.tab === "overview" && !canManage()) return;
+  if(btn.dataset.tab === "validations" && !canManage()) return;
   state.tab = btn.dataset.tab;
   renderTabs();
+});
+
+document.getElementById("archive-search").addEventListener("input", (e) => {
+  state.archiveSearch = e.target.value;
+  renderArchive();
 });
 
 // ---------- Criação de setores ----------
