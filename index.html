@@ -85,6 +85,13 @@
     cursor:pointer; text-decoration:underline; padding:0;
   }
   .logout-btn:hover{color:var(--text-hi);}
+  .presentation-toggle-btn{
+    font-family:var(--font-mono); font-size:11px; color:var(--text-mid);
+    background:var(--ink-1); border:1px solid var(--hairline); border-radius:999px;
+    padding:5px 12px; cursor:pointer; transition:all .15s ease;
+  }
+  .presentation-toggle-btn:hover{border-color:var(--text-low); color:var(--text-hi);}
+  .presentation-toggle-btn.active{background:var(--brand-red); border-color:var(--brand-red); color:#fff;}
 
   .main-nav{display:flex; gap:6px; background:var(--ink-1); border:1px solid var(--hairline); border-radius:999px; padding:4px; margin-bottom:24px; width:fit-content;}
   .main-nav button{
@@ -399,6 +406,30 @@
   }
   .attachment-upload-hint{font-family:var(--font-mono); font-size:10.5px; color:var(--text-low);}
 
+  .related-list{display:flex; flex-direction:column; gap:6px; margin-bottom:8px;}
+  .related-item{
+    display:flex; align-items:center; gap:8px; flex-wrap:wrap;
+    background:var(--ink-1); border:1px solid var(--hairline); border-radius:8px; padding:6px 10px;
+  }
+  .related-pill{
+    font-family:var(--font-mono); font-size:10px; color:var(--text-mid);
+    border:1px solid var(--hairline); border-radius:5px; padding:1px 6px; flex-shrink:0;
+  }
+  .related-title{font-size:12.5px; color:var(--text-hi); flex:1; min-width:0;}
+  .related-status{
+    font-family:var(--font-mono); font-size:9.5px; text-transform:uppercase; letter-spacing:.03em;
+    color:var(--text-low); white-space:nowrap;
+  }
+  .related-status[data-st="andamento"]{color:var(--st-andamento);}
+  .related-status[data-st="concluido"]{color:var(--st-concluido);}
+  .related-remove-btn{
+    background:none; border:none; color:var(--text-low); font-size:12px; cursor:pointer;
+    padding:2px 4px; line-height:1; border-radius:4px; flex-shrink:0;
+  }
+  .related-remove-btn:hover{color:var(--sev-critica); background:#e2564f1a;}
+  .related-empty{font-size:12px; color:var(--text-low); margin:0 0 8px;}
+  .related-select{width:100%;}
+
   .welcome-name{color:var(--brand-red);}
 
   .tab-panel-head{display:flex; align-items:center; justify-content:space-between; gap:16px; margin-bottom:18px; flex-wrap:wrap;}
@@ -520,6 +551,30 @@
   .tab-panel{animation:tabFadeIn .32s ease;}
   @keyframes tabFadeIn{from{opacity:0; transform:translateY(6px);} to{opacity:1; transform:translateY(0);}}
 
+  /* ---------- modo apresentação: visão só-leitura pra abrir numa reunião sem expor os
+     controles de edição (status/responsável/prazo viram texto, botões de gerenciar somem) ---------- */
+  body.presentation-mode .status-select,
+  body.presentation-mode .assignee-select,
+  body.presentation-mode .due-input{
+    pointer-events:none; background:transparent !important; border-color:transparent !important;
+    background-image:none !important;
+  }
+  body.presentation-mode .due-input::-webkit-calendar-picker-indicator{ display:none; }
+  body.presentation-mode .move-btn,
+  body.presentation-mode .remove-btn,
+  body.presentation-mode .add-btn,
+  body.presentation-mode .obs-save-row,
+  body.presentation-mode .obs-textarea,
+  body.presentation-mode #nav-admin-btn,
+  body.presentation-mode #admin-tab,
+  body.presentation-mode .toggle-access-btn,
+  body.presentation-mode .related-add-row,
+  body.presentation-mode .related-remove-btn,
+  body.presentation-mode .attachment-remove-btn,
+  body.presentation-mode .attachment-upload-row{
+    display:none !important;
+  }
+
   /* ---------- login screen ---------- */
   #login-screen{
     position:fixed; inset:0; z-index:200; display:flex; align-items:center; justify-content:center;
@@ -599,6 +654,7 @@
         <span class="role-tag" id="user-role">—</span>
         <button type="button" class="logout-btn" id="logout-btn">sair</button>
       </div>
+      <button type="button" class="presentation-toggle-btn" id="presentation-toggle" style="display:none;">🖥 Modo apresentação</button>
     </div>
   </header>
 
@@ -655,6 +711,10 @@
     <div class="overview-block">
       <div class="summary-label">Progresso por setor</div>
       <div class="bar-list" id="overview-sectors"></div>
+    </div>
+    <div class="overview-block">
+      <div class="summary-label">Carga de trabalho (demandas ativas por pessoa)</div>
+      <div class="bar-list" id="overview-workload"></div>
     </div>
     <div class="overview-block">
       <div class="summary-label">🏆 Ranking de responsáveis</div>
@@ -1068,7 +1128,7 @@ let storageMode = hasClaudeStorage ? "shared" : (hasLocalStorage ? "local" : "no
 async function ensureBoardDoc(){
   const snap = await fsGetDoc(BOARD_DOC);
   if(!snap.exists()){
-    const initial = { statuses:{}, customItems:[], observacoes:{}, comentarios:{}, sectors:DEFAULT_SECTORS.slice(), directory:[], stages:{}, assignees:{}, dueDates:{}, statusHistory:{}, attachments:{} };
+    const initial = { statuses:{}, customItems:[], observacoes:{}, comentarios:{}, sectors:DEFAULT_SECTORS.slice(), directory:[], stages:{}, assignees:{}, dueDates:{}, statusHistory:{}, attachments:{}, related:{} };
     await fsSetDoc(BOARD_DOC, initial);
     return initial;
   }
@@ -1175,6 +1235,7 @@ function applyRemoteState(data){
   const comentarios = data.comentarios || {};
   const statusHistory = data.statusHistory || {};
   const attachments = data.attachments || {};
+  const related = data.related || {};
   stagesMap = data.stages || {};
   assigneesMap = data.assignees || {};
   dueDatesMap = data.dueDates || {};
@@ -1189,6 +1250,7 @@ function applyRemoteState(data){
     if(statuses[d.id] !== undefined && statuses[d.id] !== "") d.status = statuses[d.id];
     d.statusHistory = statusHistory[d.id] || [];
     d.attachments = attachments[d.id] || [];
+    d.related = related[d.id] || [];
     // Observações funcionam como comentários (lista de {text, authorName, authorEmail, at}),
     // imutáveis depois de publicados, guardadas no mapa compartilhado "comentarios" — pra
     // base e customizado por igual, sem reescrever o array customItems inteiro.
@@ -1220,6 +1282,9 @@ function cardHTML(item){
   const assigneeOptions = DIRECTORY.filter(u => (!u.disabled || u.email === assignee) && (u.role === "admin" || (u.assignedAreas || []).includes(item.area)));
   const due = dueInfo(item);
   const completed = completedByInfo(item);
+  const relatedIds = item.related || [];
+  const relatedItems = relatedIds.map(rid => DATA.find(d => d.id === rid)).filter(Boolean);
+  const relatedCandidates = DATA.filter(d => d.id !== item.id && !relatedIds.includes(d.id) && areasForUser().includes(d.area));
   return `
     <div class="card${isOpen ? " open" : ""}" style="--rail:${sectorColor(item.area)};" data-sev="${item.sev}" data-id="${item.id}" tabindex="0" role="button" aria-expanded="${isOpen ? "true" : "false"}" ${draggable ? 'draggable="true"' : ''}>
       <div class="card-top">
@@ -1240,7 +1305,7 @@ function cardHTML(item){
         <select class="status-select" data-status="${item.status}" aria-label="Status de ${item.title}">
           <option value="aberto" ${item.status==="aberto"?"selected":""}>Em aberto</option>
           <option value="andamento" ${item.status==="andamento"?"selected":""}>Em andamento</option>
-          <option value="concluido" ${item.status==="concluido"?"selected":""}>Concluído</option>
+          <option value="concluido" ${item.status==="concluido"?"selected":""} ${!canManage() ? "disabled" : ""}>Concluído${!canManage() ? " (requer gestão)" : ""}</option>
         </select>
       </div>
       ${completed ? `<div class="completed-badge">✓ Concluído por <b>${escapeHtml(completed.authorName || completed.authorEmail || "—")}</b> · ${formatCommentDate(completed.at)}</div>` : ""}
@@ -1276,6 +1341,27 @@ function cardHTML(item){
               </div>
             `).join("") : '<p class="history-empty">Nenhuma mudança de status registrada ainda.</p>'}
           </div>
+        </div>
+        <div class="detail-block">
+          <div class="detail-label">Itens relacionados</div>
+          <div class="related-list">
+            ${relatedItems.length ? relatedItems.map(r => `
+              <div class="related-item">
+                <span class="related-pill" style="border-color:${sectorColor(r.area)};">${r.id}</span>
+                <span class="related-title">${escapeHtml(r.title)}</span>
+                <span class="related-status" data-st="${r.status}">${statusLabel(r.status)}</span>
+                ${canManage() ? `<button type="button" class="related-remove-btn" data-rel-remove-id="${item.id}" data-rel-target="${r.id}" aria-label="Desvincular">✕</button>` : ""}
+              </div>
+            `).join("") : '<p class="related-empty">Nenhum item relacionado ainda.</p>'}
+          </div>
+          ${canManage() ? `
+            <div class="related-add-row">
+              <select class="status-select related-select" data-rel-add-id="${item.id}" aria-label="Vincular a outra demanda">
+                <option value="">+ Vincular a outra demanda...</option>
+                ${relatedCandidates.map(d => `<option value="${d.id}">${d.id} · ${escapeHtml(d.title)}</option>`).join("")}
+              </select>
+            </div>
+          ` : ""}
         </div>
         ${ATTACHMENTS_ENABLED ? `
         <div class="detail-block">
@@ -1378,6 +1464,13 @@ function wireCardListeners(container){
     sel.addEventListener("mousedown", e => e.stopPropagation());
     sel.addEventListener("change", (e) => {
       e.stopPropagation();
+      // A opção "Concluído" já vem desabilitada no HTML pra quem não tem permissão de gestão,
+      // mas isso é reforço: se algo mudar o valor por outro caminho, a conclusão não passa.
+      if(e.target.value === "concluido" && !canManage()){
+        e.target.value = e.target.getAttribute("data-status");
+        alert("Só quem tem permissão de gestão pode marcar uma demanda como Concluída.");
+        return;
+      }
       const card = e.target.closest(".card");
       updateStatus(card.getAttribute("data-id"), e.target.value);
     });
@@ -1454,6 +1547,25 @@ function wireCardListeners(container){
         console.error("Falha ao enviar anexo:", err);
         if(hint){ hint.style.color = "var(--sev-critica)"; hint.textContent = err.message || "Falha ao enviar arquivo."; }
       }
+    });
+  });
+
+  container.querySelectorAll(".related-remove-btn").forEach(btn => {
+    btn.addEventListener("click", (e) => {
+      e.stopPropagation();
+      removeRelatedItem(btn.getAttribute("data-rel-remove-id"), btn.getAttribute("data-rel-target"));
+    });
+  });
+
+  container.querySelectorAll(".related-select").forEach(sel => {
+    sel.addEventListener("click", e => e.stopPropagation());
+    sel.addEventListener("mousedown", e => e.stopPropagation());
+    sel.addEventListener("change", (e) => {
+      e.stopPropagation();
+      const id = sel.getAttribute("data-rel-add-id");
+      const targetId = e.target.value;
+      e.target.value = "";
+      if(targetId) addRelatedItem(id, targetId);
     });
   });
 }
@@ -1696,8 +1808,9 @@ function refreshAssigneeOptionsForArea(){
 function renderOverview(){
   const kpiEl = document.getElementById("overview-kpis");
   const sectorsEl = document.getElementById("overview-sectors");
+  const workloadEl = document.getElementById("overview-workload");
   const assigneesEl = document.getElementById("overview-assignees");
-  if(!kpiEl || !sectorsEl || !assigneesEl) return;
+  if(!kpiEl || !sectorsEl || !workloadEl || !assigneesEl) return;
 
   // Vale o mesmo recorte de filtros (setor/responsável/prioridade/status) usado no Board e no
   // Backlog: escolher "Setor: Operações" aqui mostra os gráficos só daquele setor, por exemplo.
@@ -1742,6 +1855,38 @@ function renderOverview(){
       </div>
     `;
   }).join("") || '<p class="snippet">Nenhum setor sob sua gestão ainda.</p>';
+
+  // Carga de trabalho: quantas demandas cada pessoa tem ATIVAS agora (aberto + andamento),
+  // não quantas já concluiu — complementa o ranking abaixo, que é sobre desempenho histórico,
+  // com uma visão de quem está sobrecarregado neste exato momento.
+  const byWorkload = {};
+  opData.forEach(d => {
+    if(d.status === "concluido") return;
+    const a = itemAssignee(d);
+    if(!a) return;
+    if(!byWorkload[a]) byWorkload[a] = { aberto: 0, andamento: 0 };
+    byWorkload[a][d.status === "andamento" ? "andamento" : "aberto"]++;
+  });
+  const workloadRows = Object.entries(byWorkload)
+    .map(([email, c]) => ({ email, c, load: c.aberto + c.andamento }))
+    .sort((a, b) => b.load - a.load);
+  const maxLoad = workloadRows.length ? Math.max(...workloadRows.map(r => r.load)) : 0;
+  workloadEl.innerHTML = workloadRows.map(({ email, c, load }, i) => {
+    const person = DIRECTORY.find(u => u.email === email);
+    const label = ((person && person.name) ? person.name : email) + (person && person.disabled ? " (inativo)" : "");
+    const level = load >= 6 ? "alta" : load >= 3 ? "media" : "normal";
+    const barColor = level === "alta" ? "var(--sev-critica)" : level === "media" ? "var(--sev-alta)" : "var(--brand-red)";
+    const pct = maxLoad ? Math.round((load / maxLoad) * 100) : 0;
+    return `
+      <div class="bar-row" style="--i:${i};">
+        <div class="bar-head">
+          <span class="bar-name">${label}${level === "alta" ? ' <span class="overdue-badge">⚠ Carga alta</span>' : ""}</span>
+          <span>${load} ativa${load === 1 ? "" : "s"} · ${c.andamento} em andamento</span>
+        </div>
+        <div class="bar-track"><div class="bar-fill" style="width:${pct}%; background:${barColor};"></div></div>
+      </div>
+    `;
+  }).join("") || '<p class="snippet">Nenhuma demanda ativa com responsável atribuído.</p>';
 
   const byAssignee = {};
   opData.forEach(d => {
@@ -1806,6 +1951,9 @@ function applyRoleLayout(){
   if(filtersPanel && isOperador) filtersPanel.classList.remove("open");
   if(boardToolbar) boardToolbar.style.display = isOperador ? "none" : "";
   if(storageNote) storageNote.style.display = isOperador ? "none" : "";
+
+  const presentationToggle = document.getElementById("presentation-toggle");
+  if(presentationToggle) presentationToggle.style.display = canManage() ? "" : "none";
 
   const name = firstName();
   if(h1) h1.innerHTML = name ? `${greetingByHour()}, <span class="welcome-name">${name}</span>!` : "Board de Melhorias";
@@ -2094,6 +2242,50 @@ async function deleteAttachment(id, attachmentId){
   }
 }
 
+// Vínculo entre demandas (ex.: "isso depende daquilo"). Guardado no mapa compartilhado
+// "related" (mesmo padrão atômico de comentarios/statusHistory/attachments) e sempre
+// bidirecional: vincular A a B atualiza os dois lados, pra quem abrir qualquer um dos dois
+// veja o vínculo, sem precisar lembrar em qual item ele foi criado primeiro.
+async function persistRelated(id, list){
+  if(storageMode === "firebase" && firebaseReady){
+    const fpPath = new fsFieldPath("related", id);
+    await fsUpdateDoc(BOARD_DOC, fpPath, list.length ? list : fsDeleteField());
+  }else{
+    await storageAdapter.set(`related:${id}`, list.length ? JSON.stringify(list) : "");
+  }
+}
+
+async function addRelatedItem(id, targetId){
+  if(!targetId || targetId === id) return;
+  const item = DATA.find(d => d.id === id);
+  const target = DATA.find(d => d.id === targetId);
+  if(!item || !target) return;
+  if((item.related || []).includes(targetId)) return;
+  item.related = [...(item.related || []), targetId];
+  target.related = [...(target.related || []), id];
+  renderTabs();
+  try{
+    await persistRelated(id, item.related);
+    await persistRelated(targetId, target.related);
+  }catch(err){
+    console.error("Falha ao vincular item relacionado:", err);
+  }
+}
+
+async function removeRelatedItem(id, targetId){
+  const item = DATA.find(d => d.id === id);
+  const target = DATA.find(d => d.id === targetId);
+  if(item) item.related = (item.related || []).filter(r => r !== targetId);
+  if(target) target.related = (target.related || []).filter(r => r !== id);
+  renderTabs();
+  try{
+    if(item) await persistRelated(id, item.related);
+    if(target) await persistRelated(targetId, target.related);
+  }catch(err){
+    console.error("Falha ao remover item relacionado:", err);
+  }
+}
+
 async function loadObservacoes(){
   if(storageMode === "none") return;
   try{
@@ -2173,6 +2365,10 @@ async function loadItemFieldMaps(){
         const rawHistory = await storageAdapter.get(`statusHistory:${item.id}`);
         if(rawHistory) item.statusHistory = JSON.parse(rawHistory);
       }catch(e){}
+      try{
+        const rawRelated = await storageAdapter.get(`related:${item.id}`);
+        if(rawRelated) item.related = JSON.parse(rawRelated);
+      }catch(e){}
     }));
   }catch(e){
     console.error("Falha ao carregar stage/responsável/prazo/histórico:", e);
@@ -2245,6 +2441,17 @@ async function removeCustomItem(id){
     }
     try{ await fsUpdateDoc(BOARD_DOC, new fsFieldPath("attachments", id), fsDeleteField()); }catch(e){}
   }
+  // Remove também o vínculo do lado de quem apontava pra este item removido, senão sobra uma
+  // referência quebrada (ID que não existe mais) na lista de relacionados de outra demanda.
+  if((removedItem.related || []).length){
+    for(const targetId of removedItem.related){
+      const target = DATA.find(d => d.id === targetId);
+      if(!target) continue;
+      target.related = (target.related || []).filter(r => r !== id);
+      try{ await persistRelated(targetId, target.related); }catch(e){}
+    }
+  }
+  try{ await persistRelated(id, []); }catch(e){}
 }
 
 function openModal(){
@@ -2576,6 +2783,11 @@ document.getElementById("login-forgot").addEventListener("click", async () => {
 
 document.getElementById("logout-btn").addEventListener("click", async () => {
   if(auth) await authSignOut(auth);
+});
+document.getElementById("presentation-toggle").addEventListener("click", (e) => {
+  const active = document.body.classList.toggle("presentation-mode");
+  e.target.classList.toggle("active", active);
+  e.target.textContent = active ? "Sair do modo apresentação" : "🖥 Modo apresentação";
 });
 document.getElementById("login-signout-denied").addEventListener("click", async () => {
   if(auth) await authSignOut(auth);
