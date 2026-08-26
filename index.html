@@ -86,18 +86,15 @@
   *{box-sizing:border-box;}
   html,body{margin:0;padding:0;}
   body{
-    background:
-      radial-gradient(ellipse 900px 500px at 12% -10%, #16264a55, transparent),
-      radial-gradient(ellipse 900px 600px at 105% 5%, var(--brand-red-dim), transparent),
-      radial-gradient(ellipse 700px 500px at 100% 0%, #1a1f3a55, transparent),
-      var(--ink-0);
+    background:var(--ink-0);
     color:var(--text-hi);
     font-family:var(--font-display);
     min-height:100vh;
     padding:32px 20px 60px;
   }
+  #bg-network{position:fixed; inset:0; z-index:0; pointer-events:none;}
 
-  .wrap{max-width:1180px;margin:0 auto; animation:appFadeIn .45s ease;}
+  .wrap{position:relative; z-index:1; max-width:1180px;margin:0 auto; animation:appFadeIn .45s ease;}
   @keyframes appFadeIn{from{opacity:0;} to{opacity:1;}}
 
   header{
@@ -694,11 +691,10 @@
   /* ---------- login screen ---------- */
   #login-screen{
     position:fixed; inset:0; z-index:200; display:flex; align-items:center; justify-content:center;
-    background:var(--ink-0);
-    padding:20px; overflow:hidden;
+    background:transparent;
+    padding:20px;
   }
   #login-screen.hidden{display:none;}
-  #login-network{position:absolute; inset:0; display:block;}
   .login-card{
     position:relative; z-index:1;
     width:100%; max-width:380px;
@@ -779,8 +775,9 @@
 </head>
 <body>
 
+<canvas id="bg-network" aria-hidden="true"></canvas>
+
 <div id="login-screen">
-  <canvas id="login-network" aria-hidden="true"></canvas>
   <div class="login-card" id="login-card">
     <img src="logo.png" alt="Crediffato" />
     <h2>Crediffato - Gestão</h2>
@@ -1186,7 +1183,7 @@
 // versão mais recente (a pessoa só precisa fazer login de novo).
 // IMPORTANTE: mude o valor de APP_VERSION a cada publicação — é a única forma de o mecanismo
 // perceber que existe uma versão nova.
-const APP_VERSION = "2026-08-26.1";
+const APP_VERSION = "2026-08-26.2";
 
 async function checkForNewVersion(){
   try{
@@ -1220,14 +1217,15 @@ const firebaseConfig = {
 };
 const FIREBASE_API_KEY = firebaseConfig.apiKey;
 
-// Fundo animado da tela de login: pontos conectados por linhas, se movendo bem devagar.
-// Roda direto (não espera Firebase) já que a tela de login aparece antes de qualquer
-// autenticação. Pausa sozinho quando a tela de login fica escondida (poupar CPU) e
-// respeita "reduzir movimento" desenhando só um quadro estático em vez de animar.
-(function initLoginNetwork(){
-  const canvas = document.getElementById("login-network");
+// Fundo animado (pontos conectados por linhas, se movendo bem devagar) por trás de toda a
+// plataforma — login e área logada usam o mesmo canvas fixo no body, pra ficarem visualmente
+// idênticos em vez de duas versões separadas. Roda direto (não espera Firebase) já que a tela
+// de login aparece antes de qualquer autenticação. Pausa sozinho quando a aba não está visível
+// (poupar CPU/bateria em segundo plano) e respeita "reduzir movimento" desenhando só um quadro
+// estático em vez de animar.
+(function initBgNetwork(){
+  const canvas = document.getElementById("bg-network");
   const ctx = canvas.getContext("2d");
-  const screenEl = document.getElementById("login-screen");
   const reduceMotion = window.matchMedia && window.matchMedia("(prefers-reduced-motion: reduce)").matches;
   const dpr = Math.min(window.devicePixelRatio || 1, 2);
   let particles = [];
@@ -1274,20 +1272,18 @@ const FIREBASE_API_KEY = firebaseConfig.apiKey;
       ctx.arc(p.x, p.y, 1.6, 0, Math.PI * 2);
       ctx.fill();
     }
-    raf = (!screenEl.classList.contains("hidden") && !reduceMotion) ? requestAnimationFrame(step) : null;
+    raf = (!document.hidden && !reduceMotion) ? requestAnimationFrame(step) : null;
   }
 
   function start(){
-    if(screenEl.classList.contains("hidden") || raf) return;
+    if(document.hidden || raf) return;
     raf = requestAnimationFrame(step);
   }
 
   window.addEventListener("resize", () => { resize(); if(reduceMotion) step(); });
+  document.addEventListener("visibilitychange", () => { if(!reduceMotion) start(); });
   resize();
   if(reduceMotion){ step(); } else { start(); }
-
-  // Volta a animar quando a tela de login reaparece (ex.: depois de um logout).
-  new MutationObserver(() => { if(!reduceMotion) start(); }).observe(screenEl, { attributes: true, attributeFilter: ["class"] });
 })();
 
 // E-mail do administrador "bootstrap": a primeira vez que essa conta fizer login,
