@@ -1264,9 +1264,6 @@
               <span>Vermelho</span>
             </div>
           </div>
-          <div class="settings-dropdown-divider"></div>
-          <p class="settings-section-title">Quem está logado agora</p>
-          <div class="admin-list" id="online-list"></div>
         </div>
       </div>
     </div>
@@ -1471,7 +1468,7 @@
       </div>
     </div>
     <div class="admin-grid" id="admin-view-users">
-      <div class="admin-card admin-card-network">
+      <div class="admin-card admin-card-network" id="new-access-card">
         <svg class="network-watermark" viewBox="0 0 300 200" aria-hidden="true">
           <line x1="18" y1="24" x2="80" y2="66"/><line x1="80" y1="66" x2="46" y2="128"/>
           <line x1="80" y1="66" x2="150" y2="40"/><line x1="150" y1="40" x2="222" y2="80"/>
@@ -1542,9 +1539,13 @@
         </div>
         <div class="admin-list" id="user-list" style="margin-top:16px;"></div>
       </div>
+      <div class="admin-card" style="grid-column:1 / -1;">
+        <h3>Quem está logado agora</h3>
+        <div class="admin-list" id="online-list"></div>
+      </div>
     </div>
     <div class="admin-grid" id="admin-view-sectors" style="display:none;">
-      <div class="admin-card">
+      <div class="admin-card" id="new-sector-card">
         <h3>Novo setor</h3>
         <form id="sector-form">
           <label class="field">
@@ -1764,7 +1765,7 @@
 // que a comparação ">"/"<" abaixo saiba qual versão é mais nova) — é a única forma de o mecanismo
 // perceber que existe uma versão nova. Só funciona pra quem está conectado ao Firestore (modo de
 // contingência sem Firebase não tem sincronização em tempo real de nada, essa checagem incluída).
-const APP_VERSION = "2026-08-27T20:32:03Z";
+const APP_VERSION = "2026-08-27T20:53:15Z";
 
 // Desloga e recarrega — usado tanto pela verificação de versão nova quanto pelos sinais de
 // desconexão manual (shutdown geral ou alguém sendo desconectado individualmente).
@@ -3119,6 +3120,11 @@ function renderArchive(){
 }
 
 function renderAdminLists(){
+  const newAccessCard = document.getElementById("new-access-card");
+  if(newAccessCard) newAccessCard.style.display = canCreate() ? "" : "none";
+  const newSectorCard = document.getElementById("new-sector-card");
+  if(newSectorCard) newSectorCard.style.display = canCreate() ? "" : "none";
+
   const sectorList = document.getElementById("sector-list");
   if(sectorList){
     sectorList.innerHTML = SECTORS.map(s => `<div class="admin-list-item"><span>${s.label}</span><span>${s.key}</span></div>`).join("");
@@ -4198,9 +4204,11 @@ function renderTabs(){
   const navValidationsBtn = document.getElementById("nav-validations-btn");
   if(navValidationsBtn) navValidationsBtn.style.display = canManage() ? "" : "none";
   const navAdminBtn = document.getElementById("nav-admin-btn");
-  if(navAdminBtn) navAdminBtn.style.display = canCreate() ? "" : "none";
+  // A aba fica aberta pra todo mundo ver quem está logado agora e a lista de colaboradores/
+  // setores — só a criação e manutenção (Novo acesso, Novo setor, editar/desativar/excluir)
+  // continua restrita a quem pode gerenciar (ver canCreate() nos próprios cartões/botões).
+  if(navAdminBtn) navAdminBtn.style.display = "";
 
-  if(state.tab === "admin" && !canCreate()) state.tab = "board";
   if(state.tab === "overview" && !canManage()) state.tab = "board";
   if(state.tab === "validations" && !canManage()) state.tab = "board";
 
