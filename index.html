@@ -96,6 +96,11 @@
 
   .wrap{position:relative; z-index:1; max-width:1320px;margin:0 auto; animation:appFadeIn .45s ease;}
   @keyframes appFadeIn{from{opacity:0;} to{opacity:1;}}
+  .wrap.portal-reveal{animation:portalReveal .75s cubic-bezier(.16,1,.3,1) both; will-change:transform, opacity;}
+  @keyframes portalReveal{
+    from{ opacity:0; transform:scale(.93); }
+    to{ opacity:1; transform:scale(1); }
+  }
 
   .app-shell{display:flex; align-items:flex-start; gap:28px;}
   .main-col{flex:1; min-width:0;}
@@ -825,6 +830,7 @@
     .filters-panel.open{animation:none;}
     .resolution-bar-row, .donut-multiple-item, .vbar-item, .vbar-crown{animation:none; opacity:1; transform:none;}
     .upgrade-ring, .upgrade-icon, #sync-btn.spinning svg{animation:none;}
+    .login-card.converging, .wrap.portal-reveal{animation:none;}
     .donut-chart svg circle{transition:none;}
     *{transition:none !important;}
   }
@@ -877,6 +883,14 @@
   @keyframes loginCardIn{
     from{ opacity:0; transform:translateY(22px) scale(.96); }
     to{ opacity:1; transform:translateY(0) scale(1); }
+  }
+  .login-card.converging{
+    animation:loginConverge .7s cubic-bezier(.55,0,.85,.35) forwards;
+    will-change:transform, opacity;
+  }
+  @keyframes loginConverge{
+    30%{ transform:scale(1.015); }
+    to{ transform:scale(.1); opacity:0; }
   }
   .login-card img{
     height:56px; width:auto; margin-bottom:18px;
@@ -1501,7 +1515,7 @@
 // que a comparação ">"/"<" abaixo saiba qual versão é mais nova) — é a única forma de o mecanismo
 // perceber que existe uma versão nova. Só funciona pra quem está conectado ao Firestore (modo de
 // contingência sem Firebase não tem sincronização em tempo real de nada, essa checagem incluída).
-const APP_VERSION = "2026-08-27T15:30:00Z";
+const APP_VERSION = "2026-08-27T17:15:00Z";
 
 // Desloga e recarrega — usado tanto pela verificação de versão nova quanto pelos sinais de
 // desconexão manual (shutdown geral ou alguém sendo desconectado individualmente).
@@ -1697,6 +1711,8 @@ const FIREBASE_API_KEY = firebaseConfig.apiKey;
 // de login aparece antes de qualquer autenticação. Pausa sozinho quando a aba não está visível
 // (poupar CPU/bateria em segundo plano) e respeita "reduzir movimento" desenhando só um quadro
 // estático em vez de animar.
+let bgNetworkConverge = null;
+let bgNetworkRelease = null;
 (function initBgNetwork(){
   const canvas = document.getElementById("bg-network");
   const ctx = canvas.getContext("2d");
@@ -1705,27 +1721,117 @@ const FIREBASE_API_KEY = firebaseConfig.apiKey;
   let particles = [];
   let raf = null;
 
+  // Máquina de estados do efeito de login: "idle" (deriva normal, sempre) -> "converging"
+  // (pontos vão até o centro do card, com easing, sem oscilar) -> "holding" (ficam girando
+  // devagar num núcleo pulsante, por quanto tempo for preciso — não depende de um tempo fixo,
+  // só termina quando showApp() de fato revela o painel) -> "releasing" (explodem pra fora,
+  // sincronizado com o painel aparecendo) -> volta pra "idle".
+  let phase = "idle";
+  let target = null;
+  let phaseStart = 0;
+  const CONVERGE_MS = 700;
+  const RELEASE_MS = 1200;
+
+  function easeOutCubic(t){ return 1 - Math.pow(1 - t, 3); }
+
   function resize(){
     const w = window.innerWidth, h = window.innerHeight;
     canvas.width = w * dpr; canvas.height = h * dpr;
     canvas.style.width = w + "px"; canvas.style.height = h + "px";
     ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
-    const count = Math.min(90, Math.round((w * h) / 18000));
-    particles = Array.from({ length: count }, () => ({
+    const count = Math.min(150, Math.round((w * h) / 12000));
+    // orbitAngle e burstAngle são distribuídos em partes iguais ao redor do círculo (com um
+    // leve desvio pra não ficar mecânico), nunca sorteados soltos — com poucas dezenas de
+    // partículas, ângulo puramente aleatório concentra por acaso mais pontos de um lado que
+    // do outro. burstAngle é FIXO desde a criação (não gira com o tempo, diferente do
+    // orbitAngle, que avança sozinho durante o "segurando") — a explosão de saída usa esse
+    // ângulo fixo, não a posição ao vivo, senão o lado pra onde ela "puxa" varia dependendo
+    // de quanto tempo os dados demoraram pra carregar (cada partícula gira num sentido e
+    // velocidade diferente, então uma espera mais longa deixava tudo desbalanceado nessa
+    // hora, mesmo já corrigido no início do "segurando").
+    particles = Array.from({ length: count }, (_, i) => ({
       x: Math.random() * w, y: Math.random() * h,
       vx: (Math.random() - 0.5) * 0.25, vy: (Math.random() - 0.5) * 0.25,
+      orbitAngle: (i / count) * Math.PI * 2 + (Math.random() - 0.5) * 0.3,
+      burstAngle: (i / count) * Math.PI * 2 + (Math.random() - 0.5) * 0.4,
+      orbitRadius: 14 + Math.random() * 30,
+      orbitSpeed: (0.35 + Math.random() * 0.45) * (Math.random() < 0.5 ? 1 : -1),
     }));
+  }
+
+  function drawFlash(flashT){
+    // onda de choque do estouro: expande rápido e forte a partir do centro, some em seguida.
+    const r = 40 + flashT * 420;
+    const fade = Math.pow(1 - flashT, 1.6);
+    const grad = ctx.createRadialGradient(target.x, target.y, 0, target.x, target.y, r);
+    grad.addColorStop(0, `rgba(212,15,58,${0.55 * fade})`);
+    grad.addColorStop(0.35, `rgba(212,15,58,${0.28 * fade})`);
+    grad.addColorStop(1, "rgba(212,15,58,0)");
+    ctx.fillStyle = grad;
+    ctx.beginPath();
+    ctx.arc(target.x, target.y, r, 0, Math.PI * 2);
+    ctx.fill();
+  }
+
+  function drawCore(now){
+    // brilho suave e pulsante no ponto de convergência — mantém a tela "viva" enquanto os
+    // dados ainda estão carregando, em vez de parecer travada num vazio.
+    const pulse = (Math.sin(now / 480) + 1) / 2;
+    const r = 30 + pulse * 14;
+    const grad = ctx.createRadialGradient(target.x, target.y, 0, target.x, target.y, r);
+    grad.addColorStop(0, `rgba(212,15,58,${0.28 + pulse * 0.14})`);
+    grad.addColorStop(1, "rgba(212,15,58,0)");
+    ctx.fillStyle = grad;
+    ctx.beginPath();
+    ctx.arc(target.x, target.y, r, 0, Math.PI * 2);
+    ctx.fill();
   }
 
   function step(){
     const w = window.innerWidth, h = window.innerHeight;
     ctx.clearRect(0, 0, w, h);
-    for(const p of particles){
-      p.x += p.vx; p.y += p.vy;
-      if(p.x < 0 || p.x > w) p.vx *= -1;
-      if(p.y < 0 || p.y > h) p.vy *= -1;
+    const now = performance.now();
+
+    if(phase === "converging"){
+      const t = Math.min(1, (now - phaseStart) / CONVERGE_MS);
+      const e = easeOutCubic(t);
+      for(const p of particles){
+        p.x = p.startX + (target.x - p.startX) * e;
+        p.y = p.startY + (target.y - p.startY) * e;
+      }
+      drawCore(now);
+      if(t >= 1) phase = "holding";
+    }else if(phase === "holding"){
+      for(const p of particles){
+        p.orbitAngle += p.orbitSpeed * 0.018;
+        p.x = target.x + Math.cos(p.orbitAngle) * p.orbitRadius;
+        p.y = target.y + Math.sin(p.orbitAngle) * p.orbitRadius;
+      }
+      drawCore(now);
+    }else if(phase === "releasing"){
+      const t = Math.min(1, (now - phaseStart) / RELEASE_MS);
+      // decaimento forte no início (tipo explosão) — a maior parte do percurso acontece
+      // rápido, depois desacelera suave até virar deriva ambiente normal.
+      const decay = Math.pow(1 - t, 2.1);
+      for(const p of particles){
+        p.x += p.burstVx * decay + p.vx;
+        p.y += p.burstVy * decay + p.vy;
+        if(p.x < 0 || p.x > w) p.vx *= -1;
+        if(p.y < 0 || p.y > h) p.vy *= -1;
+      }
+      if(t < 0.4) drawFlash(t / 0.4);
+      if(t >= 1){
+        phase = "idle"; target = null;
+      }
+    }else{
+      for(const p of particles){
+        p.x += p.vx; p.y += p.vy;
+        if(p.x < 0 || p.x > w) p.vx *= -1;
+        if(p.y < 0 || p.y > h) p.vy *= -1;
+      }
     }
-    const maxDist = 130;
+
+    const maxDist = 165;
     for(let i = 0; i < particles.length; i++){
       for(let j = i + 1; j < particles.length; j++){
         const a = particles[i], b = particles[j];
@@ -1758,6 +1864,29 @@ const FIREBASE_API_KEY = firebaseConfig.apiKey;
   document.addEventListener("visibilitychange", () => { if(!reduceMotion) start(); });
   resize();
   if(reduceMotion){ step(); } else { start(); }
+
+  bgNetworkConverge = function(cx, cy){
+    if(reduceMotion || !particles.length) return;
+    target = { x: cx, y: cy };
+    for(const p of particles){ p.startX = p.x; p.startY = p.y; }
+    phase = "converging";
+    phaseStart = performance.now();
+  };
+  bgNetworkRelease = function(){
+    if(reduceMotion || phase === "idle" || !target) return;
+    for(const p of particles){
+      // Usa o burstAngle fixo (distribuído em partes iguais, ver resize()) — não a posição
+      // ao vivo da partícula, que já pode ter girado desbalanceada dependendo de quanto
+      // tempo o "segurando" durou.
+      const speed = 10 + Math.random() * 16;
+      p.burstVx = Math.cos(p.burstAngle) * speed;
+      p.burstVy = Math.sin(p.burstAngle) * speed;
+      p.vx = (Math.random() - 0.5) * 0.3;
+      p.vy = (Math.random() - 0.5) * 0.3;
+    }
+    phase = "releasing";
+    phaseStart = performance.now();
+  };
 })();
 
 // E-mail do administrador "bootstrap": a primeira vez que essa conta fizer login,
@@ -4412,19 +4541,46 @@ document.getElementById("edit-access-form").addEventListener("submit", async (e)
 });
 
 // ---------- Login / Autenticação ----------
+let pendingLoginReveal = false;
 function showApp(){
   document.getElementById("login-screen").classList.add("hidden");
-  document.getElementById("app-content").style.display = "";
+  const wrap = document.getElementById("app-content");
+  wrap.style.display = "";
+  if(pendingLoginReveal){
+    pendingLoginReveal = false;
+    const card = document.getElementById("login-card");
+    if(card) card.classList.remove("converging");
+    if(bgNetworkRelease) bgNetworkRelease();
+    // Um frame de intervalo entre o painel virar visível (o navegador ainda precisa montar
+    // o layout inteiro dele, que é pesado) e a animação de revelação começar — assim a
+    // animação em si roda limpa, sem competir com esse primeiro layout/estilo pesado.
+    wrap.classList.remove("portal-reveal");
+    requestAnimationFrame(() => {
+      void wrap.offsetWidth;
+      wrap.classList.add("portal-reveal");
+    });
+  }
+}
+// Se o login não terminar em showApp() (ex.: gate de versão ou acesso negado devolvendo
+// pra tela de login), desfaz o efeito de "convergência" pendente — senão o card de login
+// ficaria encolhido/invisível pra sempre, preso no fim daquela animação.
+function resetLoginRevealState(){
+  pendingLoginReveal = false;
+  const card = document.getElementById("login-card");
+  if(card) card.classList.remove("converging");
+  if(bgNetworkRelease) bgNetworkRelease();
 }
 function showLogin(){
   document.getElementById("app-content").style.display = "none";
   document.getElementById("login-screen").classList.remove("hidden");
   document.getElementById("login-denied").style.display = "none";
+  resetLoginRevealState();
 }
 function showDenied(){
   document.getElementById("app-content").style.display = "none";
   document.getElementById("login-screen").classList.remove("hidden");
   document.getElementById("login-denied").style.display = "block";
+  resetLoginRevealState();
 }
 
 async function handleAuthedUser(fbUser){
@@ -4562,6 +4718,16 @@ document.getElementById("login-form").addEventListener("submit", async (e) => {
     // na primeira tentativa (só "colava" numa segunda tentativa, com o valor já salvo).
     try{ localStorage.setItem("appLoginVersion", APP_VERSION); }catch(e){}
     await authSignIn(auth, email, password);
+    // A rede de pontos do fundo converge pro centro do card (como se "montasse" a
+    // plataforma), enquanto o card encolhe — showApp() aplica o efeito de revelação
+    // assim que os dados terminarem de carregar (ver pendingLoginReveal).
+    pendingLoginReveal = true;
+    const card = document.getElementById("login-card");
+    if(card){
+      const rect = card.getBoundingClientRect();
+      if(bgNetworkConverge) bgNetworkConverge(rect.left + rect.width / 2, rect.top + rect.height / 2);
+      card.classList.add("converging");
+    }
   }catch(err){
     console.error("Falha no login:", err);
     errEl.textContent = "E-mail ou senha incorretos.";
