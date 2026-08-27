@@ -94,8 +94,11 @@
   }
   #bg-network{position:fixed; inset:0; z-index:0; pointer-events:none;}
 
-  .wrap{position:relative; z-index:1; max-width:1180px;margin:0 auto; animation:appFadeIn .45s ease;}
+  .wrap{position:relative; z-index:1; max-width:1320px;margin:0 auto; animation:appFadeIn .45s ease;}
   @keyframes appFadeIn{from{opacity:0;} to{opacity:1;}}
+
+  .app-shell{display:flex; align-items:flex-start; gap:28px;}
+  .main-col{flex:1; min-width:0;}
 
   header{
     display:flex; justify-content:space-between; align-items:flex-start; gap:24px; flex-wrap:wrap;
@@ -168,13 +171,52 @@
   .theme-swatch[data-theme-choice="claro"]{background:#f3f4f8;}
   .theme-swatch[data-theme-choice="vermelho"]{background:#170a0d;}
 
-  .main-nav{display:flex; gap:6px; background:var(--ink-1); border:1px solid var(--hairline); border-radius:999px; padding:4px; margin-bottom:24px; width:fit-content;}
-  .main-nav button{
-    font-family:var(--font-mono); font-size:12.5px; letter-spacing:.02em; color:var(--text-mid);
-    background:transparent; border:none; border-radius:999px; padding:8px 18px; cursor:pointer;
-    transition:background-color .2s ease, color .2s ease;
+  .main-nav{
+    position:sticky; top:24px; z-index:2;
+    display:flex; flex-direction:column; align-items:center; gap:6px;
+    background:var(--ink-1); border:1px solid var(--hairline); border-radius:16px;
+    padding:12px 8px; width:60px; flex-shrink:0;
   }
-  .main-nav button.active{background:var(--brand-red); color:#fff;}
+  .side-nav-indicator{
+    position:absolute; left:0; top:0; width:44px; height:44px; border-radius:11px;
+    background:var(--brand-red-dim); border:1px solid var(--brand-red); z-index:0; opacity:0;
+    box-shadow:0 0 0 3px var(--brand-red-dim);
+    transition:transform .32s cubic-bezier(.16,1,.3,1), opacity .2s ease;
+  }
+  .main-nav button{
+    position:relative; z-index:1; width:44px; height:44px;
+    display:flex; align-items:center; justify-content:center; flex-shrink:0;
+    font-family:var(--font-mono); font-size:12.5px; letter-spacing:.02em; color:var(--text-mid);
+    background:transparent; border:none; border-radius:11px; padding:0; cursor:pointer;
+    transition:color .2s ease, background-color .2s ease;
+  }
+  .main-nav button .nav-icon{display:flex; flex-shrink:0; opacity:.75; transition:opacity .2s ease;}
+  .main-nav button.active{color:var(--brand-red);}
+  .main-nav button.active .nav-icon{opacity:1;}
+  .main-nav button:not(.active):hover{color:var(--text-hi); background:var(--ink-2);}
+  .main-nav button:not(.active):hover .nav-icon{opacity:1;}
+  .main-nav .nav-label{
+    position:absolute; left:calc(100% + 12px); top:50%; z-index:20;
+    transform:translate(-6px, -50%);
+    background:var(--ink-2); border:1px solid var(--hairline); color:var(--text-hi);
+    font-family:var(--font-mono); font-size:11px; text-transform:uppercase; letter-spacing:.06em;
+    padding:6px 11px; border-radius:7px; white-space:nowrap;
+    opacity:0; pointer-events:none;
+    box-shadow:0 10px 26px #00000055;
+    transition:opacity .15s ease, transform .15s ease;
+  }
+  .main-nav button:hover .nav-label, .main-nav button:focus-visible .nav-label{
+    opacity:1; transform:translate(0, -50%);
+  }
+  @media (max-width:900px){
+    .app-shell{flex-direction:column;}
+    .main-nav{
+      position:static; width:100%; flex-direction:row; justify-content:flex-start;
+      overflow-x:auto; gap:6px; padding:8px;
+    }
+    .main-nav .nav-label{left:50%; top:calc(100% + 10px); transform:translate(-50%, -6px);}
+    .main-nav button:hover .nav-label, .main-nav button:focus-visible .nav-label{transform:translate(-50%, 0);}
+  }
 
   .summary-group{margin-bottom:18px;}
   .summary-label{
@@ -598,6 +640,52 @@
     .access-info{min-width:140px;}
   }
 
+  .routine-list{display:flex; flex-direction:column; gap:10px; margin-top:16px;}
+  .routine-card{
+    display:flex; align-items:center; gap:14px; background:var(--ink-1); border:1px solid var(--hairline);
+    border-left:3px solid var(--hairline); border-radius:12px; padding:14px 16px;
+    transition:border-color .15s ease, opacity .15s ease;
+  }
+  .routine-card:hover{border-color:var(--text-low); border-left-color:var(--text-low);}
+  .routine-card.routine-done{border-left-color:var(--st-concluido);}
+  .routine-card.routine-pending{border-left-color:var(--sev-alta);}
+  .routine-card.routine-inactive{opacity:.5;}
+  .routine-freq-icon{
+    width:36px; height:36px; border-radius:10px; flex-shrink:0; display:flex; align-items:center; justify-content:center;
+    background:var(--ink-2); color:var(--text-mid); border:1px solid var(--hairline);
+  }
+  .routine-info{flex:1; min-width:0;}
+  .routine-title-row{display:flex; align-items:center; gap:8px; flex-wrap:wrap;}
+  .routine-title{font-size:13.5px; font-weight:600; color:var(--text-hi);}
+  .routine-desc{font-size:12px; color:var(--text-low); margin-top:3px; max-width:60ch;}
+  .routine-meta{display:flex; align-items:center; gap:10px; flex-wrap:wrap; margin-top:6px; font-family:var(--font-mono); font-size:11px; color:var(--text-low);}
+  .routine-meta .routine-assignee{display:flex; align-items:center; gap:5px; color:var(--text-mid);}
+  .routine-badge{
+    font-family:var(--font-mono); font-size:9.5px; text-transform:uppercase; letter-spacing:.04em;
+    padding:2px 8px; border-radius:999px; white-space:nowrap; border:1px solid var(--hairline); color:var(--text-mid);
+  }
+  .routine-badge-freq{background:var(--ink-2);}
+  .routine-badge-sector{background:var(--ink-2);}
+  .routine-badge-wholesector{background:#8b8dfb1f; color:var(--pa); border-color:#8b8dfb55;}
+  .routine-status-pill{
+    font-family:var(--font-mono); font-size:10.5px; font-weight:600; text-transform:uppercase; letter-spacing:.03em;
+    padding:4px 10px; border-radius:999px; flex-shrink:0; white-space:nowrap;
+  }
+  .routine-status-done{background:#4ee2a01a; color:var(--st-concluido); border:1px solid #4ee2a055;}
+  .routine-status-pending{background:#e08a3c1a; color:var(--sev-alta); border:1px solid #e08a3c55;}
+  .routine-actions{display:flex; align-items:center; gap:6px; flex-shrink:0;}
+  .routine-complete-btn{
+    font-family:var(--font-mono); font-size:11px; font-weight:600; border-radius:999px; padding:7px 14px; cursor:pointer;
+    background:var(--brand-red); color:#fff; border:1px solid var(--brand-red); white-space:nowrap;
+  }
+  .routine-complete-btn:hover{opacity:.85;}
+  .routine-complete-btn.undo{background:transparent; color:var(--text-mid); border-color:var(--hairline); font-weight:400;}
+  .routine-complete-btn.undo:hover{color:var(--text-hi); border-color:var(--text-low);}
+  @media (max-width:700px){
+    .routine-card{flex-wrap:wrap;}
+    .routine-info{min-width:200px;}
+  }
+
   .kpi-row{display:grid; grid-template-columns:repeat(7, 1fr); gap:14px; margin-bottom:28px;}
   .kpi-card{background:var(--ink-1); border:1px solid var(--hairline); border-radius:var(--radius); padding:16px; transition:border-color .2s ease, background-color .2s ease;}
   .kpi-card.kpi-alert{border-color:#e2564f66; background:#e2564f0f;}
@@ -922,14 +1010,18 @@
     </div>
   </header>
 
+  <div class="app-shell">
   <div class="main-nav" id="main-nav" role="group" aria-label="Navegação principal">
-    <button type="button" data-tab="overview" id="nav-overview-btn" style="display:none;">Visão Geral</button>
-    <button type="button" data-tab="board" class="active">Board</button>
-    <button type="button" data-tab="backlog">Backlog</button>
-    <button type="button" data-tab="validations" id="nav-validations-btn" style="display:none;">Validações</button>
-    <button type="button" data-tab="archive">Arquivo</button>
-    <button type="button" data-tab="admin" id="nav-admin-btn" style="display:none;">Acessos</button>
+    <div class="side-nav-indicator" id="side-nav-indicator"></div>
+    <button type="button" data-tab="overview" id="nav-overview-btn" style="display:none;"><span class="nav-icon"><svg width="16" height="16" viewBox="0 0 16 16" fill="none" aria-hidden="true"><path d="M2.5 13.5V9M8 13.5V5M13.5 13.5V2.5" stroke="currentColor" stroke-width="1.4" stroke-linecap="round"/></svg></span><span class="nav-label">Visão Geral</span></button>
+    <button type="button" data-tab="board" class="active"><span class="nav-icon"><svg width="16" height="16" viewBox="0 0 16 16" fill="none" aria-hidden="true"><rect x="1.5" y="2.5" width="4" height="11" rx="1" stroke="currentColor" stroke-width="1.3"/><rect x="6.5" y="2.5" width="4" height="7" rx="1" stroke="currentColor" stroke-width="1.3"/><rect x="11.5" y="2.5" width="3" height="9" rx="1" stroke="currentColor" stroke-width="1.3"/></svg></span><span class="nav-label">Board</span></button>
+    <button type="button" data-tab="backlog"><span class="nav-icon"><svg width="16" height="16" viewBox="0 0 16 16" fill="none" aria-hidden="true"><path d="M5.5 4H14M5.5 8H14M5.5 12H14" stroke="currentColor" stroke-width="1.4" stroke-linecap="round"/><circle cx="2.3" cy="4" r="1" fill="currentColor"/><circle cx="2.3" cy="8" r="1" fill="currentColor"/><circle cx="2.3" cy="12" r="1" fill="currentColor"/></svg></span><span class="nav-label">Backlog</span></button>
+    <button type="button" data-tab="routines" id="nav-routines-btn"><span class="nav-icon"><svg width="16" height="16" viewBox="0 0 16 16" fill="none" aria-hidden="true"><path d="M2.5 8a5.5 5.5 0 0 1 9.4-3.9M13.5 8a5.5 5.5 0 0 1-9.4 3.9" stroke="currentColor" stroke-width="1.4" stroke-linecap="round"/><path d="M12 1.8v2.5h-2.5M4 14.2v-2.5h2.5" stroke="currentColor" stroke-width="1.4" stroke-linecap="round" stroke-linejoin="round"/></svg></span><span class="nav-label">Rotinas</span></button>
+    <button type="button" data-tab="validations" id="nav-validations-btn" style="display:none;"><span class="nav-icon"><svg width="16" height="16" viewBox="0 0 16 16" fill="none" aria-hidden="true"><circle cx="8" cy="8" r="6" stroke="currentColor" stroke-width="1.4"/><path d="M5.3 8.2l1.8 1.8 3.6-4" stroke="currentColor" stroke-width="1.4" stroke-linecap="round" stroke-linejoin="round"/></svg></span><span class="nav-label">Validações</span></button>
+    <button type="button" data-tab="archive"><span class="nav-icon"><svg width="16" height="16" viewBox="0 0 16 16" fill="none" aria-hidden="true"><rect x="1.8" y="3" width="12.4" height="3" rx="1" stroke="currentColor" stroke-width="1.3"/><path d="M2.8 6v6.2a1 1 0 0 0 1 1h8.4a1 1 0 0 0 1-1V6" stroke="currentColor" stroke-width="1.3"/><path d="M6.3 8.6h3.4" stroke="currentColor" stroke-width="1.3" stroke-linecap="round"/></svg></span><span class="nav-label">Arquivo</span></button>
+    <button type="button" data-tab="admin" id="nav-admin-btn" style="display:none;"><span class="nav-icon"><svg width="16" height="16" viewBox="0 0 16 16" fill="none" aria-hidden="true"><circle cx="6" cy="5.3" r="2.3" stroke="currentColor" stroke-width="1.3"/><path d="M1.8 13.2c.5-2.5 2.2-3.8 4.2-3.8s3.7 1.3 4.2 3.8" stroke="currentColor" stroke-width="1.3" stroke-linecap="round"/><circle cx="11.6" cy="5.6" r="1.8" stroke="currentColor" stroke-width="1.2"/><path d="M10.6 9.7c1.6.1 2.8 1.2 3.2 3.1" stroke="currentColor" stroke-width="1.2" stroke-linecap="round"/></svg></span><span class="nav-label">Acessos</span></button>
   </div>
+  <div class="main-col">
 
   <div class="filters-row" id="global-filters-row">
     <button type="button" class="filters-toggle-btn" id="filters-toggle" aria-expanded="false" aria-controls="filters-panel">
@@ -1045,6 +1137,43 @@
     <div class="backlog-list" id="backlog-list"></div>
   </div>
 
+  <div class="tab-panel" id="routines-tab" style="display:none;">
+    <div class="tab-panel-head">
+      <h2>Rotinas</h2>
+      <div style="display:flex; align-items:center; gap:12px; flex-wrap:wrap;">
+        <div class="view-toggle" id="routines-view-toggle" role="group" aria-label="Visão de rotinas">
+          <button type="button" data-routines-view="dashboard" class="active">Visão geral</button>
+          <button type="button" data-routines-view="detail">Detalhamento</button>
+        </div>
+        <button class="add-btn" id="open-add-routine-modal">+ Nova rotina</button>
+      </div>
+    </div>
+    <p class="sub" id="routines-sub" style="margin-bottom:18px;">Demandas recorrentes (diárias, semanais, mensais e anuais) repassadas a um responsável — com a opção de marcar que o setor inteiro está envolvido. Cada rotina volta a ficar pendente no início de cada período.</p>
+
+    <div id="routines-view-dashboard">
+      <div class="filter-group" id="routines-dashboard-area-filter" style="margin-bottom:16px;">
+        <span class="fg-label">Setor:</span>
+        <button class="filter-btn active" data-routine-area="todos">Todos</button>
+      </div>
+      <div class="kpi-row" id="routines-kpis" style="margin-bottom:24px;"></div>
+      <div class="overview-block">
+        <div class="summary-label">Pendentes</div>
+        <div class="routine-list" id="routines-dashboard-pending"></div>
+      </div>
+      <div class="overview-block" id="routines-dashboard-done-block">
+        <div class="summary-label">Concluídas neste período</div>
+        <div class="routine-list" id="routines-dashboard-done"></div>
+      </div>
+    </div>
+
+    <div id="routines-view-detail" style="display:none;">
+      <div class="filter-group" id="routines-detail-area-filter" style="margin-bottom:20px;">
+        <span class="fg-label">Setor (obrigatório):</span>
+      </div>
+      <div id="routines-detail-body"></div>
+    </div>
+  </div>
+
   <div class="tab-panel" id="validations-tab" style="display:none;">
     <div class="tab-panel-head">
       <h2>Validações pendentes</h2>
@@ -1140,6 +1269,9 @@
         <div class="admin-list" id="sector-list"></div>
       </div>
     </div>
+  </div>
+
+  </div>
   </div>
 
   <div class="modal-overlay" id="modal-overlay">
@@ -1259,6 +1391,53 @@
     </div>
   </div>
 
+  <div class="modal-overlay" id="routine-modal-overlay">
+    <div class="modal" role="dialog" aria-modal="true" aria-labelledby="routine-modal-title">
+      <div class="modal-head">
+        <h2 id="routine-modal-title">Nova rotina</h2>
+        <button class="modal-close" id="routine-modal-close" aria-label="Fechar">✕</button>
+      </div>
+      <form id="routine-form">
+        <label class="field">
+          <span class="field-label">Título *</span>
+          <input type="text" id="routine-title" required maxlength="120" placeholder="Ex: Conferência de caixa" />
+        </label>
+        <div class="field-row">
+          <label class="field">
+            <span class="field-label">Setor *</span>
+            <select id="routine-area" required></select>
+          </label>
+          <label class="field">
+            <span class="field-label">Frequência *</span>
+            <select id="routine-frequency" required>
+              <option value="diaria">Diária</option>
+              <option value="semanal">Semanal</option>
+              <option value="mensal">Mensal</option>
+              <option value="anual">Anual</option>
+            </select>
+          </label>
+        </div>
+        <label class="field">
+          <span class="field-label">Responsável *</span>
+          <select id="routine-assignee" required></select>
+        </label>
+        <label class="field" style="display:flex; align-items:center; flex-direction:row; gap:8px;">
+          <input type="checkbox" id="routine-whole-sector" style="width:auto; margin:0;" />
+          <span class="field-label" style="margin:0;">Envolve o setor inteiro (além do responsável acima)</span>
+        </label>
+        <label class="field">
+          <span class="field-label">Descrição (opcional)</span>
+          <textarea id="routine-desc" rows="2" maxlength="400" placeholder="Detalhes ou instruções da rotina"></textarea>
+        </label>
+        <div class="modal-actions">
+          <button type="button" class="btn-secondary" id="routine-modal-cancel">Cancelar</button>
+          <button type="submit" class="btn-primary">Salvar rotina</button>
+        </div>
+        <p class="form-msg" id="routine-msg"></p>
+      </form>
+    </div>
+  </div>
+
   <footer>
     Este board não contém dados pessoais de clientes, em conformidade com a LGPD (Lei nº 13.709/2018).<br/>
     Uso interno — Crediffato - Gestão.
@@ -1280,7 +1459,7 @@
 // que a comparação ">"/"<" abaixo saiba qual versão é mais nova) — é a única forma de o mecanismo
 // perceber que existe uma versão nova. Só funciona pra quem está conectado ao Firestore (modo de
 // contingência sem Firebase não tem sincronização em tempo real de nada, essa checagem incluída).
-const APP_VERSION = "2026-08-26T22:45:00Z";
+const APP_VERSION = "2026-08-27T14:00:00Z";
 
 // Desloga e recarrega — usado tanto pela verificação de versão nova quanto pelos sinais de
 // desconexão manual (shutdown geral ou alguém sendo desconectado individualmente).
@@ -1648,6 +1827,50 @@ function canCreate(){
   return currentUser && (currentUser.role === "admin" || currentUser.role === "gestor");
 }
 
+// ---------- Rotinas (demandas recorrentes: diária/semanal/mensal/anual) ----------
+// Regras próprias, mais simples que as do board principal: sem status/validação/histórico —
+// só "feito ou não neste período", reaberto sozinho assim que o período muda.
+const FREQ_LABEL = {diaria:"Diária", semanal:"Semanal", mensal:"Mensal", anual:"Anual"};
+function pad2(n){ return String(n).padStart(2, "0"); }
+function mondayOfWeek(date){
+  const d = new Date(date.getFullYear(), date.getMonth(), date.getDate());
+  const day = (d.getDay() + 6) % 7; // 0 = segunda-feira
+  d.setDate(d.getDate() - day);
+  return d;
+}
+function currentPeriodKey(frequency, date){
+  const d = date || new Date();
+  if(frequency === "diaria") return `${d.getFullYear()}-${pad2(d.getMonth() + 1)}-${pad2(d.getDate())}`;
+  if(frequency === "semanal"){
+    const m = mondayOfWeek(d);
+    return `semana-${m.getFullYear()}-${pad2(m.getMonth() + 1)}-${pad2(m.getDate())}`;
+  }
+  if(frequency === "mensal") return `${d.getFullYear()}-${pad2(d.getMonth() + 1)}`;
+  if(frequency === "anual") return `${d.getFullYear()}`;
+  return "";
+}
+function routineStatus(r){
+  const period = currentPeriodKey(r.frequency);
+  const completion = (r.completions || []).find(c => c.period === period) || null;
+  return { period, done: !!completion, completion };
+}
+function visibleRoutines(){
+  const scoped = ROUTINES.filter(r => areasForUser().includes(r.sector));
+  // Quem gerencia (admin/gestor/supervisor) vê tudo do(s) setor(es) dela, pra ter visão de
+  // equipe. Quem não gerencia só vê o que é "setor inteiro" ou o que foi atribuído a ela
+  // mesma — uma rotina individual de outra pessoa não aparece pra quem não é responsável.
+  if(canManage()) return scoped;
+  if(!currentUser) return [];
+  return scoped.filter(r => r.wholeSector || r.assigneeUid === currentUser.uid);
+}
+function canCompleteRoutine(r){
+  if(!currentUser) return false;
+  if(canManage()) return true;
+  if(r.assigneeUid === currentUser.uid) return true;
+  if(r.wholeSector && areasForUser().includes(r.sector)) return true;
+  return false;
+}
+
 const DATA = [
   { id:"1.1", area:"op", title:"Protocolo de Atendimento (Smart NX)", sev:"alta", status:"aberto",
     hoje:"Protocolo às vezes gerado no sistema, mas não comunicado ao cliente; já houve sinalização grave aplicada indevidamente quando o problema real era só a falta de comunicação.",
@@ -1679,6 +1902,8 @@ const DEFAULT_SECTORS = [
 ];
 let SECTORS = DEFAULT_SECTORS.slice();
 let DIRECTORY = []; // [{uid, email, role, assignedAreas}]
+let ROUTINES = []; // [{id, title, description, sector, frequency, assigneeUid, wholeSector, active, createdBy, createdAt, completions:[{period, at, byUid, byName}]}]
+let editingRoutineId = null; // id da rotina sendo editada no modal "Nova/Editar rotina", ou null em modo de criação
 let stagesMap = {};    // itemId -> "backlog" | "board", para todos os itens (base e customizados)
 let assigneesMap = {}; // itemId -> email, para todos os itens (base e customizados)
 let dueDatesMap = {};  // itemId -> "AAAA-MM-DD" (data prevista), para todos os itens
@@ -1821,7 +2046,7 @@ let storageMode = hasClaudeStorage ? "shared" : (hasLocalStorage ? "local" : "no
 async function ensureBoardDoc(){
   const snap = await fsGetDoc(BOARD_DOC);
   if(!snap.exists()){
-    const initial = { statuses:{}, customItems:[], observacoes:{}, comentarios:{}, sectors:DEFAULT_SECTORS.slice(), directory:[], stages:{}, assignees:{}, dueDates:{}, statusHistory:{}, attachments:{}, related:{}, validated:{} };
+    const initial = { statuses:{}, customItems:[], observacoes:{}, comentarios:{}, sectors:DEFAULT_SECTORS.slice(), directory:[], stages:{}, assignees:{}, dueDates:{}, statusHistory:{}, attachments:{}, related:{}, validated:{}, routines:[] };
     await fsSetDoc(BOARD_DOC, initial);
     return initial;
   }
@@ -1948,6 +2173,7 @@ function applyRemoteState(data){
   dueDatesMap = data.dueDates || {};
   SECTORS = (data.sectors && data.sectors.length) ? data.sectors : DEFAULT_SECTORS.slice();
   DIRECTORY = data.directory || [];
+  ROUTINES = data.routines || [];
   const baseItems = DATA.filter(d => !d.custom);
   const customItems = (data.customItems || []).slice();
   DATA.length = 0;
@@ -1977,7 +2203,7 @@ function applyRemoteState(data){
   renderTabs();
 }
 
-let state = { sev:"todos", status:"todos", area:"todos", assignee:"todos", view:"area", tab:"board", archiveSearch:"", userSearch:"", userStatusFilter:"todos", userRoleFilter:"todos" };
+let state = { sev:"todos", status:"todos", area:"todos", assignee:"todos", view:"area", tab:"board", archiveSearch:"", userSearch:"", userStatusFilter:"todos", userRoleFilter:"todos", routinesView:"dashboard", routineArea:"todos", routineDetailArea:"" };
 const openCardIds = new Set();
 const obsDrafts = {}; // id -> texto ainda não salvo, preservado entre re-renders
 
@@ -2508,6 +2734,57 @@ document.getElementById("edit-access-modal-overlay").addEventListener("click", (
   if(e.target.id === "edit-access-modal-overlay") closeEditAccessModal();
 });
 
+document.getElementById("open-add-routine-modal").addEventListener("click", openRoutineModal);
+document.getElementById("routine-modal-cancel").addEventListener("click", closeRoutineModal);
+document.getElementById("routine-modal-close").addEventListener("click", closeRoutineModal);
+document.getElementById("routine-modal-overlay").addEventListener("click", (e) => {
+  if(e.target.id === "routine-modal-overlay") closeRoutineModal();
+});
+document.getElementById("routine-area").addEventListener("change", refreshRoutineAssigneeOptions);
+document.getElementById("routines-view-toggle").addEventListener("click", (e) => {
+  const btn = e.target.closest("button[data-routines-view]");
+  if(!btn) return;
+  state.routinesView = btn.dataset.routinesView;
+  renderRoutines();
+});
+document.getElementById("routines-dashboard-area-filter").addEventListener("click", (e) => {
+  const btn = e.target.closest("button[data-routine-area]");
+  if(!btn) return;
+  state.routineArea = btn.dataset.routineArea;
+  renderRoutines();
+});
+document.getElementById("routines-detail-area-filter").addEventListener("click", (e) => {
+  const btn = e.target.closest("button[data-routine-detail-area]");
+  if(!btn) return;
+  state.routineDetailArea = btn.dataset.routineDetailArea;
+  renderRoutines();
+});
+document.getElementById("routine-form").addEventListener("submit", async (e) => {
+  e.preventDefault();
+  const msgEl = document.getElementById("routine-msg");
+  msgEl.style.color = ""; msgEl.textContent = "";
+  const title = document.getElementById("routine-title").value;
+  const sector = document.getElementById("routine-area").value;
+  const frequency = document.getElementById("routine-frequency").value;
+  const assigneeUid = document.getElementById("routine-assignee").value;
+  const wholeSector = document.getElementById("routine-whole-sector").checked;
+  const description = document.getElementById("routine-desc").value;
+  if(!title.trim()){ msgEl.textContent = "Informe o título da rotina."; return; }
+  if(!sector){ msgEl.textContent = "Selecione um setor."; return; }
+  if(!assigneeUid){ msgEl.textContent = "Selecione o responsável pela rotina — esse campo é obrigatório."; return; }
+  try{
+    if(editingRoutineId){
+      await updateRoutine(editingRoutineId, {title, sector, frequency, assigneeUid, wholeSector, description});
+    }else{
+      await createRoutine({title, sector, frequency, assigneeUid, wholeSector, description});
+    }
+    closeRoutineModal();
+  }catch(err){
+    console.error("Falha ao salvar rotina:", err);
+    msgEl.textContent = "Não foi possível salvar a rotina: " + (err.message || "erro desconhecido");
+  }
+});
+
 async function toggleUserAccess(uid, disable){
   const user = DIRECTORY.find(u => u.uid === uid);
   if(!user) return;
@@ -2565,7 +2842,17 @@ async function deleteUserAccess(uid){
     }
     DIRECTORY = newDirectory;
     renderAdminLists();
-    setMsg(`Acesso de ${label} excluído.`, true);
+    // O SDK do Firebase Auth, rodando no navegador, só deixa uma conta apagar a si mesma —
+    // nunca uma conta admin apagando a de outra pessoa. Excluir a conta de login de verdade
+    // exigiria um backend com privilégio administrativo, que essa plataforma não tem (é só
+    // estática). Por isso, junto da exclusão daqui, mostramos um link direto pra tela do
+    // Firebase Console onde dá pra terminar o segundo passo manualmente, sem esquecer.
+    const authUsersUrl = `https://console.firebase.google.com/project/${firebaseConfig.projectId}/authentication/users`;
+    if(msgEl){
+      msgEl.style.color = "var(--st-concluido)";
+      msgEl.innerHTML = `Acesso de ${escapeHtml(label)} excluído. Falta apagar a conta de login (${escapeHtml(user.email)}) no Firebase Auth — `
+        + `<a href="${authUsersUrl}" target="_blank" rel="noopener" style="color:inherit; text-decoration:underline;">abrir Firebase Console</a>.`;
+    }
   }catch(err){
     console.error("Falha ao excluir acesso:", err);
     setMsg("Não foi possível excluir o acesso.", false);
@@ -2589,8 +2876,293 @@ function refreshSectorDependentUI(){
   if(editAreasInput){
     editAreasInput.innerHTML = SECTORS.map(s => `<label><input type="checkbox" value="${s.key}"> ${s.label}</label>`).join("");
   }
+  const routineArea = document.getElementById("routine-area");
+  if(routineArea){
+    const current = routineArea.value;
+    const routineAreaOptions = SECTORS.filter(s => areasForUser().includes(s.key));
+    routineArea.innerHTML = routineAreaOptions.map(s => `<option value="${s.key}">${s.label}</option>`).join("");
+    if(routineAreaOptions.some(s => s.key === current)) routineArea.value = current;
+    refreshRoutineAssigneeOptions();
+  }
   refreshFilterPanelOptions();
   renderAdminLists();
+}
+
+function refreshRoutineAssigneeOptions(){
+  const areaSel = document.getElementById("routine-area");
+  const sel = document.getElementById("routine-assignee");
+  if(!areaSel || !sel) return;
+  const current = sel.value;
+  const area = areaSel.value;
+  const options = DIRECTORY.filter(u => !u.disabled && (u.role === "admin" || (u.assignedAreas || []).includes(area)));
+  sel.innerHTML = '<option value="" disabled hidden>Selecione um responsável</option>'
+    + options.map(u => `<option value="${u.uid}">${escapeHtml(u.name || u.email)}</option>`).join("");
+  if(options.some(u => u.uid === current)) sel.value = current; else sel.value = "";
+}
+
+const ROUTINE_FREQ_ICON = {
+  diaria: '<svg width="17" height="17" viewBox="0 0 16 16" fill="none" aria-hidden="true"><rect x="2" y="3" width="12" height="10.5" rx="1.5" stroke="currentColor" stroke-width="1.3"/><path d="M2 6.3h12M5 1.8v2.4M11 1.8v2.4" stroke="currentColor" stroke-width="1.3" stroke-linecap="round"/><circle cx="8" cy="10" r="1.1" fill="currentColor"/></svg>',
+  semanal: '<svg width="17" height="17" viewBox="0 0 16 16" fill="none" aria-hidden="true"><rect x="2" y="3" width="12" height="10.5" rx="1.5" stroke="currentColor" stroke-width="1.3"/><path d="M2 6.3h12M5 1.8v2.4M11 1.8v2.4" stroke="currentColor" stroke-width="1.3" stroke-linecap="round"/><path d="M4.6 9.6h6.8" stroke="currentColor" stroke-width="1.3" stroke-linecap="round"/></svg>',
+  mensal: '<svg width="17" height="17" viewBox="0 0 16 16" fill="none" aria-hidden="true"><rect x="2" y="3" width="12" height="10.5" rx="1.5" stroke="currentColor" stroke-width="1.3"/><path d="M2 6.3h12M5 1.8v2.4M11 1.8v2.4" stroke="currentColor" stroke-width="1.3" stroke-linecap="round"/><circle cx="5.6" cy="9.6" r=".8" fill="currentColor"/><circle cx="8" cy="9.6" r=".8" fill="currentColor"/><circle cx="10.4" cy="9.6" r=".8" fill="currentColor"/></svg>',
+  anual: '<svg width="17" height="17" viewBox="0 0 16 16" fill="none" aria-hidden="true"><path d="M8 1.8l1.6 3.4 3.7.4-2.7 2.6.7 3.7L8 10l-3.3 1.9.7-3.7-2.7-2.6 3.7-.4L8 1.8Z" stroke="currentColor" stroke-width="1.2" stroke-linejoin="round"/></svg>',
+};
+
+function routineCardHTML(r){
+  const { done, completion } = routineStatus(r);
+  const assigneeUser = DIRECTORY.find(u => u.uid === r.assigneeUid);
+  const sector = SECTORS.find(s => s.key === r.sector);
+  const canComplete = canCompleteRoutine(r);
+  const canEdit = canManage();
+  // Numa rotina de "setor inteiro", qualquer um do setor pode concluir — se quem concluiu não
+  // foi o responsável principal cadastrado, mostra quem foi, no mesmo padrão do "Concluído por"
+  // já usado nos cartões do board.
+  const showCompletedBy = done && r.wholeSector && completion && completion.byUid && completion.byUid !== r.assigneeUid;
+  return `
+  <div class="routine-card ${done ? "routine-done" : "routine-pending"}">
+    <div class="routine-freq-icon" title="${FREQ_LABEL[r.frequency] || r.frequency}">${ROUTINE_FREQ_ICON[r.frequency] || ""}</div>
+    <div class="routine-info">
+      <div class="routine-title-row">
+        <span class="routine-title">${escapeHtml(r.title)}</span>
+        <span class="routine-badge routine-badge-freq">${FREQ_LABEL[r.frequency] || r.frequency}</span>
+        <span class="routine-badge routine-badge-sector">${sector ? escapeHtml(sector.label) : escapeHtml(r.sector)}</span>
+        ${r.wholeSector ? '<span class="routine-badge routine-badge-wholesector">Setor inteiro</span>' : ""}
+      </div>
+      ${r.description ? `<div class="routine-desc">${escapeHtml(r.description)}</div>` : ""}
+      <div class="routine-meta">
+        <span class="routine-assignee">Responsável: ${escapeHtml(assigneeUser ? (assigneeUser.name || assigneeUser.email) : "—")}</span>
+      </div>
+      ${showCompletedBy ? `<div class="completed-badge" style="margin:8px 0 0;">${ICON_CHECK} Concluído por <b>${escapeHtml(completion.byName || "—")}</b> · ${formatCommentDate(completion.at)}</div>` : ""}
+    </div>
+    <span class="routine-status-pill ${done ? "routine-status-done" : "routine-status-pending"}">${done ? "Feito" : "Pendente"}</span>
+    <div class="routine-actions">
+      ${canComplete ? `<button type="button" class="routine-complete-btn${done ? " undo" : ""}" data-toggle-routine="${r.id}">${done ? "Desfazer" : "Concluir"}</button>` : ""}
+      ${canEdit ? `<button type="button" class="toggle-access-btn" data-edit-routine="${r.id}">Editar</button>` : ""}
+      ${canEdit ? `<button type="button" class="toggle-access-btn danger" data-delete-routine="${r.id}">Excluir</button>` : ""}
+    </div>
+  </div>`;
+}
+
+function wireRoutineListEvents(container){
+  if(!container) return;
+  container.querySelectorAll("[data-toggle-routine]").forEach(btn => {
+    btn.addEventListener("click", () => toggleRoutineCompletion(btn.getAttribute("data-toggle-routine")));
+  });
+  container.querySelectorAll("[data-edit-routine]").forEach(btn => {
+    btn.addEventListener("click", () => startEditRoutine(btn.getAttribute("data-edit-routine")));
+  });
+  container.querySelectorAll("[data-delete-routine]").forEach(btn => {
+    btn.addEventListener("click", () => deleteRoutine(btn.getAttribute("data-delete-routine")));
+  });
+}
+
+function renderRoutines(){
+  const addBtn = document.getElementById("open-add-routine-modal");
+  if(addBtn) addBtn.style.display = canManage() ? "" : "none";
+
+  document.querySelectorAll("#routines-view-toggle button[data-routines-view]").forEach(b => {
+    b.classList.toggle("active", b.dataset.routinesView === state.routinesView);
+  });
+  const dashboardEl = document.getElementById("routines-view-dashboard");
+  const detailEl = document.getElementById("routines-view-detail");
+  if(dashboardEl) dashboardEl.style.display = state.routinesView === "dashboard" ? "" : "none";
+  if(detailEl) detailEl.style.display = state.routinesView === "detail" ? "" : "none";
+  const subEl = document.getElementById("routines-sub");
+  if(subEl){
+    subEl.textContent = state.routinesView === "dashboard"
+      ? "Panorama da equipe: o que está pendente e o que já foi concluído neste período, por setor."
+      : "Detalhamento por setor — escolha um setor para ver as rotinas diárias, semanais, mensais e anuais separadamente.";
+  }
+
+  if(state.routinesView === "detail") renderRoutinesDetail();
+  else renderRoutinesDashboard();
+}
+
+function renderRoutinesDashboard(){
+  const areaFilterGroup = document.getElementById("routines-dashboard-area-filter");
+  if(areaFilterGroup){
+    const options = SECTORS.filter(s => areasForUser().includes(s.key));
+    if(state.routineArea !== "todos" && !options.some(s => s.key === state.routineArea)) state.routineArea = "todos";
+    areaFilterGroup.innerHTML = '<span class="fg-label">Setor:</span>'
+      + `<button class="filter-btn${state.routineArea === "todos" ? " active" : ""}" data-routine-area="todos">Todos</button>`
+      + options.map(s => `<button class="filter-btn${state.routineArea === s.key ? " active" : ""}" data-routine-area="${s.key}">${s.label}</button>`).join("");
+  }
+
+  const isManager = canManage();
+  const scoped = visibleRoutines().filter(r => state.routineArea === "todos" || r.sector === state.routineArea);
+  const pending = scoped.filter(r => !routineStatus(r).done).sort((a, b) => (a.title || "").localeCompare(b.title || ""));
+  const done = scoped.filter(r => routineStatus(r).done).sort((a, b) => (a.title || "").localeCompare(b.title || ""));
+  const total = scoped.length;
+  const pct = total ? Math.round((done.length / total) * 100) : 0;
+
+  const kpiEl = document.getElementById("routines-kpis");
+  if(kpiEl){
+    // Quem não gerencia só acompanha o que ainda falta fazer — sem números de concluídas
+    // nem % do período, pra manter a visão do operador restrita ao pendente (pedido do
+    // Natanael: uma rotina concluída simplesmente some até o próximo período abrir de novo).
+    kpiEl.style.gridTemplateColumns = isManager ? "repeat(4, 1fr)" : "minmax(160px, 220px)";
+    kpiEl.innerHTML = isManager ? `
+      <div class="kpi-card"><div class="n">${total}</div><div class="l">Total de rotinas</div></div>
+      <div class="kpi-card kpi-alert"><div class="n">${pending.length}</div><div class="l">Pendentes</div></div>
+      <div class="kpi-card"><div class="n" style="color:var(--st-concluido);">${done.length}</div><div class="l">Concluídas</div></div>
+      <div class="kpi-card kpi-primary"><div class="n">${pct}%</div><div class="l">Concluído no período</div></div>
+    ` : `
+      <div class="kpi-card kpi-alert"><div class="n">${pending.length}</div><div class="l">Pendentes</div></div>
+    `;
+  }
+
+  const pendingEl = document.getElementById("routines-dashboard-pending");
+  if(pendingEl){
+    pendingEl.innerHTML = pending.length
+      ? pending.map(routineCardHTML).join("")
+      : `<div class="admin-list-item">${total || !isManager ? "Tudo em dia por aqui." : "Nenhuma rotina cadastrada ainda."}</div>`;
+    wireRoutineListEvents(pendingEl);
+  }
+  const doneBlockEl = document.getElementById("routines-dashboard-done-block");
+  const doneEl = document.getElementById("routines-dashboard-done");
+  if(doneBlockEl) doneBlockEl.style.display = isManager ? "" : "none";
+  if(doneEl && isManager){
+    doneEl.innerHTML = done.length
+      ? done.map(routineCardHTML).join("")
+      : `<div class="admin-list-item">Nenhuma conclusão neste período ainda.</div>`;
+    wireRoutineListEvents(doneEl);
+  }
+}
+
+function renderRoutinesDetail(){
+  const areaFilterGroup = document.getElementById("routines-detail-area-filter");
+  const bodyEl = document.getElementById("routines-detail-body");
+  if(!areaFilterGroup || !bodyEl) return;
+
+  const options = SECTORS.filter(s => areasForUser().includes(s.key));
+  if(!options.some(s => s.key === state.routineDetailArea)){
+    state.routineDetailArea = options.length ? options[0].key : "";
+  }
+  areaFilterGroup.innerHTML = '<span class="fg-label">Setor (obrigatório):</span>'
+    + options.map(s => `<button class="filter-btn${state.routineDetailArea === s.key ? " active" : ""}" data-routine-detail-area="${s.key}">${s.label}</button>`).join("");
+
+  if(!state.routineDetailArea){
+    bodyEl.innerHTML = `<div class="admin-list-item">Nenhum setor disponível.</div>`;
+    return;
+  }
+
+  const isManager = canManage();
+  // Quem não gerencia só vê o que ainda está pendente por aqui também — uma rotina concluída
+  // some da lista e só volta a aparecer quando o período seguinte abrir (ver routineStatus/
+  // currentPeriodKey: diária no dia seguinte, semanal na segunda-feira, mensal no mês
+  // seguinte, anual no ano seguinte).
+  const sectorRoutines = visibleRoutines()
+    .filter(r => r.sector === state.routineDetailArea)
+    .filter(r => isManager || !routineStatus(r).done);
+  const groups = [
+    {key:"diaria", label:"Diárias"},
+    {key:"semanal", label:"Semanais"},
+    {key:"mensal", label:"Mensais"},
+    {key:"anual", label:"Anuais"},
+  ];
+  bodyEl.innerHTML = groups.map(g => {
+    const rows = sectorRoutines.filter(r => r.frequency === g.key).sort((a, b) => (a.title || "").localeCompare(b.title || ""));
+    return `
+    <div class="overview-block">
+      <div class="summary-label" style="display:flex; align-items:center; gap:8px;">${ROUTINE_FREQ_ICON[g.key] || ""} ${g.label}</div>
+      <div class="routine-list">
+        ${rows.length ? rows.map(routineCardHTML).join("") : `<div class="admin-list-item">Nenhuma rotina ${g.label.toLowerCase()} ${isManager ? "cadastrada" : "pendente"} para este setor.</div>`}
+      </div>
+    </div>`;
+  }).join("");
+  wireRoutineListEvents(bodyEl);
+}
+
+function nextRoutineId(){
+  return "rt_" + Date.now().toString(36) + Math.random().toString(36).slice(2, 7);
+}
+
+async function saveRoutinesArray(newRoutines){
+  if(storageMode === "firebase" && firebaseReady){
+    await fsUpdateDoc(BOARD_DOC, "routines", newRoutines);
+  }else{
+    ROUTINES = newRoutines;
+    renderRoutines();
+  }
+}
+
+async function createRoutine({title, sector, frequency, assigneeUid, wholeSector, description}){
+  const routine = {
+    id: nextRoutineId(), title: title.trim(), description: (description || "").trim(),
+    sector, frequency, assigneeUid, wholeSector: !!wholeSector,
+    createdBy: currentUser ? currentUser.uid : "", createdByName: currentUser ? (currentUser.name || currentUser.email) : "",
+    createdAt: new Date().toISOString(), completions: [],
+  };
+  if(storageMode === "firebase" && firebaseReady){
+    await fsUpdateDoc(BOARD_DOC, "routines", fsArrayUnion(routine));
+  }else{
+    ROUTINES.push(routine);
+    renderRoutines();
+  }
+}
+
+async function updateRoutine(id, {title, sector, frequency, assigneeUid, wholeSector, description}){
+  const newRoutines = ROUTINES.map(r => r.id === id
+    ? { ...r, title: title.trim(), sector, frequency, assigneeUid, wholeSector: !!wholeSector, description: (description || "").trim() }
+    : r);
+  await saveRoutinesArray(newRoutines);
+}
+
+async function deleteRoutine(id){
+  if(!canManage()) return;
+  const routine = ROUTINES.find(r => r.id === id);
+  if(!routine) return;
+  if(!confirm(`Excluir a rotina "${routine.title}"? Isso não pode ser desfeito.`)) return;
+  const newRoutines = ROUTINES.filter(r => r.id !== id);
+  await saveRoutinesArray(newRoutines);
+}
+
+async function toggleRoutineCompletion(id){
+  const routine = ROUTINES.find(r => r.id === id);
+  if(!routine || !canCompleteRoutine(routine)) return;
+  const { period, done } = routineStatus(routine);
+  const newRoutines = ROUTINES.map(r => {
+    if(r.id !== id) return r;
+    const completions = done
+      ? (r.completions || []).filter(c => c.period !== period)
+      : [...(r.completions || []), { period, at: new Date().toISOString(), byUid: currentUser ? currentUser.uid : "", byName: currentUser ? (currentUser.name || currentUser.email) : "" }];
+    return { ...r, completions };
+  });
+  await saveRoutinesArray(newRoutines);
+}
+
+function openRoutineModal(){
+  if(!canManage()) return;
+  editingRoutineId = null;
+  document.getElementById("routine-modal-title").textContent = "Nova rotina";
+  document.getElementById("routine-form").reset();
+  refreshSectorDependentUI();
+  document.getElementById("routine-whole-sector").checked = false;
+  document.getElementById("routine-msg").textContent = "";
+  document.getElementById("routine-modal-overlay").classList.add("open");
+}
+
+function startEditRoutine(id){
+  if(!canManage()) return;
+  const routine = ROUTINES.find(r => r.id === id);
+  if(!routine) return;
+  editingRoutineId = id;
+  document.getElementById("routine-modal-title").textContent = "Editar rotina";
+  document.getElementById("routine-title").value = routine.title || "";
+  document.getElementById("routine-frequency").value = routine.frequency;
+  document.getElementById("routine-area").value = routine.sector;
+  refreshRoutineAssigneeOptions();
+  document.getElementById("routine-assignee").value = routine.assigneeUid || "";
+  document.getElementById("routine-whole-sector").checked = !!routine.wholeSector;
+  document.getElementById("routine-desc").value = routine.description || "";
+  document.getElementById("routine-msg").textContent = "";
+  document.getElementById("routine-modal-overlay").classList.add("open");
+}
+
+function closeRoutineModal(){
+  editingRoutineId = null;
+  document.getElementById("routine-modal-overlay").classList.remove("open");
+  document.getElementById("routine-form").reset();
+  document.getElementById("routine-msg").textContent = "";
 }
 
 function refreshFilterPanelOptions(){
@@ -2904,6 +3476,7 @@ function renderTabs(){
   const overviewTab = document.getElementById("overview-tab");
   const boardTab = document.getElementById("board-tab");
   const backlogTab = document.getElementById("backlog-tab");
+  const routinesTab = document.getElementById("routines-tab");
   const validationsTab = document.getElementById("validations-tab");
   const archiveTab = document.getElementById("archive-tab");
   const adminTab = document.getElementById("admin-tab");
@@ -2922,13 +3495,14 @@ function renderTabs(){
   const isOperador = currentUser && currentUser.role === "operador";
   const globalFiltersRow = document.getElementById("global-filters-row");
   const filtersPanelEl = document.getElementById("filters-panel");
-  if(globalFiltersRow) globalFiltersRow.style.display = (isOperador || state.tab === "admin") ? "none" : "";
-  if(filtersPanelEl && (isOperador || state.tab === "admin")) filtersPanelEl.classList.remove("open");
+  if(globalFiltersRow) globalFiltersRow.style.display = (isOperador || state.tab === "admin" || state.tab === "routines") ? "none" : "";
+  if(filtersPanelEl && (isOperador || state.tab === "admin" || state.tab === "routines")) filtersPanelEl.classList.remove("open");
 
   document.querySelectorAll("#main-nav button[data-tab]").forEach(b => b.classList.toggle("active", b.dataset.tab === state.tab));
   if(overviewTab) overviewTab.style.display = state.tab === "overview" ? "" : "none";
   if(boardTab) boardTab.style.display = state.tab === "board" ? "" : "none";
   if(backlogTab) backlogTab.style.display = state.tab === "backlog" ? "" : "none";
+  if(routinesTab) routinesTab.style.display = state.tab === "routines" ? "" : "none";
   if(validationsTab) validationsTab.style.display = state.tab === "validations" ? "" : "none";
   if(archiveTab) archiveTab.style.display = state.tab === "archive" ? "" : "none";
   if(adminTab) adminTab.style.display = state.tab === "admin" ? "" : "none";
@@ -2936,12 +3510,30 @@ function renderTabs(){
   if(state.tab === "overview") renderOverview();
   else if(state.tab === "board") render();
   else if(state.tab === "backlog") renderBacklog();
+  else if(state.tab === "routines") renderRoutines();
   else if(state.tab === "validations") renderValidations();
   else if(state.tab === "archive") renderArchive();
   else if(state.tab === "admin") renderAdminLists();
 
   updateSummary();
+  updateSideNavIndicator();
 }
+
+function updateSideNavIndicator(){
+  const nav = document.getElementById("main-nav");
+  const indicator = document.getElementById("side-nav-indicator");
+  if(!nav || !indicator) return;
+  const activeBtn = nav.querySelector("button[data-tab].active");
+  if(!activeBtn || activeBtn.offsetParent === null){
+    indicator.style.opacity = "0";
+    return;
+  }
+  indicator.style.transform = `translate(${activeBtn.offsetLeft}px, ${activeBtn.offsetTop}px)`;
+  indicator.style.width = `${activeBtn.offsetWidth}px`;
+  indicator.style.height = `${activeBtn.offsetHeight}px`;
+  indicator.style.opacity = "1";
+}
+window.addEventListener("resize", () => { try{ updateSideNavIndicator(); }catch(e){} });
 
 function toggleCard(card){
   const isOpen = card.classList.toggle("open");
@@ -3469,6 +4061,7 @@ document.addEventListener("keydown", (e) => {
   if(e.key === "Escape" && document.getElementById("modal-overlay").classList.contains("open")) closeModal();
   if(e.key === "Escape" && document.getElementById("conclusion-modal-overlay").classList.contains("open")) cancelConclusionModal();
   if(e.key === "Escape" && document.getElementById("edit-access-modal-overlay").classList.contains("open")) closeEditAccessModal();
+  if(e.key === "Escape" && document.getElementById("routine-modal-overlay").classList.contains("open")) closeRoutineModal();
 });
 
 let pendingConclusionId = null;
@@ -3801,6 +4394,7 @@ async function handleAuthedUser(fbUser){
       boardDocCache = await ensureBoardDoc();
       SECTORS = (boardDocCache.sectors && boardDocCache.sectors.length) ? boardDocCache.sectors : DEFAULT_SECTORS.slice();
       DIRECTORY = boardDocCache.directory || [];
+      ROUTINES = boardDocCache.routines || [];
     }catch(e){
       console.error("Não foi possível carregar o documento da plataforma antes do login:", e);
     }
