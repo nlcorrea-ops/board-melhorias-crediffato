@@ -243,13 +243,14 @@
     display:none; position:absolute; top:calc(100% + 10px); right:0; z-index:50;
     background:var(--ink-1); border:1px solid var(--hairline); border-radius:14px;
     padding:14px; width:240px; box-shadow:0 16px 40px #00000055;
-    flex-direction:column; gap:10px;
+    flex-direction:column; gap:10px; max-height:80vh; overflow-y:auto;
   }
   .settings-dropdown.open{display:flex; animation:modalPopIn .18s cubic-bezier(.2,.9,.3,1.2);}
   .settings-dropdown .user-chip{margin-bottom:0; width:100%; box-sizing:border-box; justify-content:space-between;}
   .settings-dropdown .presentation-toggle-btn, .settings-dropdown .shutdown-btn{width:100%; box-sizing:border-box; text-align:center;}
-  .settings-dropdown-divider{height:1px; background:var(--hairline); margin:0;}
+  .settings-dropdown-divider{height:1px; background:var(--hairline); margin:0; flex-shrink:0;}
   .settings-dropdown .theme-swatch-row{justify-content:flex-start;}
+  .settings-dropdown #online-list{margin-top:0;}
 
   .main-nav{
     position:sticky; top:24px; z-index:2;
@@ -1263,6 +1264,9 @@
               <span>Vermelho</span>
             </div>
           </div>
+          <div class="settings-dropdown-divider"></div>
+          <p class="settings-section-title">Quem está logado agora</p>
+          <div class="admin-list" id="online-list"></div>
         </div>
       </div>
     </div>
@@ -1538,10 +1542,6 @@
         </div>
         <div class="admin-list" id="user-list" style="margin-top:16px;"></div>
       </div>
-      <div class="admin-card" style="grid-column:1 / -1;">
-        <h3>Quem está logado agora</h3>
-        <div class="admin-list" id="online-list"></div>
-      </div>
     </div>
     <div class="admin-grid" id="admin-view-sectors" style="display:none;">
       <div class="admin-card">
@@ -1764,7 +1764,7 @@
 // que a comparação ">"/"<" abaixo saiba qual versão é mais nova) — é a única forma de o mecanismo
 // perceber que existe uma versão nova. Só funciona pra quem está conectado ao Firestore (modo de
 // contingência sem Firebase não tem sincronização em tempo real de nada, essa checagem incluída).
-const APP_VERSION = "2026-08-27T19:13:16Z";
+const APP_VERSION = "2026-08-27T20:32:03Z";
 
 // Desloga e recarrega — usado tanto pela verificação de versão nova quanto pelos sinais de
 // desconexão manual (shutdown geral ou alguém sendo desconectado individualmente).
@@ -2270,6 +2270,16 @@ function canCreate(){
   return currentUser && (currentUser.role === "admin" || currentUser.role === "gestor");
 }
 
+const ROLE_RANK = { operador: 1, supervisor: 2, gestor: 3, admin: 4 };
+function isAssignableByCurrentUser(u){
+  // Ninguém pode atribuir uma demanda/rotina a alguém acima dela mesma na hierarquia
+  // (operador < supervisor < gestor < admin) — vale em cascata pra todo mundo, então um
+  // gestor não atribui pra admin, um supervisor não atribui pra gestor/admin, etc. Atribuir
+  // pra alguém do mesmo nível ou abaixo continua liberado.
+  if(!currentUser) return false;
+  return (ROLE_RANK[u.role] || 0) <= (ROLE_RANK[currentUser.role] || 0);
+}
+
 // ---------- Rotinas (demandas recorrentes: diária/semanal/mensal/anual) ----------
 // Regras próprias, mais simples que as do board principal: sem status/validação/histórico —
 // só "feito ou não neste período", reaberto sozinho assim que o período muda.
@@ -2680,7 +2690,7 @@ function cardHTML(item){
   const draggable = state.tab === "board" && state.view === "status";
   const stage = itemStage(item);
   const assignee = itemAssignee(item);
-  const assigneeOptions = DIRECTORY.filter(u => (!u.disabled || u.email === assignee) && (u.role === "admin" || (u.assignedAreas || []).includes(item.area)));
+  const assigneeOptions = DIRECTORY.filter(u => (!u.disabled || u.email === assignee) && (u.role === "admin" || (u.assignedAreas || []).includes(item.area)) && (isAssignableByCurrentUser(u) || u.email === assignee));
   const due = dueInfo(item);
   const completed = completedByInfo(item);
   const validation = validationInfo(item);
@@ -3429,7 +3439,7 @@ function refreshRoutineAssigneeOptions(){
   if(!areaSel || !sel) return;
   const current = sel.value;
   const area = areaSel.value;
-  const options = DIRECTORY.filter(u => !u.disabled && (u.role === "admin" || (u.assignedAreas || []).includes(area)));
+  const options = DIRECTORY.filter(u => !u.disabled && (u.role === "admin" || (u.assignedAreas || []).includes(area)) && (isAssignableByCurrentUser(u) || u.uid === current));
   sel.innerHTML = '<option value="" disabled hidden>Selecione um responsável</option>'
     + options.map(u => `<option value="${u.uid}">${escapeHtml(u.name || u.email)}</option>`).join("");
   if(options.some(u => u.uid === current)) sel.value = current; else sel.value = "";
@@ -3895,7 +3905,7 @@ function refreshAssigneeOptionsForArea(){
   const sel = document.getElementById("f-assignee");
   if(!areaSel || !sel) return;
   const area = areaSel.value;
-  const options = DIRECTORY.filter(u => !u.disabled && (u.role === "admin" || (u.assignedAreas || []).includes(area)));
+  const options = DIRECTORY.filter(u => !u.disabled && (u.role === "admin" || (u.assignedAreas || []).includes(area)) && isAssignableByCurrentUser(u));
   sel.innerHTML = '<option value="">Sem responsável</option>' + options.map(u => `<option value="${u.email}">${u.name || u.email}</option>`).join("");
 }
 
@@ -5292,14 +5302,34 @@ document.getElementById("reset-form").addEventListener("submit", async (e) => {
     return;
   }
   try{
+    try{ localStorage.setItem("appLoginVersion", APP_VERSION); }catch(e){}
     await authConfirmReset(auth, resetOobCode, pass);
     inPasswordReset = false;
     history.replaceState(null, "", location.pathname);
-    document.getElementById("reset-card").style.display = "none";
-    document.getElementById("login-card").style.display = "";
-    const loginErr = document.getElementById("login-error");
-    loginErr.style.color = "var(--st-concluido)";
-    loginErr.textContent = "Senha redefinida! Faça login com sua nova senha.";
+    try{
+      // Loga automaticamente com a senha nova, em vez de devolver pro formulário de login e
+      // exigir que a pessoa digite tudo de novo — antes ficava parado no card de redefinição
+      // sem avançar sozinho pro app.
+      await authSignIn(auth, resetEmail, pass);
+      pendingLoginReveal = true;
+      const card = document.getElementById("reset-card");
+      if(card){
+        const rect = card.getBoundingClientRect();
+        if(bgNetworkConverge) bgNetworkConverge(rect.left + rect.width / 2, rect.top + rect.height / 2);
+        card.classList.add("converging");
+      }
+    }catch(signInErr){
+      // Senha já foi trocada com sucesso — se o login automático falhar por algum motivo,
+      // cai pro login manual como reserva, sem perder a senha nova que a pessoa acabou de definir.
+      console.error("Falha ao logar automaticamente após redefinir senha:", signInErr);
+      document.getElementById("reset-card").style.display = "none";
+      document.getElementById("login-card").style.display = "";
+      const loginEmailInput = document.getElementById("login-email");
+      if(loginEmailInput && resetEmail) loginEmailInput.value = resetEmail;
+      const loginErr = document.getElementById("login-error");
+      loginErr.style.color = "var(--st-concluido)";
+      loginErr.textContent = "Senha redefinida! Faça login com sua nova senha.";
+    }
   }catch(err){
     console.error("Falha ao redefinir senha:", err);
     errEl.textContent = "Não foi possível redefinir a senha — o link pode ter expirado. Peça um novo em \"Esqueci minha senha\".";
@@ -5348,11 +5378,17 @@ document.getElementById("login-signout-denied").addEventListener("click", async 
 const resetUrlParams = new URLSearchParams(location.search);
 const resetOobCode = resetUrlParams.get("mode") === "resetPassword" ? resetUrlParams.get("oobCode") : null;
 let inPasswordReset = false;
+let resetEmail = "";
 
 async function handlePasswordResetLink(oobCode){
   inPasswordReset = true;
   try{
     const email = await authVerifyResetCode(auth, oobCode);
+    resetEmail = email;
+    // Mesma proteção do login normal: grava a versão ANTES de qualquer coisa que possa
+    // disparar onAuthStateChanged, senão o gate de versão (ver handleAuthedUser) derruba
+    // a sessão que acabou de ser criada e a pessoa só consegue entrar numa segunda tentativa.
+    try{ localStorage.setItem("appLoginVersion", APP_VERSION); }catch(e){}
     document.getElementById("reset-sub").textContent = `Defina a nova senha para ${email}.`;
     document.getElementById("login-card").style.display = "none";
     document.getElementById("reset-card").style.display = "";
