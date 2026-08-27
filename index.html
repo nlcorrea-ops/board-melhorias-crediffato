@@ -138,6 +138,33 @@
   }
   .presentation-toggle-btn:hover{border-color:var(--text-low); color:var(--text-hi);}
   .presentation-toggle-btn.active{background:var(--brand-red); border-color:var(--brand-red); color:#fff;}
+  #sync-btn:hover{color:var(--brand-red);}
+  #sync-btn.spinning svg{animation:syncSpin .6s linear infinite;}
+  @keyframes syncSpin{to{transform:rotate(360deg);}}
+
+  .upgrade-overlay{
+    position:fixed; inset:0; z-index:9999;
+    display:flex; align-items:center; justify-content:center;
+    background:#05070ecc; backdrop-filter:blur(3px); -webkit-backdrop-filter:blur(3px);
+    opacity:0; pointer-events:none;
+    transition:opacity .25s ease;
+  }
+  .upgrade-overlay.open{opacity:1; pointer-events:all;}
+  .upgrade-box{display:flex; flex-direction:column; align-items:center; gap:16px;}
+  .upgrade-ring-wrap{position:relative; width:84px; height:84px;}
+  .upgrade-ring{
+    position:absolute; inset:0; border-radius:50%;
+    border:3px solid var(--hairline); border-top-color:var(--brand-red);
+    animation:upgradeSpin 1s linear infinite;
+  }
+  .upgrade-icon{
+    position:absolute; inset:0; display:flex; align-items:center; justify-content:center;
+    color:var(--brand-red); animation:upgradePulse 1.3s ease-in-out infinite;
+  }
+  @keyframes upgradeSpin{to{transform:rotate(360deg);}}
+  @keyframes upgradePulse{0%,100%{transform:scale(1); opacity:1;} 50%{transform:scale(1.18); opacity:.65;}}
+  .upgrade-text{font-family:var(--font-mono); font-size:13px; color:var(--text-hi); letter-spacing:.02em;}
+  .upgrade-sub{font-family:var(--font-mono); font-size:11px; color:var(--text-low);}
   .shutdown-btn{
     font-family:var(--font-mono); font-size:11px; color:var(--sev-critica);
     background:var(--ink-1); border:1px solid var(--sev-critica); border-radius:999px;
@@ -797,6 +824,7 @@
     .modal{animation:none;}
     .filters-panel.open{animation:none;}
     .resolution-bar-row, .donut-multiple-item, .vbar-item, .vbar-crown{animation:none; opacity:1; transform:none;}
+    .upgrade-ring, .upgrade-icon, #sync-btn.spinning svg{animation:none;}
     .donut-chart svg circle{transition:none;}
     *{transition:none !important;}
   }
@@ -918,6 +946,19 @@
 
 <canvas id="bg-network" aria-hidden="true"></canvas>
 
+<div class="upgrade-overlay" id="upgrade-overlay" aria-hidden="true">
+  <div class="upgrade-box">
+    <div class="upgrade-ring-wrap">
+      <div class="upgrade-ring"></div>
+      <div class="upgrade-icon">
+        <svg width="30" height="30" viewBox="0 0 16 16" fill="none" aria-hidden="true"><path d="M8 13V3M8 3L4 7M8 3l4 4" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/></svg>
+      </div>
+    </div>
+    <div class="upgrade-text">Sincronizando com a última versão</div>
+    <div class="upgrade-sub">Isso leva só um instante...</div>
+  </div>
+</div>
+
 <div id="login-screen">
   <div class="login-card" id="login-card">
     <img src="logo.png" alt="Crediffato" />
@@ -1000,6 +1041,7 @@
         <span class="role-tag" id="user-role">—</span>
         <button type="button" class="logout-btn" id="logout-btn">sair</button>
       </div>
+      <button type="button" class="presentation-toggle-btn" id="sync-btn" title="Sincronizar com a última versão do sistema"><svg width="13" height="13" viewBox="0 0 16 16" fill="none" style="vertical-align:-2px;" aria-hidden="true"><path d="M2.5 8a5.5 5.5 0 0 1 9.4-3.9M13.5 8a5.5 5.5 0 0 1-9.4 3.9" stroke="currentColor" stroke-width="1.4" stroke-linecap="round"/><path d="M12 1.8v2.5h-2.5M4 14.2v-2.5h2.5" stroke="currentColor" stroke-width="1.4" stroke-linecap="round" stroke-linejoin="round"/></svg> Atualizar</button>
       <button type="button" class="presentation-toggle-btn" id="presentation-toggle" style="display:none;"><svg width="13" height="13" viewBox="0 0 16 16" fill="none" style="vertical-align:-2px;" aria-hidden="true"><rect x="1.5" y="2.5" width="13" height="9" rx="1" stroke="currentColor" stroke-width="1.4"/><path d="M5.5 14.5H10.5M8 11.5V14.5" stroke="currentColor" stroke-width="1.4" stroke-linecap="round"/></svg> Modo apresentação</button>
       <button type="button" class="shutdown-btn" id="shutdown-btn" style="display:none;" title="Desconecta todo mundo que estiver logado agora, exceto você">Encerrar todos os acessos</button>
       <div class="theme-switcher" id="theme-switcher" role="group" aria-label="Escolher tema">
@@ -1459,7 +1501,7 @@
 // que a comparação ">"/"<" abaixo saiba qual versão é mais nova) — é a única forma de o mecanismo
 // perceber que existe uma versão nova. Só funciona pra quem está conectado ao Firestore (modo de
 // contingência sem Firebase não tem sincronização em tempo real de nada, essa checagem incluída).
-const APP_VERSION = "2026-08-27T14:00:00Z";
+const APP_VERSION = "2026-08-27T15:30:00Z";
 
 // Desloga e recarrega — usado tanto pela verificação de versão nova quanto pelos sinais de
 // desconexão manual (shutdown geral ou alguém sendo desconectado individualmente).
@@ -1474,6 +1516,19 @@ function forceReconnect(){
     // pra uma URL com um parâmetro novo a cada vez, que força uma busca de verdade no servidor.
     location.href = location.pathname + "?v=" + Date.now();
   })();
+}
+
+// Sincronização manual: botão pra qualquer pessoa forçar a busca da versão mais recente na
+// hora, sem esperar o listener em tempo real — ao contrário do forceReconnect() (usado pra
+// derrubar sessões por segurança), aqui não desconecta ninguém, só recarrega com cache novo.
+function manualSync(){
+  const overlay = document.getElementById("upgrade-overlay");
+  const btn = document.getElementById("sync-btn");
+  if(btn) btn.classList.add("spinning");
+  if(overlay) overlay.classList.add("open");
+  setTimeout(() => {
+    location.href = location.pathname + "?v=" + Date.now();
+  }, 850);
 }
 
 function checkFirestoreVersion(data){
@@ -4501,11 +4556,12 @@ document.getElementById("login-form").addEventListener("submit", async (e) => {
     return;
   }
   try{
-    await authSignIn(auth, email, password);
-    // Login feito na mão (e não uma sessão antiga sendo restaurada sozinha pelo Firebase)
-    // sempre conta como "já na versão certa" — evita o gate de versão logo abaixo recusar o
-    // próprio login que acabou de acontecer.
+    // Precisa ser gravado ANTES do login, não depois: o onAuthStateChanged (que confere esse
+    // valor) pode disparar antes mesmo do "await" abaixo devolver o controle pra essa função —
+    // gravando depois, o próprio login que acabou de funcionar era recusado pelo gate de versão
+    // na primeira tentativa (só "colava" numa segunda tentativa, com o valor já salvo).
     try{ localStorage.setItem("appLoginVersion", APP_VERSION); }catch(e){}
+    await authSignIn(auth, email, password);
   }catch(err){
     console.error("Falha no login:", err);
     errEl.textContent = "E-mail ou senha incorretos.";
@@ -4570,6 +4626,7 @@ document.getElementById("logout-btn").addEventListener("click", async () => {
   if(auth) await authSignOut(auth);
 });
 document.getElementById("shutdown-btn").addEventListener("click", triggerShutdown);
+document.getElementById("sync-btn").addEventListener("click", manualSync);
 document.getElementById("presentation-toggle").addEventListener("click", (e) => {
   const active = document.body.classList.toggle("presentation-mode");
   e.target.classList.toggle("active", active);
