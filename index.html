@@ -18,14 +18,14 @@
 <link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500;600&family=IBM+Plex+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
 <style>
   :root{
-    --ink-0:#0b1220;
-    --ink-1:#121b30;
-    --ink-2:#182642;
-    --ink-3:#22335a;
-    --hairline:#2b3a5e;
-    --text-hi:#eef2fb;
-    --text-mid:#aab6d6;
-    --text-low:#7382a8;
+    --ink-0:#09090b;
+    --ink-1:#131315;
+    --ink-2:#1c1c1f;
+    --ink-3:#27272b;
+    --hairline:#323236;
+    --text-hi:#f5f5f7;
+    --text-mid:#a5a5ad;
+    --text-low:#75757d;
 
     --op:#37b8a6;
     --ql:#d8a94a;
@@ -49,19 +49,19 @@
   }
 
   /* ---------- temas ---------- */
-  /* "Escuro" (acima, no :root) é o padrão. Os outros só reescrevem a escala de fundo/texto —
-     as cores de severidade/status/setor ficam praticamente as mesmas em todos os temas de
-     propósito, porque o SIGNIFICADO delas (crítico = vermelho, concluído = verde...) precisa
-     continuar reconhecível não importa o tema escolhido. */
+  /* "Escuro" (acima, no :root) é o padrão, dominado por preto neutro. "Claro" inverte pra
+     branco neutro dominante. Só a escala de fundo/texto muda entre os dois — as cores de
+     severidade/status/setor ficam as mesmas, porque o SIGNIFICADO delas (crítico = vermelho,
+     concluído = verde...) precisa continuar reconhecível não importa o tema escolhido. */
   :root[data-theme="claro"]{
-    --ink-0:#f3f4f8;
+    --ink-0:#f7f7f8;
     --ink-1:#ffffff;
-    --ink-2:#eef0f6;
-    --ink-3:#e3e6f0;
-    --hairline:#dbdfea;
-    --text-hi:#161d2e;
-    --text-mid:#4c5670;
-    --text-low:#77809a;
+    --ink-2:#eeeeef;
+    --ink-3:#e2e2e5;
+    --hairline:#dcdcdf;
+    --text-hi:#18181b;
+    --text-mid:#55555c;
+    --text-low:#83838a;
 
     --sev-media:#5c6a8a;
     --st-aberto:#5c6a8a;
@@ -69,6 +69,21 @@
 
     --brand-red-dim:#d40f3a1f;
     color-scheme:light;
+  }
+
+  /* Preto puro e Vermelho: a rede de pontos animada no fundo (#bg-network) é quem muda de cor
+     nesses dois — vira branca em vez do vermelho padrão (ver networkColor() no script) — as
+     bordas/divisórias do app (--hairline) continuam discretas, sem virar branco. */
+  :root[data-theme="preto"]{
+    --ink-0:#000000;
+    --ink-1:#0a0a0a;
+    --ink-2:#141414;
+    --ink-3:#1f1f1f;
+    --hairline:#2a2a2a;
+    --text-hi:#ffffff;
+    --text-mid:#cfcfcf;
+    --text-low:#8c8c8c;
+    color-scheme:dark;
   }
 
   :root[data-theme="vermelho"]{
@@ -91,6 +106,10 @@
     font-family:var(--font-display);
     min-height:100vh;
     padding:32px 20px 60px;
+    overflow-x:hidden; /* rede de segurança: nada deve abrir rolagem horizontal na página */
+  }
+  @media (max-width:480px){
+    body{padding:18px 14px 40px;}
   }
   #bg-network{position:fixed; inset:0; z-index:0; pointer-events:none;}
 
@@ -198,10 +217,39 @@
   }
   .theme-swatch:hover{transform:scale(1.15);}
   .theme-swatch:focus-visible{outline:2px solid #6c8cff; outline-offset:2px;}
-  .theme-swatch.active{border-color:var(--brand-red); box-shadow:0 0 0 2px var(--brand-red-dim);}
-  .theme-swatch[data-theme-choice="escuro"]{background:#0b1220;}
-  .theme-swatch[data-theme-choice="claro"]{background:#f3f4f8;}
+  .theme-swatch[data-theme-choice="escuro"]{background:#09090b;}
+  .theme-swatch[data-theme-choice="claro"]{background:#f7f7f8;}
+  .theme-swatch[data-theme-choice="preto"]{background:#000000;}
   .theme-swatch[data-theme-choice="vermelho"]{background:#170a0d;}
+  .theme-swatch.active{border-color:var(--brand-red); box-shadow:0 0 0 2px var(--brand-red-dim);}
+  .theme-swatch-label{font-family:var(--font-mono); font-size:11px; color:var(--text-mid); margin-left:4px;}
+  .theme-swatch-row{display:flex; align-items:center; gap:10px; flex-wrap:wrap;}
+  .theme-swatch-option{display:flex; flex-direction:column; align-items:center; gap:6px;}
+  .theme-swatch-option span{font-family:var(--font-mono); font-size:10px; color:var(--text-low);}
+
+  .settings-btn{
+    background:none; border:1px solid var(--hairline); color:var(--text-mid); cursor:pointer;
+    width:30px; height:30px; border-radius:999px; display:flex; align-items:center; justify-content:center;
+    transition:border-color .2s ease, color .2s ease, transform .3s ease;
+  }
+  .settings-btn:hover{border-color:var(--text-low); color:var(--text-hi); transform:rotate(25deg);}
+  .settings-btn[aria-expanded="true"]{border-color:var(--brand-red); color:var(--text-hi); transform:rotate(25deg);}
+  .settings-section-title{
+    font-family:var(--font-mono); font-size:11px; text-transform:uppercase; letter-spacing:.06em;
+    color:var(--text-low); margin:0;
+  }
+  .settings-menu{position:relative;}
+  .settings-dropdown{
+    display:none; position:absolute; top:calc(100% + 10px); right:0; z-index:50;
+    background:var(--ink-1); border:1px solid var(--hairline); border-radius:14px;
+    padding:14px; width:240px; box-shadow:0 16px 40px #00000055;
+    flex-direction:column; gap:10px;
+  }
+  .settings-dropdown.open{display:flex; animation:modalPopIn .18s cubic-bezier(.2,.9,.3,1.2);}
+  .settings-dropdown .user-chip{margin-bottom:0; width:100%; box-sizing:border-box; justify-content:space-between;}
+  .settings-dropdown .presentation-toggle-btn, .settings-dropdown .shutdown-btn{width:100%; box-sizing:border-box; text-align:center;}
+  .settings-dropdown-divider{height:1px; background:var(--hairline); margin:0;}
+  .settings-dropdown .theme-swatch-row{justify-content:flex-start;}
 
   .main-nav{
     position:sticky; top:24px; z-index:2;
@@ -244,10 +292,15 @@
     .app-shell{flex-direction:column;}
     .main-nav{
       position:static; width:100%; flex-direction:row; justify-content:flex-start;
-      overflow-x:auto; gap:6px; padding:8px;
+      overflow-x:auto; -webkit-overflow-scrolling:touch; gap:6px; padding:8px;
     }
-    .main-nav .nav-label{left:50%; top:calc(100% + 10px); transform:translate(-50%, -6px);}
-    .main-nav button:hover .nav-label, .main-nav button:focus-visible .nav-label{transform:translate(-50%, 0);}
+    /* Em touch não existe hover pra revelar a legenda flutuante — o nome de cada aba fica
+       sempre visível ao lado do ícone aqui, em vez de depender de passar o mouse. */
+    .main-nav button{width:auto; height:auto; padding:10px 14px; gap:8px; white-space:nowrap;}
+    .main-nav .nav-label{
+      position:static; opacity:1; pointer-events:none; transform:none;
+      background:none; border:none; box-shadow:none; padding:0; color:inherit; font-size:12px;
+    }
   }
 
   .summary-group{margin-bottom:18px;}
@@ -281,6 +334,14 @@
   .filter-btn.active{background:var(--text-hi); color:var(--ink-0); border-color:var(--text-hi);}
   .filter-btn.active.brand{background:var(--brand-red); border-color:var(--brand-red); color:#fff;}
   .filter-btn:focus-visible{outline:2px solid #6c8cff; outline-offset:2px;}
+  .filter-group-minimal{gap:18px;}
+  .filter-group-minimal .fg-label{font-size:10.5px; opacity:.7;}
+  .filter-group-minimal .filter-btn{
+    background:none; border:none; border-bottom:2px solid transparent; border-radius:0;
+    padding:2px 0; color:var(--text-low);
+  }
+  .filter-group-minimal .filter-btn:hover{color:var(--text-hi); border-bottom-color:var(--hairline);}
+  .filter-group-minimal .filter-btn.active{background:none; color:var(--text-hi); border-bottom-color:var(--brand-red); font-weight:600;}
 
   .filters-toggle-btn{
     font-family:var(--font-mono); font-size:12px; letter-spacing:.03em; color:var(--text-mid);
@@ -619,12 +680,69 @@
     border:1px solid var(--hairline); border-radius:8px; padding:8px 10px; display:flex;
     justify-content:space-between; gap:8px;
   }
+
+  .admin-card-network{position:relative; overflow:hidden;}
+  .admin-card-network h3{display:flex; align-items:center; gap:9px;}
+  .network-watermark{
+    position:absolute; top:0; right:0; width:58%; height:100%; opacity:.16; pointer-events:none;
+    stroke:var(--pa); stroke-width:1.2; fill:var(--pa);
+  }
+  @media (max-width:800px){ .network-watermark{display:none;} }
+
+  .role-network{position:relative; display:flex; justify-content:space-between; padding:12px 4px 0; margin-top:2px;}
+  .role-network-track{position:absolute; top:17px; left:12.5%; right:12.5%; height:2px; background:var(--hairline);}
+  .role-network-fill{position:absolute; top:0; left:0; height:100%; width:0%; background:var(--pa); transition:width .3s ease;}
+  .role-node{
+    position:relative; z-index:1; background:none; border:none; padding:0; cursor:pointer;
+    display:flex; flex-direction:column; align-items:center; gap:6px; flex:1;
+  }
+  .role-node-dot{
+    width:13px; height:13px; border-radius:50%; background:var(--ink-2); border:2px solid var(--hairline);
+    transition:background-color .2s ease, border-color .2s ease, box-shadow .2s ease;
+  }
+  .role-node-label{font-family:var(--font-mono); font-size:10px; color:var(--text-low); transition:color .2s ease;}
+  .role-node:hover .role-node-dot{border-color:var(--text-low);}
+  .role-node.active .role-node-dot{background:var(--pa); border-color:var(--pa); box-shadow:0 0 0 4px #8b8dfb26;}
+  .role-node.active .role-node-label{color:var(--text-hi); font-weight:600;}
+  .role-node.disabled{cursor:not-allowed; opacity:.4;}
+  .role-node:focus-visible .role-node-dot{outline:2px solid #6c8cff; outline-offset:2px;}
+
   .checkbox-list{display:flex; flex-wrap:wrap; gap:8px; margin-top:4px;}
   .checkbox-list label{
-    display:flex; align-items:center; gap:6px; font-size:12.5px; color:var(--text-mid);
-    background:var(--ink-2); border:1px solid var(--hairline); border-radius:999px; padding:5px 10px; cursor:pointer;
+    display:flex; align-items:center; gap:7px; font-size:12.5px; color:var(--text-mid);
+    background:var(--ink-2); border:1px solid var(--hairline); border-radius:999px; padding:6px 12px 6px 10px; cursor:pointer;
+    transition:border-color .2s ease, background-color .2s ease, color .2s ease;
   }
-  .checkbox-list input{cursor:pointer;}
+  .checkbox-list label:hover{border-color:var(--text-low);}
+  .checkbox-list label:has(input:checked){border-color:var(--pa); background:#8b8dfb14; color:var(--text-hi);}
+  .checkbox-list input[type="checkbox"]{
+    appearance:none; -webkit-appearance:none; width:14px; height:14px; border-radius:50%; flex-shrink:0;
+    border:2px solid var(--hairline); background:var(--ink-0); cursor:pointer; margin:0;
+    transition:background-color .2s ease, border-color .2s ease, box-shadow .2s ease;
+  }
+  .checkbox-list input[type="checkbox"]:checked{
+    background:var(--pa); border-color:var(--pa); box-shadow:0 0 0 4px #8b8dfb26, 0 0 9px 1px #8b8dfb80;
+  }
+  .checkbox-list input[type="checkbox"]:focus-visible{outline:2px solid #6c8cff; outline-offset:2px;}
+
+  .sector-network{display:flex; align-items:center; gap:0; margin-top:4px;}
+  .sector-hub{
+    width:30px; height:30px; border-radius:50%; flex-shrink:0; display:flex; align-items:center; justify-content:center;
+    background:var(--ink-2); border:1px solid var(--hairline); color:var(--text-low);
+  }
+  .sector-hub svg{width:16px; height:16px;}
+  .sector-network:has(input:checked) .sector-hub{border-color:var(--pa); color:var(--pa); background:#8b8dfb14;}
+  .sector-hub-stem{
+    width:16px; height:2px; flex-shrink:0; background:var(--hairline);
+    transition:background-color .2s ease;
+  }
+  .sector-network:has(input:checked) .sector-hub-stem{background:var(--pa);}
+  .sector-network .checkbox-list{flex:1; margin-top:0;}
+  .sector-counter{
+    font-family:var(--font-mono); font-size:10.5px; color:var(--text-low); margin-top:8px; padding-left:38px;
+    transition:color .2s ease;
+  }
+  .sector-network:has(input:checked) ~ .sector-counter{color:var(--pa);}
   .form-msg{font-size:12px; margin:10px 0 0; min-height:14px;}
 
   .admin-list-item.disabled-user{opacity:.55;}
@@ -670,52 +788,114 @@
   @media (max-width:620px){
     .access-row{flex-wrap:wrap;}
     .access-info{min-width:140px;}
+    .access-actions{flex-wrap:wrap; width:100%; justify-content:flex-end;}
   }
 
-  .routine-list{display:flex; flex-direction:column; gap:10px; margin-top:16px;}
-  .routine-card{
-    display:flex; align-items:center; gap:14px; background:var(--ink-1); border:1px solid var(--hairline);
-    border-left:3px solid var(--hairline); border-radius:12px; padding:14px 16px;
-    transition:border-color .15s ease, opacity .15s ease;
+  .routines-layout{display:flex; justify-content:space-between; gap:26px; align-items:flex-start; flex-wrap:wrap;}
+  .routines-layout .routines-scope{flex:0 1 660px;}
+  .routine-side-panel{
+    flex:0 0 300px; margin-left:auto; background:var(--ink-1); border:1px solid var(--hairline); border-radius:var(--radius);
+    padding:22px 20px 20px; margin-top:16px; display:flex; flex-direction:column; align-items:center; text-align:center; gap:10px;
+    animation:routineProgressFloat 4.5s ease-in-out infinite;
   }
-  .routine-card:hover{border-color:var(--text-low); border-left-color:var(--text-low);}
-  .routine-card.routine-done{border-left-color:var(--st-concluido);}
-  .routine-card.routine-pending{border-left-color:var(--sev-alta);}
-  .routine-card.routine-inactive{opacity:.5;}
-  .routine-freq-icon{
-    width:36px; height:36px; border-radius:10px; flex-shrink:0; display:flex; align-items:center; justify-content:center;
-    background:var(--ink-2); color:var(--text-mid); border:1px solid var(--hairline);
+  @keyframes routineProgressFloat{ 0%,100%{transform:translateY(0);} 50%{transform:translateY(-5px);} }
+  .rp-title{font-family:var(--font-mono); font-size:10.5px; letter-spacing:.08em; text-transform:uppercase; color:var(--text-low);}
+  .rf-grid{display:grid; grid-template-columns:1fr 1fr; gap:16px 8px; width:100%;}
+  .rf-cell{display:flex; flex-direction:column; align-items:center; gap:4px; opacity:0; animation:rpItemIn .4s ease forwards;}
+  .rf-ring-wrap{position:relative; width:64px; height:64px;}
+  .rf-ring-wrap svg{transform:rotate(-90deg); width:100%; height:100%;}
+  .rf-ring-track{fill:none; stroke:var(--hairline); stroke-width:6;}
+  .rf-ring-fill{fill:none; stroke:var(--pa); stroke-width:6; stroke-linecap:round; transition:stroke-dashoffset 1s cubic-bezier(.25,.8,.35,1);}
+  .rf-ring-center{
+    position:absolute; inset:0; display:flex; align-items:center; justify-content:center;
+    font-family:var(--font-mono); font-size:12px; font-weight:600; color:var(--text-hi);
   }
-  .routine-info{flex:1; min-width:0;}
-  .routine-title-row{display:flex; align-items:center; gap:8px; flex-wrap:wrap;}
-  .routine-title{font-size:13.5px; font-weight:600; color:var(--text-hi);}
-  .routine-desc{font-size:12px; color:var(--text-low); margin-top:3px; max-width:60ch;}
-  .routine-meta{display:flex; align-items:center; gap:10px; flex-wrap:wrap; margin-top:6px; font-family:var(--font-mono); font-size:11px; color:var(--text-low);}
-  .routine-meta .routine-assignee{display:flex; align-items:center; gap:5px; color:var(--text-mid);}
-  .routine-badge{
-    font-family:var(--font-mono); font-size:9.5px; text-transform:uppercase; letter-spacing:.04em;
-    padding:2px 8px; border-radius:999px; white-space:nowrap; border:1px solid var(--hairline); color:var(--text-mid);
+  .rf-label{font-size:11px; color:var(--text-mid); font-weight:600;}
+  .rf-frac{font-family:var(--font-mono); font-size:9.5px; color:var(--text-low);}
+  .rp-divider{width:100%; height:1px; background:var(--hairline); margin:2px 0;}
+  .rp-activity{width:100%; display:flex; flex-direction:column; gap:11px; text-align:left;}
+  .rp-activity-title{font-family:var(--font-mono); font-size:10px; letter-spacing:.08em; text-transform:uppercase; color:var(--text-low); text-align:center; margin-bottom:1px;}
+  .rp-activity-item{
+    display:flex; align-items:flex-start; gap:8px; font-size:11.5px; color:var(--text-mid); line-height:1.45;
+    opacity:0; animation:rpItemIn .4s ease forwards;
   }
-  .routine-badge-freq{background:var(--ink-2);}
-  .routine-badge-sector{background:var(--ink-2);}
-  .routine-badge-wholesector{background:#8b8dfb1f; color:var(--pa); border-color:#8b8dfb55;}
-  .routine-status-pill{
-    font-family:var(--font-mono); font-size:10.5px; font-weight:600; text-transform:uppercase; letter-spacing:.03em;
-    padding:4px 10px; border-radius:999px; flex-shrink:0; white-space:nowrap;
+  .rp-activity-item .dot{width:6px; height:6px; border-radius:50%; background:var(--st-concluido); margin-top:5px; flex-shrink:0;}
+  .rp-activity-item b{color:var(--text-hi); font-weight:600;}
+  .rp-activity-item .time{display:block; font-family:var(--font-mono); font-size:9.5px; color:var(--text-low); margin-top:1px;}
+  @keyframes rpItemIn{ from{opacity:0; transform:translateY(4px);} to{opacity:1; transform:translateY(0);} }
+  .rp-activity-empty{font-size:11px; color:var(--text-low); text-align:center;}
+  .rl-list{width:100%; display:flex; flex-direction:column; gap:10px; text-align:left;}
+  .rl-row{display:flex; align-items:center; gap:10px; font-size:12px; opacity:0; animation:rpItemIn .4s ease forwards;}
+  .rl-rank{
+    width:22px; height:22px; border-radius:50%; background:var(--ink-2); border:1px solid var(--hairline);
+    display:flex; align-items:center; justify-content:center; font-family:var(--font-mono); font-size:10.5px;
+    color:var(--text-low); flex-shrink:0;
   }
-  .routine-status-done{background:#4ee2a01a; color:var(--st-concluido); border:1px solid #4ee2a055;}
-  .routine-status-pending{background:#e08a3c1a; color:var(--sev-alta); border:1px solid #e08a3c55;}
-  .routine-actions{display:flex; align-items:center; gap:6px; flex-shrink:0;}
-  .routine-complete-btn{
-    font-family:var(--font-mono); font-size:11px; font-weight:600; border-radius:999px; padding:7px 14px; cursor:pointer;
-    background:var(--brand-red); color:#fff; border:1px solid var(--brand-red); white-space:nowrap;
+  .rl-row.top1 .rl-rank{border-color:var(--pa); color:var(--pa); background:#8b8dfb1f;}
+  .rl-name{flex:1; min-width:0; color:var(--text-hi); font-weight:600; overflow:hidden; text-overflow:ellipsis; white-space:nowrap;}
+  .rl-count{font-family:var(--font-mono); font-size:10.5px; color:var(--text-low); flex-shrink:0;}
+  .rl-empty{font-size:11px; color:var(--text-low); text-align:center;}
+  .rc-total{font-family:var(--font-mono); font-size:11px; color:var(--text-low);}
+  .rc-list{width:100%; display:flex; flex-direction:column; gap:12px; text-align:left; margin-top:2px;}
+  .rc-row{display:flex; flex-direction:column; gap:5px; opacity:0; animation:rpItemIn .4s ease forwards;}
+  .rc-row-head{display:flex; justify-content:space-between; font-size:11.5px; color:var(--text-mid);}
+  .rc-row-head b{color:var(--text-hi); font-weight:600; font-family:var(--font-mono);}
+  .rc-bar-track{width:100%; height:6px; border-radius:999px; background:var(--ink-2); overflow:hidden;}
+  .rc-bar-fill{height:100%; border-radius:999px; background:var(--pa); width:0%; transition:width 1s cubic-bezier(.25,.8,.35,1);}
+  @media (max-width:900px){ .routine-side-panel{display:none;} }
+  @media (prefers-reduced-motion:reduce){
+    .routine-side-panel{animation:none;}
+    .rf-ring-fill{transition:none;}
+    .rf-cell{animation:none; opacity:1;}
+    .rp-activity-item{animation:none; opacity:1;}
+    .rl-row{animation:none; opacity:1;}
+    .rc-row{animation:none; opacity:1;}
+    .rc-bar-fill{transition:none;}
   }
-  .routine-complete-btn:hover{opacity:.85;}
-  .routine-complete-btn.undo{background:transparent; color:var(--text-mid); border-color:var(--hairline); font-weight:400;}
-  .routine-complete-btn.undo:hover{color:var(--text-hi); border-color:var(--text-low);}
-  @media (max-width:700px){
-    .routine-card{flex-wrap:wrap;}
-    .routine-info{min-width:200px;}
+
+  .routine-list{
+    display:flex; flex-direction:column; margin-top:16px;
+    background:var(--ink-1); border:1px solid var(--hairline); border-radius:12px; padding:2px 16px;
+  }
+  .routine-check-row{
+    display:flex; align-items:center; gap:14px; padding:13px 0; border-bottom:1px solid var(--hairline);
+  }
+  .routine-check-row:last-child{border-bottom:none;}
+  .routine-check-dot{
+    width:22px; height:22px; border-radius:50%; flex-shrink:0; display:flex; align-items:center; justify-content:center;
+    border:2px solid var(--hairline); color:var(--ink-0);
+  }
+  .routine-check-dot.done{background:var(--st-concluido); border-color:var(--st-concluido);}
+  .routine-check-dot svg{width:12px; height:12px;}
+  .routine-check-body{flex:1; min-width:0;}
+  .routine-check-title{
+    font-size:13.5px; font-weight:600; color:var(--text-hi); display:flex; align-items:center; gap:7px;
+  }
+  .routine-check-title.done{color:var(--text-mid); text-decoration:line-through; text-decoration-color:var(--hairline);}
+  .whole-sector-icon{color:var(--pa); display:inline-flex; flex-shrink:0;}
+  .routine-check-meta{
+    font-family:var(--font-mono); font-size:11px; color:var(--text-low); margin-top:3px;
+    overflow:hidden; text-overflow:ellipsis; white-space:nowrap;
+  }
+  .routine-check-desc{font-size:11.5px; color:var(--text-low); margin-top:3px; max-width:60ch;}
+  .routine-check-action{
+    font-family:var(--font-mono); font-size:11px; font-weight:600; border-radius:999px; padding:7px 14px;
+    cursor:pointer; white-space:nowrap; flex-shrink:0;
+    background:var(--brand-red); color:#fff; border:1px solid var(--brand-red);
+  }
+  .routine-check-action:hover{opacity:.85;}
+  .routine-check-action.undo{background:transparent; color:var(--text-mid); border-color:var(--hairline); font-weight:400;}
+  .routine-check-action.undo:hover{color:var(--text-hi); border-color:var(--text-low);}
+  .routine-check-icon-btn{
+    width:26px; height:26px; border-radius:8px; border:1px solid transparent; background:transparent;
+    color:var(--text-low); cursor:pointer; flex-shrink:0; display:flex; align-items:center; justify-content:center;
+  }
+  .routine-check-icon-btn:hover{background:var(--ink-2); color:var(--text-hi); border-color:var(--hairline);}
+  .routine-check-icon-btn.danger:hover{background:var(--sev-critica); color:#fff; border-color:var(--sev-critica);}
+  @media (max-width:640px){
+    .routine-check-row{flex-wrap:wrap; row-gap:8px;}
+    .routine-check-body{min-width:200px;}
+    .routine-check-meta{white-space:normal;}
   }
 
   .kpi-row{display:grid; grid-template-columns:repeat(7, 1fr); gap:14px; margin-bottom:28px;}
@@ -1050,18 +1230,40 @@
       <p class="sub" id="app-sub">Guia de melhorias internas e institucionais, organizado por setor e por responsável. Clique em um cartão para ver o comparativo completo; use os campos de status e responsável para acompanhar o andamento.</p>
     </div>
     <div class="meta">
-      <div class="user-chip" id="user-chip">
-        <span id="user-email">—</span>
-        <span class="role-tag" id="user-role">—</span>
-        <button type="button" class="logout-btn" id="logout-btn">sair</button>
-      </div>
-      <button type="button" class="presentation-toggle-btn" id="sync-btn" title="Sincronizar com a última versão do sistema"><svg width="13" height="13" viewBox="0 0 16 16" fill="none" style="vertical-align:-2px;" aria-hidden="true"><path d="M2.5 8a5.5 5.5 0 0 1 9.4-3.9M13.5 8a5.5 5.5 0 0 1-9.4 3.9" stroke="currentColor" stroke-width="1.4" stroke-linecap="round"/><path d="M12 1.8v2.5h-2.5M4 14.2v-2.5h2.5" stroke="currentColor" stroke-width="1.4" stroke-linecap="round" stroke-linejoin="round"/></svg> Atualizar</button>
-      <button type="button" class="presentation-toggle-btn" id="presentation-toggle" style="display:none;"><svg width="13" height="13" viewBox="0 0 16 16" fill="none" style="vertical-align:-2px;" aria-hidden="true"><rect x="1.5" y="2.5" width="13" height="9" rx="1" stroke="currentColor" stroke-width="1.4"/><path d="M5.5 14.5H10.5M8 11.5V14.5" stroke="currentColor" stroke-width="1.4" stroke-linecap="round"/></svg> Modo apresentação</button>
-      <button type="button" class="shutdown-btn" id="shutdown-btn" style="display:none;" title="Desconecta todo mundo que estiver logado agora, exceto você">Encerrar todos os acessos</button>
-      <div class="theme-switcher" id="theme-switcher" role="group" aria-label="Escolher tema">
-        <button type="button" class="theme-swatch" data-theme-choice="escuro" title="Tema escuro" aria-label="Tema escuro"></button>
-        <button type="button" class="theme-swatch" data-theme-choice="claro" title="Tema claro" aria-label="Tema claro"></button>
-        <button type="button" class="theme-swatch" data-theme-choice="vermelho" title="Tema vermelho Crediffato" aria-label="Tema vermelho Crediffato"></button>
+      <div class="settings-menu" id="settings-menu">
+        <button type="button" class="settings-btn" id="settings-btn" title="Configurações" aria-label="Configurações" aria-haspopup="true" aria-expanded="false">
+          <svg width="17" height="17" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M12 15.5a3.5 3.5 0 1 0 0-7 3.5 3.5 0 0 0 0 7Z"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 1 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 1 1-2.83-2.83l.06-.06A1.65 1.65 0 0 0 4.6 15a1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 1 1 2.83-2.83l.06.06A1.65 1.65 0 0 0 9 4.6a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 1 1 2.83 2.83l-.06.06A1.65 1.65 0 0 0 19.4 9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1Z" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linejoin="round"/></svg>
+        </button>
+        <div class="settings-dropdown" id="settings-dropdown">
+          <div class="user-chip" id="user-chip">
+            <span id="user-email">—</span>
+            <span class="role-tag" id="user-role">—</span>
+            <button type="button" class="logout-btn" id="logout-btn">sair</button>
+          </div>
+          <button type="button" class="presentation-toggle-btn" id="sync-btn" title="Sincronizar com a última versão do sistema"><svg width="13" height="13" viewBox="0 0 16 16" fill="none" style="vertical-align:-2px;" aria-hidden="true"><path d="M2.5 8a5.5 5.5 0 0 1 9.4-3.9M13.5 8a5.5 5.5 0 0 1-9.4 3.9" stroke="currentColor" stroke-width="1.4" stroke-linecap="round"/><path d="M12 1.8v2.5h-2.5M4 14.2v-2.5h2.5" stroke="currentColor" stroke-width="1.4" stroke-linecap="round" stroke-linejoin="round"/></svg> Atualizar</button>
+          <button type="button" class="presentation-toggle-btn" id="presentation-toggle" style="display:none;"><svg width="13" height="13" viewBox="0 0 16 16" fill="none" style="vertical-align:-2px;" aria-hidden="true"><rect x="1.5" y="2.5" width="13" height="9" rx="1" stroke="currentColor" stroke-width="1.4"/><path d="M5.5 14.5H10.5M8 11.5V14.5" stroke="currentColor" stroke-width="1.4" stroke-linecap="round"/></svg> Modo apresentação</button>
+          <button type="button" class="shutdown-btn" id="shutdown-btn" style="display:none;" title="Desconecta todo mundo que estiver logado agora, exceto você">Encerrar todos os acessos</button>
+          <div class="settings-dropdown-divider"></div>
+          <p class="settings-section-title">Tema</p>
+          <div class="theme-switcher theme-swatch-row" id="theme-switcher" role="group" aria-label="Escolher tema">
+            <div class="theme-swatch-option">
+              <button type="button" class="theme-swatch" data-theme-choice="escuro" title="Tema escuro" aria-label="Tema escuro"></button>
+              <span>Escuro</span>
+            </div>
+            <div class="theme-swatch-option">
+              <button type="button" class="theme-swatch" data-theme-choice="claro" title="Tema claro" aria-label="Tema claro"></button>
+              <span>Claro</span>
+            </div>
+            <div class="theme-swatch-option">
+              <button type="button" class="theme-swatch" data-theme-choice="preto" title="Tema preto, rede de fundo branca" aria-label="Tema preto, rede de fundo branca"></button>
+              <span>Preto</span>
+            </div>
+            <div class="theme-swatch-option">
+              <button type="button" class="theme-swatch" data-theme-choice="vermelho" title="Tema vermelho Crediffato, rede de fundo branca" aria-label="Tema vermelho Crediffato, rede de fundo branca"></button>
+              <span>Vermelho</span>
+            </div>
+          </div>
+        </div>
       </div>
     </div>
   </header>
@@ -1198,35 +1400,44 @@
       <h2>Rotinas</h2>
       <div style="display:flex; align-items:center; gap:12px; flex-wrap:wrap;">
         <div class="view-toggle" id="routines-view-toggle" role="group" aria-label="Visão de rotinas">
-          <button type="button" data-routines-view="dashboard" class="active">Visão geral</button>
+          <button type="button" data-routines-view="pending" class="active">Pendentes</button>
+          <button type="button" data-routines-view="done">Concluídas</button>
           <button type="button" data-routines-view="detail">Detalhamento</button>
         </div>
         <button class="add-btn" id="open-add-routine-modal">+ Nova rotina</button>
       </div>
     </div>
-    <p class="sub" id="routines-sub" style="margin-bottom:18px;">Demandas recorrentes (diárias, semanais, mensais e anuais) repassadas a um responsável — com a opção de marcar que o setor inteiro está envolvido. Cada rotina volta a ficar pendente no início de cada período.</p>
-
-    <div id="routines-view-dashboard">
-      <div class="filter-group" id="routines-dashboard-area-filter" style="margin-bottom:16px;">
-        <span class="fg-label">Setor:</span>
-        <button class="filter-btn active" data-routine-area="todos">Todos</button>
+    <div class="routines-layout" id="routines-view-pending" style="margin-top:22px;">
+      <div class="routines-scope">
+        <div class="filter-group filter-group-minimal" id="routines-pending-area-filter" style="margin-bottom:16px;">
+          <span class="fg-label">Setor:</span>
+          <button class="filter-btn active" data-routine-area="todos">Todos</button>
+        </div>
+        <div class="kpi-row" id="routines-kpis" style="margin-bottom:24px;"></div>
+        <div class="routine-list" id="routines-list-pending"></div>
       </div>
-      <div class="kpi-row" id="routines-kpis" style="margin-bottom:24px;"></div>
-      <div class="overview-block">
-        <div class="summary-label">Pendentes</div>
-        <div class="routine-list" id="routines-dashboard-pending"></div>
-      </div>
-      <div class="overview-block" id="routines-dashboard-done-block">
-        <div class="summary-label">Concluídas neste período</div>
-        <div class="routine-list" id="routines-dashboard-done"></div>
-      </div>
+      <div class="routine-side-panel" id="routines-progress-panel"></div>
     </div>
 
-    <div id="routines-view-detail" style="display:none;">
-      <div class="filter-group" id="routines-detail-area-filter" style="margin-bottom:20px;">
-        <span class="fg-label">Setor (obrigatório):</span>
+    <div class="routines-layout" id="routines-view-done" style="display:none; margin-top:22px;">
+      <div class="routines-scope">
+        <div class="filter-group filter-group-minimal" id="routines-done-area-filter" style="margin-bottom:16px;">
+          <span class="fg-label">Setor:</span>
+          <button class="filter-btn active" data-routine-area="todos">Todos</button>
+        </div>
+        <div class="routine-list" id="routines-list-done"></div>
       </div>
-      <div id="routines-detail-body"></div>
+      <div class="routine-side-panel" id="routines-leaderboard-panel"></div>
+    </div>
+
+    <div class="routines-layout" id="routines-view-detail" style="display:none; margin-top:22px;">
+      <div class="routines-scope">
+        <div class="filter-group filter-group-minimal" id="routines-detail-area-filter" style="margin-bottom:20px;">
+          <span class="fg-label">Setor (obrigatório):</span>
+        </div>
+        <div id="routines-detail-body"></div>
+      </div>
+      <div class="routine-side-panel" id="routines-composition-panel"></div>
     </div>
   </div>
 
@@ -1256,8 +1467,18 @@
       </div>
     </div>
     <div class="admin-grid" id="admin-view-users">
-      <div class="admin-card">
-        <h3>Novo acesso</h3>
+      <div class="admin-card admin-card-network">
+        <svg class="network-watermark" viewBox="0 0 300 200" aria-hidden="true">
+          <line x1="18" y1="24" x2="80" y2="66"/><line x1="80" y1="66" x2="46" y2="128"/>
+          <line x1="80" y1="66" x2="150" y2="40"/><line x1="150" y1="40" x2="222" y2="80"/>
+          <line x1="150" y1="40" x2="118" y2="150"/><line x1="222" y1="80" x2="270" y2="52"/>
+          <line x1="222" y1="80" x2="252" y2="150"/><line x1="118" y1="150" x2="46" y2="128"/>
+          <line x1="118" y1="150" x2="180" y2="176"/><line x1="252" y1="150" x2="180" y2="176"/>
+          <circle cx="18" cy="24" r="3"/><circle cx="80" cy="66" r="3.5"/><circle cx="46" cy="128" r="3"/>
+          <circle cx="150" cy="40" r="3.5"/><circle cx="222" cy="80" r="3"/><circle cx="270" cy="52" r="2.5"/>
+          <circle cx="118" cy="150" r="3"/><circle cx="252" cy="150" r="2.5"/><circle cx="180" cy="176" r="3"/>
+        </svg>
+        <h3><span class="pulse"></span>Novo acesso</h3>
         <form id="user-form">
           <label class="field">
             <span class="field-label">Nome do colaborador</span>
@@ -1267,19 +1488,33 @@
             <span class="field-label">E-mail</span>
             <input type="email" id="user-email-input" required placeholder="pessoa@crediffato.com.br" />
           </label>
-          <label class="field">
+          <div class="field">
             <span class="field-label">Papel</span>
-            <select id="user-role-input">
+            <div class="role-network" id="role-network-new" role="group" aria-label="Papel">
+              <div class="role-network-track"><div class="role-network-fill"></div></div>
+              <button type="button" class="role-node" data-role="operador"><span class="role-node-dot"></span><span class="role-node-label">Operador</span></button>
+              <button type="button" class="role-node" data-role="supervisor"><span class="role-node-dot"></span><span class="role-node-label">Supervisor</span></button>
+              <button type="button" class="role-node" data-role="gestor"><span class="role-node-dot"></span><span class="role-node-label">Gestor</span></button>
+              <button type="button" class="role-node" data-role="admin"><span class="role-node-dot"></span><span class="role-node-label">Admin</span></button>
+            </div>
+            <select id="user-role-input" style="display:none;">
               <option value="operador">Operador</option>
               <option value="supervisor">Supervisor</option>
               <option value="gestor">Gestor</option>
               <option value="admin">Admin</option>
             </select>
-          </label>
-          <label class="field">
+          </div>
+          <div class="field">
             <span class="field-label">Setores atribuídos</span>
-            <div class="checkbox-list" id="user-areas-input"></div>
-          </label>
+            <div class="sector-network">
+              <div class="sector-hub" title="Colaborador" aria-hidden="true">
+                <svg viewBox="0 0 24 24" fill="none"><circle cx="12" cy="8.2" r="3.4" stroke="currentColor" stroke-width="1.6"/><path d="M5 19.4c1-4 3.6-6 7-6s6 2 7 6" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"/></svg>
+              </div>
+              <div class="sector-hub-stem"></div>
+              <div class="checkbox-list" id="user-areas-input"></div>
+            </div>
+            <div class="sector-counter" id="user-areas-counter">Nenhum setor conectado</div>
+          </div>
           <button type="submit" class="btn-primary" id="user-form-submit-btn">Criar acesso</button>
           <p class="form-msg" id="user-msg"></p>
         </form>
@@ -1425,19 +1660,33 @@
           <span class="field-label">E-mail</span>
           <input type="email" id="edit-access-email" required />
         </label>
-        <label class="field">
+        <div class="field">
           <span class="field-label">Papel</span>
-          <select id="edit-access-role">
+          <div class="role-network" id="role-network-edit" role="group" aria-label="Papel">
+            <div class="role-network-track"><div class="role-network-fill"></div></div>
+            <button type="button" class="role-node" data-role="operador"><span class="role-node-dot"></span><span class="role-node-label">Operador</span></button>
+            <button type="button" class="role-node" data-role="supervisor"><span class="role-node-dot"></span><span class="role-node-label">Supervisor</span></button>
+            <button type="button" class="role-node" data-role="gestor"><span class="role-node-dot"></span><span class="role-node-label">Gestor</span></button>
+            <button type="button" class="role-node" data-role="admin"><span class="role-node-dot"></span><span class="role-node-label">Admin</span></button>
+          </div>
+          <select id="edit-access-role" style="display:none;">
             <option value="operador">Operador</option>
             <option value="supervisor">Supervisor</option>
             <option value="gestor">Gestor</option>
             <option value="admin">Admin</option>
           </select>
-        </label>
-        <label class="field">
+        </div>
+        <div class="field">
           <span class="field-label">Setores atribuídos</span>
-          <div class="checkbox-list" id="edit-access-areas"></div>
-        </label>
+          <div class="sector-network">
+            <div class="sector-hub" title="Colaborador" aria-hidden="true">
+              <svg viewBox="0 0 24 24" fill="none"><circle cx="12" cy="8.2" r="3.4" stroke="currentColor" stroke-width="1.6"/><path d="M5 19.4c1-4 3.6-6 7-6s6 2 7 6" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"/></svg>
+            </div>
+            <div class="sector-hub-stem"></div>
+            <div class="checkbox-list" id="edit-access-areas"></div>
+          </div>
+          <div class="sector-counter" id="edit-access-areas-counter">Nenhum setor conectado</div>
+        </div>
         <div class="modal-actions">
           <button type="button" class="btn-secondary" id="edit-access-modal-cancel">Cancelar</button>
           <button type="submit" class="btn-primary">Salvar alterações</button>
@@ -1515,7 +1764,7 @@
 // que a comparação ">"/"<" abaixo saiba qual versão é mais nova) — é a única forma de o mecanismo
 // perceber que existe uma versão nova. Só funciona pra quem está conectado ao Firestore (modo de
 // contingência sem Firebase não tem sincronização em tempo real de nada, essa checagem incluída).
-const APP_VERSION = "2026-08-27T17:15:00Z";
+const APP_VERSION = "2026-08-27T19:13:16Z";
 
 // Desloga e recarrega — usado tanto pela verificação de versão nova quanto pelos sinais de
 // desconexão manual (shutdown geral ou alguém sendo desconectado individualmente).
@@ -1759,14 +2008,22 @@ let bgNetworkRelease = null;
     }));
   }
 
+  function networkRGB(){
+    // Preto e Vermelho pedem a rede de fundo branca em vez do vermelho de marca padrão —
+    // lido a cada frame porque o tema pode mudar a qualquer momento pelo dropdown.
+    const theme = document.documentElement.getAttribute("data-theme");
+    return (theme === "preto" || theme === "vermelho") ? "255,255,255" : "212,15,58";
+  }
+
   function drawFlash(flashT){
     // onda de choque do estouro: expande rápido e forte a partir do centro, some em seguida.
+    const rgb = networkRGB();
     const r = 40 + flashT * 420;
     const fade = Math.pow(1 - flashT, 1.6);
     const grad = ctx.createRadialGradient(target.x, target.y, 0, target.x, target.y, r);
-    grad.addColorStop(0, `rgba(212,15,58,${0.55 * fade})`);
-    grad.addColorStop(0.35, `rgba(212,15,58,${0.28 * fade})`);
-    grad.addColorStop(1, "rgba(212,15,58,0)");
+    grad.addColorStop(0, `rgba(${rgb},${0.55 * fade})`);
+    grad.addColorStop(0.35, `rgba(${rgb},${0.28 * fade})`);
+    grad.addColorStop(1, `rgba(${rgb},0)`);
     ctx.fillStyle = grad;
     ctx.beginPath();
     ctx.arc(target.x, target.y, r, 0, Math.PI * 2);
@@ -1776,11 +2033,12 @@ let bgNetworkRelease = null;
   function drawCore(now){
     // brilho suave e pulsante no ponto de convergência — mantém a tela "viva" enquanto os
     // dados ainda estão carregando, em vez de parecer travada num vazio.
+    const rgb = networkRGB();
     const pulse = (Math.sin(now / 480) + 1) / 2;
     const r = 30 + pulse * 14;
     const grad = ctx.createRadialGradient(target.x, target.y, 0, target.x, target.y, r);
-    grad.addColorStop(0, `rgba(212,15,58,${0.28 + pulse * 0.14})`);
-    grad.addColorStop(1, "rgba(212,15,58,0)");
+    grad.addColorStop(0, `rgba(${rgb},${0.28 + pulse * 0.14})`);
+    grad.addColorStop(1, `rgba(${rgb},0)`);
     ctx.fillStyle = grad;
     ctx.beginPath();
     ctx.arc(target.x, target.y, r, 0, Math.PI * 2);
@@ -1831,6 +2089,7 @@ let bgNetworkRelease = null;
       }
     }
 
+    const netRgb = networkRGB();
     const maxDist = 165;
     for(let i = 0; i < particles.length; i++){
       for(let j = i + 1; j < particles.length; j++){
@@ -1838,7 +2097,7 @@ let bgNetworkRelease = null;
         const dx = a.x - b.x, dy = a.y - b.y;
         const dist = Math.sqrt(dx * dx + dy * dy);
         if(dist < maxDist){
-          ctx.strokeStyle = `rgba(212,15,58,${(1 - dist / maxDist) * 0.35})`;
+          ctx.strokeStyle = `rgba(${netRgb},${(1 - dist / maxDist) * 0.35})`;
           ctx.lineWidth = 1;
           ctx.beginPath();
           ctx.moveTo(a.x, a.y); ctx.lineTo(b.x, b.y);
@@ -1847,7 +2106,7 @@ let bgNetworkRelease = null;
       }
     }
     for(const p of particles){
-      ctx.fillStyle = "rgba(212,15,58,.75)";
+      ctx.fillStyle = `rgba(${netRgb},.75)`;
       ctx.beginPath();
       ctx.arc(p.x, p.y, 1.6, 0, Math.PI * 2);
       ctx.fill();
@@ -2037,6 +2296,30 @@ function routineStatus(r){
   const period = currentPeriodKey(r.frequency);
   const completion = (r.completions || []).find(c => c.period === period) || null;
   return { period, done: !!completion, completion };
+}
+const WEEKDAY_FULL = ["domingo", "segunda-feira", "terça-feira", "quarta-feira", "quinta-feira", "sexta-feira", "sábado"];
+function nextResetLabel(routines){
+  if(!routines.length) return "";
+  const freqs = new Set(routines.map(r => r.frequency));
+  const now = new Date();
+  const today = new Date(now.getFullYear(), now.getMonth(), now.getDate());
+  const candidates = [];
+  if(freqs.has("diaria")){
+    const d = new Date(today); d.setDate(d.getDate() + 1);
+    candidates.push(d);
+  }
+  if(freqs.has("semanal")){
+    const d = mondayOfWeek(today); d.setDate(d.getDate() + 7);
+    candidates.push(d);
+  }
+  if(freqs.has("mensal")) candidates.push(new Date(today.getFullYear(), today.getMonth() + 1, 1));
+  if(freqs.has("anual")) candidates.push(new Date(today.getFullYear() + 1, 0, 1));
+  if(!candidates.length) return "";
+  const next = candidates.reduce((a, b) => (a < b ? a : b));
+  const diffDays = Math.round((next - today) / 86400000);
+  if(diffDays <= 1) return "amanhã";
+  if(diffDays < 7) return WEEKDAY_FULL[next.getDay()];
+  return `${pad2(next.getDate())}/${pad2(next.getMonth() + 1)}`;
 }
 function visibleRoutines(){
   const scoped = ROUTINES.filter(r => areasForUser().includes(r.sector));
@@ -2387,7 +2670,7 @@ function applyRemoteState(data){
   renderTabs();
 }
 
-let state = { sev:"todos", status:"todos", area:"todos", assignee:"todos", view:"area", tab:"board", archiveSearch:"", userSearch:"", userStatusFilter:"todos", userRoleFilter:"todos", routinesView:"dashboard", routineArea:"todos", routineDetailArea:"" };
+let state = { sev:"todos", status:"todos", area:"todos", assignee:"todos", view:"area", tab:"board", archiveSearch:"", userSearch:"", userStatusFilter:"todos", userRoleFilter:"todos", routinesView:"pending", routineArea:"todos", routineDetailArea:"" };
 const openCardIds = new Set();
 const obsDrafts = {}; // id -> texto ainda não salvo, preservado entre re-renders
 
@@ -2899,9 +3182,11 @@ function startEditUser(uid){
   roleSelect.value = user.role;
   const adminOption = roleSelect.querySelector('option[value="admin"]');
   if(adminOption) adminOption.disabled = !(currentUser && currentUser.role === "admin");
+  syncRoleNetworkEdit();
   document.querySelectorAll('#edit-access-areas input[type="checkbox"]').forEach(cb => {
     cb.checked = (user.assignedAreas || []).includes(cb.value);
   });
+  updateSectorCounter("edit-access-areas", "edit-access-areas-counter");
   document.getElementById("edit-access-msg").textContent = "";
   document.getElementById("edit-access-modal-overlay").classList.add("open");
 }
@@ -2918,7 +3203,65 @@ document.getElementById("edit-access-modal-overlay").addEventListener("click", (
   if(e.target.id === "edit-access-modal-overlay") closeEditAccessModal();
 });
 
+function closeSettingsDropdown(){
+  document.getElementById("settings-dropdown").classList.remove("open");
+  document.getElementById("settings-btn").setAttribute("aria-expanded", "false");
+}
+function toggleSettingsDropdown(){
+  const dropdown = document.getElementById("settings-dropdown");
+  const willOpen = !dropdown.classList.contains("open");
+  dropdown.classList.toggle("open", willOpen);
+  document.getElementById("settings-btn").setAttribute("aria-expanded", willOpen ? "true" : "false");
+}
+document.getElementById("settings-btn").addEventListener("click", (e) => {
+  e.stopPropagation();
+  toggleSettingsDropdown();
+});
+document.getElementById("settings-dropdown").addEventListener("click", (e) => e.stopPropagation());
+document.addEventListener("click", closeSettingsDropdown);
+document.addEventListener("keydown", (e) => { if(e.key === "Escape") closeSettingsDropdown(); });
+
 document.getElementById("open-add-routine-modal").addEventListener("click", openRoutineModal);
+const ROLE_ORDER = ["operador", "supervisor", "gestor", "admin"];
+function wireRoleNetwork(containerId, selectId){
+  const container = document.getElementById(containerId);
+  const select = document.getElementById(selectId);
+  if(!container || !select) return () => {};
+  const nodes = Array.from(container.querySelectorAll(".role-node"));
+  const fill = container.querySelector(".role-network-fill");
+  function sync(){
+    const idx = Math.max(0, ROLE_ORDER.indexOf(select.value));
+    nodes.forEach((n, i) => {
+      n.classList.toggle("active", i <= idx);
+      n.setAttribute("aria-pressed", i === idx ? "true" : "false");
+      const optionEl = select.querySelector(`option[value="${n.dataset.role}"]`);
+      n.classList.toggle("disabled", !!(optionEl && optionEl.disabled));
+    });
+    if(fill) fill.style.width = `${(idx / (ROLE_ORDER.length - 1)) * 100}%`;
+  }
+  nodes.forEach(n => {
+    n.addEventListener("click", () => {
+      if(n.classList.contains("disabled")) return;
+      select.value = n.dataset.role;
+      sync();
+    });
+  });
+  sync();
+  return sync;
+}
+const syncRoleNetworkNew = wireRoleNetwork("role-network-new", "user-role-input");
+const syncRoleNetworkEdit = wireRoleNetwork("role-network-edit", "edit-access-role");
+
+function updateSectorCounter(containerId, counterId){
+  const container = document.getElementById(containerId);
+  const counterEl = document.getElementById(counterId);
+  if(!container || !counterEl) return;
+  const count = container.querySelectorAll('input[type="checkbox"]:checked').length;
+  counterEl.textContent = count === 0 ? "Nenhum setor conectado" : `${count} setor${count === 1 ? "" : "es"} conectado${count === 1 ? "" : "s"}`;
+}
+document.getElementById("user-areas-input").addEventListener("change", () => updateSectorCounter("user-areas-input", "user-areas-counter"));
+document.getElementById("edit-access-areas").addEventListener("change", () => updateSectorCounter("edit-access-areas", "edit-access-areas-counter"));
+
 document.getElementById("routine-modal-cancel").addEventListener("click", closeRoutineModal);
 document.getElementById("routine-modal-close").addEventListener("click", closeRoutineModal);
 document.getElementById("routine-modal-overlay").addEventListener("click", (e) => {
@@ -2931,7 +3274,13 @@ document.getElementById("routines-view-toggle").addEventListener("click", (e) =>
   state.routinesView = btn.dataset.routinesView;
   renderRoutines();
 });
-document.getElementById("routines-dashboard-area-filter").addEventListener("click", (e) => {
+document.getElementById("routines-pending-area-filter").addEventListener("click", (e) => {
+  const btn = e.target.closest("button[data-routine-area]");
+  if(!btn) return;
+  state.routineArea = btn.dataset.routineArea;
+  renderRoutines();
+});
+document.getElementById("routines-done-area-filter").addEventListener("click", (e) => {
   const btn = e.target.closest("button[data-routine-area]");
   if(!btn) return;
   state.routineArea = btn.dataset.routineArea;
@@ -3055,10 +3404,12 @@ function refreshSectorDependentUI(){
   const areasInput = document.getElementById("user-areas-input");
   if(areasInput){
     areasInput.innerHTML = SECTORS.map(s => `<label><input type="checkbox" value="${s.key}"> ${s.label}</label>`).join("");
+    updateSectorCounter("user-areas-input", "user-areas-counter");
   }
   const editAreasInput = document.getElementById("edit-access-areas");
   if(editAreasInput){
     editAreasInput.innerHTML = SECTORS.map(s => `<label><input type="checkbox" value="${s.key}"> ${s.label}</label>`).join("");
+    updateSectorCounter("edit-access-areas", "edit-access-areas-counter");
   }
   const routineArea = document.getElementById("routine-area");
   if(routineArea){
@@ -3091,6 +3442,14 @@ const ROUTINE_FREQ_ICON = {
   anual: '<svg width="17" height="17" viewBox="0 0 16 16" fill="none" aria-hidden="true"><path d="M8 1.8l1.6 3.4 3.7.4-2.7 2.6.7 3.7L8 10l-3.3 1.9.7-3.7-2.7-2.6 3.7-.4L8 1.8Z" stroke="currentColor" stroke-width="1.2" stroke-linejoin="round"/></svg>',
 };
 
+const ICON_WHOLE_SECTOR = '<svg width="13" height="13" viewBox="0 0 16 16" fill="none" aria-hidden="true"><circle cx="6" cy="5.3" r="2.3" stroke="currentColor" stroke-width="1.3"/><path d="M1.8 13.2c.5-2.5 2.2-3.8 4.2-3.8s3.7 1.3 4.2 3.8" stroke="currentColor" stroke-width="1.3" stroke-linecap="round"/><circle cx="11.6" cy="5.6" r="1.8" stroke="currentColor" stroke-width="1.2"/><path d="M10.6 9.7c1.6.1 2.8 1.2 3.2 3.1" stroke="currentColor" stroke-width="1.2" stroke-linecap="round"/></svg>';
+const ICON_EDIT_SMALL = '<svg width="13" height="13" viewBox="0 0 16 16" fill="none" aria-hidden="true"><path d="M11 2.5 13.5 5 5 13.5H2.5V11L11 2.5Z" stroke="currentColor" stroke-width="1.3" stroke-linejoin="round"/></svg>';
+const ICON_DELETE_SMALL = '<svg width="13" height="13" viewBox="0 0 16 16" fill="none" aria-hidden="true"><path d="M3 4.5h10M6.5 4.5V3a1 1 0 0 1 1-1h1a1 1 0 0 1 1 1v1.5M4.5 4.5 5 13a1 1 0 0 0 1 1h4a1 1 0 0 0 1-1l.5-8.5" stroke="currentColor" stroke-width="1.3" stroke-linecap="round" stroke-linejoin="round"/></svg>';
+
+// Estilo "checklist": uma bolinha marca feito/pendente, tudo o mais (setor, frequência,
+// responsável) cabe numa única linha discreta em vez de vários selos coloridos — bem mais
+// calmo de ler que o cartão anterior, que empilhava ícone + selos + descrição + status +
+// botões tudo junto.
 function routineCardHTML(r){
   const { done, completion } = routineStatus(r);
   const assigneeUser = DIRECTORY.find(u => u.uid === r.assigneeUid);
@@ -3098,31 +3457,28 @@ function routineCardHTML(r){
   const canComplete = canCompleteRoutine(r);
   const canEdit = canManage();
   // Numa rotina de "setor inteiro", qualquer um do setor pode concluir — se quem concluiu não
-  // foi o responsável principal cadastrado, mostra quem foi, no mesmo padrão do "Concluído por"
-  // já usado nos cartões do board.
+  // foi o responsável principal cadastrado, mostra quem foi, no mesmo espírito do "Concluído
+  // por" já usado nos cartões do board, só que embutido na linha de meta em vez de um selo à parte.
   const showCompletedBy = done && r.wholeSector && completion && completion.byUid && completion.byUid !== r.assigneeUid;
+  const metaParts = [
+    sector ? escapeHtml(sector.label) : escapeHtml(r.sector),
+    FREQ_LABEL[r.frequency] || r.frequency,
+    `Responsável: ${escapeHtml(assigneeUser ? (assigneeUser.name || assigneeUser.email) : "—")}`,
+  ];
+  if(showCompletedBy) metaParts.push(`concluído por ${escapeHtml(completion.byName || "—")}`);
   return `
-  <div class="routine-card ${done ? "routine-done" : "routine-pending"}">
-    <div class="routine-freq-icon" title="${FREQ_LABEL[r.frequency] || r.frequency}">${ROUTINE_FREQ_ICON[r.frequency] || ""}</div>
-    <div class="routine-info">
-      <div class="routine-title-row">
-        <span class="routine-title">${escapeHtml(r.title)}</span>
-        <span class="routine-badge routine-badge-freq">${FREQ_LABEL[r.frequency] || r.frequency}</span>
-        <span class="routine-badge routine-badge-sector">${sector ? escapeHtml(sector.label) : escapeHtml(r.sector)}</span>
-        ${r.wholeSector ? '<span class="routine-badge routine-badge-wholesector">Setor inteiro</span>' : ""}
+  <div class="routine-check-row">
+    <div class="routine-check-dot${done ? " done" : ""}">${done ? ICON_CHECK : ""}</div>
+    <div class="routine-check-body">
+      <div class="routine-check-title${done ? " done" : ""}">
+        ${escapeHtml(r.title)}${r.wholeSector ? `<span class="whole-sector-icon" title="Envolve o setor inteiro">${ICON_WHOLE_SECTOR}</span>` : ""}
       </div>
-      ${r.description ? `<div class="routine-desc">${escapeHtml(r.description)}</div>` : ""}
-      <div class="routine-meta">
-        <span class="routine-assignee">Responsável: ${escapeHtml(assigneeUser ? (assigneeUser.name || assigneeUser.email) : "—")}</span>
-      </div>
-      ${showCompletedBy ? `<div class="completed-badge" style="margin:8px 0 0;">${ICON_CHECK} Concluído por <b>${escapeHtml(completion.byName || "—")}</b> · ${formatCommentDate(completion.at)}</div>` : ""}
+      <div class="routine-check-meta">${metaParts.join(" · ")}</div>
+      ${r.description ? `<div class="routine-check-desc">${escapeHtml(r.description)}</div>` : ""}
     </div>
-    <span class="routine-status-pill ${done ? "routine-status-done" : "routine-status-pending"}">${done ? "Feito" : "Pendente"}</span>
-    <div class="routine-actions">
-      ${canComplete ? `<button type="button" class="routine-complete-btn${done ? " undo" : ""}" data-toggle-routine="${r.id}">${done ? "Desfazer" : "Concluir"}</button>` : ""}
-      ${canEdit ? `<button type="button" class="toggle-access-btn" data-edit-routine="${r.id}">Editar</button>` : ""}
-      ${canEdit ? `<button type="button" class="toggle-access-btn danger" data-delete-routine="${r.id}">Excluir</button>` : ""}
-    </div>
+    ${canComplete ? `<button type="button" class="routine-check-action${done ? " undo" : ""}" data-toggle-routine="${r.id}">${done ? "Desfazer" : "Concluir"}</button>` : ""}
+    ${canEdit ? `<button type="button" class="routine-check-icon-btn" data-edit-routine="${r.id}" title="Editar" aria-label="Editar">${ICON_EDIT_SMALL}</button>` : ""}
+    ${canEdit ? `<button type="button" class="routine-check-icon-btn danger" data-delete-routine="${r.id}" title="Excluir" aria-label="Excluir">${ICON_DELETE_SMALL}</button>` : ""}
   </div>`;
 }
 
@@ -3146,33 +3502,159 @@ function renderRoutines(){
   document.querySelectorAll("#routines-view-toggle button[data-routines-view]").forEach(b => {
     b.classList.toggle("active", b.dataset.routinesView === state.routinesView);
   });
-  const dashboardEl = document.getElementById("routines-view-dashboard");
+  const pendingViewEl = document.getElementById("routines-view-pending");
+  const doneViewEl = document.getElementById("routines-view-done");
   const detailEl = document.getElementById("routines-view-detail");
-  if(dashboardEl) dashboardEl.style.display = state.routinesView === "dashboard" ? "" : "none";
+  if(pendingViewEl) pendingViewEl.style.display = state.routinesView === "pending" ? "" : "none";
+  if(doneViewEl) doneViewEl.style.display = state.routinesView === "done" ? "" : "none";
   if(detailEl) detailEl.style.display = state.routinesView === "detail" ? "" : "none";
-  const subEl = document.getElementById("routines-sub");
-  if(subEl){
-    subEl.textContent = state.routinesView === "dashboard"
-      ? "Panorama da equipe: o que está pendente e o que já foi concluído neste período, por setor."
-      : "Detalhamento por setor — escolha um setor para ver as rotinas diárias, semanais, mensais e anuais separadamente.";
-  }
 
   if(state.routinesView === "detail") renderRoutinesDetail();
-  else renderRoutinesDashboard();
+  else if(state.routinesView === "done") renderRoutinesDone();
+  else renderRoutinesPending();
 }
 
-function renderRoutinesDashboard(){
-  const areaFilterGroup = document.getElementById("routines-dashboard-area-filter");
-  if(areaFilterGroup){
-    const options = SECTORS.filter(s => areasForUser().includes(s.key));
-    if(state.routineArea !== "todos" && !options.some(s => s.key === state.routineArea)) state.routineArea = "todos";
-    areaFilterGroup.innerHTML = '<span class="fg-label">Setor:</span>'
-      + `<button class="filter-btn${state.routineArea === "todos" ? " active" : ""}" data-routine-area="todos">Todos</button>`
-      + options.map(s => `<button class="filter-btn${state.routineArea === s.key ? " active" : ""}" data-routine-area="${s.key}">${s.label}</button>`).join("");
-  }
+function scopedRoutines(){
+  return visibleRoutines().filter(r => state.routineArea === "todos" || r.sector === state.routineArea);
+}
+
+function syncRoutineAreaFilter(groupEl){
+  if(!groupEl) return;
+  const options = SECTORS.filter(s => areasForUser().includes(s.key));
+  if(state.routineArea !== "todos" && !options.some(s => s.key === state.routineArea)) state.routineArea = "todos";
+  groupEl.innerHTML = '<span class="fg-label">Setor:</span>'
+    + `<button class="filter-btn${state.routineArea === "todos" ? " active" : ""}" data-routine-area="todos">Todos</button>`
+    + options.map(s => `<button class="filter-btn${state.routineArea === s.key ? " active" : ""}" data-routine-area="${s.key}">${s.label}</button>`).join("");
+}
+
+function timeAgo(iso){
+  const diffMs = Date.now() - new Date(iso).getTime();
+  const min = Math.floor(diffMs / 60000);
+  if(min < 1) return "agora";
+  if(min < 60) return `há ${min} min`;
+  const h = Math.floor(min / 60);
+  if(h < 24) return `há ${h}h`;
+  const d = Math.floor(h / 24);
+  if(d === 1) return "ontem";
+  return `há ${d} dias`;
+}
+function recentRoutineCompletions(routines, limit){
+  const items = [];
+  routines.forEach(r => {
+    const period = currentPeriodKey(r.frequency);
+    const c = (r.completions || []).find(c => c.period === period);
+    if(c && c.at) items.push({ routineTitle: r.title, byName: c.byName, at: c.at });
+  });
+  return items.sort((a, b) => new Date(b.at) - new Date(a.at)).slice(0, limit);
+}
+function routineFrequencyRingsHTML(scoped){
+  const groups = [
+    {key:"diaria", label:"Diária"},
+    {key:"semanal", label:"Semanal"},
+    {key:"mensal", label:"Mensal"},
+    {key:"anual", label:"Anual"},
+  ];
+  const r = 26, circumference = 2 * Math.PI * r;
+  let visibleIndex = 0;
+  const cellsHTML = groups.map(g => {
+    const items = scoped.filter(it => it.frequency === g.key);
+    if(!items.length) return "";
+    const doneCount = items.filter(it => routineStatus(it).done).length;
+    const total = items.length;
+    const pct = Math.round((doneCount / total) * 100);
+    const offset = circumference - (pct / 100) * circumference;
+    const delay = (visibleIndex++ * 0.08).toFixed(2);
+    return `
+      <div class="rf-cell" style="animation-delay:${delay}s;">
+        <div class="rf-ring-wrap">
+          <svg viewBox="0 0 64 64">
+            <circle class="rf-ring-track" cx="32" cy="32" r="${r}"></circle>
+            <circle class="rf-ring-fill" cx="32" cy="32" r="${r}" style="stroke-dasharray:${circumference};stroke-dashoffset:${circumference};" data-target-offset="${offset}"></circle>
+          </svg>
+          <div class="rf-ring-center">${pct}%</div>
+        </div>
+        <div class="rf-label">${g.label}</div>
+        <div class="rf-frac">${doneCount}/${total}</div>
+      </div>`;
+  }).join("");
+  return cellsHTML || `<div class="rl-empty">Nenhuma rotina no filtro atual.</div>`;
+}
+
+function routineProgressPanelHTML(total, doneCount, pct, scoped){
+  const recent = recentRoutineCompletions(scoped, 4);
+  const activityHTML = recent.length
+    ? recent.map((item, i) => `
+        <div class="rp-activity-item" style="animation-delay:${(i * 0.08).toFixed(2)}s;">
+          <span class="dot"></span>
+          <span><b>${escapeHtml(item.byName || "Alguém")}</b> concluiu ${escapeHtml(item.routineTitle)}<span class="time">${timeAgo(item.at)}</span></span>
+        </div>`).join("")
+    : `<div class="rp-activity-empty">Nenhuma conclusão ainda neste período.</div>`;
+  return `
+    <div class="rp-title">Progresso por frequência</div>
+    <div class="rf-grid">${routineFrequencyRingsHTML(scoped)}</div>
+    <div class="rp-divider"></div>
+    <div class="rp-activity">
+      <div class="rp-activity-title">Atividade recente</div>
+      ${activityHTML}
+    </div>
+  `;
+}
+
+function routineLeaderboardHTML(doneRoutines){
+  const counts = new Map();
+  doneRoutines.forEach(r => {
+    const { completion } = routineStatus(r);
+    if(completion && completion.byUid){
+      const entry = counts.get(completion.byUid) || { name: completion.byName || "Alguém", count: 0 };
+      entry.count += 1;
+      entry.name = completion.byName || entry.name;
+      counts.set(completion.byUid, entry);
+    }
+  });
+  const ranked = Array.from(counts.values()).sort((a, b) => b.count - a.count).slice(0, 5);
+  const rowsHTML = ranked.length
+    ? ranked.map((p, i) => `
+        <div class="rl-row${i === 0 ? " top1" : ""}" style="animation-delay:${(i * 0.08).toFixed(2)}s;">
+          <div class="rl-rank">${i + 1}</div>
+          <div class="rl-name">${escapeHtml(p.name)}</div>
+          <div class="rl-count">${p.count} concluída${p.count === 1 ? "" : "s"}</div>
+        </div>`).join("")
+    : `<div class="rl-empty">Ninguém concluiu nada ainda neste período.</div>`;
+  return `
+    <div class="rp-title">Placar do período</div>
+    <div class="rl-list">${rowsHTML}</div>
+  `;
+}
+
+function routineCompositionHTML(sectorRoutines){
+  const groups = [
+    {key:"diaria", label:"Diária"},
+    {key:"semanal", label:"Semanal"},
+    {key:"mensal", label:"Mensal"},
+    {key:"anual", label:"Anual"},
+  ];
+  const total = sectorRoutines.length;
+  const rowsHTML = groups.map((g, i) => {
+    const count = sectorRoutines.filter(r => r.frequency === g.key).length;
+    const pct = total ? Math.round((count / total) * 100) : 0;
+    return `
+      <div class="rc-row" style="animation-delay:${(i * 0.08).toFixed(2)}s;">
+        <div class="rc-row-head"><span>${g.label}</span><b>${count}</b></div>
+        <div class="rc-bar-track"><div class="rc-bar-fill" data-target-width="${pct}"></div></div>
+      </div>`;
+  }).join("");
+  return `
+    <div class="rp-title">Composição do setor</div>
+    <div class="rc-total">${total} rotina${total === 1 ? "" : "s"} no total</div>
+    <div class="rc-list">${rowsHTML}</div>
+  `;
+}
+
+function renderRoutinesPending(){
+  syncRoutineAreaFilter(document.getElementById("routines-pending-area-filter"));
 
   const isManager = canManage();
-  const scoped = visibleRoutines().filter(r => state.routineArea === "todos" || r.sector === state.routineArea);
+  const scoped = scopedRoutines();
   const pending = scoped.filter(r => !routineStatus(r).done).sort((a, b) => (a.title || "").localeCompare(b.title || ""));
   const done = scoped.filter(r => routineStatus(r).done).sort((a, b) => (a.title || "").localeCompare(b.title || ""));
   const total = scoped.length;
@@ -3180,9 +3662,6 @@ function renderRoutinesDashboard(){
 
   const kpiEl = document.getElementById("routines-kpis");
   if(kpiEl){
-    // Quem não gerencia só acompanha o que ainda falta fazer — sem números de concluídas
-    // nem % do período, pra manter a visão do operador restrita ao pendente (pedido do
-    // Natanael: uma rotina concluída simplesmente some até o próximo período abrir de novo).
     kpiEl.style.gridTemplateColumns = isManager ? "repeat(4, 1fr)" : "minmax(160px, 220px)";
     kpiEl.innerHTML = isManager ? `
       <div class="kpi-card"><div class="n">${total}</div><div class="l">Total de rotinas</div></div>
@@ -3194,21 +3673,45 @@ function renderRoutinesDashboard(){
     `;
   }
 
-  const pendingEl = document.getElementById("routines-dashboard-pending");
+  const pendingEl = document.getElementById("routines-list-pending");
   if(pendingEl){
     pendingEl.innerHTML = pending.length
       ? pending.map(routineCardHTML).join("")
-      : `<div class="admin-list-item">${total || !isManager ? "Tudo em dia por aqui." : "Nenhuma rotina cadastrada ainda."}</div>`;
+      : `<div class="admin-list-item">${total ? "Tudo em dia por aqui." : "Nenhuma rotina cadastrada ainda."}</div>`;
     wireRoutineListEvents(pendingEl);
   }
-  const doneBlockEl = document.getElementById("routines-dashboard-done-block");
-  const doneEl = document.getElementById("routines-dashboard-done");
-  if(doneBlockEl) doneBlockEl.style.display = isManager ? "" : "none";
-  if(doneEl && isManager){
+
+  const progressPanelEl = document.getElementById("routines-progress-panel");
+  if(progressPanelEl){
+    progressPanelEl.style.display = total ? "" : "none";
+    if(total){
+      progressPanelEl.innerHTML = routineProgressPanelHTML(total, done.length, pct, scoped);
+      const fillCircles = progressPanelEl.querySelectorAll(".rf-ring-fill");
+      requestAnimationFrame(() => requestAnimationFrame(() => {
+        fillCircles.forEach(circle => { circle.style.strokeDashoffset = circle.dataset.targetOffset; });
+      }));
+    }
+  }
+}
+
+function renderRoutinesDone(){
+  syncRoutineAreaFilter(document.getElementById("routines-done-area-filter"));
+
+  const scoped = scopedRoutines();
+  const done = scoped.filter(r => routineStatus(r).done).sort((a, b) => (a.title || "").localeCompare(b.title || ""));
+
+  const doneEl = document.getElementById("routines-list-done");
+  if(doneEl){
     doneEl.innerHTML = done.length
       ? done.map(routineCardHTML).join("")
       : `<div class="admin-list-item">Nenhuma conclusão neste período ainda.</div>`;
     wireRoutineListEvents(doneEl);
+  }
+
+  const leaderboardEl = document.getElementById("routines-leaderboard-panel");
+  if(leaderboardEl){
+    leaderboardEl.style.display = scoped.length ? "" : "none";
+    if(scoped.length) leaderboardEl.innerHTML = routineLeaderboardHTML(done);
   }
 }
 
@@ -3224,8 +3727,10 @@ function renderRoutinesDetail(){
   areaFilterGroup.innerHTML = '<span class="fg-label">Setor (obrigatório):</span>'
     + options.map(s => `<button class="filter-btn${state.routineDetailArea === s.key ? " active" : ""}" data-routine-detail-area="${s.key}">${s.label}</button>`).join("");
 
+  const compositionEl = document.getElementById("routines-composition-panel");
   if(!state.routineDetailArea){
     bodyEl.innerHTML = `<div class="admin-list-item">Nenhum setor disponível.</div>`;
+    if(compositionEl) compositionEl.style.display = "none";
     return;
   }
 
@@ -3234,9 +3739,8 @@ function renderRoutinesDetail(){
   // some da lista e só volta a aparecer quando o período seguinte abrir (ver routineStatus/
   // currentPeriodKey: diária no dia seguinte, semanal na segunda-feira, mensal no mês
   // seguinte, anual no ano seguinte).
-  const sectorRoutines = visibleRoutines()
-    .filter(r => r.sector === state.routineDetailArea)
-    .filter(r => isManager || !routineStatus(r).done);
+  const sectorRoutinesAll = visibleRoutines().filter(r => r.sector === state.routineDetailArea);
+  const sectorRoutines = sectorRoutinesAll.filter(r => isManager || !routineStatus(r).done);
   const groups = [
     {key:"diaria", label:"Diárias"},
     {key:"semanal", label:"Semanais"},
@@ -3254,6 +3758,19 @@ function renderRoutinesDetail(){
     </div>`;
   }).join("");
   wireRoutineListEvents(bodyEl);
+
+  if(compositionEl){
+    compositionEl.style.display = sectorRoutinesAll.length ? "" : "none";
+    if(sectorRoutinesAll.length){
+      compositionEl.innerHTML = routineCompositionHTML(sectorRoutinesAll);
+      compositionEl.querySelectorAll(".rc-bar-fill").forEach(bar => {
+        const target = bar.dataset.targetWidth;
+        requestAnimationFrame(() => requestAnimationFrame(() => {
+          bar.style.width = target + "%";
+        }));
+      });
+    }
+  }
 }
 
 function nextRoutineId(){
@@ -3642,6 +4159,7 @@ function applyRoleLayout(){
   if(roleSelect){
     const adminOption = roleSelect.querySelector('option[value="admin"]');
     if(adminOption) adminOption.disabled = !isAdmin;
+    syncRoleNetworkNew();
   }
 
   const name = firstName();
@@ -4477,6 +4995,8 @@ document.getElementById("user-form").addEventListener("submit", async (e) => {
     await restSendPasswordReset(email);
     refreshSectorDependentUI();
     document.getElementById("user-form").reset();
+    syncRoleNetworkNew();
+    updateSectorCounter("user-areas-input", "user-areas-counter");
     msgEl.style.color = "var(--st-concluido)";
     msgEl.textContent = `Acesso criado! Enviamos um e-mail para ${email} definir a senha.`;
   }catch(err){
