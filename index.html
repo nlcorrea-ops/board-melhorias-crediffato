@@ -746,6 +746,20 @@
   .sector-network:has(input:checked) ~ .sector-counter{color:var(--pa);}
   .form-msg{font-size:12px; margin:10px 0 0; min-height:14px;}
 
+  .alert-section{margin-bottom:16px;}
+  .alert-section:last-child{margin-bottom:0;}
+  .alert-section-title{display:flex; align-items:center; gap:8px; font-size:13px; font-weight:600; color:var(--text-hi); margin-bottom:8px;}
+  .alert-dot{width:8px; height:8px; border-radius:50%; flex-shrink:0;}
+  .alert-dot.late{background:var(--sev-critica);}
+  .alert-dot.soon{background:var(--sev-alta);}
+  .alert-dot.routines{background:var(--pa);}
+  .alert-list{list-style:none; margin:0; padding:0; display:flex; flex-direction:column; gap:6px; max-height:160px; overflow-y:auto;}
+  .alert-list li{
+    font-size:12.5px; color:var(--text-mid); display:flex; justify-content:space-between; gap:10px;
+    background:var(--ink-2); border:1px solid var(--hairline); border-radius:8px; padding:7px 10px;
+  }
+  .alert-hint{font-family:var(--font-mono); font-size:10.5px; color:var(--text-low); white-space:nowrap; flex-shrink:0;}
+
   .admin-list-item.disabled-user{opacity:.55;}
   .inactive-badge{
     display:inline-block; font-family:var(--font-mono); font-size:9px; text-transform:uppercase; letter-spacing:.05em;
@@ -1646,6 +1660,19 @@
     </div>
   </div>
 
+  <div class="modal-overlay" id="alerts-modal-overlay">
+    <div class="modal" role="dialog" aria-modal="true" aria-labelledby="alerts-modal-title">
+      <div class="modal-head">
+        <h2 id="alerts-modal-title">Pendências de hoje</h2>
+        <button class="modal-close" id="alerts-modal-close" aria-label="Fechar">✕</button>
+      </div>
+      <div id="alerts-modal-body"></div>
+      <div class="modal-actions">
+        <button type="button" class="btn-primary" id="alerts-modal-ok">Entendi</button>
+      </div>
+    </div>
+  </div>
+
   <div class="modal-overlay" id="edit-access-modal-overlay">
     <div class="modal" role="dialog" aria-modal="true" aria-labelledby="edit-access-modal-title">
       <div class="modal-head">
@@ -1765,7 +1792,7 @@
 // que a comparação ">"/"<" abaixo saiba qual versão é mais nova) — é a única forma de o mecanismo
 // perceber que existe uma versão nova. Só funciona pra quem está conectado ao Firestore (modo de
 // contingência sem Firebase não tem sincronização em tempo real de nada, essa checagem incluída).
-const APP_VERSION = "2026-08-28T12:18:01Z";
+const APP_VERSION = "2026-08-28T12:29:36Z";
 
 // Desloga e recarrega — usado tanto pela verificação de versão nova quanto pelos sinais de
 // desconexão manual (shutdown geral ou alguém sendo desconectado individualmente).
@@ -2450,6 +2477,61 @@ function dueInfo(item){
   if(diffDays === 0) return { value, state:"proximo", hint:"Vence hoje" };
   if(diffDays <= 3) return { value, state:"proximo", hint:`Vence em ${diffDays} dia${diffDays > 1 ? "s" : ""}` };
   return { value, state:"ok", hint:"" };
+}
+
+// Aviso de pendências: roda uma vez por dia (por pessoa, guardado no localStorage) ao abrir o
+// app — não é notificação push de verdade (isso exigiria Cloud Functions + FCM, fora do
+// alcance de um site estático), só um resumo do que já calculamos pra cada cartão/rotina.
+function overdueAlertData(){
+  const items = visibleData().filter(d => itemStage(d) !== "backlog" && !isArchived(d));
+  const late = items.filter(d => dueInfo(d).state === "atrasado");
+  const soon = items.filter(d => dueInfo(d).state === "proximo");
+  const pendingRoutines = visibleRoutines().filter(r => (r.frequency === "diaria" || r.frequency === "semanal") && !routineStatus(r).done);
+  return { late, soon, pendingRoutines };
+}
+
+function renderAlertsModalBody(data){
+  const sections = [];
+  if(data.late.length){
+    sections.push(`
+      <div class="alert-section">
+        <div class="alert-section-title"><span class="alert-dot late"></span>${data.late.length} demanda${data.late.length === 1 ? "" : "s"} atrasada${data.late.length === 1 ? "" : "s"}</div>
+        <ul class="alert-list">${data.late.map(d => `<li><span>${escapeHtml(d.title)}</span><span class="alert-hint">${escapeHtml(dueInfo(d).hint)}</span></li>`).join("")}</ul>
+      </div>`);
+  }
+  if(data.soon.length){
+    sections.push(`
+      <div class="alert-section">
+        <div class="alert-section-title"><span class="alert-dot soon"></span>${data.soon.length} demanda${data.soon.length === 1 ? "" : "s"} vencendo em breve</div>
+        <ul class="alert-list">${data.soon.map(d => `<li><span>${escapeHtml(d.title)}</span><span class="alert-hint">${escapeHtml(dueInfo(d).hint)}</span></li>`).join("")}</ul>
+      </div>`);
+  }
+  if(data.pendingRoutines.length){
+    const plural = data.pendingRoutines.length !== 1;
+    const scopeWord = canManage() ? "do setor" : (plural ? "suas" : "sua");
+    sections.push(`
+      <div class="alert-section">
+        <div class="alert-section-title"><span class="alert-dot routines"></span>${data.pendingRoutines.length} rotina${plural ? "s" : ""} ${scopeWord} ainda pendente${plural ? "s" : ""} (diária/semanal)</div>
+        <ul class="alert-list">${data.pendingRoutines.map(r => `<li><span>${escapeHtml(r.title)}</span><span class="alert-hint">${FREQ_LABEL[r.frequency] || r.frequency}</span></li>`).join("")}</ul>
+      </div>`);
+  }
+  return sections.join("");
+}
+
+function maybeShowAlertsModal(){
+  if(!currentUser) return;
+  const data = overdueAlertData();
+  if(!data.late.length && !data.soon.length && !data.pendingRoutines.length) return;
+  const today = new Date().toISOString().slice(0, 10);
+  const key = `alertsShown:${currentUser.uid}`;
+  let lastShown = "";
+  try{ lastShown = localStorage.getItem(key) || ""; }catch(e){}
+  if(lastShown === today) return;
+  try{ localStorage.setItem(key, today); }catch(e){}
+  const bodyEl = document.getElementById("alerts-modal-body");
+  if(bodyEl) bodyEl.innerHTML = renderAlertsModalBody(data);
+  const overlay = document.getElementById("alerts-modal-overlay");
+  if(overlay) overlay.classList.add("open");
 }
 
 const STATUSES = [
@@ -3216,6 +3298,15 @@ function startEditUser(uid){
   document.getElementById("edit-access-msg").textContent = "";
   document.getElementById("edit-access-modal-overlay").classList.add("open");
 }
+
+function closeAlertsModal(){
+  document.getElementById("alerts-modal-overlay").classList.remove("open");
+}
+document.getElementById("alerts-modal-close").addEventListener("click", closeAlertsModal);
+document.getElementById("alerts-modal-ok").addEventListener("click", closeAlertsModal);
+document.getElementById("alerts-modal-overlay").addEventListener("click", (e) => {
+  if(e.target.id === "alerts-modal-overlay") closeAlertsModal();
+});
 
 function closeEditAccessModal(){
   editingUid = null;
@@ -5221,6 +5312,7 @@ async function handleAuthedUser(fbUser){
         console.error("Falha ao iniciar presença:", e);
       }
       note.textContent = "☁ Conectado ao banco compartilhado — dados sincronizados em tempo real para todos que acessam este link.";
+      setTimeout(maybeShowAlertsModal, 900);
     }catch(e){
       console.error("Firebase indisponível, usando armazenamento local como reserva:", e);
       storageMode = hasClaudeStorage ? "shared" : (hasLocalStorage ? "local" : "none");
@@ -5228,6 +5320,7 @@ async function handleAuthedUser(fbUser){
       await loadItemFieldMaps();
       await loadObservacoes();
       await loadStatuses();
+      setTimeout(maybeShowAlertsModal, 900);
     }
   }catch(e){
     console.error("Falha ao carregar permissões do usuário:", e);
