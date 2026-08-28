@@ -1520,7 +1520,7 @@
           <p class="form-msg" id="user-msg"></p>
         </form>
       </div>
-      <div class="admin-card">
+      <div class="admin-card" id="access-list-card">
         <h3>Acessos</h3>
         <input type="text" class="archive-search" id="user-search" placeholder="Pesquisar por nome ou e-mail..." aria-label="Pesquisar acessos" />
         <div class="filter-group" id="user-status-filter" style="margin-top:14px;">
@@ -1765,7 +1765,7 @@
 // que a comparação ">"/"<" abaixo saiba qual versão é mais nova) — é a única forma de o mecanismo
 // perceber que existe uma versão nova. Só funciona pra quem está conectado ao Firestore (modo de
 // contingência sem Firebase não tem sincronização em tempo real de nada, essa checagem incluída).
-const APP_VERSION = "2026-08-27T21:01:10Z";
+const APP_VERSION = "2026-08-28T12:18:01Z";
 
 // Desloga e recarrega — usado tanto pela verificação de versão nova quanto pelos sinais de
 // desconexão manual (shutdown geral ou alguém sendo desconectado individualmente).
@@ -3120,10 +3120,20 @@ function renderArchive(){
 }
 
 function renderAdminLists(){
+  // Operador/supervisor só acompanham quem está logado agora nesta aba — a listagem de
+  // colaboradores/setores e a criação de acesso/setor ficam restritas a quem pode gerenciar.
   const newAccessCard = document.getElementById("new-access-card");
   if(newAccessCard) newAccessCard.style.display = canCreate() ? "" : "none";
   const newSectorCard = document.getElementById("new-sector-card");
   if(newSectorCard) newSectorCard.style.display = canCreate() ? "" : "none";
+  const accessListCard = document.getElementById("access-list-card");
+  if(accessListCard) accessListCard.style.display = canCreate() ? "" : "none";
+  const adminViewToggle = document.getElementById("admin-view-toggle");
+  if(adminViewToggle) adminViewToggle.style.display = canCreate() ? "" : "none";
+  if(!canCreate()){
+    document.getElementById("admin-view-users").style.display = "";
+    document.getElementById("admin-view-sectors").style.display = "none";
+  }
 
   const sectorList = document.getElementById("sector-list");
   if(sectorList){
