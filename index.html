@@ -1249,6 +1249,25 @@
   @keyframes eyebrowPulse{0%,100%{box-shadow:0 0 0 0 #8b8dfb55;} 70%{box-shadow:0 0 0 7px #8b8dfb00;}}
   .teaser-title{font-size:22px; font-weight:600; margin:0; max-width:36ch; letter-spacing:-.01em;}
   .teaser-sub{font-size:12.5px; color:var(--text-low); max-width:42ch; margin:0 auto;}
+
+  /* Tema claro: o card e os brilhos brancos (filamento, faíscas, partículas, reflexo de
+     vidro) foram pensados pra um fundo escuro — sem isso, viram uma mancha escura solta
+     no meio de um app claro e os brilhos brancos somem contra o card. Aqui a paleta troca
+     pra tons lilás claros + tinta roxa escura, mantendo o mesmo desenho e animações. */
+  :root[data-theme="claro"] .teaser-card{
+    background:radial-gradient(ellipse 60% 60% at 50% 42%, #e7e3fc, var(--ink-1) 75%);
+  }
+  :root[data-theme="claro"] .bulb-neck{fill:#c9c6e8; stroke:var(--hairline);}
+  :root[data-theme="claro"] .base-shape{fill:#dad7f3; stroke:var(--pa);}
+  :root[data-theme="claro"] .bulb-highlight-shape,
+  :root[data-theme="claro"] .bulb-highlight-dot{opacity:0;}
+  :root[data-theme="claro"] .filament{stroke:#2c2560; filter:drop-shadow(0 0 3px #2c256055) drop-shadow(0 0 7px var(--pa));}
+  :root[data-theme="claro"] .spark-core{stroke:#2c2560; filter:drop-shadow(0 0 3px #2c256055);}
+  :root[data-theme="claro"] .branch-core{stroke:#2c2560;}
+  :root[data-theme="claro"] .orbit{fill:#2c2560; filter:drop-shadow(0 0 3px #2c256055) drop-shadow(0 0 5px var(--pa));}
+  :root[data-theme="claro"] .teaser-eyebrow{color:#5b4fd1;}
+  :root[data-theme="claro"] .teaser-eyebrow .dot{background:#5b4fd1; animation-name:eyebrowPulseLight;}
+  @keyframes eyebrowPulseLight{0%,100%{box-shadow:0 0 0 0 #5b4fd155;} 70%{box-shadow:0 0 0 7px #5b4fd100;}}
 </style>
 </head>
 <body>
