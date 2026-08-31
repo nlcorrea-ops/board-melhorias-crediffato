@@ -115,7 +115,7 @@
 
   .wrap{position:relative; z-index:1; max-width:1320px;margin:0 auto; animation:appFadeIn .45s ease;}
   @keyframes appFadeIn{from{opacity:0;} to{opacity:1;}}
-  .wrap.portal-reveal{animation:portalReveal .75s cubic-bezier(.16,1,.3,1) both; will-change:transform, opacity;}
+  .wrap.portal-reveal{animation:portalReveal .75s cubic-bezier(.16,1,.3,1) both;}
   @keyframes portalReveal{
     from{ opacity:0; transform:scale(.93); }
     to{ opacity:1; transform:scale(1); }
@@ -1849,7 +1849,7 @@
 // que a comparação ">"/"<" abaixo saiba qual versão é mais nova) — é a única forma de o mecanismo
 // perceber que existe uma versão nova. Só funciona pra quem está conectado ao Firestore (modo de
 // contingência sem Firebase não tem sincronização em tempo real de nada, essa checagem incluída).
-const APP_VERSION = "2026-08-31T13:06:05Z";
+const APP_VERSION = "2026-08-31T13:15:14Z";
 
 // Desloga e recarrega — usado tanto pela verificação de versão nova quanto pelos sinais de
 // desconexão manual (shutdown geral ou alguém sendo desconectado individualmente).
@@ -5343,6 +5343,13 @@ function showApp(){
     requestAnimationFrame(() => {
       void wrap.offsetWidth;
       wrap.classList.add("portal-reveal");
+      // Tira a classe assim que a animação termina — mantê-la o resto da sessão não muda o
+      // visual (a animação já rodou uma vez só), mas por baixo dos panos ela criava um novo
+      // "container" pra qualquer elemento position:fixed/sticky dentro do app (modais, popups,
+      // faixa de aviso de versão, cartões de pendência) — todos passavam a se posicionar
+      // relativos a esse painel em vez da tela inteira, e por isso podiam aparecer bem mais
+      // pra baixo do que deveriam, precisando rolar a página pra encontrar.
+      wrap.addEventListener("animationend", () => wrap.classList.remove("portal-reveal"), { once: true });
     });
   }
 }
