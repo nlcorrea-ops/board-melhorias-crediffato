@@ -565,8 +565,19 @@
     outline:2px solid #6c8cff; outline-offset:1px;
   }
   .field-row{display:grid; grid-template-columns:1fr 1fr; gap:12px;}
+  .day-picker{display:flex; gap:6px; margin-top:4px;}
+  .day-chip{
+    flex:1; font-family:var(--font-mono); font-size:12px; font-weight:600; color:var(--text-low);
+    background:var(--ink-2); border:1px solid var(--hairline); border-radius:8px; padding:8px 0; cursor:pointer;
+    transition:all .15s ease;
+  }
+  .day-chip:hover{border-color:var(--text-low); color:var(--text-hi);}
+  .day-chip.active{background:var(--pa); border-color:var(--pa); color:#fff;}
 
-  .modal-actions{display:flex; justify-content:flex-end; gap:10px; margin-top:6px;}
+  .modal-actions{
+    display:flex; justify-content:flex-end; gap:10px; margin-top:16px;
+    position:sticky; bottom:0; background:var(--ink-1); padding-top:14px; border-top:1px solid var(--hairline);
+  }
   .btn-secondary, .btn-primary{
     font-family:var(--font-mono); font-size:12.5px; border-radius:999px; padding:8px 18px;
     cursor:pointer; border:1px solid var(--hairline);
@@ -882,6 +893,31 @@
   .rc-row-head b{color:var(--text-hi); font-weight:600; font-family:var(--font-mono);}
   .rc-bar-track{width:100%; height:6px; border-radius:999px; background:var(--ink-2); overflow:hidden;}
   .rc-bar-fill{height:100%; border-radius:999px; background:var(--pa); width:0%; transition:width 1s cubic-bezier(.25,.8,.35,1);}
+
+  .agenda-head{display:flex; align-items:flex-end; justify-content:space-between; gap:16px; margin-bottom:18px; flex-wrap:wrap;}
+  .agenda-eyebrow{font-family:var(--font-mono); font-size:11px; letter-spacing:.08em; text-transform:uppercase; color:var(--text-low); margin:0 0 4px;}
+  .agenda-title{font-size:19px; margin:0; font-weight:600;}
+  .agenda-count-pill{font-family:var(--font-mono); font-size:11.5px; background:var(--ink-2); border:1px solid var(--hairline); border-radius:999px; padding:6px 13px; color:var(--text-mid); flex-shrink:0;}
+  .agenda-count-pill b{color:var(--st-concluido);}
+  .week-strip{display:flex; gap:7px; margin-bottom:18px;}
+  .strip-day{
+    flex:1; text-align:center; padding:8px 3px; border-radius:10px; border:1px solid var(--hairline);
+    background:var(--ink-2); cursor:pointer; transition:border-color .15s ease;
+  }
+  .strip-day:hover{border-color:var(--text-low);}
+  .strip-day.selected{border-color:var(--pa);}
+  .strip-day.today{background:var(--brand-red); border-color:var(--brand-red);}
+  .strip-day .sdname{display:block; font-family:var(--font-mono); font-size:9.5px; color:var(--text-low); text-transform:uppercase;}
+  .strip-day.today .sdname{color:#ffd9df;}
+  .strip-day .sdnum{display:block; font-size:14px; font-weight:600; color:var(--text-hi); margin-top:2px;}
+  .strip-day .sdcount{display:block; width:5px; height:5px; border-radius:50%; background:var(--pa); margin:5px auto 0;}
+  .strip-day.today .sdcount{background:#fff;}
+  .strip-day .sdcount.none{background:transparent;}
+  @media (max-width:640px){
+    .strip-day .sdname{font-size:8.5px;}
+    .strip-day .sdnum{font-size:12px;}
+  }
+
   @media (max-width:900px){ .routine-side-panel{display:none;} }
   @media (prefers-reduced-motion:reduce){
     .routine-side-panel{animation:none;}
@@ -1446,34 +1482,23 @@
       <h2>Rotinas</h2>
       <div style="display:flex; align-items:center; gap:12px; flex-wrap:wrap;">
         <div class="view-toggle" id="routines-view-toggle" role="group" aria-label="Visão de rotinas">
-          <button type="button" data-routines-view="pending" class="active">Pendentes</button>
-          <button type="button" data-routines-view="done">Concluídas</button>
+          <button type="button" data-routines-view="agenda" class="active">Rotinas</button>
           <button type="button" data-routines-view="detail">Detalhamento</button>
         </div>
         <button class="add-btn" id="open-add-routine-modal">+ Nova rotina</button>
       </div>
     </div>
-    <div class="routines-layout" id="routines-view-pending" style="margin-top:22px;">
+    <div class="routines-layout" id="routines-view-agenda" style="margin-top:22px;">
       <div class="routines-scope">
-        <div class="filter-group filter-group-minimal" id="routines-pending-area-filter" style="margin-bottom:16px;">
+        <div class="filter-group filter-group-minimal" id="routines-agenda-area-filter" style="margin-bottom:16px;">
           <span class="fg-label">Setor:</span>
           <button class="filter-btn active" data-routine-area="todos">Todos</button>
         </div>
-        <div class="kpi-row" id="routines-kpis" style="margin-bottom:24px;"></div>
-        <div class="routine-list" id="routines-list-pending"></div>
+        <div class="agenda-head" id="routines-agenda-head"></div>
+        <div class="week-strip" id="routines-week-strip"></div>
+        <div class="routine-list" id="routines-list-agenda"></div>
       </div>
       <div class="routine-side-panel" id="routines-progress-panel"></div>
-    </div>
-
-    <div class="routines-layout" id="routines-view-done" style="display:none; margin-top:22px;">
-      <div class="routines-scope">
-        <div class="filter-group filter-group-minimal" id="routines-done-area-filter" style="margin-bottom:16px;">
-          <span class="fg-label">Setor:</span>
-          <button class="filter-btn active" data-routine-area="todos">Todos</button>
-        </div>
-        <div class="routine-list" id="routines-list-done"></div>
-      </div>
-      <div class="routine-side-panel" id="routines-leaderboard-panel"></div>
     </div>
 
     <div class="routines-layout" id="routines-view-detail" style="display:none; margin-top:22px;">
@@ -1770,6 +1795,18 @@
             </select>
           </label>
         </div>
+        <div class="field" id="routine-days-field" style="display:none;">
+          <span class="field-label">Dias da semana (deixe vazio para qualquer dia)</span>
+          <div class="day-picker" id="routine-days-picker">
+            <button type="button" class="day-chip" data-day="0">D</button>
+            <button type="button" class="day-chip" data-day="1">S</button>
+            <button type="button" class="day-chip" data-day="2">T</button>
+            <button type="button" class="day-chip" data-day="3">Q</button>
+            <button type="button" class="day-chip" data-day="4">Q</button>
+            <button type="button" class="day-chip" data-day="5">S</button>
+            <button type="button" class="day-chip" data-day="6">S</button>
+          </div>
+        </div>
         <label class="field">
           <span class="field-label">Responsável *</span>
           <select id="routine-assignee" required></select>
@@ -1812,7 +1849,7 @@
 // que a comparação ">"/"<" abaixo saiba qual versão é mais nova) — é a única forma de o mecanismo
 // perceber que existe uma versão nova. Só funciona pra quem está conectado ao Firestore (modo de
 // contingência sem Firebase não tem sincronização em tempo real de nada, essa checagem incluída).
-const APP_VERSION = "2026-08-31T12:19:22Z";
+const APP_VERSION = "2026-08-31T13:06:05Z";
 
 // Desloga e recarrega — usado tanto pela verificação de versão nova quanto pelos sinais de
 // desconexão manual (shutdown geral ou alguém sendo desconectado individualmente).
@@ -2368,6 +2405,17 @@ function routineStatus(r){
   return { period, done: !!completion, completion };
 }
 const WEEKDAY_FULL = ["domingo", "segunda-feira", "terça-feira", "quarta-feira", "quinta-feira", "sexta-feira", "sábado"];
+const WEEKDAY_SHORT = ["Dom", "Seg", "Ter", "Qua", "Qui", "Sex", "Sáb"];
+const WEEKDAY_ABBR = ["dom", "seg", "ter", "qua", "qui", "sex", "sáb"];
+const MONTH_NAMES = ["janeiro", "fevereiro", "março", "abril", "maio", "junho", "julho", "agosto", "setembro", "outubro", "novembro", "dezembro"];
+function currentWeekDates(){
+  const monday = mondayOfWeek(new Date());
+  const sunday = new Date(monday); sunday.setDate(sunday.getDate() - 1);
+  return Array.from({ length: 7 }, (_, i) => {
+    const d = new Date(sunday); d.setDate(d.getDate() + i);
+    return d;
+  });
+}
 function nextResetLabel(routines){
   if(!routines.length) return "";
   const freqs = new Set(routines.map(r => r.frequency));
@@ -2439,7 +2487,10 @@ const DEFAULT_SECTORS = [
 ];
 let SECTORS = DEFAULT_SECTORS.slice();
 let DIRECTORY = []; // [{uid, email, role, assignedAreas}]
-let ROUTINES = []; // [{id, title, description, sector, frequency, assigneeUid, wholeSector, active, createdBy, createdAt, completions:[{period, at, byUid, byName}]}]
+let ROUTINES = []; // [{id, title, description, sector, frequency, assigneeUid, wholeSector, scheduledDays, createdBy, createdByName, createdAt, completions:[{period, at, byUid, byName}]}]
+// scheduledDays: só usado quando frequency === "semanal" — array de dias da semana (0=domingo
+// ... 6=sábado, igual Date.getDay()) em que a rotina cai. Vazio/ausente = "qualquer dia da
+// semana", o comportamento de sempre (mantém compatibilidade com rotinas já cadastradas).
 let editingRoutineId = null; // id da rotina sendo editada no modal "Nova/Editar rotina", ou null em modo de criação
 let stagesMap = {};    // itemId -> "backlog" | "board", para todos os itens (base e customizados)
 let assigneesMap = {}; // itemId -> email, para todos os itens (base e customizados)
@@ -2833,7 +2884,7 @@ function applyRemoteState(data){
   renderTabs();
 }
 
-let state = { sev:"todos", status:"todos", area:"todos", assignee:"todos", view:"area", tab:"board", archiveSearch:"", userSearch:"", userStatusFilter:"todos", userRoleFilter:"todos", routinesView:"pending", routineArea:"todos", routineDetailArea:"" };
+let state = { sev:"todos", status:"todos", area:"todos", assignee:"todos", view:"area", tab:"board", archiveSearch:"", userSearch:"", userStatusFilter:"todos", userRoleFilter:"todos", routinesView:"agenda", routineArea:"todos", routineDetailArea:"", agendaDay:new Date().getDay() };
 const openCardIds = new Set();
 const obsDrafts = {}; // id -> texto ainda não salvo, preservado entre re-renders
 
@@ -3446,22 +3497,26 @@ document.getElementById("routine-modal-overlay").addEventListener("click", (e) =
   if(e.target.id === "routine-modal-overlay") closeRoutineModal();
 });
 document.getElementById("routine-area").addEventListener("change", refreshRoutineAssigneeOptions);
+document.getElementById("routine-frequency").addEventListener("change", (e) => syncRoutineDaysField(e.target.value));
+document.querySelectorAll("#routine-days-picker .day-chip").forEach(btn => {
+  btn.addEventListener("click", () => btn.classList.toggle("active"));
+});
 document.getElementById("routines-view-toggle").addEventListener("click", (e) => {
   const btn = e.target.closest("button[data-routines-view]");
   if(!btn) return;
   state.routinesView = btn.dataset.routinesView;
   renderRoutines();
 });
-document.getElementById("routines-pending-area-filter").addEventListener("click", (e) => {
+document.getElementById("routines-agenda-area-filter").addEventListener("click", (e) => {
   const btn = e.target.closest("button[data-routine-area]");
   if(!btn) return;
   state.routineArea = btn.dataset.routineArea;
   renderRoutines();
 });
-document.getElementById("routines-done-area-filter").addEventListener("click", (e) => {
-  const btn = e.target.closest("button[data-routine-area]");
+document.getElementById("routines-week-strip").addEventListener("click", (e) => {
+  const btn = e.target.closest("[data-agenda-day]");
   if(!btn) return;
-  state.routineArea = btn.dataset.routineArea;
+  state.agendaDay = parseInt(btn.getAttribute("data-agenda-day"), 10);
   renderRoutines();
 });
 document.getElementById("routines-detail-area-filter").addEventListener("click", (e) => {
@@ -3480,14 +3535,15 @@ document.getElementById("routine-form").addEventListener("submit", async (e) => 
   const assigneeUid = document.getElementById("routine-assignee").value;
   const wholeSector = document.getElementById("routine-whole-sector").checked;
   const description = document.getElementById("routine-desc").value;
+  const scheduledDays = Array.from(document.querySelectorAll("#routine-days-picker .day-chip.active")).map(b => parseInt(b.getAttribute("data-day"), 10));
   if(!title.trim()){ msgEl.textContent = "Informe o título da rotina."; return; }
   if(!sector){ msgEl.textContent = "Selecione um setor."; return; }
   if(!assigneeUid){ msgEl.textContent = "Selecione o responsável pela rotina — esse campo é obrigatório."; return; }
   try{
     if(editingRoutineId){
-      await updateRoutine(editingRoutineId, {title, sector, frequency, assigneeUid, wholeSector, description});
+      await updateRoutine(editingRoutineId, {title, sector, frequency, assigneeUid, wholeSector, description, scheduledDays});
     }else{
-      await createRoutine({title, sector, frequency, assigneeUid, wholeSector, description});
+      await createRoutine({title, sector, frequency, assigneeUid, wholeSector, description, scheduledDays});
     }
     closeRoutineModal();
   }catch(err){
@@ -3638,9 +3694,12 @@ function routineCardHTML(r){
   // foi o responsável principal cadastrado, mostra quem foi, no mesmo espírito do "Concluído
   // por" já usado nos cartões do board, só que embutido na linha de meta em vez de um selo à parte.
   const showCompletedBy = done && r.wholeSector && completion && completion.byUid && completion.byUid !== r.assigneeUid;
+  const freqLabel = (r.frequency === "semanal" && (r.scheduledDays || []).length)
+    ? `${FREQ_LABEL[r.frequency]} · ${r.scheduledDays.slice().sort().map(d => WEEKDAY_ABBR[d]).join("/")}`
+    : (FREQ_LABEL[r.frequency] || r.frequency);
   const metaParts = [
     sector ? escapeHtml(sector.label) : escapeHtml(r.sector),
-    FREQ_LABEL[r.frequency] || r.frequency,
+    freqLabel,
     `Responsável: ${escapeHtml(assigneeUser ? (assigneeUser.name || assigneeUser.email) : "—")}`,
   ];
   if(showCompletedBy) metaParts.push(`concluído por ${escapeHtml(completion.byName || "—")}`);
@@ -3680,16 +3739,13 @@ function renderRoutines(){
   document.querySelectorAll("#routines-view-toggle button[data-routines-view]").forEach(b => {
     b.classList.toggle("active", b.dataset.routinesView === state.routinesView);
   });
-  const pendingViewEl = document.getElementById("routines-view-pending");
-  const doneViewEl = document.getElementById("routines-view-done");
+  const agendaViewEl = document.getElementById("routines-view-agenda");
   const detailEl = document.getElementById("routines-view-detail");
-  if(pendingViewEl) pendingViewEl.style.display = state.routinesView === "pending" ? "" : "none";
-  if(doneViewEl) doneViewEl.style.display = state.routinesView === "done" ? "" : "none";
+  if(agendaViewEl) agendaViewEl.style.display = state.routinesView === "agenda" ? "" : "none";
   if(detailEl) detailEl.style.display = state.routinesView === "detail" ? "" : "none";
 
   if(state.routinesView === "detail") renderRoutinesDetail();
-  else if(state.routinesView === "done") renderRoutinesDone();
-  else renderRoutinesPending();
+  else renderRoutinesAgenda();
 }
 
 function scopedRoutines(){
@@ -3758,7 +3814,7 @@ function routineFrequencyRingsHTML(scoped){
   return cellsHTML || `<div class="rl-empty">Nenhuma rotina no filtro atual.</div>`;
 }
 
-function routineProgressPanelHTML(total, doneCount, pct, scoped){
+function routineProgressPanelHTML(scoped){
   const recent = recentRoutineCompletions(scoped, 4);
   const activityHTML = recent.length
     ? recent.map((item, i) => `
@@ -3828,68 +3884,75 @@ function routineCompositionHTML(sectorRoutines){
   `;
 }
 
-function renderRoutinesPending(){
-  syncRoutineAreaFilter(document.getElementById("routines-pending-area-filter"));
+function isRoutineOnDay(r, weekdayIdx){
+  if(r.frequency === "diaria") return true;
+  if(r.frequency === "semanal") return !(r.scheduledDays || []).length || r.scheduledDays.includes(weekdayIdx);
+  return false;
+}
 
-  const isManager = canManage();
+function renderRoutinesAgenda(){
+  syncRoutineAreaFilter(document.getElementById("routines-agenda-area-filter"));
+
   const scoped = scopedRoutines();
-  const pending = scoped.filter(r => !routineStatus(r).done).sort((a, b) => (a.title || "").localeCompare(b.title || ""));
-  const done = scoped.filter(r => routineStatus(r).done).sort((a, b) => (a.title || "").localeCompare(b.title || ""));
-  const total = scoped.length;
-  const pct = total ? Math.round((done.length / total) * 100) : 0;
+  const weekDates = currentWeekDates();
+  const todayIdx = new Date().getDay();
+  const selectedIdx = (state.agendaDay === undefined || state.agendaDay === null) ? todayIdx : state.agendaDay;
+  const selectedDate = weekDates[selectedIdx];
+  const isToday = selectedIdx === todayIdx;
 
-  const kpiEl = document.getElementById("routines-kpis");
-  if(kpiEl){
-    kpiEl.style.gridTemplateColumns = isManager ? "repeat(4, 1fr)" : "minmax(160px, 220px)";
-    kpiEl.innerHTML = isManager ? `
-      <div class="kpi-card"><div class="n">${total}</div><div class="l">Total de rotinas</div></div>
-      <div class="kpi-card kpi-alert"><div class="n">${pending.length}</div><div class="l">Pendentes</div></div>
-      <div class="kpi-card"><div class="n" style="color:var(--st-concluido);">${done.length}</div><div class="l">Concluídas</div></div>
-      <div class="kpi-card kpi-primary"><div class="n">${pct}%</div><div class="l">Concluído no período</div></div>
-    ` : `
-      <div class="kpi-card kpi-alert"><div class="n">${pending.length}</div><div class="l">Pendentes</div></div>
+  const stripEl = document.getElementById("routines-week-strip");
+  if(stripEl){
+    stripEl.innerHTML = weekDates.map((d, i) => {
+      const hasAny = scoped.some(r => isRoutineOnDay(r, i));
+      const cls = ["strip-day"];
+      if(i === todayIdx) cls.push("today");
+      else if(i === selectedIdx) cls.push("selected");
+      return `
+        <div class="${cls.join(" ")}" data-agenda-day="${i}">
+          <span class="sdname">${WEEKDAY_SHORT[i]}</span>
+          <span class="sdnum">${d.getDate()}</span>
+          <span class="sdcount${hasAny ? "" : " none"}"></span>
+        </div>`;
+    }).join("");
+  }
+
+  let dayRoutines = scoped.filter(r => isRoutineOnDay(r, selectedIdx));
+  if(isToday){
+    dayRoutines = dayRoutines.concat(scoped.filter(r => (r.frequency === "mensal" || r.frequency === "anual") && !routineStatus(r).done));
+  }
+  dayRoutines.sort((a, b) => (a.title || "").localeCompare(b.title || ""));
+  const doneCount = dayRoutines.filter(r => routineStatus(r).done).length;
+
+  const headEl = document.getElementById("routines-agenda-head");
+  if(headEl){
+    const dateLabel = `${WEEKDAY_FULL[selectedIdx][0].toUpperCase()}${WEEKDAY_FULL[selectedIdx].slice(1)} · ${selectedDate.getDate()} de ${MONTH_NAMES[selectedDate.getMonth()]}`;
+    headEl.innerHTML = `
+      <div>
+        <p class="agenda-eyebrow">${escapeHtml(dateLabel)}</p>
+        <h2 class="agenda-title">${isToday ? "O que tem hoje" : "O que tem nesse dia"}</h2>
+      </div>
+      <div class="agenda-count-pill">${dayRoutines.length ? `<b>${doneCount}</b> de ${dayRoutines.length} concluídas` : "Nada programado"}</div>
     `;
   }
 
-  const pendingEl = document.getElementById("routines-list-pending");
-  if(pendingEl){
-    pendingEl.innerHTML = pending.length
-      ? pending.map(routineCardHTML).join("")
-      : `<div class="admin-list-item">${total ? "Tudo em dia por aqui." : "Nenhuma rotina cadastrada ainda."}</div>`;
-    wireRoutineListEvents(pendingEl);
+  const listEl = document.getElementById("routines-list-agenda");
+  if(listEl){
+    listEl.innerHTML = dayRoutines.length
+      ? dayRoutines.map(routineCardHTML).join("")
+      : `<div class="admin-list-item">${scoped.length ? "Nada programado para este dia." : "Nenhuma rotina cadastrada ainda."}</div>`;
+    wireRoutineListEvents(listEl);
   }
 
   const progressPanelEl = document.getElementById("routines-progress-panel");
   if(progressPanelEl){
-    progressPanelEl.style.display = total ? "" : "none";
-    if(total){
-      progressPanelEl.innerHTML = routineProgressPanelHTML(total, done.length, pct, scoped);
+    progressPanelEl.style.display = scoped.length ? "" : "none";
+    if(scoped.length){
+      progressPanelEl.innerHTML = routineProgressPanelHTML(scoped);
       const fillCircles = progressPanelEl.querySelectorAll(".rf-ring-fill");
       requestAnimationFrame(() => requestAnimationFrame(() => {
         fillCircles.forEach(circle => { circle.style.strokeDashoffset = circle.dataset.targetOffset; });
       }));
     }
-  }
-}
-
-function renderRoutinesDone(){
-  syncRoutineAreaFilter(document.getElementById("routines-done-area-filter"));
-
-  const scoped = scopedRoutines();
-  const done = scoped.filter(r => routineStatus(r).done).sort((a, b) => (a.title || "").localeCompare(b.title || ""));
-
-  const doneEl = document.getElementById("routines-list-done");
-  if(doneEl){
-    doneEl.innerHTML = done.length
-      ? done.map(routineCardHTML).join("")
-      : `<div class="admin-list-item">Nenhuma conclusão neste período ainda.</div>`;
-    wireRoutineListEvents(doneEl);
-  }
-
-  const leaderboardEl = document.getElementById("routines-leaderboard-panel");
-  if(leaderboardEl){
-    leaderboardEl.style.display = scoped.length ? "" : "none";
-    if(scoped.length) leaderboardEl.innerHTML = routineLeaderboardHTML(done);
   }
 }
 
@@ -3940,7 +4003,10 @@ function renderRoutinesDetail(){
   if(compositionEl){
     compositionEl.style.display = sectorRoutinesAll.length ? "" : "none";
     if(sectorRoutinesAll.length){
-      compositionEl.innerHTML = routineCompositionHTML(sectorRoutinesAll);
+      const doneRoutines = sectorRoutinesAll.filter(r => routineStatus(r).done);
+      compositionEl.innerHTML = routineLeaderboardHTML(doneRoutines)
+        + '<div class="rp-divider"></div>'
+        + routineCompositionHTML(sectorRoutinesAll);
       compositionEl.querySelectorAll(".rc-bar-fill").forEach(bar => {
         const target = bar.dataset.targetWidth;
         requestAnimationFrame(() => requestAnimationFrame(() => {
@@ -3964,10 +4030,10 @@ async function saveRoutinesArray(newRoutines){
   }
 }
 
-async function createRoutine({title, sector, frequency, assigneeUid, wholeSector, description}){
+async function createRoutine({title, sector, frequency, assigneeUid, wholeSector, description, scheduledDays}){
   const routine = {
     id: nextRoutineId(), title: title.trim(), description: (description || "").trim(),
-    sector, frequency, assigneeUid, wholeSector: !!wholeSector,
+    sector, frequency, assigneeUid, wholeSector: !!wholeSector, scheduledDays: scheduledDays || [],
     createdBy: currentUser ? currentUser.uid : "", createdByName: currentUser ? (currentUser.name || currentUser.email) : "",
     createdAt: new Date().toISOString(), completions: [],
   };
@@ -3979,9 +4045,9 @@ async function createRoutine({title, sector, frequency, assigneeUid, wholeSector
   }
 }
 
-async function updateRoutine(id, {title, sector, frequency, assigneeUid, wholeSector, description}){
+async function updateRoutine(id, {title, sector, frequency, assigneeUid, wholeSector, description, scheduledDays}){
   const newRoutines = ROUTINES.map(r => r.id === id
-    ? { ...r, title: title.trim(), sector, frequency, assigneeUid, wholeSector: !!wholeSector, description: (description || "").trim() }
+    ? { ...r, title: title.trim(), sector, frequency, assigneeUid, wholeSector: !!wholeSector, description: (description || "").trim(), scheduledDays: scheduledDays || [] }
     : r);
   await saveRoutinesArray(newRoutines);
 }
@@ -4009,6 +4075,11 @@ async function toggleRoutineCompletion(id){
   await saveRoutinesArray(newRoutines);
 }
 
+function syncRoutineDaysField(frequency){
+  const daysField = document.getElementById("routine-days-field");
+  if(daysField) daysField.style.display = frequency === "semanal" ? "" : "none";
+}
+
 function openRoutineModal(){
   if(!canManage()) return;
   editingRoutineId = null;
@@ -4016,6 +4087,8 @@ function openRoutineModal(){
   document.getElementById("routine-form").reset();
   refreshSectorDependentUI();
   document.getElementById("routine-whole-sector").checked = false;
+  document.querySelectorAll("#routine-days-picker .day-chip").forEach(b => b.classList.remove("active"));
+  syncRoutineDaysField(document.getElementById("routine-frequency").value);
   document.getElementById("routine-msg").textContent = "";
   document.getElementById("routine-modal-overlay").classList.add("open");
 }
@@ -4033,6 +4106,10 @@ function startEditRoutine(id){
   document.getElementById("routine-assignee").value = routine.assigneeUid || "";
   document.getElementById("routine-whole-sector").checked = !!routine.wholeSector;
   document.getElementById("routine-desc").value = routine.description || "";
+  document.querySelectorAll("#routine-days-picker .day-chip").forEach(b => {
+    b.classList.toggle("active", (routine.scheduledDays || []).includes(parseInt(b.getAttribute("data-day"), 10)));
+  });
+  syncRoutineDaysField(routine.frequency);
   document.getElementById("routine-msg").textContent = "";
   document.getElementById("routine-modal-overlay").classList.add("open");
 }
