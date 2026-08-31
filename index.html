@@ -189,6 +189,22 @@
   @keyframes upgradePulse{0%,100%{transform:scale(1); opacity:1;} 50%{transform:scale(1.18); opacity:.65;}}
   .upgrade-text{font-family:var(--font-mono); font-size:13px; color:var(--text-hi); letter-spacing:.02em;}
   .upgrade-sub{font-family:var(--font-mono); font-size:11px; color:var(--text-low);}
+
+  .version-banner{
+    display:none; position:fixed; top:0; left:0; right:0; z-index:9998;
+    background:var(--brand-red); color:#fff; padding:10px 16px;
+    align-items:center; justify-content:center; gap:14px; flex-wrap:wrap;
+    font-family:var(--font-display); font-size:13px;
+    box-shadow:0 4px 20px #00000055; transform:translateY(-100%); transition:transform .3s ease;
+  }
+  .version-banner.open{display:flex; transform:translateY(0);}
+  .version-banner-refresh{
+    font-family:var(--font-mono); font-size:12px; font-weight:600; border-radius:999px;
+    padding:6px 14px; cursor:pointer; background:#fff; color:var(--brand-red); border:1px solid #fff;
+  }
+  .version-banner-refresh:hover{opacity:.85;}
+  .version-banner-dismiss{background:none; border:none; color:#fff; cursor:pointer; font-size:14px; opacity:.8; padding:2px;}
+  .version-banner-dismiss:hover{opacity:1;}
   .shutdown-btn{
     font-family:var(--font-mono); font-size:11px; color:var(--sev-critica);
     background:var(--ink-1); border:1px solid var(--sev-critica); border-radius:999px;
@@ -746,19 +762,28 @@
   .sector-network:has(input:checked) ~ .sector-counter{color:var(--pa);}
   .form-msg{font-size:12px; margin:10px 0 0; min-height:14px;}
 
-  .alert-section{margin-bottom:16px;}
-  .alert-section:last-child{margin-bottom:0;}
-  .alert-section-title{display:flex; align-items:center; gap:8px; font-size:13px; font-weight:600; color:var(--text-hi); margin-bottom:8px;}
-  .alert-dot{width:8px; height:8px; border-radius:50%; flex-shrink:0;}
-  .alert-dot.late{background:var(--sev-critica);}
-  .alert-dot.soon{background:var(--sev-alta);}
-  .alert-dot.routines{background:var(--pa);}
-  .alert-list{list-style:none; margin:0; padding:0; display:flex; flex-direction:column; gap:6px; max-height:160px; overflow-y:auto;}
-  .alert-list li{
-    font-size:12.5px; color:var(--text-mid); display:flex; justify-content:space-between; gap:10px;
-    background:var(--ink-2); border:1px solid var(--hairline); border-radius:8px; padding:7px 10px;
+  .toast-stack{
+    position:fixed; top:20px; right:20px; z-index:9997; display:flex; flex-direction:column;
+    gap:10px; width:280px; max-width:calc(100vw - 40px);
   }
-  .alert-hint{font-family:var(--font-mono); font-size:10.5px; color:var(--text-low); white-space:nowrap; flex-shrink:0;}
+  .toast{
+    background:var(--ink-1); border:1px solid var(--hairline); border-left:3px solid var(--sev-critica);
+    border-radius:10px; padding:12px 14px; box-shadow:0 10px 30px #00000055;
+    opacity:0; animation:toastIn .3s ease forwards;
+  }
+  .toast.soon{border-left-color:var(--sev-alta);}
+  .toast.routines{border-left-color:var(--pa);}
+  @keyframes toastIn{from{opacity:0; transform:translateX(16px);} to{opacity:1; transform:translateX(0);}}
+  .toast-title{font-size:12.5px; font-weight:600; color:var(--text-hi); display:flex; justify-content:space-between; gap:8px;}
+  .toast-close{background:none; border:none; color:var(--text-low); cursor:pointer; font-size:12px; padding:0; flex-shrink:0;}
+  .toast-close:hover{color:var(--text-hi);}
+  .toast-sub{font-size:11px; color:var(--text-mid); margin-top:5px; line-height:1.4;}
+  @media (max-width:600px){
+    .toast-stack{top:auto; bottom:16px; right:16px; left:16px; width:auto; max-width:none;}
+  }
+  @media (prefers-reduced-motion:reduce){
+    .toast{animation:none; opacity:1;}
+  }
 
   .admin-list-item.disabled-user{opacity:.55;}
   .inactive-badge{
@@ -1166,6 +1191,12 @@
     <div class="upgrade-text">Sincronizando com a última versão</div>
     <div class="upgrade-sub">Isso leva só um instante...</div>
   </div>
+</div>
+
+<div class="version-banner" id="version-banner" role="status">
+  <span>Uma nova versão do sistema foi publicada.</span>
+  <button type="button" class="version-banner-refresh" id="version-banner-refresh">Atualizar agora</button>
+  <button type="button" class="version-banner-dismiss" id="version-banner-dismiss" aria-label="Dispensar">✕</button>
 </div>
 
 <div id="login-screen">
@@ -1660,18 +1691,7 @@
     </div>
   </div>
 
-  <div class="modal-overlay" id="alerts-modal-overlay">
-    <div class="modal" role="dialog" aria-modal="true" aria-labelledby="alerts-modal-title">
-      <div class="modal-head">
-        <h2 id="alerts-modal-title">Pendências de hoje</h2>
-        <button class="modal-close" id="alerts-modal-close" aria-label="Fechar">✕</button>
-      </div>
-      <div id="alerts-modal-body"></div>
-      <div class="modal-actions">
-        <button type="button" class="btn-primary" id="alerts-modal-ok">Entendi</button>
-      </div>
-    </div>
-  </div>
+  <div class="toast-stack" id="alerts-toast-stack" aria-live="polite"></div>
 
   <div class="modal-overlay" id="edit-access-modal-overlay">
     <div class="modal" role="dialog" aria-modal="true" aria-labelledby="edit-access-modal-title">
@@ -1792,7 +1812,7 @@
 // que a comparação ">"/"<" abaixo saiba qual versão é mais nova) — é a única forma de o mecanismo
 // perceber que existe uma versão nova. Só funciona pra quem está conectado ao Firestore (modo de
 // contingência sem Firebase não tem sincronização em tempo real de nada, essa checagem incluída).
-const APP_VERSION = "2026-08-31T11:37:53Z";
+const APP_VERSION = "2026-08-31T12:19:22Z";
 
 // Desloga e recarrega — usado tanto pela verificação de versão nova quanto pelos sinais de
 // desconexão manual (shutdown geral ou alguém sendo desconectado individualmente).
@@ -1822,14 +1842,26 @@ function manualSync(){
   }, 850);
 }
 
+let updateBannerShown = false;
+function showUpdateBanner(){
+  if(updateBannerShown) return;
+  updateBannerShown = true;
+  const banner = document.getElementById("version-banner");
+  if(banner) banner.classList.add("open");
+}
+
 function checkFirestoreVersion(data){
   if(!data) return;
   const remoteVersion = data.appVersion || "";
   if(remoteVersion === APP_VERSION) return;
   if(remoteVersion > APP_VERSION){
-    // Alguém já anunciou uma versão mais nova que a minha — estou desatualizado, reconecto.
-    console.warn(`Nova versão publicada (${remoteVersion} > ${APP_VERSION}) — reconectando...`);
-    forceReconnect();
+    // Alguém já anunciou uma versão mais nova que a minha — estou desatualizado. Antes isso
+    // desconectava e recarregava na hora pra todo mundo, mas durante uma sequência rápida de
+    // publicações (várias no mesmo dia) isso interrompia gente no meio de um login ou de uma
+    // observação sendo digitada — agora só avisa com um banner, e quem clica em "Atualizar
+    // agora" decide a própria hora de reconectar.
+    console.warn(`Nova versão publicada (${remoteVersion} > ${APP_VERSION}) — avisando...`);
+    showUpdateBanner();
   }else if(BOARD_DOC && fsUpdateDoc){
     // Sou a versão mais nova (ou ninguém ainda anunciou) — aviso pros outros conectados.
     fsUpdateDoc(BOARD_DOC, "appVersion", APP_VERSION).catch(() => {});
@@ -2490,48 +2522,86 @@ function overdueAlertData(){
   return { late, soon, pendingRoutines };
 }
 
-function renderAlertsModalBody(data){
-  const sections = [];
+function joinTitlesCapped(items, cap){
+  const titles = items.map(i => i.title);
+  if(titles.length <= cap) return titles.join(" · ");
+  return titles.slice(0, cap).join(" · ") + ` · +${titles.length - cap}`;
+}
+
+function renderAlertsToasts(data){
+  const stack = document.getElementById("alerts-toast-stack");
+  if(!stack) return;
+  const toasts = [];
   if(data.late.length){
-    sections.push(`
-      <div class="alert-section">
-        <div class="alert-section-title"><span class="alert-dot late"></span>${data.late.length} demanda${data.late.length === 1 ? "" : "s"} atrasada${data.late.length === 1 ? "" : "s"}</div>
-        <ul class="alert-list">${data.late.map(d => `<li><span>${escapeHtml(d.title)}</span><span class="alert-hint">${escapeHtml(dueInfo(d).hint)}</span></li>`).join("")}</ul>
-      </div>`);
+    toasts.push({
+      cls: "late",
+      title: `${data.late.length} demanda${data.late.length === 1 ? "" : "s"} atrasada${data.late.length === 1 ? "" : "s"}`,
+      sub: joinTitlesCapped(data.late, 3),
+    });
   }
   if(data.soon.length){
-    sections.push(`
-      <div class="alert-section">
-        <div class="alert-section-title"><span class="alert-dot soon"></span>${data.soon.length} demanda${data.soon.length === 1 ? "" : "s"} vencendo em breve</div>
-        <ul class="alert-list">${data.soon.map(d => `<li><span>${escapeHtml(d.title)}</span><span class="alert-hint">${escapeHtml(dueInfo(d).hint)}</span></li>`).join("")}</ul>
-      </div>`);
+    toasts.push({
+      cls: "soon",
+      title: `${data.soon.length} demanda${data.soon.length === 1 ? "" : "s"} vencendo em breve`,
+      sub: joinTitlesCapped(data.soon, 3),
+    });
   }
   if(data.pendingRoutines.length){
     const plural = data.pendingRoutines.length !== 1;
     const scopeWord = canManage() ? "do setor" : (plural ? "suas" : "sua");
-    sections.push(`
-      <div class="alert-section">
-        <div class="alert-section-title"><span class="alert-dot routines"></span>${data.pendingRoutines.length} rotina${plural ? "s" : ""} ${scopeWord} ainda pendente${plural ? "s" : ""} (diária/semanal)</div>
-        <ul class="alert-list">${data.pendingRoutines.map(r => `<li><span>${escapeHtml(r.title)}</span><span class="alert-hint">${FREQ_LABEL[r.frequency] || r.frequency}</span></li>`).join("")}</ul>
-      </div>`);
+    toasts.push({
+      cls: "routines",
+      title: `${data.pendingRoutines.length} rotina${plural ? "s" : ""} ${scopeWord} pendente${plural ? "s" : ""}`,
+      sub: joinTitlesCapped(data.pendingRoutines, 3),
+    });
   }
-  return sections.join("");
+  stack.innerHTML = toasts.map((t, i) => `
+    <div class="toast ${t.cls}" style="animation-delay:${(i * 0.08).toFixed(2)}s;">
+      <div class="toast-title"><span>${escapeHtml(t.title)}</span><button type="button" class="toast-close" aria-label="Dispensar">✕</button></div>
+      <div class="toast-sub">${escapeHtml(t.sub)}</div>
+    </div>
+  `).join("");
+  stack.querySelectorAll(".toast-close").forEach(btn => {
+    btn.addEventListener("click", (e) => {
+      const toast = e.currentTarget.closest(".toast");
+      if(toast) toast.remove();
+    });
+  });
 }
 
-function maybeShowAlertsModal(){
+const ALERTS_INTERVAL_MS = 3 * 60 * 60 * 1000; // repete de 3 em 3 horas, não só ao entrar
+let alertsIntervalStarted = false;
+
+function maybeShowAlerts(){
   if(!currentUser) return;
   const data = overdueAlertData();
   if(!data.late.length && !data.soon.length && !data.pendingRoutines.length) return;
-  const today = new Date().toISOString().slice(0, 10);
-  const key = `alertsShown:${currentUser.uid}`;
-  let lastShown = "";
-  try{ lastShown = localStorage.getItem(key) || ""; }catch(e){}
-  if(lastShown === today) return;
-  try{ localStorage.setItem(key, today); }catch(e){}
-  const bodyEl = document.getElementById("alerts-modal-body");
-  if(bodyEl) bodyEl.innerHTML = renderAlertsModalBody(data);
-  const overlay = document.getElementById("alerts-modal-overlay");
-  if(overlay) overlay.classList.add("open");
+  const key = `alertsLastShown:${currentUser.uid}`;
+  let lastShown = 0;
+  try{ lastShown = parseInt(localStorage.getItem(key) || "0", 10) || 0; }catch(e){}
+  if(Date.now() - lastShown < ALERTS_INTERVAL_MS) return;
+  try{ localStorage.setItem(key, String(Date.now())); }catch(e){}
+  renderAlertsToasts(data);
+}
+
+function initAlertsBaseline(){
+  // Não mostra na hora que a pessoa entra — só marca o "relógio" de 3h a partir de agora
+  // (se ainda não existir), pra primeira aparição ser depois de um tempo de uso, não assim
+  // que a sessão abre.
+  if(!currentUser) return;
+  const key = `alertsLastShown:${currentUser.uid}`;
+  try{
+    if(!localStorage.getItem(key)) localStorage.setItem(key, String(Date.now()));
+  }catch(e){}
+}
+
+function startAlertsInterval(){
+  if(alertsIntervalStarted) return;
+  alertsIntervalStarted = true;
+  initAlertsBaseline();
+  // Confere a cada 15min em vez de um único setTimeout de 3h — assim continua funcionando
+  // mesmo que a aba fique aberta o dia inteiro, sem depender de um timer gigante e impreciso.
+  setInterval(maybeShowAlerts, 15 * 60 * 1000);
 }
 
 const STATUSES = [
@@ -3298,15 +3368,6 @@ function startEditUser(uid){
   document.getElementById("edit-access-msg").textContent = "";
   document.getElementById("edit-access-modal-overlay").classList.add("open");
 }
-
-function closeAlertsModal(){
-  document.getElementById("alerts-modal-overlay").classList.remove("open");
-}
-document.getElementById("alerts-modal-close").addEventListener("click", closeAlertsModal);
-document.getElementById("alerts-modal-ok").addEventListener("click", closeAlertsModal);
-document.getElementById("alerts-modal-overlay").addEventListener("click", (e) => {
-  if(e.target.id === "alerts-modal-overlay") closeAlertsModal();
-});
 
 function closeEditAccessModal(){
   editingUid = null;
@@ -5321,7 +5382,7 @@ async function handleAuthedUser(fbUser){
         console.error("Falha ao iniciar presença:", e);
       }
       note.textContent = "☁ Conectado ao banco compartilhado — dados sincronizados em tempo real para todos que acessam este link.";
-      setTimeout(maybeShowAlertsModal, 900);
+      startAlertsInterval();
     }catch(e){
       console.error("Firebase indisponível, usando armazenamento local como reserva:", e);
       storageMode = hasClaudeStorage ? "shared" : (hasLocalStorage ? "local" : "none");
@@ -5329,7 +5390,7 @@ async function handleAuthedUser(fbUser){
       await loadItemFieldMaps();
       await loadObservacoes();
       await loadStatuses();
-      setTimeout(maybeShowAlertsModal, 900);
+      startAlertsInterval();
     }
   }catch(e){
     console.error("Falha ao carregar permissões do usuário:", e);
@@ -5462,6 +5523,10 @@ document.getElementById("logout-btn").addEventListener("click", async () => {
 });
 document.getElementById("shutdown-btn").addEventListener("click", triggerShutdown);
 document.getElementById("sync-btn").addEventListener("click", manualSync);
+document.getElementById("version-banner-refresh").addEventListener("click", forceReconnect);
+document.getElementById("version-banner-dismiss").addEventListener("click", () => {
+  document.getElementById("version-banner").classList.remove("open");
+});
 document.getElementById("presentation-toggle").addEventListener("click", (e) => {
   const active = document.body.classList.toggle("presentation-mode");
   e.target.classList.toggle("active", active);
