@@ -1218,7 +1218,36 @@
     min-height:460px; display:flex; flex-direction:column; align-items:center; justify-content:center;
     gap:22px; text-align:center; padding:44px 20px; margin-top:20px; position:relative; overflow:hidden;
   }
-  .net-wrap{width:320px; max-width:100%; margin:0 auto;}
+  .mist-blob{
+    position:absolute; border-radius:50%; pointer-events:none; z-index:0;
+    background:radial-gradient(circle, #8b8dfb55, transparent 70%);
+    filter:blur(30px);
+  }
+  .mist-blob-1{width:220px; height:220px; top:8%; left:12%; animation:mistDrift1 14s ease-in-out infinite;}
+  .mist-blob-2{
+    width:260px; height:260px; top:48%; right:8%;
+    background:radial-gradient(circle, #8b8dfb40, transparent 70%);
+    animation:mistDrift2 18s ease-in-out infinite -6s;
+  }
+  @keyframes mistDrift1{
+    0%,100%{transform:translate(0,0) scale(1); opacity:.55;}
+    50%{transform:translate(28px,20px) scale(1.15); opacity:.85;}
+  }
+  @keyframes mistDrift2{
+    0%,100%{transform:translate(0,0) scale(1); opacity:.4;}
+    50%{transform:translate(-24px,-16px) scale(1.1); opacity:.7;}
+  }
+  .signal-ring{
+    fill:none; stroke:var(--pa); stroke-width:1.4; opacity:0;
+    transform-box:fill-box; transform-origin:50% 50%;
+    animation:signalPing 4.8s ease-out infinite;
+  }
+  @keyframes signalPing{
+    0%{transform:scale(.7); opacity:.5;}
+    70%{opacity:.12;}
+    100%{transform:scale(2.6); opacity:0;}
+  }
+  .net-wrap{width:320px; max-width:100%; margin:0 auto; position:relative; z-index:1;}
   .net-wrap svg{width:100%; height:auto; overflow:visible;}
   .bulb-glass{fill:#8b8dfb1f; stroke:var(--pa); stroke-width:1.8; stroke-linejoin:round;}
   .bulb-neck{fill:var(--ink-2); stroke:var(--hairline); stroke-width:1;}
@@ -1243,12 +1272,12 @@
   .orbit{fill:#fff; filter:drop-shadow(0 0 3px #fff) drop-shadow(0 0 6px var(--pa));}
   .teaser-eyebrow{
     font-family:var(--font-mono); font-size:11px; letter-spacing:.16em; text-transform:uppercase; color:var(--pa);
-    display:flex; align-items:center; gap:8px;
+    display:flex; align-items:center; gap:8px; position:relative; z-index:1;
   }
   .teaser-eyebrow .dot{width:6px; height:6px; border-radius:50%; background:var(--pa); box-shadow:0 0 0 0 #8b8dfb55; animation:eyebrowPulse 1.8s ease-in-out infinite;}
   @keyframes eyebrowPulse{0%,100%{box-shadow:0 0 0 0 #8b8dfb55;} 70%{box-shadow:0 0 0 7px #8b8dfb00;}}
-  .teaser-title{font-size:22px; font-weight:600; margin:0; max-width:36ch; letter-spacing:-.01em;}
-  .teaser-sub{font-size:12.5px; color:var(--text-low); max-width:42ch; margin:0 auto;}
+  .teaser-title{font-size:22px; font-weight:600; margin:0; max-width:36ch; letter-spacing:-.01em; position:relative; z-index:1;}
+  .teaser-sub{font-size:12.5px; color:var(--text-low); max-width:42ch; margin:0 auto; position:relative; z-index:1;}
 
   /* Tema claro: o card e os brilhos brancos (filamento, faíscas, partículas, reflexo de
      vidro) foram pensados pra um fundo escuro — sem isso, viram uma mancha escura solta
@@ -1698,6 +1727,8 @@
     </div>
     <p class="sub" style="margin-bottom:14px;">Assistente de IA pra tirar dúvidas rápidas sobre convênio, negociações, ouvidoria e mais — em breve por aqui.</p>
     <div class="teaser-card">
+      <div class="mist-blob mist-blob-1" aria-hidden="true"></div>
+      <div class="mist-blob mist-blob-2" aria-hidden="true"></div>
       <div class="net-wrap">
         <svg id="agorasei-bulb-svg" viewBox="0 0 340 260"></svg>
       </div>
@@ -5787,6 +5818,16 @@ async function handlePasswordResetLink(oobCode){
   var svg = document.getElementById("agorasei-bulb-svg");
   if(!svg) return;
   var cx = 170, cy = 100, r = 58;
+
+  // ondas de sinal: anéis que nascem no centro e se expandem sumindo, como um
+  // radar/sinal sendo emitido — ficam atrás da lâmpada (adicionados primeiro).
+  for(var ringI = 0; ringI < 3; ringI++){
+    var ring = document.createElementNS(NS, "circle");
+    ring.setAttribute("class", "signal-ring");
+    ring.setAttribute("cx", cx); ring.setAttribute("cy", cy); ring.setAttribute("r", 62);
+    ring.style.animationDelay = (ringI * 1.6) + "s";
+    svg.appendChild(ring);
+  }
 
   var g = document.createElementNS(NS, "g");
   g.setAttribute("class", "bulb-group");
