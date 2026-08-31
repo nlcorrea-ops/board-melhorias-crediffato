@@ -1792,7 +1792,7 @@
 // que a comparação ">"/"<" abaixo saiba qual versão é mais nova) — é a única forma de o mecanismo
 // perceber que existe uma versão nova. Só funciona pra quem está conectado ao Firestore (modo de
 // contingência sem Firebase não tem sincronização em tempo real de nada, essa checagem incluída).
-const APP_VERSION = "2026-08-28T12:29:36Z";
+const APP_VERSION = "2026-08-31T11:37:53Z";
 
 // Desloga e recarrega — usado tanto pela verificação de versão nova quanto pelos sinais de
 // desconexão manual (shutdown geral ou alguém sendo desconectado individualmente).
@@ -4823,13 +4823,22 @@ async function removeCustomItem(id){
   DATA.splice(idx, 1);
   renderTabs();
   await saveCustomItems();
-  // Limpa também stage/assignee: como os IDs de itens customizados são reaproveitados
-  // (N1, N2, ...), sem isso um item novo criado depois poderia herdar por engano o
-  // stage/assignee de um item já removido que tinha o mesmo ID.
+  // Limpa também stage/assignee/observações: como os IDs de itens customizados são
+  // reaproveitados (N1, N2, ...), sem isso um item novo criado depois poderia herdar por
+  // engano o stage/assignee/comentários de um item já removido que tinha o mesmo ID — era
+  // exatamente isso que fazia uma observação antiga (de um item já excluído) reaparecer
+  // "publicada" por outra pessoa num item novo e completamente diferente.
   try{ await storageAdapter.set(`status:${id}`, ""); }catch(e){}
   try{ await updateFieldPathMap("stages", stagesMap, id, ""); }catch(e){}
   try{ await updateFieldPathMap("assignees", assigneesMap, id, ""); }catch(e){}
   try{ await updateFieldPathMap("dueDates", dueDatesMap, id, ""); }catch(e){}
+  try{
+    if(storageMode === "firebase" && firebaseReady){
+      await fsUpdateDoc(BOARD_DOC, new fsFieldPath("comentarios", id), fsDeleteField());
+    }else{
+      await storageAdapter.set(`comentarios:${id}`, "");
+    }
+  }catch(e){}
   try{
     if(storageMode === "firebase" && firebaseReady){
       await fsUpdateDoc(BOARD_DOC, new fsFieldPath("statusHistory", id), fsDeleteField());
