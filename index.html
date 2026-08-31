@@ -1242,19 +1242,17 @@
     0%,100%{transform:translate(0,0) scale(1); opacity:.4;}
     50%{transform:translate(-32px,-22px) scale(1.1); opacity:.7;}
   }
-  /* ondas de sinal: nascem em pontos aleatórios espalhados pelo retângulo inteiro
-     (ver JS), não a partir da lâmpada — dá a sensação de fundo vivo, não de "raio
-     saindo do objeto". */
-  .bg-ping{
-    position:absolute; width:14px; height:14px; margin:-7px 0 0 -7px;
-    border:1.4px solid var(--pa); border-radius:50%;
-    pointer-events:none; z-index:0; opacity:0;
-    animation:bgPing 3.4s ease-out forwards;
+  /* poeira de partículas: pontinhos sempre presentes, flutuando devagar por todo
+     o retângulo (ver JS) — nunca aparecem/somem de repente, só se movem sem parar. */
+  .dust-particle{
+    position:absolute; width:3px; height:3px; border-radius:50%;
+    background:var(--pa); pointer-events:none; z-index:0;
+    box-shadow:0 0 4px var(--pa);
+    animation-name:dustFloat; animation-timing-function:ease-in-out; animation-iteration-count:infinite;
   }
-  @keyframes bgPing{
-    0%{transform:scale(1); opacity:.5;}
-    70%{opacity:.1;}
-    100%{transform:scale(11); opacity:0;}
+  @keyframes dustFloat{
+    0%,100%{transform:translate(0,0); opacity:.18;}
+    50%{transform:translate(var(--dx,20px), var(--dy,-24px)); opacity:.55;}
   }
   .net-wrap{width:320px; max-width:100%; margin:0 auto; position:relative; z-index:1;}
   .net-wrap svg{width:100%; height:auto; overflow:visible;}
@@ -5978,24 +5976,20 @@ async function handlePasswordResetLink(oobCode){
     })(orbitR, dur, startAngle, dot);
   }
 
-  // ondas de sinal: nascem em pontos aleatórios espalhados pelo retângulo
-  // inteiro (não a partir da lâmpada), como um radar/sinal sendo emitido.
+  // poeira de partículas: pontinhos espalhados pelo retângulo inteiro, sempre
+  // presentes, cada um flutuando devagar num vaivém próprio (nunca some/aparece).
   var card = document.getElementById("agorasei-teaser-card");
   if(card){
-    var spawnPing = function(){
-      var ping = document.createElement("div");
-      ping.className = "bg-ping";
-      ping.style.left = (8 + Math.random() * 84) + "%";
-      ping.style.top = (10 + Math.random() * 80) + "%";
-      card.appendChild(ping);
-      setTimeout(function(){ ping.remove(); }, 3500);
-    };
-    var startPingGenerator = function(){
-      spawnPing();
-      setTimeout(startPingGenerator, 2200 + Math.random() * 2600);
-    };
-    for(var pg = 0; pg < 2; pg++){
-      setTimeout(startPingGenerator, Math.random() * 2000);
+    for(var dpI = 0; dpI < 16; dpI++){
+      var dust = document.createElement("div");
+      dust.className = "dust-particle";
+      dust.style.left = (4 + Math.random() * 92) + "%";
+      dust.style.top = (4 + Math.random() * 92) + "%";
+      dust.style.setProperty("--dx", ((Math.random() - 0.5) * 50).toFixed(1) + "px");
+      dust.style.setProperty("--dy", ((Math.random() - 0.5) * 50).toFixed(1) + "px");
+      dust.style.animationDuration = (7 + Math.random() * 8).toFixed(1) + "s";
+      dust.style.animationDelay = (-Math.random() * 10).toFixed(1) + "s";
+      card.appendChild(dust);
     }
   }
 })();
