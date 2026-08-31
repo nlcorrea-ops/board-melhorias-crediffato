@@ -2371,9 +2371,11 @@ let BOARD_DOC = null;
 let boardDocCache = null;
 let PRESENCE_DOC = null;
 let onlineMap = {}; // uid -> {name, email, at}
+let boardSnapUnsub = null;
+let presenceSnapUnsub = null;
 let presenceHeartbeatTimer = null;
 let onlineListRerenderTimer = null;
-let fsDoc, fsGetDoc, fsSetDoc, fsUpdateDoc, fsDeleteDoc, fsOnSnapshot, fsFieldPath, fsDeleteField, fsArrayUnion, fsArrayRemove;
+let fsDoc, fsGetDoc, fsSetDoc, fsUpdateDoc, fsDeleteDoc, fsOnSnapshot, fsFieldPath, fsDeleteField, fsArrayUnion, fsArrayRemove, fsRunTransaction;
 let authSignIn, authOnState, authSignOut, authSendReset, authVerifyResetCode, authConfirmReset;
 let authVerifyBeforeUpdateEmail;
 let stRef, stUploadBytes, stGetDownloadURL, stDeleteObject;
@@ -2393,6 +2395,7 @@ async function initFirebase(){
     fsUpdateDoc = fsMod.updateDoc; fsDeleteDoc = fsMod.deleteDoc; fsOnSnapshot = fsMod.onSnapshot;
     fsFieldPath = fsMod.FieldPath; fsDeleteField = fsMod.deleteField;
     fsArrayUnion = fsMod.arrayUnion; fsArrayRemove = fsMod.arrayRemove;
+    fsRunTransaction = fsMod.runTransaction;
     authSignIn = authMod.signInWithEmailAndPassword;
     authOnState = authMod.onAuthStateChanged;
     authSignOut = authMod.signOut;
@@ -2452,7 +2455,12 @@ async function loadOrBootstrapUserDoc(fbUser){
   const uref = fsDoc(db, "users", fbUser.uid);
   const snap = await fsGetDoc(uref);
   if(snap.exists()) return snap.data();
-  if((fbUser.email || "").toLowerCase() === BOOTSTRAP_ADMIN_EMAIL){
+  // Só faz o bootstrap automático se ainda não existir NENHUM admin no diretório — ou seja,
+  // só na configuração inicial de verdade. Sem essa checagem, se essa conta específica fosse
+  // excluída/recriada mais tarde (e o provedor de e-mail/senha do Firebase ainda permitisse
+  // auto-cadastro), qualquer pessoa poderia se cadastrar com esse e-mail e virar admin sozinha.
+  const hasExistingAdmin = DIRECTORY.some(u => u.role === "admin");
+  if(!hasExistingAdmin && (fbUser.email || "").toLowerCase() === BOOTSTRAP_ADMIN_EMAIL){
     const assignedAreas = SECTORS.map(s => s.key);
     const doc = { email: fbUser.email, name: "", role: "admin", assignedAreas };
     await fsSetDoc(uref, doc);
@@ -2664,8 +2672,14 @@ function dueInfo(item){
   const value = itemDueDate(item);
   if(!value) return { value:"", state:"sem-prazo", hint:"" };
   if(item.status === "concluido") return { value, state:"concluido", hint:"" };
-  const due = new Date(value + "T23:59:59");
-  const diffDays = Math.ceil((due - new Date()) / 86400000);
+  // Compara dia-a-dia (as duas datas na meia-noite local), não o prazo às 23:59:59 contra o
+  // instante atual — do jeito antigo, um item que vence hoje aparecia como "vence em 1 dia"
+  // (e um atrasado desde ontem como "vence hoje") durante quase o dia inteiro, porque a
+  // diferença em horas raramente batia um número exato de dias.
+  const due = new Date(value + "T00:00:00");
+  const today = new Date();
+  today.setHours(0, 0, 0, 0);
+  const diffDays = Math.round((due - today) / 86400000);
   if(diffDays < 0){
     const d = Math.abs(diffDays);
     return { value, state:"atrasado", hint:`Atrasado há ${d} dia${d > 1 ? "s" : ""}` };
@@ -2997,7 +3011,7 @@ function applyRemoteState(data){
   renderTabs();
 }
 
-let state = { sev:"todos", status:"todos", area:"todos", assignee:"todos", view:"area", tab:"board", archiveSearch:"", userSearch:"", userStatusFilter:"todos", userRoleFilter:"todos", routinesView:"agenda", routineArea:"todos", routineDetailArea:"", agendaDay:new Date().getDay() };
+let state = { sev:"todos", status:"todos", area:"todos", assignee:"todos", view:"area", tab:"board", archiveSearch:"", userSearch:"", userStatusFilter:"todos", userRoleFilter:"todos", routinesView:"agenda", routineArea:"todos", routineDetailArea:"", agendaDay:null };
 const openCardIds = new Set();
 const obsDrafts = {}; // id -> texto ainda não salvo, preservado entre re-renders
 
@@ -3029,9 +3043,9 @@ function cardHTML(item){
           ${item.custom && canManage() ? `<button class="remove-btn" data-remove-id="${item.id}" aria-label="Remover demanda" title="Remover demanda">✕</button>` : ""}
         </span>
       </div>
-      <h3>${item.title}${item.shared ? `<span class="shared">${item.shared}</span>` : ""}${item.custom ? `<span class="shared">Nova</span>` : ""}</h3>
+      <h3>${escapeHtml(item.title)}${item.shared ? `<span class="shared">${escapeHtml(item.shared)}</span>` : ""}${item.custom ? `<span class="shared">Nova</span>` : ""}</h3>
       <div class="status-row">
-        <select class="status-select" data-status="${item.status}" aria-label="Status de ${item.title}" ${(validation && !canManage()) ? `disabled title="Demanda já validada — só quem tem permissão de gestão pode reabri-la."` : ""}>
+        <select class="status-select" data-status="${item.status}" aria-label="Status de ${escapeHtml(item.title)}" ${(validation && !canManage()) ? `disabled title="Demanda já validada — só quem tem permissão de gestão pode reabri-la."` : ""}>
           <option value="aberto" ${item.status==="aberto"?"selected":""}>Em aberto</option>
           <option value="andamento" ${item.status==="andamento"?"selected":""}>Em andamento</option>
           <option value="concluido" ${item.status==="concluido"?"selected":""}>Concluído</option>
@@ -3043,24 +3057,24 @@ function cardHTML(item){
         : `<button type="button" class="validate-btn" data-validate-id="${item.id}">${ICON_CHECK} Validar conclusão</button>`
       ) : ""}
       <div class="status-row">
-        <select class="status-select assignee-select" data-assignee-id="${item.id}" aria-label="Responsável por ${item.title}">
+        <select class="status-select assignee-select" data-assignee-id="${item.id}" aria-label="Responsável por ${escapeHtml(item.title)}">
           <option value="">Sem responsável</option>
-          ${assigneeOptions.map(u => `<option value="${u.email}" ${assignee===u.email?"selected":""}>${u.name || u.email}</option>`).join("")}
+          ${assigneeOptions.map(u => `<option value="${escapeHtml(u.email)}" ${assignee===u.email?"selected":""}>${escapeHtml(u.name || u.email)}</option>`).join("")}
         </select>
       </div>
       <div class="status-row due-row">
-        <input type="date" class="due-input" data-due-id="${item.id}" data-due-state="${due.state}" value="${due.value}" aria-label="Prazo de ${item.title}" />
+        <input type="date" class="due-input" data-due-id="${item.id}" data-due-state="${due.state}" value="${due.value}" aria-label="Prazo de ${escapeHtml(item.title)}" />
         ${due.hint ? `<span class="due-hint ${due.state}">${due.hint}</span>` : ""}
       </div>
-      <p class="snippet"><b>Problema:</b> ${(item.hoje && item.hoje.length > 92) ? item.hoje.slice(0,92) + "…" : (item.hoje || "Não descrito ainda.")}</p>
+      <p class="snippet"><b>Problema:</b> ${(item.hoje && item.hoje.length > 92) ? escapeHtml(item.hoje.slice(0,92)) + "…" : escapeHtml(item.hoje || "Não descrito ainda.")}</p>
       <div class="detail">
         <div class="detail-block">
           <div class="detail-label">Descrição do problema</div>
-          <p class="detail-text">${item.hoje || "Não descrito ainda."}</p>
+          <p class="detail-text">${escapeHtml(item.hoje || "Não descrito ainda.")}</p>
         </div>
         <div class="detail-block">
           <div class="detail-label">Requisitos para conclusão</div>
-          <p class="detail-text">${item.sugestao || "Não descrito ainda."}</p>
+          <p class="detail-text">${escapeHtml(item.sugestao || "Não descrito ainda.")}</p>
         </div>
         ${canManage() ? `
         <div class="detail-block">
@@ -3110,7 +3124,7 @@ function cardHTML(item){
           </div>
           ${(storageMode === "firebase" && firebaseReady) ? `
             <div class="attachment-upload-row">
-              <input type="file" class="attachment-input" data-att-upload-id="${item.id}" aria-label="Anexar arquivo a ${item.title}" />
+              <input type="file" class="attachment-input" data-att-upload-id="${item.id}" aria-label="Anexar arquivo a ${escapeHtml(item.title)}" />
               <span class="attachment-upload-hint" data-att-hint-id="${item.id}"></span>
             </div>
           ` : '<p class="attachment-empty">Anexos ainda não disponíveis nesta plataforma.</p>'}
@@ -3638,7 +3652,22 @@ document.getElementById("routines-detail-area-filter").addEventListener("click",
   state.routineDetailArea = btn.dataset.routineDetailArea;
   renderRoutines();
 });
-document.getElementById("routine-form").addEventListener("submit", async (e) => {
+// Trava o botão de salvar enquanto o envio ainda está em andamento — sem isso, um
+// clique duplo ou Enter repetido antes da primeira gravação terminar dispara o
+// mesmo formulário duas vezes, criando item/rotina/setor/usuário/acesso duplicado.
+function withSubmitGuard(handler){
+  return async (e) => {
+    const btn = e.target.querySelector('button[type="submit"]');
+    if(btn && btn.disabled) return;
+    if(btn) btn.disabled = true;
+    try{
+      await handler(e);
+    }finally{
+      if(btn) btn.disabled = false;
+    }
+  };
+}
+document.getElementById("routine-form").addEventListener("submit", withSubmitGuard(async (e) => {
   e.preventDefault();
   const msgEl = document.getElementById("routine-msg");
   msgEl.style.color = ""; msgEl.textContent = "";
@@ -3663,7 +3692,7 @@ document.getElementById("routine-form").addEventListener("submit", async (e) => 
     console.error("Falha ao salvar rotina:", err);
     msgEl.textContent = "Não foi possível salvar a rotina: " + (err.message || "erro desconhecido");
   }
-});
+}));
 
 async function toggleUserAccess(uid, disable){
   const user = DIRECTORY.find(u => u.uid === uid);
@@ -4252,7 +4281,7 @@ function refreshFilterPanelOptions(){
     const people = DIRECTORY.filter(u => u.role === "admin" || (u.assignedAreas || []).some(a => scopeAreas.includes(a)));
     if(state.assignee !== "todos" && state.assignee !== "" && !people.some(u => u.email === state.assignee)) state.assignee = "todos";
     assigneeSel.innerHTML = '<option value="todos">Todos</option><option value="">Sem responsável</option>'
-      + people.map(u => `<option value="${u.email}">${u.name || u.email}${u.disabled ? " (inativo)" : ""}</option>`).join("");
+      + people.map(u => `<option value="${escapeHtml(u.email)}">${escapeHtml(u.name || u.email)}${u.disabled ? " (inativo)" : ""}</option>`).join("");
     assigneeSel.value = state.assignee;
   }
   updateFiltersBadge();
@@ -4264,7 +4293,7 @@ function refreshAssigneeOptionsForArea(){
   if(!areaSel || !sel) return;
   const area = areaSel.value;
   const options = DIRECTORY.filter(u => !u.disabled && (u.role === "admin" || (u.assignedAreas || []).includes(area)) && isAssignableByCurrentUser(u));
-  sel.innerHTML = '<option value="">Sem responsável</option>' + options.map(u => `<option value="${u.email}">${u.name || u.email}</option>`).join("");
+  sel.innerHTML = '<option value="">Sem responsável</option>' + options.map(u => `<option value="${escapeHtml(u.email)}">${escapeHtml(u.name || u.email)}</option>`).join("");
 }
 
 function renderOverview(){
@@ -5040,8 +5069,11 @@ async function saveCustomItems(){
 }
 
 function nextCustomId(){
-  const customCount = DATA.filter(d => d.custom).length;
-  return `N${customCount + 1}`;
+  // Não usa a contagem atual de itens: excluir um item e criar outro reproduziria
+  // um ID já existente (e dois usuários criando ao mesmo tempo colidiriam também),
+  // e como os mapas de etapa/prazo/comentários são indexados pelo ID, uma colisão
+  // faz dois cartões diferentes compartilharem os mesmos dados silenciosamente.
+  return `N${Date.now().toString(36)}${Math.random().toString(36).slice(2, 6)}`;
 }
 
 async function addNewItem({title, area, sev, hoje, sugestao, obs, assignee, due}){
@@ -5168,7 +5200,7 @@ document.getElementById("conclusion-modal-cancel").addEventListener("click", can
 document.getElementById("conclusion-modal-overlay").addEventListener("click", (e) => {
   if(e.target.id === "conclusion-modal-overlay") cancelConclusionModal();
 });
-document.getElementById("conclusion-form").addEventListener("submit", async (e) => {
+document.getElementById("conclusion-form").addEventListener("submit", withSubmitGuard(async (e) => {
   e.preventDefault();
   const reason = document.getElementById("conclusion-reason").value.trim();
   if(!reason || !pendingConclusionId) return;
@@ -5177,11 +5209,15 @@ document.getElementById("conclusion-form").addEventListener("submit", async (e) 
   document.getElementById("conclusion-modal-overlay").classList.remove("open");
   document.getElementById("conclusion-form").reset();
   await updateStatus(id, "concluido", reason);
-});
+}));
 document.getElementById("f-area").addEventListener("change", refreshAssigneeOptionsForArea);
 
-document.getElementById("add-form").addEventListener("submit", async (e) => {
+document.getElementById("add-form").addEventListener("submit", withSubmitGuard(async (e) => {
   e.preventDefault();
+  // O botão "Nova demanda" já fica escondido pra quem não pode gerenciar, mas isso
+  // é só CSS — sem essa checagem aqui, bastaria reexibir o formulário pelo DevTools
+  // pra qualquer conta enviar itens sem nenhuma validação de permissão real.
+  if(!canManage()) return;
   const title = document.getElementById("f-title").value;
   const hoje = document.getElementById("f-hoje").value;
   const sugestao = document.getElementById("f-sugestao").value;
@@ -5205,7 +5241,7 @@ document.getElementById("add-form").addEventListener("submit", async (e) => {
     }
   }
   closeModal();
-});
+}));
 
 document.getElementById("filters-sev").addEventListener("click", (e) => {
   const btn = e.target.closest(".filter-btn");
@@ -5322,13 +5358,13 @@ function slugify(label){
   return label.toLowerCase().normalize("NFD").replace(/[̀-ͯ]/g, "")
     .replace(/[^a-z0-9]+/g, "-").replace(/(^-|-$)/g, "") || "setor";
 }
-function uniqueSectorKey(base){
+function uniqueSectorKey(base, sectors){
   let key = base, n = 2;
-  while(SECTORS.some(s => s.key === key)){ key = `${base}-${n}`; n++; }
+  while(sectors.some(s => s.key === key)){ key = `${base}-${n}`; n++; }
   return key;
 }
 
-document.getElementById("sector-form").addEventListener("submit", async (e) => {
+document.getElementById("sector-form").addEventListener("submit", withSubmitGuard(async (e) => {
   e.preventDefault();
   const msgEl = document.getElementById("sector-msg");
   msgEl.style.color = ""; msgEl.textContent = "";
@@ -5336,10 +5372,22 @@ document.getElementById("sector-form").addEventListener("submit", async (e) => {
   const label = nameInput.value.trim();
   if(!label){ msgEl.textContent = "Informe um nome para o setor."; return; }
   if(!firebaseReady || storageMode !== "firebase"){ msgEl.textContent = "Indisponível no momento (sem conexão com o banco compartilhado)."; return; }
-  const key = uniqueSectorKey(slugify(label));
+  const base = slugify(label);
   try{
-    await fsUpdateDoc(BOARD_DOC, "sectors", fsArrayUnion({ key, label }));
-    SECTORS.push({ key, label });
+    // Lê e escreve a lista de setores numa transação (em vez de calcular a chave em cima
+    // do cache local e só depois gravar): duas pessoas criando setores parecidos ao mesmo
+    // tempo antes calculavam a mesma chave sem ver a gravação uma da outra, e a segunda
+    // ficava com o mesmo "key" da primeira mas um "label" diferente — invisível depois,
+    // porque toda busca por chave sempre resolve pro primeiro setor com aquele key.
+    const newSector = await fsRunTransaction(db, async (tx) => {
+      const snap = await tx.get(BOARD_DOC);
+      const currentSectors = (snap.exists() && snap.data().sectors) || [];
+      const key = uniqueSectorKey(base, currentSectors);
+      const sector = { key, label };
+      tx.update(BOARD_DOC, { sectors: [...currentSectors, sector] });
+      return sector;
+    });
+    SECTORS.push(newSector);
     refreshSectorDependentUI();
     nameInput.value = "";
     msgEl.style.color = "var(--st-concluido)";
@@ -5348,10 +5396,10 @@ document.getElementById("sector-form").addEventListener("submit", async (e) => {
     console.error("Falha ao criar setor:", err);
     msgEl.textContent = "Não foi possível criar o setor.";
   }
-});
+}));
 
 // ---------- Criação de acessos ----------
-document.getElementById("user-form").addEventListener("submit", async (e) => {
+document.getElementById("user-form").addEventListener("submit", withSubmitGuard(async (e) => {
   e.preventDefault();
   const msgEl = document.getElementById("user-msg");
   msgEl.style.color = ""; msgEl.textContent = "";
@@ -5383,10 +5431,10 @@ document.getElementById("user-form").addEventListener("submit", async (e) => {
     console.error("Falha ao criar acesso:", err);
     msgEl.textContent = "Não foi possível criar o acesso: " + (err.message || "erro desconhecido");
   }
-});
+}));
 
 // ---------- Edição de acessos (modal) ----------
-document.getElementById("edit-access-form").addEventListener("submit", async (e) => {
+document.getElementById("edit-access-form").addEventListener("submit", withSubmitGuard(async (e) => {
   e.preventDefault();
   const msgEl = document.getElementById("edit-access-msg");
   msgEl.style.color = ""; msgEl.textContent = "";
@@ -5438,7 +5486,7 @@ document.getElementById("edit-access-form").addEventListener("submit", async (e)
     console.error("Falha ao atualizar acesso:", err);
     msgEl.textContent = "Não foi possível salvar as alterações: " + (err.message || "erro desconhecido");
   }
-});
+}));
 
 // ---------- Login / Autenticação ----------
 let pendingLoginReveal = false;
@@ -5451,21 +5499,31 @@ function showApp(){
     const card = document.getElementById("login-card");
     if(card) card.classList.remove("converging");
     if(bgNetworkRelease) bgNetworkRelease();
-    // Um frame de intervalo entre o painel virar visível (o navegador ainda precisa montar
-    // o layout inteiro dele, que é pesado) e a animação de revelação começar — assim a
-    // animação em si roda limpa, sem competir com esse primeiro layout/estilo pesado.
-    wrap.classList.remove("portal-reveal");
-    requestAnimationFrame(() => {
-      void wrap.offsetWidth;
-      wrap.classList.add("portal-reveal");
-      // Tira a classe assim que a animação termina — mantê-la o resto da sessão não muda o
-      // visual (a animação já rodou uma vez só), mas por baixo dos panos ela criava um novo
-      // "container" pra qualquer elemento position:fixed/sticky dentro do app (modais, popups,
-      // faixa de aviso de versão, cartões de pendência) — todos passavam a se posicionar
-      // relativos a esse painel em vez da tela inteira, e por isso podiam aparecer bem mais
-      // pra baixo do que deveriam, precisando rolar a página pra encontrar.
-      wrap.addEventListener("animationend", () => wrap.classList.remove("portal-reveal"), { once: true });
-    });
+    // Com "reduzir movimento" ativado, a animação nem roda (ver CSS), então o
+    // "animationend" abaixo nunca dispararia e a classe ficaria presa a sessão
+    // inteira — e ela também funciona como novo container de posicionamento pra
+    // qualquer position:fixed/sticky dentro do app, o que quebra modais/popups.
+    // Sem a animação, não tem porque nem tentar aplicar a classe.
+    const reduceMotion = window.matchMedia && window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+    if(reduceMotion){
+      wrap.classList.remove("portal-reveal");
+    }else{
+      // Um frame de intervalo entre o painel virar visível (o navegador ainda precisa montar
+      // o layout inteiro dele, que é pesado) e a animação de revelação começar — assim a
+      // animação em si roda limpa, sem competir com esse primeiro layout/estilo pesado.
+      wrap.classList.remove("portal-reveal");
+      requestAnimationFrame(() => {
+        void wrap.offsetWidth;
+        wrap.classList.add("portal-reveal");
+        // Tira a classe assim que a animação termina — mantê-la o resto da sessão não muda o
+        // visual (a animação já rodou uma vez só), mas por baixo dos panos ela criava um novo
+        // "container" pra qualquer elemento position:fixed/sticky dentro do app (modais, popups,
+        // faixa de aviso de versão, cartões de pendência) — todos passavam a se posicionar
+        // relativos a esse painel em vez da tela inteira, e por isso podiam aparecer bem mais
+        // pra baixo do que deveriam, precisando rolar a página pra encontrar.
+        wrap.addEventListener("animationend", () => wrap.classList.remove("portal-reveal"), { once: true });
+      });
+    }
   }
 }
 // Se o login não terminar em showApp() (ex.: gate de versão ou acesso negado devolvendo
@@ -5549,7 +5607,11 @@ async function handleAuthedUser(fbUser){
     const note = document.getElementById("storage-note");
     try{
       applyRemoteState(boardDocCache);
-      fsOnSnapshot(BOARD_DOC, (snap) => {
+      // Se handleAuthedUser rodar mais de uma vez pra mesma sessão (o SDK não garante que
+      // onAuthStateChanged dispare só uma vez), evita empilhar um segundo listener duplicado
+      // no mesmo documento — sem isso, cada atualização passaria a re-renderizar duas vezes.
+      if(boardSnapUnsub){ try{ boardSnapUnsub(); }catch(e){} }
+      boardSnapUnsub = fsOnSnapshot(BOARD_DOC, (snap) => {
         if(snap.exists()){
           boardDocCache = snap.data();
           applyRemoteState(boardDocCache);
@@ -5566,7 +5628,8 @@ async function handleAuthedUser(fbUser){
       });
       try{
         await ensurePresenceDoc();
-        fsOnSnapshot(PRESENCE_DOC, (snap) => {
+        if(presenceSnapUnsub){ try{ presenceSnapUnsub(); }catch(e){} }
+        presenceSnapUnsub = fsOnSnapshot(PRESENCE_DOC, (snap) => {
           if(snap.exists()){
             const data = snap.data();
             onlineMap = data.online || {};
@@ -5812,6 +5875,13 @@ async function handlePasswordResetLink(oobCode){
     refreshSectorDependentUI();
     showApp();
     renderTabs();
+    // Deixa bem claro que isso não é o board compartilhado de verdade — sem esse aviso,
+    // alguém pode achar que está vendo/editando os dados reais da equipe quando na verdade
+    // é só uma cópia local deste navegador, perdida ao recarregar.
+    const localModeNote = document.getElementById("storage-note");
+    if(localModeNote){
+      localModeNote.textContent = "⚠ Sem conexão com o banco compartilhado — você está num modo local temporário deste navegador, nada aqui é visto por outras pessoas nem é salvo de verdade.";
+    }
     await loadCustomItems();
     await loadItemFieldMaps();
     await loadObservacoes();
