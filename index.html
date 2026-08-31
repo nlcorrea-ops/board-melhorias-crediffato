@@ -1210,6 +1210,45 @@
     display:none; text-align:left; font-size:12.5px; color:var(--text-mid); background:var(--ink-2);
     border:1px solid var(--hairline); border-radius:8px; padding:10px 12px; margin-top:14px; line-height:1.5;
   }
+
+  /* Aba "Agora Eu Sei" — teaser animado do assistente de IA (Fato) */
+  .teaser-card{
+    background:radial-gradient(ellipse 60% 60% at 50% 42%, #191540, var(--ink-1) 75%);
+    border:1px solid var(--hairline); border-radius:16px;
+    min-height:460px; display:flex; flex-direction:column; align-items:center; justify-content:center;
+    gap:22px; text-align:center; padding:44px 20px; margin-top:20px; position:relative; overflow:hidden;
+  }
+  .net-wrap{width:320px; max-width:100%; margin:0 auto;}
+  .net-wrap svg{width:100%; height:auto; overflow:visible;}
+  .bulb-glass{fill:#8b8dfb1f; stroke:var(--pa); stroke-width:1.8; stroke-linejoin:round;}
+  .bulb-neck{fill:var(--ink-2); stroke:var(--hairline); stroke-width:1;}
+  .bulb-highlight-shape{fill:#fff; opacity:.2;}
+  .bulb-highlight-dot{fill:#fff; opacity:.32;}
+  .bulb-group{animation:bulbBreathe 2.6s ease-in-out infinite; transform-origin:170px 100px;}
+  @keyframes bulbBreathe{
+    0%,100%{filter:drop-shadow(0 0 10px #8b8dfb55) drop-shadow(0 0 22px #8b8dfb33);}
+    50%{filter:drop-shadow(0 0 18px #8b8dfb99) drop-shadow(0 0 36px #8b8dfb55);}
+  }
+  .base-stripe{stroke:var(--pa); stroke-width:1; opacity:.45;}
+  .base-shape{fill:var(--ink-2); stroke:var(--pa); stroke-width:1.6; stroke-linejoin:round;}
+  .filament{stroke:#fff; stroke-width:1.8; fill:none; stroke-linecap:round; stroke-linejoin:round; animation:filamentFlicker 1.4s ease-in-out infinite; filter:drop-shadow(0 0 4px #fff) drop-shadow(0 0 10px var(--pa));}
+  @keyframes filamentFlicker{0%,100%{opacity:.75;} 45%{opacity:1;} 50%{opacity:.5;} 55%{opacity:1;} 80%{opacity:.85;}}
+  .spark-group{opacity:0;}
+  .spark-group.firing{animation:sparkFlashOnce .85s ease-out forwards;}
+  .spark-glow{stroke:var(--pa); stroke-width:2.4; fill:none; stroke-linecap:round; stroke-linejoin:round; filter:drop-shadow(0 0 3px var(--pa)) drop-shadow(0 0 7px var(--pa));}
+  .spark-core{stroke:#fff; stroke-width:1; fill:none; stroke-linecap:round; stroke-linejoin:round; filter:drop-shadow(0 0 3px #fff);}
+  .branch-glow{stroke:var(--pa); stroke-width:1.5; fill:none; stroke-linecap:round; stroke-linejoin:round; opacity:.8;}
+  .branch-core{stroke:#fff; stroke-width:.55; fill:none; stroke-linecap:round; stroke-linejoin:round; opacity:.85;}
+  @keyframes sparkFlashOnce{0%{opacity:0;} 8%{opacity:1;} 18%{opacity:.25;} 28%{opacity:.95;} 45%{opacity:.1;} 100%{opacity:0;}}
+  .orbit{fill:#fff; filter:drop-shadow(0 0 3px #fff) drop-shadow(0 0 6px var(--pa));}
+  .teaser-eyebrow{
+    font-family:var(--font-mono); font-size:11px; letter-spacing:.16em; text-transform:uppercase; color:var(--pa);
+    display:flex; align-items:center; gap:8px;
+  }
+  .teaser-eyebrow .dot{width:6px; height:6px; border-radius:50%; background:var(--pa); box-shadow:0 0 0 0 #8b8dfb55; animation:eyebrowPulse 1.8s ease-in-out infinite;}
+  @keyframes eyebrowPulse{0%,100%{box-shadow:0 0 0 0 #8b8dfb55;} 70%{box-shadow:0 0 0 7px #8b8dfb00;}}
+  .teaser-title{font-size:22px; font-weight:600; margin:0; max-width:36ch; letter-spacing:-.01em;}
+  .teaser-sub{font-size:12.5px; color:var(--text-low); max-width:42ch; margin:0 auto;}
 </style>
 </head>
 <body>
@@ -1360,6 +1399,7 @@
     <button type="button" data-tab="validations" id="nav-validations-btn" style="display:none;"><span class="nav-icon"><svg width="16" height="16" viewBox="0 0 16 16" fill="none" aria-hidden="true"><circle cx="8" cy="8" r="6" stroke="currentColor" stroke-width="1.4"/><path d="M5.3 8.2l1.8 1.8 3.6-4" stroke="currentColor" stroke-width="1.4" stroke-linecap="round" stroke-linejoin="round"/></svg></span><span class="nav-label">Validações</span></button>
     <button type="button" data-tab="archive"><span class="nav-icon"><svg width="16" height="16" viewBox="0 0 16 16" fill="none" aria-hidden="true"><rect x="1.8" y="3" width="12.4" height="3" rx="1" stroke="currentColor" stroke-width="1.3"/><path d="M2.8 6v6.2a1 1 0 0 0 1 1h8.4a1 1 0 0 0 1-1V6" stroke="currentColor" stroke-width="1.3"/><path d="M6.3 8.6h3.4" stroke="currentColor" stroke-width="1.3" stroke-linecap="round"/></svg></span><span class="nav-label">Arquivo</span></button>
     <button type="button" data-tab="admin" id="nav-admin-btn" style="display:none;"><span class="nav-icon"><svg width="16" height="16" viewBox="0 0 16 16" fill="none" aria-hidden="true"><circle cx="6" cy="5.3" r="2.3" stroke="currentColor" stroke-width="1.3"/><path d="M1.8 13.2c.5-2.5 2.2-3.8 4.2-3.8s3.7 1.3 4.2 3.8" stroke="currentColor" stroke-width="1.3" stroke-linecap="round"/><circle cx="11.6" cy="5.6" r="1.8" stroke="currentColor" stroke-width="1.2"/><path d="M10.6 9.7c1.6.1 2.8 1.2 3.2 3.1" stroke="currentColor" stroke-width="1.2" stroke-linecap="round"/></svg></span><span class="nav-label">Acessos</span></button>
+    <button type="button" data-tab="agorasei"><span class="nav-icon"><svg width="16" height="16" viewBox="0 0 16 16" fill="none" aria-hidden="true"><path d="M8 1.5C5.5 1.5 3.7 3.4 3.7 5.7C3.7 7.3 4.5 8.3 5.3 9.2C5.9 9.9 6.2 10.4 6.2 11.2H9.8C9.8 10.4 10.1 9.9 10.7 9.2C11.5 8.3 12.3 7.3 12.3 5.7C12.3 3.4 10.5 1.5 8 1.5Z" stroke="currentColor" stroke-width="1.3" stroke-linejoin="round"/><path d="M6.3 13H9.7M6.6 14.3H9.4" stroke="currentColor" stroke-width="1.3" stroke-linecap="round"/></svg></span><span class="nav-label">Agora Eu Sei</span></button>
   </div>
   <div class="main-col">
 
@@ -1630,6 +1670,21 @@
         <h3>Setores</h3>
         <div class="admin-list" id="sector-list"></div>
       </div>
+    </div>
+  </div>
+
+  <div class="tab-panel" id="agorasei-tab" style="display:none;">
+    <div class="tab-panel-head">
+      <h2>Agora Eu Sei</h2>
+    </div>
+    <p class="sub" style="margin-bottom:14px;">Assistente de IA pra tirar dúvidas rápidas sobre convênio, negociações, ouvidoria e mais — em breve por aqui.</p>
+    <div class="teaser-card">
+      <div class="net-wrap">
+        <svg id="agorasei-bulb-svg" viewBox="0 0 340 260"></svg>
+      </div>
+      <div class="teaser-eyebrow"><span class="dot"></span>Em construção</div>
+      <p class="teaser-title">O Fato está tomando forma por aqui</p>
+      <p class="teaser-sub">Prepare suas perguntas — a resposta está a caminho.</p>
     </div>
   </div>
 
@@ -4437,6 +4492,7 @@ function renderTabs(){
   const validationsTab = document.getElementById("validations-tab");
   const archiveTab = document.getElementById("archive-tab");
   const adminTab = document.getElementById("admin-tab");
+  const agoraseiTab = document.getElementById("agorasei-tab");
 
   const navOverviewBtn = document.getElementById("nav-overview-btn");
   if(navOverviewBtn) navOverviewBtn.style.display = canManage() ? "" : "none";
@@ -4454,8 +4510,8 @@ function renderTabs(){
   const isOperador = currentUser && currentUser.role === "operador";
   const globalFiltersRow = document.getElementById("global-filters-row");
   const filtersPanelEl = document.getElementById("filters-panel");
-  if(globalFiltersRow) globalFiltersRow.style.display = (isOperador || state.tab === "admin" || state.tab === "routines") ? "none" : "";
-  if(filtersPanelEl && (isOperador || state.tab === "admin" || state.tab === "routines")) filtersPanelEl.classList.remove("open");
+  if(globalFiltersRow) globalFiltersRow.style.display = (isOperador || state.tab === "admin" || state.tab === "routines" || state.tab === "agorasei") ? "none" : "";
+  if(filtersPanelEl && (isOperador || state.tab === "admin" || state.tab === "routines" || state.tab === "agorasei")) filtersPanelEl.classList.remove("open");
 
   document.querySelectorAll("#main-nav button[data-tab]").forEach(b => b.classList.toggle("active", b.dataset.tab === state.tab));
   if(overviewTab) overviewTab.style.display = state.tab === "overview" ? "" : "none";
@@ -4465,6 +4521,7 @@ function renderTabs(){
   if(validationsTab) validationsTab.style.display = state.tab === "validations" ? "" : "none";
   if(archiveTab) archiveTab.style.display = state.tab === "archive" ? "" : "none";
   if(adminTab) adminTab.style.display = state.tab === "admin" ? "" : "none";
+  if(agoraseiTab) agoraseiTab.style.display = state.tab === "agorasei" ? "" : "none";
 
   if(state.tab === "overview") renderOverview();
   else if(state.tab === "board") render();
@@ -5701,6 +5758,164 @@ async function handlePasswordResetLink(oobCode){
     await loadItemFieldMaps();
     await loadObservacoes();
     await loadStatuses();
+  }
+})();
+
+// Teaser animado da aba "Agora Eu Sei" (assistente Fato) — lâmpada de vidro
+// roxo com filamento incandescente e raios elétricos nascendo ao redor.
+(function(){
+  var NS = "http://www.w3.org/2000/svg";
+  var svg = document.getElementById("agorasei-bulb-svg");
+  if(!svg) return;
+  var cx = 170, cy = 100, r = 58;
+
+  var g = document.createElementNS(NS, "g");
+  g.setAttribute("class", "bulb-group");
+  svg.appendChild(g);
+
+  var glass = document.createElementNS(NS, "path");
+  glass.setAttribute("class", "bulb-glass");
+  glass.setAttribute("d",
+    "M148,152 " +
+    "C112,152 112,132 112,108 " +
+    "C112,78 130,48 170,48 " +
+    "C210,48 228,78 228,108 " +
+    "C228,132 228,152 192,152 " +
+    "Z"
+  );
+  g.appendChild(glass);
+
+  var neck = document.createElementNS(NS, "path");
+  neck.setAttribute("class", "bulb-neck");
+  neck.setAttribute("d", "M148,152 L192,152 L188,162 L152,162 Z");
+  g.appendChild(neck);
+
+  var hl1 = document.createElementNS(NS, "path");
+  hl1.setAttribute("class", "bulb-highlight-shape");
+  hl1.setAttribute("d", "M130,68 Q118,103 135,133 Q145,108 142,83 Q140,73 130,68 Z");
+  g.appendChild(hl1);
+  var hl2 = document.createElementNS(NS, "circle");
+  hl2.setAttribute("class", "bulb-highlight-dot");
+  hl2.setAttribute("cx", "155"); hl2.setAttribute("cy", "56"); hl2.setAttribute("r", "6");
+  g.appendChild(hl2);
+
+  var baseTop = 162, baseBottom = 205, hwTop = 23, hwBottom = 17;
+  var base = document.createElementNS(NS, "path");
+  base.setAttribute("class", "base-shape");
+  base.setAttribute("d",
+    "M" + (cx - hwTop) + "," + baseTop + " " +
+    "L" + (cx + hwTop) + "," + baseTop + " " +
+    "L" + (cx + hwBottom) + "," + (baseBottom - 7) + " " +
+    "Q" + (cx + hwBottom) + "," + baseBottom + " " + (cx + hwBottom - 6) + "," + baseBottom + " " +
+    "L" + (cx - hwBottom + 6) + "," + baseBottom + " " +
+    "Q" + (cx - hwBottom) + "," + baseBottom + " " + (cx - hwBottom) + "," + (baseBottom - 7) + " " +
+    "Z"
+  );
+  g.appendChild(base);
+  [0.19, 0.37, 0.56, 0.74].forEach(function(f){
+    var y = baseTop + f * (baseBottom - baseTop);
+    var hw = hwTop + (hwBottom - hwTop) * f;
+    var line = document.createElementNS(NS, "line");
+    line.setAttribute("class", "base-stripe");
+    line.setAttribute("x1", cx - hw + 3); line.setAttribute("y1", y.toFixed(1));
+    line.setAttribute("x2", cx + hw - 3); line.setAttribute("y2", y.toFixed(1));
+    g.appendChild(line);
+  });
+
+  var filamentPts = [[156,150],[161,100],[166,130],[170,75],[174,130],[179,100],[184,150]];
+  var fd = "M" + filamentPts.map(function(p){ return p[0]+","+p[1]; }).join(" L");
+  var filament = document.createElementNS(NS, "path");
+  filament.setAttribute("class", "filament");
+  filament.setAttribute("d", fd);
+  g.appendChild(filament);
+
+  function fractalBolt(x1, y1, x2, y2, depth, offsetScale){
+    if(depth <= 0) return [[x1, y1], [x2, y2]];
+    var midx = (x1 + x2) / 2, midy = (y1 + y2) / 2;
+    var dx = x2 - x1, dy = y2 - y1, len = Math.hypot(dx, dy) || 1;
+    var perpX = -dy / len, perpY = dx / len;
+    var disp = (Math.random() - 0.5) * 2 * offsetScale;
+    midx += perpX * disp; midy += perpY * disp;
+    var left = fractalBolt(x1, y1, midx, midy, depth - 1, offsetScale * 0.55);
+    var right = fractalBolt(midx, midy, x2, y2, depth - 1, offsetScale * 0.55);
+    return left.concat(right.slice(1));
+  }
+  function toPath(pts){
+    return "M" + pts.map(function(p){ return p[0].toFixed(1) + "," + p[1].toFixed(1); }).join(" L");
+  }
+
+  function spawnSpark(){
+    var angle = Math.random() * Math.PI * 2;
+    var r1 = r + 3, r2 = r + 40 + Math.random() * 45;
+    var x1 = cx + Math.cos(angle) * r1, y1 = cy + Math.sin(angle) * r1;
+    var x2 = cx + Math.cos(angle) * r2, y2 = cy + Math.sin(angle) * r2;
+    var main = fractalBolt(x1, y1, x2, y2, 3, 7);
+    var mainD = toPath(main);
+
+    var group = document.createElementNS(NS, "g");
+    group.setAttribute("class", "spark-group");
+
+    var glow = document.createElementNS(NS, "path");
+    glow.setAttribute("class", "spark-glow");
+    glow.setAttribute("d", mainD);
+    group.appendChild(glow);
+    var core = document.createElementNS(NS, "path");
+    core.setAttribute("class", "spark-core");
+    core.setAttribute("d", mainD);
+    group.appendChild(core);
+
+    [0.3, 0.55].forEach(function(frac, bi){
+      var idx = Math.round(frac * (main.length - 1));
+      var bx = main[idx][0], by = main[idx][1];
+      var branchAngle = angle + (bi === 0 ? 1 : -1) * (0.45 + Math.random() * 0.5);
+      var blen = 20 + Math.random() * 16;
+      var bx2 = bx + Math.cos(branchAngle) * blen;
+      var by2 = by + Math.sin(branchAngle) * blen;
+      var branch = fractalBolt(bx, by, bx2, by2, 2, 4);
+      var bd = toPath(branch);
+      var bGlow = document.createElementNS(NS, "path");
+      bGlow.setAttribute("class", "branch-glow");
+      bGlow.setAttribute("d", bd);
+      group.appendChild(bGlow);
+      var bCore = document.createElementNS(NS, "path");
+      bCore.setAttribute("class", "branch-core");
+      bCore.setAttribute("d", bd);
+      group.appendChild(bCore);
+    });
+
+    svg.appendChild(group);
+    requestAnimationFrame(function(){ group.classList.add("firing"); });
+    setTimeout(function(){ group.remove(); }, 900);
+  }
+
+  function startSparkGenerator(){
+    spawnSpark();
+    setTimeout(startSparkGenerator, 1800 + Math.random() * 2700);
+  }
+  for(var s = 0; s < 3; s++){
+    setTimeout(startSparkGenerator, Math.random() * 2500);
+  }
+
+  for(var j = 0; j < 5; j++){
+    var orbitR = 78 + (j % 2) * 14;
+    var dur = 5000 + j * 700;
+    var startAngle = (j / 5) * Math.PI * 2;
+    var dot = document.createElementNS(NS, "circle");
+    dot.setAttribute("class", "orbit");
+    dot.setAttribute("r", "1.8");
+    svg.appendChild(dot);
+    (function(orbitR, dur, startAngle, dot){
+      var start = null;
+      function frame(t){
+        if(start === null) start = t;
+        var elapsed = t - start;
+        var a = startAngle + (elapsed / dur) * Math.PI * 2;
+        dot.setAttribute("cx", cx + Math.cos(a) * orbitR);
+        dot.setAttribute("cy", cy + Math.sin(a) * orbitR * .78);
+        requestAnimationFrame(frame);
+      }
+      requestAnimationFrame(frame);
+    })(orbitR, dur, startAngle, dot);
   }
 })();
 </script>
