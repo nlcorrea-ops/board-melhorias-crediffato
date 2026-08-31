@@ -143,6 +143,7 @@
   h1{font-size:26px; line-height:1.25; margin:0 0 6px; font-weight:600; letter-spacing:-.01em;}
   .sub{color:var(--text-mid); font-size:14.5px; max-width:52ch; margin:0;}
   .meta{font-family:var(--font-mono); font-size:12px; color:var(--text-low); text-align:right; min-width:160px; line-height:1.7; display:flex; flex-direction:column; align-items:flex-end; gap:2px;}
+  .meta-icons{display:flex; align-items:center; gap:8px;}
   .meta b{color:var(--text-mid); font-weight:500;}
   .user-chip{
     font-family:var(--font-mono); font-size:11px; color:var(--text-mid);
@@ -545,6 +546,24 @@
   @keyframes modalPopIn{from{opacity:0; transform:translateY(10px) scale(.97);} to{opacity:1; transform:translateY(0) scale(1);}}
   .modal-head{display:flex; align-items:center; justify-content:space-between; margin-bottom:16px;}
   .modal-head h2{font-size:17px; margin:0; font-weight:600;}
+
+  /* Busca global (Ctrl+K) */
+  .gsearch-modal{max-width:560px; padding:0; display:flex; flex-direction:column; max-height:70vh;}
+  .gsearch-head{display:flex; align-items:center; gap:10px; padding:16px 18px; border-bottom:1px solid var(--hairline); flex-shrink:0;}
+  .gsearch-head svg{color:var(--text-low); flex-shrink:0;}
+  .gsearch-input{flex:1; background:none; border:none; color:var(--text-hi); font-family:var(--font-display); font-size:15px; outline:none; min-width:0;}
+  .gsearch-hint{font-family:var(--font-mono); font-size:10.5px; color:var(--text-low); border:1px solid var(--hairline); border-radius:5px; padding:2px 6px; flex-shrink:0;}
+  .gsearch-close{background:none; border:none; color:var(--text-low); cursor:pointer; font-size:16px; padding:4px; line-height:1; flex-shrink:0;}
+  .gsearch-close:hover{color:var(--text-hi);}
+  .gsearch-results{overflow-y:auto; padding:8px;}
+  .gsearch-group-label{font-family:var(--font-mono); font-size:10.5px; letter-spacing:.08em; text-transform:uppercase; color:var(--text-low); padding:10px 10px 6px;}
+  .gsearch-result{display:flex; flex-direction:column; gap:2px; padding:10px 12px; border-radius:8px; cursor:pointer;}
+  .gsearch-result:hover{background:var(--ink-2);}
+  .gsearch-result-title{font-size:13.5px; font-weight:500; color:var(--text-hi);}
+  .gsearch-result-meta{font-size:11.5px; color:var(--text-low);}
+  .gsearch-empty{padding:30px 16px; text-align:center; color:var(--text-low); font-size:13px;}
+  @keyframes searchJumpFlash{0%{background:var(--brand-red-dim);} 100%{background:transparent;}}
+  .search-jump-highlight{animation:searchJumpFlash 1.6s ease-out;}
   .modal-close{
     background:none; border:none; color:var(--text-low); font-size:16px; cursor:pointer;
     width:28px; height:28px; border-radius:6px; line-height:1;
@@ -1406,6 +1425,10 @@
       <p class="sub" id="app-sub">Guia de melhorias internas e institucionais, organizado por setor e por responsável. Clique em um cartão para ver o comparativo completo; use os campos de status e responsável para acompanhar o andamento.</p>
     </div>
     <div class="meta">
+      <div class="meta-icons">
+        <button type="button" class="settings-btn" id="global-search-btn" title="Busca global (Ctrl+K)" aria-label="Busca global" aria-haspopup="dialog">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" aria-hidden="true"><circle cx="11" cy="11" r="7" stroke="currentColor" stroke-width="2"/><path d="M20 20l-3.5-3.5" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg>
+        </button>
       <div class="settings-menu" id="settings-menu">
         <button type="button" class="settings-btn" id="settings-btn" title="Configurações" aria-label="Configurações" aria-haspopup="true" aria-expanded="false">
           <svg width="17" height="17" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M12 15.5a3.5 3.5 0 1 0 0-7 3.5 3.5 0 0 0 0 7Z"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 1 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 1 1-2.83-2.83l.06-.06A1.65 1.65 0 0 0 4.6 15a1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 1 1 2.83-2.83l.06.06A1.65 1.65 0 0 0 9 4.6a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 1 1 2.83 2.83l-.06.06A1.65 1.65 0 0 0 19.4 9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1Z" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linejoin="round"/></svg>
@@ -1440,6 +1463,7 @@
             </div>
           </div>
         </div>
+      </div>
       </div>
     </div>
   </header>
@@ -1747,6 +1771,18 @@
   </div>
 
   </div>
+  </div>
+
+  <div class="modal-overlay" id="global-search-overlay">
+    <div class="modal gsearch-modal" role="dialog" aria-modal="true" aria-label="Busca global">
+      <div class="gsearch-head">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" aria-hidden="true"><circle cx="11" cy="11" r="7" stroke="currentColor" stroke-width="2"/><path d="M20 20l-3.5-3.5" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg>
+        <input type="text" id="global-search-input" class="gsearch-input" placeholder="Buscar demandas e rotinas..." aria-label="Busca global" autocomplete="off" />
+        <span class="gsearch-hint">Esc</span>
+        <button type="button" class="gsearch-close" id="global-search-close" aria-label="Fechar busca">✕</button>
+      </div>
+      <div class="gsearch-results" id="global-search-results"></div>
+    </div>
   </div>
 
   <div class="modal-overlay" id="modal-overlay">
@@ -4649,6 +4685,106 @@ function visibleData(){
   return DATA.filter(d => areasForUser().includes(d.area));
 }
 
+// ---------- Busca global (Ctrl+K) ----------
+// Busca em demandas e rotinas dentro do que a pessoa já pode ver (mesmo escopo de
+// visibleData()/scopedRoutines() usado no resto do app) — não é uma busca "de admin".
+function renderGlobalSearchResults(query){
+  const resultsEl = document.getElementById("global-search-results");
+  if(!resultsEl) return;
+  const q = query.trim().toLowerCase();
+  if(!q){
+    resultsEl.innerHTML = '<p class="gsearch-empty">Digite pra buscar em demandas e rotinas.</p>';
+    return;
+  }
+  const items = visibleData().filter(d =>
+    d.id.toLowerCase().includes(q) ||
+    d.title.toLowerCase().includes(q) ||
+    (d.hoje || "").toLowerCase().includes(q) ||
+    (d.sugestao || "").toLowerCase().includes(q)
+  ).slice(0, 8);
+  const FREQ_LABEL = { diaria:"Diária", semanal:"Semanal", mensal:"Mensal", anual:"Anual" };
+  const routines = scopedRoutines().filter(r =>
+    r.title.toLowerCase().includes(q) || (r.description || "").toLowerCase().includes(q)
+  ).slice(0, 8);
+  if(!items.length && !routines.length){
+    resultsEl.innerHTML = `<p class="gsearch-empty">Nada encontrado pra "${escapeHtml(query.trim())}".</p>`;
+    return;
+  }
+  let html = "";
+  if(items.length){
+    html += '<div class="gsearch-group-label">Demandas</div>';
+    html += items.map(it => {
+      const where = isArchived(it) ? "Arquivada" : (itemStage(it) === "backlog" ? "Backlog" : "Board");
+      return `<div class="gsearch-result" data-gsearch-item="${escapeHtml(it.id)}">
+        <span class="gsearch-result-title">${escapeHtml(it.title)}</span>
+        <span class="gsearch-result-meta">${escapeHtml(it.id)} · ${escapeHtml(sectorLabel(it.area))} · ${where}</span>
+      </div>`;
+    }).join("");
+  }
+  if(routines.length){
+    html += '<div class="gsearch-group-label">Rotinas</div>';
+    html += routines.map(r => `<div class="gsearch-result" data-gsearch-routine="${escapeHtml(r.id)}">
+        <span class="gsearch-result-title">${escapeHtml(r.title)}</span>
+        <span class="gsearch-result-meta">${escapeHtml(sectorLabel(r.sector))} · ${FREQ_LABEL[r.frequency] || r.frequency}</span>
+      </div>`).join("");
+  }
+  resultsEl.innerHTML = html;
+}
+
+function flashJumpTarget(el){
+  if(!el) return;
+  el.scrollIntoView({ behavior:"smooth", block:"center" });
+  el.classList.remove("search-jump-highlight");
+  void el.offsetWidth;
+  el.classList.add("search-jump-highlight");
+  setTimeout(() => el.classList.remove("search-jump-highlight"), 1600);
+}
+
+function openGlobalSearchItem(id){
+  const item = DATA.find(d => d.id === id);
+  if(!item) return;
+  closeGlobalSearch();
+  // Reseta os filtros pra garantir que o item apareça mesmo que estivesse escondido
+  // por um filtro ativo de severidade/status/área/responsável ou pela busca do arquivo.
+  state.sev = "todos"; state.status = "todos"; state.area = "todos"; state.assignee = "todos";
+  state.archiveSearch = "";
+  state.tab = isArchived(item) ? "archive" : (itemStage(item) === "backlog" ? "backlog" : "board");
+  openCardIds.add(item.id);
+  renderTabs();
+  requestAnimationFrame(() => {
+    flashJumpTarget(document.querySelector(`.card[data-id="${CSS.escape(item.id)}"]`));
+  });
+}
+
+function openGlobalSearchRoutine(id){
+  const routine = ROUTINES.find(r => r.id === id);
+  if(!routine) return;
+  closeGlobalSearch();
+  state.tab = "routines";
+  state.routinesView = "detail";
+  state.routineDetailArea = routine.sector;
+  renderTabs();
+  requestAnimationFrame(() => {
+    const btn = document.querySelector(`[data-edit-routine="${CSS.escape(routine.id)}"]`);
+    flashJumpTarget(btn && btn.closest(".routine-check-row"));
+  });
+}
+
+function openGlobalSearch(){
+  const overlay = document.getElementById("global-search-overlay");
+  const input = document.getElementById("global-search-input");
+  if(!overlay || !input) return;
+  overlay.classList.add("open");
+  input.value = "";
+  renderGlobalSearchResults("");
+  setTimeout(() => input.focus(), 30);
+}
+
+function closeGlobalSearch(){
+  const overlay = document.getElementById("global-search-overlay");
+  if(overlay) overlay.classList.remove("open");
+}
+
 function updateSummary(){
   const vd = visibleData().filter(d => itemStage(d) === "board" && !isArchived(d));
   document.getElementById("sum-total").textContent = vd.length;
@@ -5177,6 +5313,30 @@ document.addEventListener("keydown", (e) => {
   if(e.key === "Escape" && document.getElementById("conclusion-modal-overlay").classList.contains("open")) cancelConclusionModal();
   if(e.key === "Escape" && document.getElementById("edit-access-modal-overlay").classList.contains("open")) closeEditAccessModal();
   if(e.key === "Escape" && document.getElementById("routine-modal-overlay").classList.contains("open")) closeRoutineModal();
+  if(e.key === "Escape" && document.getElementById("global-search-overlay").classList.contains("open")) closeGlobalSearch();
+});
+
+// Ctrl+K (ou Cmd+K no Mac) abre a busca global de qualquer aba, a qualquer momento —
+// funciona mesmo com o foco em outro campo, já que é um atalho com modificador.
+document.addEventListener("keydown", (e) => {
+  if((e.ctrlKey || e.metaKey) && e.key.toLowerCase() === "k"){
+    e.preventDefault();
+    openGlobalSearch();
+  }
+});
+document.getElementById("global-search-btn").addEventListener("click", openGlobalSearch);
+document.getElementById("global-search-close").addEventListener("click", closeGlobalSearch);
+document.getElementById("global-search-overlay").addEventListener("click", (e) => {
+  if(e.target.id === "global-search-overlay") closeGlobalSearch();
+});
+document.getElementById("global-search-input").addEventListener("input", (e) => {
+  renderGlobalSearchResults(e.target.value);
+});
+document.getElementById("global-search-results").addEventListener("click", (e) => {
+  const itemEl = e.target.closest("[data-gsearch-item]");
+  if(itemEl){ openGlobalSearchItem(itemEl.getAttribute("data-gsearch-item")); return; }
+  const routineEl = e.target.closest("[data-gsearch-routine]");
+  if(routineEl){ openGlobalSearchRoutine(routineEl.getAttribute("data-gsearch-routine")); }
 });
 
 let pendingConclusionId = null;
