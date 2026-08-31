@@ -1223,29 +1223,38 @@
     background:radial-gradient(circle, #8b8dfb55, transparent 70%);
     filter:blur(30px);
   }
-  .mist-blob-1{width:220px; height:220px; top:8%; left:12%; animation:mistDrift1 14s ease-in-out infinite;}
+  .mist-blob-1{width:220px; height:220px; top:5%; left:6%; animation:mistDrift1 14s ease-in-out infinite;}
   .mist-blob-2{
-    width:260px; height:260px; top:48%; right:8%;
+    width:260px; height:260px; top:50%; right:4%;
     background:radial-gradient(circle, #8b8dfb40, transparent 70%);
     animation:mistDrift2 18s ease-in-out infinite -6s;
   }
+  .mist-blob-3{
+    width:200px; height:200px; bottom:2%; left:38%;
+    background:radial-gradient(circle, #8b8dfb38, transparent 70%);
+    animation:mistDrift1 16s ease-in-out infinite -9s;
+  }
   @keyframes mistDrift1{
-    0%,100%{transform:translate(0,0) scale(1); opacity:.55;}
-    50%{transform:translate(28px,20px) scale(1.15); opacity:.85;}
+    0%,100%{transform:translate(0,0) scale(1); opacity:.5;}
+    50%{transform:translate(36px,26px) scale(1.15); opacity:.8;}
   }
   @keyframes mistDrift2{
     0%,100%{transform:translate(0,0) scale(1); opacity:.4;}
-    50%{transform:translate(-24px,-16px) scale(1.1); opacity:.7;}
+    50%{transform:translate(-32px,-22px) scale(1.1); opacity:.7;}
   }
-  .signal-ring{
-    fill:none; stroke:var(--pa); stroke-width:1.4; opacity:0;
-    transform-box:fill-box; transform-origin:50% 50%;
-    animation:signalPing 4.8s ease-out infinite;
+  /* ondas de sinal: nascem em pontos aleatórios espalhados pelo retângulo inteiro
+     (ver JS), não a partir da lâmpada — dá a sensação de fundo vivo, não de "raio
+     saindo do objeto". */
+  .bg-ping{
+    position:absolute; width:14px; height:14px; margin:-7px 0 0 -7px;
+    border:1.4px solid var(--pa); border-radius:50%;
+    pointer-events:none; z-index:0; opacity:0;
+    animation:bgPing 3.4s ease-out forwards;
   }
-  @keyframes signalPing{
-    0%{transform:scale(.7); opacity:.5;}
-    70%{opacity:.12;}
-    100%{transform:scale(2.6); opacity:0;}
+  @keyframes bgPing{
+    0%{transform:scale(1); opacity:.5;}
+    70%{opacity:.1;}
+    100%{transform:scale(11); opacity:0;}
   }
   .net-wrap{width:320px; max-width:100%; margin:0 auto; position:relative; z-index:1;}
   .net-wrap svg{width:100%; height:auto; overflow:visible;}
@@ -1726,9 +1735,10 @@
       <h2>Agora Eu Sei</h2>
     </div>
     <p class="sub" style="margin-bottom:14px;">Assistente de IA pra tirar dúvidas rápidas sobre convênio, negociações, ouvidoria e mais — em breve por aqui.</p>
-    <div class="teaser-card">
+    <div class="teaser-card" id="agorasei-teaser-card">
       <div class="mist-blob mist-blob-1" aria-hidden="true"></div>
       <div class="mist-blob mist-blob-2" aria-hidden="true"></div>
+      <div class="mist-blob mist-blob-3" aria-hidden="true"></div>
       <div class="net-wrap">
         <svg id="agorasei-bulb-svg" viewBox="0 0 340 260"></svg>
       </div>
@@ -5819,16 +5829,6 @@ async function handlePasswordResetLink(oobCode){
   if(!svg) return;
   var cx = 170, cy = 100, r = 58;
 
-  // ondas de sinal: anéis que nascem no centro e se expandem sumindo, como um
-  // radar/sinal sendo emitido — ficam atrás da lâmpada (adicionados primeiro).
-  for(var ringI = 0; ringI < 3; ringI++){
-    var ring = document.createElementNS(NS, "circle");
-    ring.setAttribute("class", "signal-ring");
-    ring.setAttribute("cx", cx); ring.setAttribute("cy", cy); ring.setAttribute("r", 62);
-    ring.style.animationDelay = (ringI * 1.6) + "s";
-    svg.appendChild(ring);
-  }
-
   var g = document.createElementNS(NS, "g");
   g.setAttribute("class", "bulb-group");
   svg.appendChild(g);
@@ -5976,6 +5976,27 @@ async function handlePasswordResetLink(oobCode){
       }
       requestAnimationFrame(frame);
     })(orbitR, dur, startAngle, dot);
+  }
+
+  // ondas de sinal: nascem em pontos aleatórios espalhados pelo retângulo
+  // inteiro (não a partir da lâmpada), como um radar/sinal sendo emitido.
+  var card = document.getElementById("agorasei-teaser-card");
+  if(card){
+    var spawnPing = function(){
+      var ping = document.createElement("div");
+      ping.className = "bg-ping";
+      ping.style.left = (8 + Math.random() * 84) + "%";
+      ping.style.top = (10 + Math.random() * 80) + "%";
+      card.appendChild(ping);
+      setTimeout(function(){ ping.remove(); }, 3500);
+    };
+    var startPingGenerator = function(){
+      spawnPing();
+      setTimeout(startPingGenerator, 2200 + Math.random() * 2600);
+    };
+    for(var pg = 0; pg < 2; pg++){
+      setTimeout(startPingGenerator, Math.random() * 2000);
+    }
   }
 })();
 </script>
