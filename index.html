@@ -715,6 +715,37 @@
   }
   .archive-search:focus-visible{outline:2px solid #6c8cff; outline-offset:1px;}
 
+  /* Tendência mensal (aba Arquivo) */
+  .trend-block{
+    background:var(--ink-1); border:1px solid var(--hairline); border-radius:var(--radius);
+    padding:18px 20px 14px; margin-bottom:18px; position:relative; overflow:hidden;
+  }
+  .trend-head{display:flex; align-items:baseline; justify-content:space-between; gap:12px; margin-bottom:14px; flex-wrap:wrap; position:relative; z-index:1;}
+  .trend-total{font-size:12.5px; color:var(--text-mid); margin:0;}
+  .trend-total b{color:var(--text-hi); font-variant-numeric:tabular-nums;}
+  .chart-wrap{position:relative; z-index:1;}
+  .bar-col{cursor:pointer;}
+  .bar-value{font-family:var(--font-mono); font-size:11px; fill:var(--text-mid); font-variant-numeric:tabular-nums;}
+  .bar-value.current{fill:var(--text-low);}
+  .bar-label{font-family:var(--font-mono); font-size:10.5px; fill:var(--text-low);}
+  .bar-fill{fill:var(--brand-red);}
+  .bar-fill.current{fill:none; stroke:var(--brand-red); stroke-width:1.5; stroke-dasharray:3 3;}
+  .bar-hit{fill:transparent;}
+  .trend-baseline{stroke:var(--hairline); stroke-width:1;}
+  .trend-block .tooltip{
+    position:absolute; pointer-events:none; background:var(--ink-2); border:1px solid var(--hairline);
+    border-radius:8px; padding:7px 10px; font-size:12px; color:var(--text-hi); white-space:nowrap;
+    transform:translate(-50%,-100%); margin-top:-10px; opacity:0; transition:opacity .12s ease; z-index:5;
+    box-shadow:0 8px 20px #00000055;
+  }
+  .trend-block .tooltip.show{opacity:1;}
+  .trend-block .tooltip .tt-label{font-family:var(--font-mono); font-size:10px; color:var(--text-low); text-transform:uppercase; letter-spacing:.06em; display:block; margin-bottom:2px;}
+  .trend-block .tooltip .tt-value{font-weight:600;}
+  .current-note{font-size:11px; color:var(--text-low); margin:8px 2px 0; font-style:italic; position:relative; z-index:1;}
+  @media (prefers-reduced-motion:reduce){
+    .trend-block .mist-blob{animation:none;}
+  }
+
   .admin-grid{display:grid; grid-template-columns:1fr 1fr; gap:20px;}
   @media (max-width:800px){
     .admin-grid{grid-template-columns:1fr;}
@@ -1644,6 +1675,21 @@
       <h2>Arquivo</h2>
     </div>
     <p class="sub" style="margin-bottom:14px;">Demandas concluídas e já validadas — fora do Board, mas sempre disponíveis pra consulta.</p>
+
+    <div class="trend-block">
+      <div class="mist-blob mist-blob-1" aria-hidden="true"></div>
+      <div class="mist-blob mist-blob-2" aria-hidden="true"></div>
+      <div class="trend-head">
+        <p class="summary-label">Itens concluídos por mês</p>
+        <p class="trend-total">Últimos 6 meses: <b id="trend-total-value">—</b> itens</p>
+      </div>
+      <div class="chart-wrap">
+        <svg id="archive-trend-svg" viewBox="0 0 600 150" style="width:100%; height:auto; overflow:visible;"></svg>
+        <div class="tooltip" id="archive-trend-tooltip"><span class="tt-label"></span><span class="tt-value"></span></div>
+      </div>
+      <p class="current-note" id="archive-trend-note"></p>
+    </div>
+
     <input type="text" class="archive-search" id="archive-search" placeholder="Pesquisar por título ou ID..." aria-label="Pesquisar no arquivo" />
     <div class="backlog-list" id="archive-list" style="margin-top:14px;"></div>
   </div>
@@ -3473,6 +3519,112 @@ function renderValidations(){
   restoreFocusedObs(focus);
 }
 
+// Quantos itens (dos que a pessoa pode ver) foram concluídos e validados em cada um
+// dos últimos `monthsBack` meses, usando a data em que cada item entrou em "concluído"
+// (completedByInfo) — o mesmo critério de isArchived() usado na listagem da aba.
+function monthlyCompletedTrend(monthsBack){
+  const n = monthsBack || 6;
+  const now = new Date();
+  const buckets = [];
+  for(let i = n - 1; i >= 0; i--){
+    const d = new Date(now.getFullYear(), now.getMonth() - i, 1);
+    let label = d.toLocaleDateString("pt-BR", { month: "short" }).replace(".", "");
+    label = label.charAt(0).toUpperCase() + label.slice(1);
+    buckets.push({ year: d.getFullYear(), month: d.getMonth(), label, value: 0, current: i === 0 });
+  }
+  visibleData().filter(isArchived).forEach(item => {
+    const info = completedByInfo(item);
+    if(!info || !info.at) return;
+    const at = new Date(info.at);
+    const bucket = buckets.find(b => b.year === at.getFullYear() && b.month === at.getMonth());
+    if(bucket) bucket.value++;
+  });
+  return buckets;
+}
+
+function renderArchiveTrend(){
+  const svg = document.getElementById("archive-trend-svg");
+  const tooltip = document.getElementById("archive-trend-tooltip");
+  const totalEl = document.getElementById("trend-total-value");
+  const noteEl = document.getElementById("archive-trend-note");
+  if(!svg || !tooltip) return;
+  svg.innerHTML = "";
+
+  const months = monthlyCompletedTrend(6);
+  const total = months.reduce((sum, m) => sum + m.value, 0);
+  if(totalEl) totalEl.textContent = total;
+  const currentMonth = months[months.length - 1];
+  if(noteEl) noteEl.textContent = currentMonth ? `${currentMonth.label} ainda em andamento — contagem parcial.` : "";
+
+  const NS = "http://www.w3.org/2000/svg";
+  const W = 600, H = 150;
+  const padTop = 22, padBottom = 24, padSide = 14;
+  const plotH = H - padTop - padBottom;
+  const maxVal = Math.max(1, ...months.map(m => m.value));
+  const n = months.length;
+  const colW = (W - padSide * 2) / n;
+  const barW = Math.min(34, colW * 0.5);
+
+  const baseline = document.createElementNS(NS, "line");
+  baseline.setAttribute("class", "trend-baseline");
+  baseline.setAttribute("x1", padSide); baseline.setAttribute("x2", W - padSide);
+  baseline.setAttribute("y1", H - padBottom); baseline.setAttribute("y2", H - padBottom);
+  svg.appendChild(baseline);
+
+  months.forEach((m, i) => {
+    const cx = padSide + colW * i + colW / 2;
+    const barH = Math.max(3, (m.value / maxVal) * plotH);
+    const y = H - padBottom - barH;
+
+    const g = document.createElementNS(NS, "g");
+    g.setAttribute("class", "bar-col");
+
+    const rect = document.createElementNS(NS, "rect");
+    rect.setAttribute("class", "bar-fill" + (m.current ? " current" : ""));
+    rect.setAttribute("x", cx - barW / 2);
+    rect.setAttribute("y", y);
+    rect.setAttribute("width", barW);
+    rect.setAttribute("height", barH);
+    rect.setAttribute("rx", 4);
+    g.appendChild(rect);
+
+    const valueLabel = document.createElementNS(NS, "text");
+    valueLabel.setAttribute("class", "bar-value" + (m.current ? " current" : ""));
+    valueLabel.setAttribute("x", cx);
+    valueLabel.setAttribute("y", Math.max(12, y - 8));
+    valueLabel.setAttribute("text-anchor", "middle");
+    valueLabel.textContent = m.value;
+    g.appendChild(valueLabel);
+
+    const monthLabel = document.createElementNS(NS, "text");
+    monthLabel.setAttribute("class", "bar-label");
+    monthLabel.setAttribute("x", cx);
+    monthLabel.setAttribute("y", H - padBottom + 16);
+    monthLabel.setAttribute("text-anchor", "middle");
+    monthLabel.textContent = m.label;
+    g.appendChild(monthLabel);
+
+    const hit = document.createElementNS(NS, "rect");
+    hit.setAttribute("class", "bar-hit");
+    hit.setAttribute("x", padSide + colW * i);
+    hit.setAttribute("y", padTop);
+    hit.setAttribute("width", colW);
+    hit.setAttribute("height", plotH + 10);
+    g.appendChild(hit);
+
+    g.addEventListener("mouseenter", () => {
+      tooltip.querySelector(".tt-label").textContent = m.label + (m.current ? " (em andamento)" : "");
+      tooltip.querySelector(".tt-value").textContent = m.value + " concluído" + (m.value === 1 ? "" : "s");
+      tooltip.style.left = (cx / W * 100) + "%";
+      tooltip.style.top = (y / H * 100) + "%";
+      tooltip.classList.add("show");
+    });
+    g.addEventListener("mouseleave", () => tooltip.classList.remove("show"));
+
+    svg.appendChild(g);
+  });
+}
+
 function renderArchive(){
   const list = document.getElementById("archive-list");
   if(!list) return;
@@ -3483,6 +3635,7 @@ function renderArchive(){
   list.innerHTML = items.map(it => cardHTML(it)).join("") || '<p class="snippet" style="padding:8px 2px;">Nenhuma demanda arquivada encontrada.</p>';
   wireCardListeners(list);
   restoreFocusedObs(focus);
+  renderArchiveTrend();
 }
 
 function renderAdminLists(){
