@@ -732,6 +732,18 @@
   .bar-fill.current{fill:none; stroke:var(--brand-red); stroke-width:1.5; stroke-dasharray:3 3;}
   .bar-hit{fill:transparent;}
   .trend-baseline{stroke:var(--hairline); stroke-width:1;}
+  /* Brilho por valor: uma mancha suave e borrada atrás de cada barra — sem forma
+     própria, só intensidade — maior e mais forte no mês com mais itens concluídos. */
+  .value-glow{
+    position:absolute; bottom:22px; left:0; border-radius:50%; pointer-events:none; z-index:0;
+    background:radial-gradient(circle, var(--pa) 0%, transparent 72%);
+    filter:blur(16px); transform:translateX(-50%);
+    animation-name:glowBreathe; animation-timing-function:ease-in-out; animation-iteration-count:infinite;
+  }
+  @keyframes glowBreathe{
+    0%,100%{transform:translateX(-50%) scale(1);}
+    50%{transform:translateX(-50%) scale(1.1);}
+  }
   .trend-block .tooltip{
     position:absolute; pointer-events:none; background:var(--ink-2); border:1px solid var(--hairline);
     border-radius:8px; padding:7px 10px; font-size:12px; color:var(--text-hi); white-space:nowrap;
@@ -743,7 +755,7 @@
   .trend-block .tooltip .tt-value{font-weight:600;}
   .current-note{font-size:11px; color:var(--text-low); margin:8px 2px 0; font-style:italic; position:relative; z-index:1;}
   @media (prefers-reduced-motion:reduce){
-    .trend-block .mist-blob{animation:none;}
+    .value-glow{animation:none;}
   }
 
   .admin-grid{display:grid; grid-template-columns:1fr 1fr; gap:20px;}
@@ -1677,14 +1689,12 @@
     <p class="sub" style="margin-bottom:14px;">Demandas concluídas e já validadas — fora do Board, mas sempre disponíveis pra consulta.</p>
 
     <div class="trend-block">
-      <div class="mist-blob mist-blob-1" aria-hidden="true"></div>
-      <div class="mist-blob mist-blob-2" aria-hidden="true"></div>
       <div class="trend-head">
         <p class="summary-label">Itens concluídos por mês</p>
         <p class="trend-total">Últimos 6 meses: <b id="trend-total-value">—</b> itens</p>
       </div>
-      <div class="chart-wrap">
-        <svg id="archive-trend-svg" viewBox="0 0 600 150" style="width:100%; height:auto; overflow:visible;"></svg>
+      <div class="chart-wrap" id="archive-trend-chart-wrap">
+        <svg id="archive-trend-svg" viewBox="0 0 600 150" style="width:100%; height:auto; overflow:visible; position:relative; z-index:1;"></svg>
         <div class="tooltip" id="archive-trend-tooltip"><span class="tt-label"></span><span class="tt-value"></span></div>
       </div>
       <p class="current-note" id="archive-trend-note"></p>
@@ -3547,8 +3557,10 @@ function renderArchiveTrend(){
   const tooltip = document.getElementById("archive-trend-tooltip");
   const totalEl = document.getElementById("trend-total-value");
   const noteEl = document.getElementById("archive-trend-note");
+  const chartWrap = document.getElementById("archive-trend-chart-wrap");
   if(!svg || !tooltip) return;
   svg.innerHTML = "";
+  if(chartWrap) chartWrap.querySelectorAll(".value-glow").forEach(el => el.remove());
 
   const months = monthlyCompletedTrend(6);
   const total = months.reduce((sum, m) => sum + m.value, 0);
@@ -3564,6 +3576,23 @@ function renderArchiveTrend(){
   const n = months.length;
   const colW = (W - padSide * 2) / n;
   const barW = Math.min(34, colW * 0.5);
+
+  if(chartWrap){
+    months.forEach((m, i) => {
+      const t = m.value / maxVal;
+      const leftPct = ((padSide + colW * i + colW / 2) / W) * 100;
+      const size = 46 + t * 78;
+      const glow = document.createElement("div");
+      glow.className = "value-glow";
+      glow.style.left = leftPct + "%";
+      glow.style.width = size + "px";
+      glow.style.height = size + "px";
+      glow.style.opacity = (0.22 + t * 0.4).toFixed(2);
+      glow.style.animationDuration = (4.2 + i * 0.5).toFixed(1) + "s";
+      glow.style.animationDelay = (-i * 0.9).toFixed(1) + "s";
+      chartWrap.appendChild(glow);
+    });
+  }
 
   const baseline = document.createElementNS(NS, "line");
   baseline.setAttribute("class", "trend-baseline");
