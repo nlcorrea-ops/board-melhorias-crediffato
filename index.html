@@ -407,13 +407,11 @@
 
   .card{
     background:var(--ink-2); border:1px solid var(--hairline); border-left:3px solid var(--rail, var(--text-low));
-    border-radius:10px; padding:14px 14px 13px; cursor:pointer;
+    border-radius:10px; padding:14px 14px 13px;
     transition:transform .15s ease, background .15s ease, border-color .15s ease, box-shadow .15s ease;
     opacity:0; transform:translateY(8px); animation:rise .5s ease forwards;
   }
   .card:hover{background:var(--ink-3); transform:translateY(-2px); box-shadow:0 8px 20px #00000030;}
-  .card.open:hover{transform:none;}
-  .card:focus-visible{outline:2px solid #6c8cff; outline-offset:2px;}
   .card[draggable="true"]{cursor:grab;}
   .card.dragging{opacity:.4;}
   @keyframes rise{ to{opacity:1; transform:translateY(0);} }
@@ -498,21 +496,18 @@
   .snippet{font-size:12.5px; color:var(--text-mid); line-height:1.5; margin:0;}
   .snippet b{color:var(--text-hi); font-weight:600;}
 
-  .detail{max-height:0; overflow:hidden; transition:max-height .35s cubic-bezier(.4,0,.2,1);}
-  .card.open .detail{max-height:1800px; margin-top:10px;}
   .detail-block{border-top:1px dashed var(--hairline); padding-top:10px; margin-top:2px; opacity:0; transform:translateY(6px);}
   .detail-block + .detail-block{margin-top:10px;}
-  .card.open .detail-block{animation:detailReveal .35s ease forwards;}
-  .card.open .detail-block:nth-child(1){animation-delay:.03s;}
-  .card.open .detail-block:nth-child(2){animation-delay:.08s;}
-  .card.open .detail-block:nth-child(3){animation-delay:.13s;}
-  .card.open .detail-block:nth-child(4){animation-delay:.18s;}
-  .card.open .detail-block:nth-child(5){animation-delay:.23s;}
+  .demand-modal.animate .detail-block{animation:detailReveal .35s ease forwards;}
+  .demand-modal.animate .detail-block:nth-child(1){animation-delay:.05s;}
+  .demand-modal.animate .detail-block:nth-child(2){animation-delay:.1s;}
+  .demand-modal.animate .detail-block:nth-child(3){animation-delay:.15s;}
+  .demand-modal.animate .detail-block:nth-child(4){animation-delay:.2s;}
+  .demand-modal.animate .detail-block:nth-child(5){animation-delay:.25s;}
   @keyframes detailReveal{ to{opacity:1; transform:translateY(0);} }
   .detail-label{font-family:var(--font-mono); font-size:10px; text-transform:uppercase; letter-spacing:.08em; color:var(--text-low); margin-bottom:4px;}
   .detail-text{font-size:12.5px; color:var(--text-mid); line-height:1.55; margin:0;}
 
-  .card.open{border-color:var(--rail, var(--hairline)); box-shadow:0 8px 22px #00000030;}
   .expand-btn{
     display:flex; align-items:center; justify-content:center; gap:6px; width:100%; margin-top:10px; padding:8px;
     background:transparent; border:none; border-top:1px solid var(--hairline); border-radius:0 0 8px 8px;
@@ -520,12 +515,38 @@
     cursor:pointer; transition:color .15s ease, background .15s ease;
   }
   .expand-btn:hover{color:var(--text-hi); background:var(--ink-3);}
+  .expand-btn:hover .expand-chevron{transform:translateY(1px);}
   .expand-btn:focus-visible{outline:2px solid #6c8cff; outline-offset:-2px;}
-  .expand-chevron{transition:transform .25s cubic-bezier(.4,0,.2,1); flex-shrink:0;}
-  .card.open .expand-chevron{transform:rotate(180deg);}
-  .expand-btn .label-open{display:none;}
-  .card.open .expand-btn .label-closed{display:none;}
-  .card.open .expand-btn .label-open{display:inline;}
+  .expand-chevron{transition:transform .15s ease; flex-shrink:0;}
+
+  /* Modal de expansão de demanda */
+  .demand-modal{
+    background:var(--ink-1); border:1px solid var(--hairline); border-radius:18px;
+    width:100%; max-width:680px; max-height:88vh; overflow-y:auto;
+    box-shadow:0 30px 80px #000000aa;
+    animation:demandModalRise .32s cubic-bezier(.2,.9,.25,1.1);
+  }
+  @keyframes demandModalRise{from{opacity:0; transform:translateY(24px) scale(.96);} to{opacity:1; transform:translateY(0) scale(1);}}
+  .dm-head{
+    position:sticky; top:0; background:var(--ink-1); z-index:2;
+    padding:20px 24px 16px; border-bottom:1px solid var(--hairline);
+    display:flex; align-items:flex-start; justify-content:space-between; gap:16px;
+  }
+  .dm-head-left{display:flex; flex-direction:column; gap:8px; min-width:0;}
+  .dm-tags{display:flex; align-items:center; gap:8px; flex-wrap:wrap;}
+  .dm-title{font-size:19px; font-weight:600; margin:0; letter-spacing:-.01em;}
+  .dm-close{
+    background:var(--ink-2); border:1px solid var(--hairline); color:var(--text-mid); border-radius:999px;
+    width:32px; height:32px; display:flex; align-items:center; justify-content:center; cursor:pointer; flex-shrink:0;
+    transition:color .15s ease, border-color .15s ease, transform .2s ease;
+  }
+  .dm-close:hover{color:var(--text-hi); border-color:var(--text-low); transform:rotate(90deg);}
+  .dm-body{padding:20px 24px 26px;}
+  .dm-body .detail-block:first-child{border-top:none; padding-top:0; margin-top:0;}
+  @media (prefers-reduced-motion:reduce){
+    .demand-modal{animation:none;}
+    .dm-close:hover{transform:none;}
+  }
 
   .storage-note{
     font-family:var(--font-mono); font-size:11px; color:var(--text-low);
@@ -1862,6 +1883,19 @@
     </div>
   </div>
 
+  <div class="modal-overlay" id="demand-modal-overlay">
+    <div class="demand-modal" id="demand-modal" role="dialog" aria-modal="true" aria-labelledby="demand-modal-title">
+      <div class="dm-head">
+        <div class="dm-head-left">
+          <div class="dm-tags" id="demand-modal-tags"></div>
+          <h2 class="dm-title" id="demand-modal-title"></h2>
+        </div>
+        <button type="button" class="dm-close" id="demand-modal-close" aria-label="Fechar">✕</button>
+      </div>
+      <div class="dm-body" id="demand-modal-body"></div>
+    </div>
+  </div>
+
   <div class="modal-overlay" id="modal-overlay">
     <div class="modal" role="dialog" aria-modal="true" aria-labelledby="modal-title">
       <div class="modal-head">
@@ -3125,12 +3159,103 @@ function applyRemoteState(data){
 }
 
 let state = { sev:"todos", status:"todos", area:"todos", assignee:"todos", view:"area", tab:"board", archiveSearch:"", userSearch:"", userStatusFilter:"todos", userRoleFilter:"todos", routinesView:"agenda", routineArea:"todos", routineDetailArea:"", agendaDay:null };
-const openCardIds = new Set();
 const obsDrafts = {}; // id -> texto ainda não salvo, preservado entre re-renders
 
-function cardHTML(item){
-  const isOpen = openCardIds.has(item.id);
+// Conteúdo de aprofundamento de uma demanda (descrição completa, requisitos, histórico,
+// itens relacionados, anexos, observações) — usado dentro do modal de expansão (ver
+// openDemandModal), fora do cartão compacto, pra dar espaço de sobra sem depender de
+// rolar a lista inteira só pra ler uma demanda.
+function demandDetailBlocksHTML(item){
   const obsValue = Object.prototype.hasOwnProperty.call(obsDrafts, item.id) ? obsDrafts[item.id] : "";
+  const relatedIds = item.related || [];
+  const relatedItems = relatedIds.map(rid => DATA.find(d => d.id === rid)).filter(Boolean);
+  const relatedCandidates = DATA.filter(d => d.id !== item.id && !relatedIds.includes(d.id) && areasForUser().includes(d.area));
+  return `
+    <div class="detail-block">
+      <div class="detail-label">Descrição do problema</div>
+      <p class="detail-text">${escapeHtml(item.hoje || "Não descrito ainda.")}</p>
+    </div>
+    <div class="detail-block">
+      <div class="detail-label">Requisitos para conclusão</div>
+      <p class="detail-text">${escapeHtml(item.sugestao || "Não descrito ainda.")}</p>
+    </div>
+    ${canManage() ? `
+    <div class="detail-block">
+      <div class="detail-label">Histórico de status</div>
+      <div class="history-list">
+        ${(item.statusHistory && item.statusHistory.length) ? item.statusHistory.map(h => `
+          <div class="history-item">
+            <span class="history-pill" data-st="${h.from}">${statusLabel(h.from)}</span>
+            <span class="history-arrow">→</span>
+            <span class="history-pill" data-st="${h.to}">${statusLabel(h.to)}</span>
+            <span class="history-meta">${escapeHtml(h.authorName || h.authorEmail || "—")} · ${formatCommentDate(h.at)}</span>
+          </div>
+        `).join("") : '<p class="history-empty">Nenhuma mudança de status registrada ainda.</p>'}
+      </div>
+    </div>
+    <div class="detail-block">
+      <div class="detail-label">Itens relacionados</div>
+      <div class="related-list">
+        ${relatedItems.length ? relatedItems.map(r => `
+          <div class="related-item">
+            <span class="related-pill" style="border-color:${sectorColor(r.area)};">${r.id}</span>
+            <span class="related-title">${escapeHtml(r.title)}</span>
+            <span class="related-status" data-st="${r.status}">${statusLabel(r.status)}</span>
+            <button type="button" class="related-remove-btn" data-rel-remove-id="${item.id}" data-rel-target="${r.id}" aria-label="Desvincular">✕</button>
+          </div>
+        `).join("") : '<p class="related-empty">Nenhum item relacionado ainda.</p>'}
+      </div>
+      <div class="related-add-row">
+        <select class="status-select related-select" data-rel-add-id="${item.id}" aria-label="Vincular a outra demanda">
+          <option value="">+ Vincular a outra demanda...</option>
+          ${relatedCandidates.map(d => `<option value="${d.id}">${d.id} · ${escapeHtml(d.title)}</option>`).join("")}
+        </select>
+      </div>
+    </div>
+    ` : ""}
+    ${ATTACHMENTS_ENABLED ? `
+    <div class="detail-block">
+      <div class="detail-label">Anexos</div>
+      <div class="attachments-list">
+        ${(item.attachments && item.attachments.length) ? item.attachments.map(a => `
+          <div class="attachment-item">
+            <a href="${a.url}" target="_blank" rel="noopener noreferrer" class="attachment-link" title="${escapeHtml(a.name)}">📎 ${escapeHtml(a.name)}</a>
+            <span class="attachment-meta">${formatFileSize(a.size)} · ${escapeHtml(a.authorName || a.authorEmail || "—")} · ${formatCommentDate(a.at)}</span>
+            ${canManage() ? `<button type="button" class="attachment-remove-btn" data-att-remove-id="${item.id}" data-att-id="${a.id}" aria-label="Remover anexo">✕</button>` : ""}
+          </div>
+        `).join("") : '<p class="attachment-empty">Nenhum anexo ainda.</p>'}
+      </div>
+      ${(storageMode === "firebase" && firebaseReady) ? `
+        <div class="attachment-upload-row">
+          <input type="file" class="attachment-input" data-att-upload-id="${item.id}" aria-label="Anexar arquivo a ${escapeHtml(item.title)}" />
+          <span class="attachment-upload-hint" data-att-hint-id="${item.id}"></span>
+        </div>
+      ` : '<p class="attachment-empty">Anexos ainda não disponíveis nesta plataforma.</p>'}
+    </div>
+    ` : ""}
+    <div class="detail-block">
+      <div class="detail-label">Observações</div>
+      <div class="comments-list">
+        ${(item.comentarios && item.comentarios.length) ? item.comentarios.map(c => `
+          <div class="comment-item">
+            <div class="comment-meta">
+              <span class="comment-author">${escapeHtml(c.authorName || c.authorEmail || "Observação anterior")}</span>
+              <span class="comment-date">${formatCommentDate(c.at)}</span>
+            </div>
+            <p class="comment-text">${escapeHtml(c.text)}</p>
+          </div>
+        `).join("") : '<p class="comment-empty">Nenhuma observação registrada ainda.</p>'}
+      </div>
+      <textarea class="obs-textarea" data-obs-id="${item.id}" rows="2" maxlength="500" placeholder="Adicionar uma nova observação (fica registrada como comentário e não pode ser alterada depois)">${obsValue}</textarea>
+      <div class="obs-save-row">
+        <span class="obs-saved-hint" data-obs-hint-id="${item.id}" style="font-family:var(--font-mono); font-size:10px; color:var(--st-concluido); opacity:0;">Publicado ✓</span>
+        <button type="button" class="obs-save-btn" data-obs-save-id="${item.id}">Publicar observação</button>
+      </div>
+    </div>
+  `;
+}
+
+function cardHTML(item){
   const draggable = state.tab === "board" && state.view === "status";
   const stage = itemStage(item);
   const assignee = itemAssignee(item);
@@ -3138,11 +3263,8 @@ function cardHTML(item){
   const due = dueInfo(item);
   const completed = completedByInfo(item);
   const validation = validationInfo(item);
-  const relatedIds = item.related || [];
-  const relatedItems = relatedIds.map(rid => DATA.find(d => d.id === rid)).filter(Boolean);
-  const relatedCandidates = DATA.filter(d => d.id !== item.id && !relatedIds.includes(d.id) && areasForUser().includes(d.area));
   return `
-    <div class="card${isOpen ? " open" : ""}" style="--rail:${sectorColor(item.area)};" data-sev="${item.sev}" data-id="${item.id}" tabindex="0" role="button" aria-expanded="${isOpen ? "true" : "false"}" ${draggable ? 'draggable="true"' : ''}>
+    <div class="card" style="--rail:${sectorColor(item.area)};" data-sev="${item.sev}" data-id="${item.id}" ${draggable ? 'draggable="true"' : ''}>
       <div class="card-top">
         <span style="display:flex; align-items:center; gap:6px; flex-wrap:wrap;">
           <span class="tag">${item.id}</span>
@@ -3180,96 +3302,50 @@ function cardHTML(item){
         ${due.hint ? `<span class="due-hint ${due.state}">${due.hint}</span>` : ""}
       </div>
       <p class="snippet"><b>Problema:</b> ${(item.hoje && item.hoje.length > 92) ? escapeHtml(item.hoje.slice(0,92)) + "…" : escapeHtml(item.hoje || "Não descrito ainda.")}</p>
-      <div class="detail">
-        <div class="detail-block">
-          <div class="detail-label">Descrição do problema</div>
-          <p class="detail-text">${escapeHtml(item.hoje || "Não descrito ainda.")}</p>
-        </div>
-        <div class="detail-block">
-          <div class="detail-label">Requisitos para conclusão</div>
-          <p class="detail-text">${escapeHtml(item.sugestao || "Não descrito ainda.")}</p>
-        </div>
-        ${canManage() ? `
-        <div class="detail-block">
-          <div class="detail-label">Histórico de status</div>
-          <div class="history-list">
-            ${(item.statusHistory && item.statusHistory.length) ? item.statusHistory.map(h => `
-              <div class="history-item">
-                <span class="history-pill" data-st="${h.from}">${statusLabel(h.from)}</span>
-                <span class="history-arrow">→</span>
-                <span class="history-pill" data-st="${h.to}">${statusLabel(h.to)}</span>
-                <span class="history-meta">${escapeHtml(h.authorName || h.authorEmail || "—")} · ${formatCommentDate(h.at)}</span>
-              </div>
-            `).join("") : '<p class="history-empty">Nenhuma mudança de status registrada ainda.</p>'}
-          </div>
-        </div>
-        <div class="detail-block">
-          <div class="detail-label">Itens relacionados</div>
-          <div class="related-list">
-            ${relatedItems.length ? relatedItems.map(r => `
-              <div class="related-item">
-                <span class="related-pill" style="border-color:${sectorColor(r.area)};">${r.id}</span>
-                <span class="related-title">${escapeHtml(r.title)}</span>
-                <span class="related-status" data-st="${r.status}">${statusLabel(r.status)}</span>
-                <button type="button" class="related-remove-btn" data-rel-remove-id="${item.id}" data-rel-target="${r.id}" aria-label="Desvincular">✕</button>
-              </div>
-            `).join("") : '<p class="related-empty">Nenhum item relacionado ainda.</p>'}
-          </div>
-          <div class="related-add-row">
-            <select class="status-select related-select" data-rel-add-id="${item.id}" aria-label="Vincular a outra demanda">
-              <option value="">+ Vincular a outra demanda...</option>
-              ${relatedCandidates.map(d => `<option value="${d.id}">${d.id} · ${escapeHtml(d.title)}</option>`).join("")}
-            </select>
-          </div>
-        </div>
-        ` : ""}
-        ${ATTACHMENTS_ENABLED ? `
-        <div class="detail-block">
-          <div class="detail-label">Anexos</div>
-          <div class="attachments-list">
-            ${(item.attachments && item.attachments.length) ? item.attachments.map(a => `
-              <div class="attachment-item">
-                <a href="${a.url}" target="_blank" rel="noopener noreferrer" class="attachment-link" title="${escapeHtml(a.name)}">📎 ${escapeHtml(a.name)}</a>
-                <span class="attachment-meta">${formatFileSize(a.size)} · ${escapeHtml(a.authorName || a.authorEmail || "—")} · ${formatCommentDate(a.at)}</span>
-                ${canManage() ? `<button type="button" class="attachment-remove-btn" data-att-remove-id="${item.id}" data-att-id="${a.id}" aria-label="Remover anexo">✕</button>` : ""}
-              </div>
-            `).join("") : '<p class="attachment-empty">Nenhum anexo ainda.</p>'}
-          </div>
-          ${(storageMode === "firebase" && firebaseReady) ? `
-            <div class="attachment-upload-row">
-              <input type="file" class="attachment-input" data-att-upload-id="${item.id}" aria-label="Anexar arquivo a ${escapeHtml(item.title)}" />
-              <span class="attachment-upload-hint" data-att-hint-id="${item.id}"></span>
-            </div>
-          ` : '<p class="attachment-empty">Anexos ainda não disponíveis nesta plataforma.</p>'}
-        </div>
-        ` : ""}
-        <div class="detail-block">
-          <div class="detail-label">Observações</div>
-          <div class="comments-list">
-            ${(item.comentarios && item.comentarios.length) ? item.comentarios.map(c => `
-              <div class="comment-item">
-                <div class="comment-meta">
-                  <span class="comment-author">${escapeHtml(c.authorName || c.authorEmail || "Observação anterior")}</span>
-                  <span class="comment-date">${formatCommentDate(c.at)}</span>
-                </div>
-                <p class="comment-text">${escapeHtml(c.text)}</p>
-              </div>
-            `).join("") : '<p class="comment-empty">Nenhuma observação registrada ainda.</p>'}
-          </div>
-          <textarea class="obs-textarea" data-obs-id="${item.id}" rows="2" maxlength="500" placeholder="Adicionar uma nova observação (fica registrada como comentário e não pode ser alterada depois)">${obsValue}</textarea>
-          <div class="obs-save-row">
-            <span class="obs-saved-hint" data-obs-hint-id="${item.id}" style="font-family:var(--font-mono); font-size:10px; color:var(--st-concluido); opacity:0;">Publicado ✓</span>
-            <button type="button" class="obs-save-btn" data-obs-save-id="${item.id}">Publicar observação</button>
-          </div>
-        </div>
-      </div>
-      <button type="button" class="expand-btn" data-expand-id="${item.id}" aria-expanded="${isOpen ? "true" : "false"}" aria-label="Ver detalhes de ${escapeHtml(item.title)}">
-        <span class="label-closed">Ver detalhes</span>
-        <span class="label-open">Ver menos</span>
+      <button type="button" class="expand-btn" data-expand-id="${item.id}" aria-haspopup="dialog" aria-label="Ver detalhes de ${escapeHtml(item.title)}">
+        Ver detalhes
         <svg class="expand-chevron" width="14" height="14" viewBox="0 0 16 16" fill="none" aria-hidden="true"><path d="M4 6l4 4 4-4" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/></svg>
       </button>
     </div>
   `;
+}
+
+// Modal de expansão de demanda: mostra a demanda inteira (descrição, requisitos,
+// histórico, relacionados, anexos, observações) de uma vez, sem precisar rolar a
+// lista — reaproveita wireCardListeners() pra ligar os mesmos controles/botões que
+// já existem no cartão (não duplica lógica de eventos).
+function openDemandModal(id){
+  const item = DATA.find(d => d.id === id);
+  if(!item) return;
+  const overlay = document.getElementById("demand-modal-overlay");
+  const modal = document.getElementById("demand-modal");
+  const tagsEl = document.getElementById("demand-modal-tags");
+  const titleEl = document.getElementById("demand-modal-title");
+  const bodyEl = document.getElementById("demand-modal-body");
+  if(!overlay || !modal || !tagsEl || !titleEl || !bodyEl) return;
+
+  const due = dueInfo(item);
+  tagsEl.innerHTML = `
+    <span class="tag">${escapeHtml(item.id)}</span>
+    <span class="area-tag">${escapeHtml(sectorLabel(item.area))}</span>
+    <span class="sev ${item.sev}"><span class="bars"><i></i><i></i><i></i></span>${SEV_LABEL[item.sev]}</span>
+    ${due.state === "atrasado" ? `<span class="overdue-badge">${ICON_WARNING} Atrasado</span>` : ""}
+  `;
+  titleEl.innerHTML = `${escapeHtml(item.title)}${item.shared ? `<span class="shared">${escapeHtml(item.shared)}</span>` : ""}${item.custom ? `<span class="shared">Nova</span>` : ""}`;
+  bodyEl.innerHTML = demandDetailBlocksHTML(item);
+
+  overlay.classList.add("open");
+  modal.classList.remove("animate");
+  void modal.offsetWidth; // força reflow pra reiniciar a animação de cascata a cada abertura
+  modal.classList.add("animate");
+  modal.scrollTop = 0;
+
+  wireCardListeners(bodyEl);
+}
+
+function closeDemandModal(){
+  const overlay = document.getElementById("demand-modal-overlay");
+  if(overlay) overlay.classList.remove("open");
 }
 
 function passesFilter(item){
@@ -3318,10 +3394,6 @@ function updateFiltersBadge(){
 
 function wireCardListeners(container){
   container.querySelectorAll(".card").forEach(card => {
-    card.addEventListener("click", () => toggleCard(card));
-    card.addEventListener("keydown", (e) => {
-      if(e.key === "Enter" || e.key === " "){ e.preventDefault(); toggleCard(card); }
-    });
     if(card.getAttribute("draggable") === "true"){
       card.addEventListener("dragstart", (e) => {
         e.stopPropagation();
@@ -3457,7 +3529,7 @@ function wireCardListeners(container){
   container.querySelectorAll(".expand-btn").forEach(btn => {
     btn.addEventListener("click", (e) => {
       e.stopPropagation();
-      toggleCard(btn.closest(".card"));
+      openDemandModal(btn.getAttribute("data-expand-id"));
     });
   });
 }
@@ -4888,14 +4960,8 @@ function updateSideNavIndicator(){
 }
 window.addEventListener("resize", () => { try{ updateSideNavIndicator(); }catch(e){} });
 
-function toggleCard(card){
-  const isOpen = card.classList.toggle("open");
-  card.setAttribute("aria-expanded", isOpen ? "true" : "false");
-  const id = card.getAttribute("data-id");
-  if(isOpen) openCardIds.add(id); else openCardIds.delete(id);
-  const expandBtn = card.querySelector(".expand-btn");
-  if(expandBtn) expandBtn.setAttribute("aria-expanded", isOpen ? "true" : "false");
-}
+// Abre o modal de detalhes de uma demanda (ver openDemandModal, definida junto com o
+// resto da UI de cartão mais abaixo).
 
 function visibleData(){
   return DATA.filter(d => areasForUser().includes(d.area));
@@ -4965,11 +5031,10 @@ function openGlobalSearchItem(id){
   state.sev = "todos"; state.status = "todos"; state.area = "todos"; state.assignee = "todos";
   state.archiveSearch = "";
   state.tab = isArchived(item) ? "archive" : (itemStage(item) === "backlog" ? "backlog" : "board");
-  openCardIds.add(item.id);
   renderTabs();
-  requestAnimationFrame(() => {
-    flashJumpTarget(document.querySelector(`.card[data-id="${CSS.escape(item.id)}"]`));
-  });
+  // Abre a demanda direto no modal de detalhes — não precisa mais achar/rolar até o
+  // cartão na lista, o modal já mostra tudo por cima, não importa onde ele está.
+  requestAnimationFrame(() => openDemandModal(item.id));
 }
 
 function openGlobalSearchRoutine(id){
@@ -5530,6 +5595,11 @@ document.addEventListener("keydown", (e) => {
   if(e.key === "Escape" && document.getElementById("edit-access-modal-overlay").classList.contains("open")) closeEditAccessModal();
   if(e.key === "Escape" && document.getElementById("routine-modal-overlay").classList.contains("open")) closeRoutineModal();
   if(e.key === "Escape" && document.getElementById("global-search-overlay").classList.contains("open")) closeGlobalSearch();
+  if(e.key === "Escape" && document.getElementById("demand-modal-overlay").classList.contains("open")) closeDemandModal();
+});
+document.getElementById("demand-modal-close").addEventListener("click", closeDemandModal);
+document.getElementById("demand-modal-overlay").addEventListener("click", (e) => {
+  if(e.target.id === "demand-modal-overlay") closeDemandModal();
 });
 
 // Ctrl+K (ou Cmd+K no Mac) abre a busca global de qualquer aba, a qualquer momento —
