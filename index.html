@@ -498,14 +498,34 @@
   .snippet{font-size:12.5px; color:var(--text-mid); line-height:1.5; margin:0;}
   .snippet b{color:var(--text-hi); font-weight:600;}
 
-  .detail{max-height:0; overflow:hidden; transition:max-height .3s ease;}
-  .card.open .detail{max-height:1400px; margin-top:10px;}
-  .detail-block{border-top:1px dashed var(--hairline); padding-top:10px; margin-top:2px;}
+  .detail{max-height:0; overflow:hidden; transition:max-height .35s cubic-bezier(.4,0,.2,1);}
+  .card.open .detail{max-height:1800px; margin-top:10px;}
+  .detail-block{border-top:1px dashed var(--hairline); padding-top:10px; margin-top:2px; opacity:0; transform:translateY(6px);}
   .detail-block + .detail-block{margin-top:10px;}
+  .card.open .detail-block{animation:detailReveal .35s ease forwards;}
+  .card.open .detail-block:nth-child(1){animation-delay:.03s;}
+  .card.open .detail-block:nth-child(2){animation-delay:.08s;}
+  .card.open .detail-block:nth-child(3){animation-delay:.13s;}
+  .card.open .detail-block:nth-child(4){animation-delay:.18s;}
+  .card.open .detail-block:nth-child(5){animation-delay:.23s;}
+  @keyframes detailReveal{ to{opacity:1; transform:translateY(0);} }
   .detail-label{font-family:var(--font-mono); font-size:10px; text-transform:uppercase; letter-spacing:.08em; color:var(--text-low); margin-bottom:4px;}
   .detail-text{font-size:12.5px; color:var(--text-mid); line-height:1.55; margin:0;}
-  .caret{font-family:var(--font-mono); font-size:11px; color:var(--text-low); transition:transform .2s ease;}
-  .card.open .caret{transform:rotate(180deg);}
+
+  .card.open{border-color:var(--rail, var(--hairline)); box-shadow:0 8px 22px #00000030;}
+  .expand-btn{
+    display:flex; align-items:center; justify-content:center; gap:6px; width:100%; margin-top:10px; padding:8px;
+    background:transparent; border:none; border-top:1px solid var(--hairline); border-radius:0 0 8px 8px;
+    color:var(--text-low); font-family:var(--font-mono); font-size:11px; letter-spacing:.04em; text-transform:uppercase;
+    cursor:pointer; transition:color .15s ease, background .15s ease;
+  }
+  .expand-btn:hover{color:var(--text-hi); background:var(--ink-3);}
+  .expand-btn:focus-visible{outline:2px solid #6c8cff; outline-offset:-2px;}
+  .expand-chevron{transition:transform .25s cubic-bezier(.4,0,.2,1); flex-shrink:0;}
+  .card.open .expand-chevron{transform:rotate(180deg);}
+  .expand-btn .label-open{display:none;}
+  .card.open .expand-btn .label-closed{display:none;}
+  .card.open .expand-btn .label-open{display:inline;}
 
   .storage-note{
     font-family:var(--font-mono); font-size:11px; color:var(--text-low);
@@ -1147,6 +1167,7 @@
     .modal{animation:none;}
     .filters-panel.open{animation:none;}
     .resolution-bar-row, .donut-multiple-item, .vbar-item, .vbar-crown{animation:none; opacity:1; transform:none;}
+    .detail-block{animation:none; opacity:1; transform:none;}
     .upgrade-ring, .upgrade-icon, #sync-btn.spinning svg{animation:none;}
     .login-card.converging, .wrap.portal-reveal{animation:none;}
     .donut-chart svg circle{transition:none;}
@@ -3242,7 +3263,11 @@ function cardHTML(item){
           </div>
         </div>
       </div>
-      <div style="text-align:right; margin-top:8px;"><span class="caret">▾ ver detalhes</span></div>
+      <button type="button" class="expand-btn" data-expand-id="${item.id}" aria-expanded="${isOpen ? "true" : "false"}" aria-label="Ver detalhes de ${escapeHtml(item.title)}">
+        <span class="label-closed">Ver detalhes</span>
+        <span class="label-open">Ver menos</span>
+        <svg class="expand-chevron" width="14" height="14" viewBox="0 0 16 16" fill="none" aria-hidden="true"><path d="M4 6l4 4 4-4" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/></svg>
+      </button>
     </div>
   `;
 }
@@ -3426,6 +3451,13 @@ function wireCardListeners(container){
     btn.addEventListener("click", (e) => {
       e.stopPropagation();
       markValidated(btn.getAttribute("data-validate-id"));
+    });
+  });
+
+  container.querySelectorAll(".expand-btn").forEach(btn => {
+    btn.addEventListener("click", (e) => {
+      e.stopPropagation();
+      toggleCard(btn.closest(".card"));
     });
   });
 }
@@ -4861,6 +4893,8 @@ function toggleCard(card){
   card.setAttribute("aria-expanded", isOpen ? "true" : "false");
   const id = card.getAttribute("data-id");
   if(isOpen) openCardIds.add(id); else openCardIds.delete(id);
+  const expandBtn = card.querySelector(".expand-btn");
+  if(expandBtn) expandBtn.setAttribute("aria-expanded", isOpen ? "true" : "false");
 }
 
 function visibleData(){
