@@ -2656,10 +2656,22 @@ function mondayOfWeek(date){
   d.setDate(d.getDate() - day);
   return d;
 }
-function currentPeriodKey(frequency, date){
+function currentPeriodKey(frequency, date, scheduledDays){
   const d = date || new Date();
   if(frequency === "diaria") return `${d.getFullYear()}-${pad2(d.getMonth() + 1)}-${pad2(d.getDate())}`;
   if(frequency === "semanal"){
+    // Rotina com dias específicos (ex.: seg/sex) tem uma ocorrência — e um período — por dia
+    // marcado, não um único período pra semana inteira. Senão, concluir na segunda já daria
+    // a rotina como feita até sexta. O período de cada ocorrência é o dia marcado mais recente
+    // (olhando até 6 dias pra trás), e passa a valer até a próxima ocorrência chegar.
+    if(scheduledDays && scheduledDays.length){
+      for(let back = 0; back < 7; back++){
+        const cand = new Date(d.getFullYear(), d.getMonth(), d.getDate() - back);
+        if(scheduledDays.includes(cand.getDay())){
+          return `semana-${cand.getFullYear()}-${pad2(cand.getMonth() + 1)}-${pad2(cand.getDate())}`;
+        }
+      }
+    }
     const m = mondayOfWeek(d);
     return `semana-${m.getFullYear()}-${pad2(m.getMonth() + 1)}-${pad2(m.getDate())}`;
   }
@@ -2668,7 +2680,7 @@ function currentPeriodKey(frequency, date){
   return "";
 }
 function routineStatus(r){
-  const period = currentPeriodKey(r.frequency);
+  const period = currentPeriodKey(r.frequency, null, r.scheduledDays);
   const completion = (r.completions || []).find(c => c.period === period) || null;
   return { period, done: !!completion, completion };
 }
@@ -4239,7 +4251,7 @@ function timeAgo(iso){
 function recentRoutineCompletions(routines, limit){
   const items = [];
   routines.forEach(r => {
-    const period = currentPeriodKey(r.frequency);
+    const period = currentPeriodKey(r.frequency, null, r.scheduledDays);
     const c = (r.completions || []).find(c => c.period === period);
     if(c && c.at) items.push({ routineTitle: r.title, byName: c.byName, at: c.at });
   });
