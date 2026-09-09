@@ -284,7 +284,7 @@
   .main-nav{
     position:sticky; top:24px; z-index:2;
     display:flex; flex-direction:column; align-items:center; gap:6px;
-    background:var(--glass-1); -webkit-backdrop-filter:blur(20px) saturate(1.3); backdrop-filter:blur(20px) saturate(1.3);
+    background:var(--glass-1); -webkit-backdrop-filter:blur(10px) saturate(1.2); backdrop-filter:blur(10px) saturate(1.2);
     border:1px solid var(--hairline); border-radius:16px;
     padding:12px 8px; width:60px; flex-shrink:0;
   }
@@ -343,7 +343,7 @@
   .summary{display:grid; grid-template-columns:repeat(4, 1fr); gap:14px;}
   .summary.status{grid-template-columns:repeat(3, 1fr);}
   .sumcard{
-    background:var(--glass-1); -webkit-backdrop-filter:blur(16px); backdrop-filter:blur(16px);
+    background:var(--glass-1); -webkit-backdrop-filter:blur(8px); backdrop-filter:blur(8px);
     border:1px solid var(--hairline); border-radius:var(--radius); padding:14px 16px;
   }
   .sumcard .n{font-family:var(--font-mono); font-size:22px; font-weight:600; transition:color .2s ease;}
@@ -404,7 +404,7 @@
 
   .board{display:grid; grid-template-columns:repeat(3, 1fr); gap:20px; align-items:start;}
   .column{
-    background:var(--glass-1); -webkit-backdrop-filter:blur(20px) saturate(1.3); backdrop-filter:blur(20px) saturate(1.3);
+    background:var(--glass-1); -webkit-backdrop-filter:blur(10px) saturate(1.2); backdrop-filter:blur(10px) saturate(1.2);
     border:1px solid var(--hairline); border-radius:18px; overflow:hidden; transition:border-color .15s ease;
   }
   .column.drag-over{border-color:var(--brand-red); box-shadow:0 0 0 1px var(--brand-red) inset; animation:dragOverPulse 1.1s ease-in-out infinite;}
@@ -447,7 +447,11 @@
   }
 
   .card{
-    background:var(--glass-2); -webkit-backdrop-filter:blur(14px); backdrop-filter:blur(14px);
+    /* Sem blur aqui de propósito: um board pode ter dezenas de cards ao mesmo tempo, e
+       backdrop-filter recalculado em cada um, a cada frame do fundo animado, era o maior
+       custo de performance da leva de vidro fosco. Mantém a transparência (ainda deixa a
+       rede de partículas entrever), só sem o blur pesado repetido dezenas de vezes. */
+    background:var(--glass-2);
     border:1px solid var(--hairline); border-left:3px solid var(--rail, var(--text-low));
     border-radius:10px; padding:14px 14px 13px;
     /* brilho ambiente atrás do card na cor do setor (--rail, já usado na tarja lateral) --
@@ -642,7 +646,7 @@
   .modal-overlay.open{display:flex; animation:overlayFadeIn .2s ease;}
   @keyframes overlayFadeIn{from{opacity:0;} to{opacity:1;}}
   .modal{
-    background:var(--glass-1); -webkit-backdrop-filter:blur(24px) saturate(1.3); backdrop-filter:blur(24px) saturate(1.3);
+    background:var(--glass-1); -webkit-backdrop-filter:blur(14px) saturate(1.2); backdrop-filter:blur(14px) saturate(1.2);
     border:1px solid var(--hairline); border-radius:16px;
     width:100%; max-width:480px; max-height:90vh; overflow-y:auto;
     padding:22px 24px 24px; box-shadow:0 20px 60px #00000066;
@@ -658,7 +662,7 @@
      em volta e os resultados chegando em cascata. Tudo escopado por id/classe própria pra não
      mexer nos outros modais (criar demanda, rotina etc.), que continuam no tratamento padrão. */
   #global-search-overlay.open{
-    background:#02030acc; backdrop-filter:blur(18px) saturate(1.2); align-items:flex-start;
+    background:#02030acc; backdrop-filter:blur(10px) saturate(1.2); align-items:flex-start;
     padding-top:min(14vh, 140px);
   }
   .gsearch-modal{
@@ -1173,7 +1177,7 @@
 
   .kpi-row{display:grid; grid-template-columns:repeat(7, 1fr); gap:14px; margin-bottom:28px;}
   .kpi-card{
-    background:var(--glass-1); -webkit-backdrop-filter:blur(16px); backdrop-filter:blur(16px);
+    background:var(--glass-1); -webkit-backdrop-filter:blur(8px); backdrop-filter:blur(8px);
     border:1px solid var(--hairline); border-radius:var(--radius); padding:16px; transition:border-color .2s ease, background-color .2s ease;
   }
   .kpi-card.kpi-alert{border-color:#e2564f66; background:#e2564f0f;}
@@ -1223,7 +1227,7 @@
     .bento-tile{transform:none !important; transition:none;}
   }
   .donut-block{
-    background:var(--glass-1); -webkit-backdrop-filter:blur(16px); backdrop-filter:blur(16px);
+    background:var(--glass-1); -webkit-backdrop-filter:blur(8px); backdrop-filter:blur(8px);
     border:1px solid var(--hairline); border-radius:var(--radius); padding:16px; margin-bottom:0;
   }
   .donut-chart{display:flex; align-items:center; gap:16px; flex-wrap:wrap;}
@@ -1238,7 +1242,8 @@
   .donut-multiples{display:grid; grid-template-columns:repeat(auto-fill, minmax(150px, 1fr)); gap:14px;}
   .donut-multiple-item{
     display:flex; flex-direction:column; align-items:center; gap:8px; text-align:center;
-    background:var(--glass-1); -webkit-backdrop-filter:blur(14px); backdrop-filter:blur(14px);
+    /* Sem blur (mesmo motivo do .card): pode repetir uma vez por setor. */
+    background:var(--glass-1);
     border:1px solid var(--hairline); border-radius:12px; padding:16px 12px;
     opacity:0; transform:translateY(8px); animation:rise .45s ease forwards; animation-delay:calc(var(--i, 0) * .06s);
   }
@@ -2539,7 +2544,7 @@ let lastMouseX = -9999, lastMouseY = -9999;
     canvas.width = w * dpr; canvas.height = h * dpr;
     canvas.style.width = w + "px"; canvas.style.height = h + "px";
     ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
-    const count = Math.min(150, Math.round((w * h) / 12000));
+    const count = Math.min(100, Math.round((w * h) / 14000));
     // orbitAngle e burstAngle são distribuídos em partes iguais ao redor do círculo (com um
     // leve desvio pra não ficar mecânico), nunca sorteados soltos — com poucas dezenas de
     // partículas, ângulo puramente aleatório concentra por acaso mais pontos de um lado que
@@ -6221,29 +6226,52 @@ function resetBentoTilt(){
 // Brilho reflexivo no vidro: um único listener delegado no document (em vez de um por
 // elemento) já resolve, porque as superfícies de vidro são recriadas o tempo todo via
 // innerHTML -- religar listener por elemento a cada render seria um transtorno à toa.
+// mousemove pode disparar muito mais que 60x/s num mouse de alta taxa de resposta -- ler
+// getBoundingClientRect() e escrever estilo a cada evento cru desperdiça trabalho. Guarda só
+// o evento mais recente e processa no máximo uma vez por frame (requestAnimationFrame).
 const GLASS_SHEEN_SELECTOR = ".column, .card, .kpi-card, .donut-block, .sumcard, .donut-multiple-item, .main-nav, .modal";
+let pendingSheenEvent = null;
 document.addEventListener("mousemove", (e) => {
   lastMouseX = e.clientX; lastMouseY = e.clientY; // usado pela celebração de conclusão (ver bgNetworkCelebrate)
-  if(prefersReducedMotion()) return;
-  const el = e.target.closest(GLASS_SHEEN_SELECTOR);
-  if(!el) return;
-  const rect = el.getBoundingClientRect();
-  el.style.setProperty("--sheen-x", `${e.clientX - rect.left}px`);
-  el.style.setProperty("--sheen-y", `${e.clientY - rect.top}px`);
+  if(!prefersReducedMotion()) pendingSheenEvent = e;
 });
+(function flushSheenFrame(){
+  if(pendingSheenEvent){
+    const e = pendingSheenEvent;
+    pendingSheenEvent = null;
+    const el = e.target.closest(GLASS_SHEEN_SELECTOR);
+    if(el){
+      const rect = el.getBoundingClientRect();
+      el.style.setProperty("--sheen-x", `${e.clientX - rect.left}px`);
+      el.style.setProperty("--sheen-y", `${e.clientY - rect.top}px`);
+    }
+  }
+  requestAnimationFrame(flushSheenFrame);
+})();
 
 const bentoGrid = document.querySelector(".bento-grid");
 if(bentoGrid){
+  let pendingTiltEvent = null;
   bentoGrid.addEventListener("mousemove", (e) => {
-    if(prefersReducedMotion()) return;
-    const tile = e.target.closest(".bento-tile");
-    if(!tile){ resetBentoTilt(); return; }
-    const rect = tile.getBoundingClientRect();
-    const px = (e.clientX - rect.left) / rect.width - 0.5;
-    const py = (e.clientY - rect.top) / rect.height - 0.5;
-    tile.style.transform = `rotateX(${(-py * 7).toFixed(2)}deg) rotateY(${(px * 7).toFixed(2)}deg)`;
+    if(!prefersReducedMotion()) pendingTiltEvent = e;
   });
   bentoGrid.addEventListener("mouseleave", resetBentoTilt);
+  (function flushTiltFrame(){
+    if(pendingTiltEvent){
+      const e = pendingTiltEvent;
+      pendingTiltEvent = null;
+      const tile = e.target.closest(".bento-tile");
+      if(!tile){
+        resetBentoTilt();
+      }else{
+        const rect = tile.getBoundingClientRect();
+        const px = (e.clientX - rect.left) / rect.width - 0.5;
+        const py = (e.clientY - rect.top) / rect.height - 0.5;
+        tile.style.transform = `rotateX(${(-py * 7).toFixed(2)}deg) rotateY(${(px * 7).toFixed(2)}deg)`;
+      }
+    }
+    requestAnimationFrame(flushTiltFrame);
+  })();
 }
 
 document.getElementById("filter-assignee").addEventListener("change", (e) => {
