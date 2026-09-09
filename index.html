@@ -480,15 +480,12 @@
   .card.dragging{opacity:.85; transform:rotate(-2deg) scale(1.03); box-shadow:0 14px 34px #00000045; cursor:grabbing; animation:none;}
   @keyframes rise{ to{opacity:1; transform:translateY(0);} }
 
-  /* Troca de aba (Board/Backlog/Rotinas/...): fade + leve deslize no próprio painel que
-     aparece, em vez do corte seco padrão. Só entra em jogo quando a aba muda de verdade
-     (ver renderTabs) -- não mexe no tamanho da página, então não tem o risco de tremor que a
-     View Transitions API nativa tinha entre abas de altura bem diferente. */
-  @keyframes tabPanelIn{ from{opacity:0; transform:translateY(8px);} to{opacity:1; transform:translateY(0);} }
-  .tab-panel.tab-enter{ animation:tabPanelIn .25s ease; }
-  @media (prefers-reduced-motion:reduce){
-    .tab-panel.tab-enter{ animation:none; }
-  }
+  /* Troca de aba (Board/Backlog/Rotinas/...): sem fade no painel inteiro -- chegou a existir
+     (ver histórico), mas a combinação de duas animações independentes acontecendo juntas (o
+     painel inteiro entrando + cada card/gráfico dentro dele com sua própria entrada) causava
+     a sensação de "carregar duas vezes". O conteúdo já tem vida própria de sobra (cards em
+     cascata, roscas crescendo, KPIs contando) sem precisar de mais uma camada de animação por
+     cima de tudo. */
 
   .card-top{display:flex; align-items:center; justify-content:space-between; gap:10px; margin-bottom:8px; flex-wrap:wrap;}
   .tag{font-family:var(--font-mono); font-size:11px; color:var(--text-low);}
@@ -5333,34 +5330,7 @@ function applyRoleLayout(){
   }
 }
 
-let lastRenderedTab = null;
 function renderTabs(){
-  // Só vale a pena animar a entrada quando a aba muda de verdade -- renderTabs() também é
-  // chamado a cada atualização de dado na MESMA aba (toggle de filtro, edição de card etc.),
-  // e disparar a animação nesses casos piscaria a tela sem motivo.
-  //
-  // Antes isso usava a View Transitions API nativa (document.startViewTransition), mas ela
-  // tenta esticar/encolher a página inteira entre a altura da aba antiga e da nova -- entre
-  // abas de altura bem diferente (Board com várias colunas vs. Backlog em lista) isso causava
-  // um tremor visível, e travar só o redimensionamento do grupo (::view-transition-group)
-  // não foi suficiente. Uma animação de entrada simples no próprio painel, igual à já usada
-  // em cards e gráficos a sessão toda, resolve sem esse risco -- não mexe no tamanho da
-  // página, só anima o conteúdo que já está no lugar certo.
-  const tabChanged = state.tab !== lastRenderedTab;
-  lastRenderedTab = state.tab;
-  renderTabsInner();
-  if(tabChanged && !prefersReducedMotion()){
-    const panel = document.getElementById(`${state.tab}-tab`);
-    if(panel){
-      panel.classList.remove("tab-enter");
-      void panel.offsetWidth; // força reflow pra animação reiniciar mesmo se a classe já tivesse acabado de ser removida
-      panel.classList.add("tab-enter");
-      panel.addEventListener("animationend", () => panel.classList.remove("tab-enter"), { once: true });
-    }
-  }
-}
-
-function renderTabsInner(){
   const overviewTab = document.getElementById("overview-tab");
   const boardTab = document.getElementById("board-tab");
   const backlogTab = document.getElementById("backlog-tab");
