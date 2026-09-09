@@ -23,6 +23,8 @@
     --ink-2:#1c1c1f;
     --ink-3:#27272b;
     --hairline:#323236;
+    --glass-1:rgba(19,19,21,.55);
+    --glass-2:rgba(28,28,31,.5);
     --text-hi:#f5f5f7;
     --text-mid:#a5a5ad;
     --text-low:#75757d;
@@ -59,6 +61,8 @@
     --ink-2:#eeeeef;
     --ink-3:#e2e2e5;
     --hairline:#dcdcdf;
+    --glass-1:rgba(255,255,255,.6);
+    --glass-2:rgba(238,238,239,.55);
     --text-hi:#18181b;
     --text-mid:#55555c;
     --text-low:#83838a;
@@ -80,6 +84,8 @@
     --ink-2:#141414;
     --ink-3:#1f1f1f;
     --hairline:#2a2a2a;
+    --glass-1:rgba(10,10,10,.55);
+    --glass-2:rgba(20,20,20,.5);
     --text-hi:#ffffff;
     --text-mid:#cfcfcf;
     --text-low:#8c8c8c;
@@ -92,6 +98,8 @@
     --ink-2:#2c141a;
     --ink-3:#3b1b23;
     --hairline:#4a232b;
+    --glass-1:rgba(33,13,19,.55);
+    --glass-2:rgba(44,20,26,.5);
     --text-hi:#fbeef0;
     --text-mid:#d8a9af;
     --text-low:#a97c82;
@@ -112,6 +120,10 @@
     body{padding:18px 14px 40px;}
   }
   #bg-network{position:fixed; inset:0; z-index:0; pointer-events:none;}
+  /* Canvas de celebração: por cima de todo o conteúdo do app (cards, colunas, modais), senão
+     o estouro de partículas fica escondido atrás da própria UI que disparou a ação -- era
+     exatamente esse o motivo de não "aparecer" quando desenhado junto com #bg-network. */
+  #fx-canvas{position:fixed; inset:0; z-index:500; pointer-events:none;}
 
   .wrap{position:relative; z-index:1; max-width:1320px;margin:0 auto; animation:appFadeIn .45s ease;}
   @keyframes appFadeIn{from{opacity:0;} to{opacity:1;}}
@@ -272,7 +284,8 @@
   .main-nav{
     position:sticky; top:24px; z-index:2;
     display:flex; flex-direction:column; align-items:center; gap:6px;
-    background:var(--ink-1); border:1px solid var(--hairline); border-radius:16px;
+    background:var(--glass-1); -webkit-backdrop-filter:blur(20px) saturate(1.3); backdrop-filter:blur(20px) saturate(1.3);
+    border:1px solid var(--hairline); border-radius:16px;
     padding:12px 8px; width:60px; flex-shrink:0;
   }
   .side-nav-indicator{
@@ -288,7 +301,8 @@
     background:transparent; border:none; border-radius:11px; padding:0; cursor:pointer;
     transition:color .2s ease, background-color .2s ease;
   }
-  .main-nav button .nav-icon{display:flex; flex-shrink:0; opacity:.75; transition:opacity .2s ease;}
+  .main-nav button .nav-icon{display:flex; flex-shrink:0; opacity:.75; transition:opacity .2s ease, transform .15s ease;}
+  .main-nav button:active .nav-icon{transform:scale(.8);}
   .main-nav button.active{color:var(--brand-red);}
   .main-nav button.active .nav-icon{opacity:1;}
   .main-nav button:not(.active):hover{color:var(--text-hi); background:var(--ink-2);}
@@ -328,7 +342,10 @@
   }
   .summary{display:grid; grid-template-columns:repeat(4, 1fr); gap:14px;}
   .summary.status{grid-template-columns:repeat(3, 1fr);}
-  .sumcard{background:var(--ink-1); border:1px solid var(--hairline); border-radius:var(--radius); padding:14px 16px;}
+  .sumcard{
+    background:var(--glass-1); -webkit-backdrop-filter:blur(16px); backdrop-filter:blur(16px);
+    border:1px solid var(--hairline); border-radius:var(--radius); padding:14px 16px;
+  }
   .sumcard .n{font-family:var(--font-mono); font-size:22px; font-weight:600; transition:color .2s ease;}
   .sumcard .l{font-size:11.5px; color:var(--text-low); text-transform:uppercase; letter-spacing:.08em; margin-top:2px;}
   .sumcard.crit .n{color:var(--sev-critica);}
@@ -349,6 +366,7 @@
     cursor:pointer; transition:all .15s ease;
   }
   .filter-btn:hover{border-color:var(--text-low); color:var(--text-hi);}
+  .filter-btn:active{transform:scale(.94);}
   .filter-btn.active{background:var(--text-hi); color:var(--ink-0); border-color:var(--text-hi);}
   .filter-btn.active.brand{background:var(--brand-red); border-color:var(--brand-red); color:#fff;}
   .filter-btn:focus-visible{outline:2px solid #6c8cff; outline-offset:2px;}
@@ -385,8 +403,18 @@
   .filter-select{width:auto; min-width:190px; padding:6px 26px 6px 10px;}
 
   .board{display:grid; grid-template-columns:repeat(3, 1fr); gap:20px; align-items:start;}
-  .column{background:var(--ink-1); border:1px solid var(--hairline); border-radius:18px; overflow:hidden;}
-  .column.drag-over{border-color:var(--brand-red); box-shadow:0 0 0 1px var(--brand-red) inset;}
+  .column{
+    background:var(--glass-1); -webkit-backdrop-filter:blur(20px) saturate(1.3); backdrop-filter:blur(20px) saturate(1.3);
+    border:1px solid var(--hairline); border-radius:18px; overflow:hidden; transition:border-color .15s ease;
+  }
+  .column.drag-over{border-color:var(--brand-red); box-shadow:0 0 0 1px var(--brand-red) inset; animation:dragOverPulse 1.1s ease-in-out infinite;}
+  @keyframes dragOverPulse{
+    0%, 100%{box-shadow:0 0 0 1px var(--brand-red) inset;}
+    50%{box-shadow:0 0 0 1px var(--brand-red) inset, 0 0 22px -4px var(--brand-red);}
+  }
+  @media (prefers-reduced-motion:reduce){
+    .column.drag-over{animation:none;}
+  }
   .col-head{padding:16px 18px 14px; border-bottom:1px solid var(--hairline); display:flex; align-items:center; justify-content:space-between;}
   .col-head .name{font-weight:600; font-size:15px; display:flex; align-items:center; gap:9px;}
   .rail-dot{width:9px;height:9px;border-radius:2px; flex-shrink:0; background:var(--text-low);}
@@ -419,15 +447,36 @@
   }
 
   .card{
-    background:var(--ink-2); border:1px solid var(--hairline); border-left:3px solid var(--rail, var(--text-low));
+    background:var(--glass-2); -webkit-backdrop-filter:blur(14px); backdrop-filter:blur(14px);
+    border:1px solid var(--hairline); border-left:3px solid var(--rail, var(--text-low));
     border-radius:10px; padding:14px 14px 13px;
-    transition:transform .15s ease, background .15s ease, border-color .15s ease, box-shadow .15s ease;
-    opacity:0; transform:translateY(8px); animation:rise .5s ease forwards;
+    /* brilho ambiente atrás do card na cor do setor (--rail, já usado na tarja lateral) --
+       reaproveita a mesma variável em vez de inventar uma cor nova por card. */
+    box-shadow:0 10px 26px -18px var(--rail, transparent);
+    transition:transform .15s ease, background .15s ease, border-color .15s ease, box-shadow .15s ease, opacity .15s ease;
+    opacity:0; transform:translateY(8px); animation:rise .45s ease forwards; animation-delay:calc(var(--i, 0) * .05s);
   }
-  .card:hover{background:var(--ink-3); transform:translateY(-2px); box-shadow:0 8px 20px #00000030;}
+  .card:hover{background:var(--ink-3); transform:translateY(-2px); box-shadow:0 10px 30px -14px var(--rail, #00000030), 0 8px 20px #00000030;}
+  /* Borda "respirando" em cards críticos ou atrasados -- pra ficarem impossíveis de ignorar
+     num relance, em vez de só um selo/cor estática que passa batido numa coluna cheia. */
+  .card[data-sev="critica"], .card[data-overdue="true"]{
+    animation:rise .45s ease forwards, cardUrgentPulse 2.4s ease-in-out infinite;
+    animation-delay:calc(var(--i, 0) * .05s), 0s;
+  }
+  @keyframes cardUrgentPulse{
+    0%, 100%{box-shadow:0 10px 26px -18px var(--rail, transparent), 0 0 0 0 rgba(226,86,79,0);}
+    50%{box-shadow:0 10px 26px -18px var(--rail, transparent), 0 0 0 4px rgba(226,86,79,.35);}
+  }
   .card[draggable="true"]{cursor:grab;}
-  .card.dragging{opacity:.4;}
+  .card.dragging{opacity:.85; transform:rotate(-2deg) scale(1.03); box-shadow:0 14px 34px #00000045; cursor:grabbing; animation:none;}
   @keyframes rise{ to{opacity:1; transform:translateY(0);} }
+
+  /* Troca de aba (Board/Backlog/Rotinas/...): fade + leve deslize em vez do corte seco
+     padrão do navegador. Só entra em jogo quando a aba muda de verdade (ver renderTabs). */
+  @keyframes tabOldOut{ to{opacity:0; transform:translateY(-6px);} }
+  @keyframes tabNewIn{ from{opacity:0; transform:translateY(6px);} }
+  ::view-transition-old(root){ animation:.18s ease both tabOldOut; }
+  ::view-transition-new(root){ animation:.22s ease both tabNewIn; }
 
   .card-top{display:flex; align-items:center; justify-content:space-between; gap:10px; margin-bottom:8px; flex-wrap:wrap;}
   .tag{font-family:var(--font-mono); font-size:11px; color:var(--text-low);}
@@ -569,10 +618,11 @@
 
   .add-btn, .move-btn{
     font-family:var(--font-mono); font-size:12px; font-weight:600; letter-spacing:.02em;
-    border-radius:999px; padding:7px 16px; cursor:pointer; transition:opacity .15s ease;
+    border-radius:999px; padding:7px 16px; cursor:pointer; transition:opacity .15s ease, transform .1s ease;
   }
   .add-btn{margin-left:auto; color:#fff; background:var(--brand-red); border:1px solid var(--brand-red);}
   .add-btn:hover{opacity:.85;}
+  .add-btn:active, .move-btn:active{transform:scale(.95);}
   .add-btn:focus-visible{outline:2px solid #6c8cff; outline-offset:2px;}
   .move-btn{font-size:10.5px; padding:4px 10px; background:transparent; border:1px solid var(--brand-red); color:var(--brand-red);}
   .move-btn:hover{background:var(--brand-red); color:#fff;}
@@ -592,7 +642,8 @@
   .modal-overlay.open{display:flex; animation:overlayFadeIn .2s ease;}
   @keyframes overlayFadeIn{from{opacity:0;} to{opacity:1;}}
   .modal{
-    background:var(--ink-1); border:1px solid var(--hairline); border-radius:16px;
+    background:var(--glass-1); -webkit-backdrop-filter:blur(24px) saturate(1.3); backdrop-filter:blur(24px) saturate(1.3);
+    border:1px solid var(--hairline); border-radius:16px;
     width:100%; max-width:480px; max-height:90vh; overflow-y:auto;
     padding:22px 24px 24px; box-shadow:0 20px 60px #00000066;
     animation:modalPopIn .25s cubic-bezier(.2,.9,.3,1.2);
@@ -601,15 +652,39 @@
   .modal-head{display:flex; align-items:center; justify-content:space-between; margin-bottom:16px;}
   .modal-head h2{font-size:17px; margin:0; font-weight:600;}
 
-  /* Busca global (Ctrl+K) */
-  .gsearch-modal{max-width:560px; padding:0; display:flex; flex-direction:column; max-height:70vh;}
-  .gsearch-head{display:flex; align-items:center; gap:10px; padding:16px 18px; border-bottom:1px solid var(--hairline); flex-shrink:0;}
-  .gsearch-head svg{color:var(--text-low); flex-shrink:0;}
-  .gsearch-input{flex:1; background:none; border:none; color:var(--text-hi); font-family:var(--font-display); font-size:15px; outline:none; min-width:0;}
+  /* Busca global (Ctrl+K) -- tratamento "cinematográfico": em vez do modal genérico pequeno
+     e centralizado, o fundo escurece bem mais forte (blur pesado) e o campo de busca entra
+     grande, mais pro topo da tela, tipo Spotlight/Raycast, com um brilho vermelho ambiente
+     em volta e os resultados chegando em cascata. Tudo escopado por id/classe própria pra não
+     mexer nos outros modais (criar demanda, rotina etc.), que continuam no tratamento padrão. */
+  #global-search-overlay.open{
+    background:#02030acc; backdrop-filter:blur(18px) saturate(1.2); align-items:flex-start;
+    padding-top:min(14vh, 140px);
+  }
+  .gsearch-modal{
+    max-width:640px; padding:0; display:flex; flex-direction:column; max-height:min(64vh, 620px);
+    box-shadow:0 30px 90px #000000aa, 0 0 0 1px var(--hairline), 0 0 60px -12px var(--brand-red-dim);
+    animation:gsearchPopIn .32s cubic-bezier(.16,1,.3,1);
+  }
+  @keyframes gsearchPopIn{
+    from{opacity:0; transform:translateY(-14px) scale(.96); filter:blur(6px);}
+    to{opacity:1; transform:translateY(0) scale(1); filter:blur(0);}
+  }
+  .gsearch-head{display:flex; align-items:center; gap:12px; padding:20px 22px; border-bottom:1px solid var(--hairline); flex-shrink:0;}
+  .gsearch-head svg{color:var(--brand-red); flex-shrink:0; width:20px; height:20px;}
+  .gsearch-input{flex:1; background:none; border:none; color:var(--text-hi); font-family:var(--font-display); font-size:19px; outline:none; min-width:0;}
+  .gsearch-input::placeholder{color:var(--text-low);}
   .gsearch-hint{font-family:var(--font-mono); font-size:10.5px; color:var(--text-low); border:1px solid var(--hairline); border-radius:5px; padding:2px 6px; flex-shrink:0;}
   .gsearch-close{background:none; border:none; color:var(--text-low); cursor:pointer; font-size:16px; padding:4px; line-height:1; flex-shrink:0;}
   .gsearch-close:hover{color:var(--text-hi);}
   .gsearch-results{overflow-y:auto; padding:8px;}
+  .gsearch-result{
+    opacity:0; transform:translateY(6px); animation:rise .3s ease forwards; animation-delay:calc(var(--i,0) * .035s);
+  }
+  @media (prefers-reduced-motion:reduce){
+    .gsearch-modal{animation:none;}
+    .gsearch-result{animation:none; opacity:1; transform:none;}
+  }
   .gsearch-group-label{font-family:var(--font-mono); font-size:10.5px; letter-spacing:.08em; text-transform:uppercase; color:var(--text-low); padding:10px 10px 6px;}
   .gsearch-result{display:flex; flex-direction:column; gap:2px; padding:10px 12px; border-radius:8px; cursor:pointer;}
   .gsearch-result:hover{background:var(--ink-2);}
@@ -653,12 +728,13 @@
   }
   .btn-secondary, .btn-primary{
     font-family:var(--font-mono); font-size:12.5px; border-radius:999px; padding:8px 18px;
-    cursor:pointer; border:1px solid var(--hairline);
+    cursor:pointer; border:1px solid var(--hairline); transition:opacity .15s ease, color .15s ease, border-color .15s ease, transform .1s ease;
   }
   .btn-secondary{background:transparent; color:var(--text-mid);}
   .btn-secondary:hover{color:var(--text-hi); border-color:var(--text-low);}
   .btn-primary{background:var(--brand-red); color:#fff; border-color:var(--brand-red); font-weight:600;}
   .btn-primary:hover{opacity:.85;}
+  .btn-secondary:active, .btn-primary:active{transform:scale(.96);}
 
   .remove-btn{
     background:none; border:none; color:var(--text-low); font-size:12px; cursor:pointer;
@@ -1096,7 +1172,10 @@
   }
 
   .kpi-row{display:grid; grid-template-columns:repeat(7, 1fr); gap:14px; margin-bottom:28px;}
-  .kpi-card{background:var(--ink-1); border:1px solid var(--hairline); border-radius:var(--radius); padding:16px; transition:border-color .2s ease, background-color .2s ease;}
+  .kpi-card{
+    background:var(--glass-1); -webkit-backdrop-filter:blur(16px); backdrop-filter:blur(16px);
+    border:1px solid var(--hairline); border-radius:var(--radius); padding:16px; transition:border-color .2s ease, background-color .2s ease;
+  }
   .kpi-card.kpi-alert{border-color:#e2564f66; background:#e2564f0f;}
   .kpi-card.kpi-alert-pa{border-color:#8b8dfb66; background:#8b8dfb14;}
   .kpi-card.kpi-primary{border-color:var(--brand-red); background:var(--brand-red-dim);}
@@ -1104,8 +1183,49 @@
   .kpi-card .n{font-family:var(--font-mono); font-size:24px; font-weight:600; color:var(--text-hi);}
   .kpi-card .l{font-size:11.5px; color:var(--text-low); text-transform:uppercase; letter-spacing:.08em; margin-top:4px;}
   .overview-block{margin-bottom:28px;}
-  .donut-row{display:grid; grid-template-columns:repeat(auto-fit, minmax(240px, 1fr)); gap:14px; margin-bottom:14px;}
-  .donut-block{background:var(--ink-1); border:1px solid var(--hairline); border-radius:var(--radius); padding:16px; margin-bottom:0;}
+
+  /* Visão Geral em "bento grid": em vez de blocos empilhados do mesmo tamanho, os blocos
+     variam de largura por linha (3+3 / 2+4 / 3+3 num grid de 6 colunas) -- é a mudança que
+     mais salta aos olhos no primeiro acesso, sem depender de altura variável (mais arriscado
+     com conteúdo dinâmico: cada linha ainda cresce sozinha, só a largura é que varia). */
+  .bento-grid{display:grid; grid-template-columns:repeat(6, 1fr); gap:16px; margin-bottom:14px; perspective:1200px;}
+  .bento-tile{margin-bottom:0;}
+  .bento-status, .bento-priority{grid-column:span 3;}
+  .bento-workload{grid-column:span 2;}
+  .bento-sectors{grid-column:span 4;}
+  .bento-resolution, .bento-top{grid-column:span 3;}
+  .bento-tile{transition:transform .12s ease;}
+
+  /* Brilho reflexivo no vidro: um reflexo de luz acompanha o cursor sobre as superfícies de
+     vidro fosco (mesmas que ganharam --glass-1/--glass-2), reforçando a sensação de vidro de
+     verdade em vez de só transparência estática. --sheen-x/--sheen-y são atualizadas via JS
+     (ver listener de mousemove delegado no document) só enquanto o mouse está em cima. */
+  .column, .card, .kpi-card, .donut-block, .sumcard, .donut-multiple-item, .main-nav, .modal{position:relative;}
+  .column::before, .card::before, .kpi-card::before, .donut-block::before,
+  .sumcard::before, .donut-multiple-item::before, .main-nav::before, .modal::before{
+    content:""; position:absolute; inset:0; border-radius:inherit; pointer-events:none; z-index:1;
+    background:radial-gradient(circle 220px at var(--sheen-x,50%) var(--sheen-y,50%), rgba(255,255,255,.12), transparent 60%);
+    opacity:0; transition:opacity .25s ease;
+  }
+  .column:hover::before, .card:hover::before, .kpi-card:hover::before, .donut-block:hover::before,
+  .sumcard:hover::before, .donut-multiple-item:hover::before, .main-nav:hover::before, .modal:hover::before{
+    opacity:1;
+  }
+  @media (prefers-reduced-motion:reduce){
+    .column::before, .card::before, .kpi-card::before, .donut-block::before,
+    .sumcard::before, .donut-multiple-item::before, .main-nav::before, .modal::before{ display:none; }
+  }
+  @media (max-width:900px){
+    .bento-grid{grid-template-columns:1fr;}
+    .bento-status, .bento-priority, .bento-workload, .bento-sectors, .bento-resolution, .bento-top{grid-column:1 / -1;}
+  }
+  @media (prefers-reduced-motion:reduce){
+    .bento-tile{transform:none !important; transition:none;}
+  }
+  .donut-block{
+    background:var(--glass-1); -webkit-backdrop-filter:blur(16px); backdrop-filter:blur(16px);
+    border:1px solid var(--hairline); border-radius:var(--radius); padding:16px; margin-bottom:0;
+  }
   .donut-chart{display:flex; align-items:center; gap:16px; flex-wrap:wrap;}
   .donut-chart svg circle{transition:stroke-dasharray .6s ease;}
   .donut-legend{display:flex; flex-direction:column; gap:7px; flex:1; min-width:0;}
@@ -1118,9 +1238,19 @@
   .donut-multiples{display:grid; grid-template-columns:repeat(auto-fill, minmax(150px, 1fr)); gap:14px;}
   .donut-multiple-item{
     display:flex; flex-direction:column; align-items:center; gap:8px; text-align:center;
-    background:var(--ink-1); border:1px solid var(--hairline); border-radius:12px; padding:16px 12px;
+    background:var(--glass-1); -webkit-backdrop-filter:blur(14px); backdrop-filter:blur(14px);
+    border:1px solid var(--hairline); border-radius:12px; padding:16px 12px;
     opacity:0; transform:translateY(8px); animation:rise .45s ease forwards; animation-delay:calc(var(--i, 0) * .06s);
   }
+  /* Blocos abaixo da dobra na Visão Geral: a entrada em cascata fica pausada no quadro inicial
+     até o bloco entrar na tela ao rolar (ver setupScrollReveal). Sem Motion ou com
+     prefers-reduced-motion, a classe in-view é aplicada na hora, sem esperar rolagem. */
+  .reveal-on-scroll .donut-multiple-item,
+  .reveal-on-scroll .resolution-bar-row,
+  .reveal-on-scroll .vbar-item{ animation-play-state:paused; }
+  .reveal-on-scroll.in-view .donut-multiple-item,
+  .reveal-on-scroll.in-view .resolution-bar-row,
+  .reveal-on-scroll.in-view .vbar-item{ animation-play-state:running; }
   .donut-multiple-item .dm-name{font-size:12.5px; font-weight:600; color:var(--text-hi); display:flex; align-items:center; gap:6px;}
   .donut-multiple-item .dm-sub{font-family:var(--font-mono); font-size:10.5px; color:var(--text-low);}
   .resolution-block{display:flex; flex-direction:column; gap:18px;}
@@ -1201,6 +1331,7 @@
 
   @media (prefers-reduced-motion: reduce){
     .card{animation:none; opacity:1; transform:none;}
+    .card[data-sev="critica"], .card[data-overdue="true"]{animation:none;}
     .pulse{animation:none;}
     .tab-panel{animation:none;}
     .wrap{animation:none;}
@@ -1433,6 +1564,7 @@
 <body>
 
 <canvas id="bg-network" aria-hidden="true"></canvas>
+<canvas id="fx-canvas" aria-hidden="true"></canvas>
 
 <div class="upgrade-overlay" id="upgrade-overlay" aria-hidden="true">
   <div class="upgrade-box">
@@ -1630,31 +1762,31 @@
       <h2>Visão geral da operação</h2>
     </div>
     <div class="kpi-row" id="overview-kpis"></div>
-    <div class="donut-row">
-      <div class="overview-block donut-block">
+    <div class="bento-grid">
+      <div class="overview-block donut-block bento-tile bento-status">
         <div class="summary-label">Distribuição por status</div>
         <div class="donut-chart" id="overview-status-donut"></div>
       </div>
-      <div class="overview-block donut-block">
+      <div class="overview-block donut-block bento-tile bento-priority">
         <div class="summary-label">Distribuição por prioridade</div>
         <div class="donut-chart" id="overview-priority-donut"></div>
       </div>
-      <div class="overview-block donut-block">
+      <div class="overview-block donut-block bento-tile bento-workload">
         <div class="summary-label">Carga de trabalho</div>
         <div class="donut-chart" id="overview-workload-donut"></div>
       </div>
-    </div>
-    <div class="overview-block">
-      <div class="summary-label">Progresso por setor</div>
-      <div class="donut-multiples" id="overview-sectors"></div>
-    </div>
-    <div class="overview-block">
-      <div class="summary-label">Tempo médio de resolução</div>
-      <div class="resolution-block" id="overview-resolution"></div>
-    </div>
-    <div class="overview-block donut-block">
-      <div class="summary-label">Top 5 demandas concluídas</div>
-      <div class="vbar-chart" id="overview-top-assignees"></div>
+      <div class="overview-block bento-tile bento-sectors">
+        <div class="summary-label">Progresso por setor</div>
+        <div class="donut-multiples" id="overview-sectors"></div>
+      </div>
+      <div class="overview-block bento-tile bento-resolution">
+        <div class="summary-label">Tempo médio de resolução</div>
+        <div class="resolution-block" id="overview-resolution"></div>
+      </div>
+      <div class="overview-block donut-block bento-tile bento-top">
+        <div class="summary-label">Top 5 demandas concluídas</div>
+        <div class="vbar-chart" id="overview-top-assignees"></div>
+      </div>
     </div>
   </div>
 
@@ -2367,6 +2499,9 @@ const FIREBASE_API_KEY = firebaseConfig.apiKey;
 // estático em vez de animar.
 let bgNetworkConverge = null;
 let bgNetworkRelease = null;
+let bgNetworkSetIntensity = null;
+let bgNetworkCelebrate = null;
+let lastMouseX = -9999, lastMouseY = -9999;
 (function initBgNetwork(){
   const canvas = document.getElementById("bg-network");
   const ctx = canvas.getContext("2d");
@@ -2374,6 +2509,17 @@ let bgNetworkRelease = null;
   const dpr = Math.min(window.devicePixelRatio || 1, 2);
   let particles = [];
   let raf = null;
+
+  // Rede reage ao cursor (empurra partículas de leve) e à quantidade de demandas críticas em
+  // aberto (mais críticas = rede mais intensa) -- vira um fundo "vivo" de verdade em vez de só
+  // deriva ambiente, sem custo de performance extra (mesma malha de partículas de sempre).
+  let mouseX = -9999, mouseY = -9999;
+  const MOUSE_RADIUS = 120;
+  let intensity = 0;
+  if(!reduceMotion){
+    window.addEventListener("mousemove", (e) => { mouseX = e.clientX; mouseY = e.clientY; });
+    window.addEventListener("mouseleave", () => { mouseX = -9999; mouseY = -9999; });
+  }
 
   // Máquina de estados do efeito de login: "idle" (deriva normal, sempre) -> "converging"
   // (pontos vão até o centro do card, com easing, sem oscilar) -> "holding" (ficam girando
@@ -2488,6 +2634,13 @@ let bgNetworkRelease = null;
       }
     }else{
       for(const p of particles){
+        const mdx = p.x - mouseX, mdy = p.y - mouseY;
+        const mDist = Math.sqrt(mdx * mdx + mdy * mdy);
+        if(mDist < MOUSE_RADIUS && mDist > 0.01){
+          const push = (1 - mDist / MOUSE_RADIUS) * 0.7;
+          p.x += (mdx / mDist) * push;
+          p.y += (mdy / mDist) * push;
+        }
         p.x += p.vx; p.y += p.vy;
         if(p.x < 0 || p.x > w) p.vx *= -1;
         if(p.y < 0 || p.y > h) p.vy *= -1;
@@ -2496,13 +2649,14 @@ let bgNetworkRelease = null;
 
     const netRgb = networkRGB();
     const maxDist = 165;
+    const boost = 1 + intensity * 0.7;
     for(let i = 0; i < particles.length; i++){
       for(let j = i + 1; j < particles.length; j++){
         const a = particles[i], b = particles[j];
         const dx = a.x - b.x, dy = a.y - b.y;
         const dist = Math.sqrt(dx * dx + dy * dy);
         if(dist < maxDist){
-          ctx.strokeStyle = `rgba(${netRgb},${(1 - dist / maxDist) * 0.35})`;
+          ctx.strokeStyle = `rgba(${netRgb},${(1 - dist / maxDist) * 0.35 * boost})`;
           ctx.lineWidth = 1;
           ctx.beginPath();
           ctx.moveTo(a.x, a.y); ctx.lineTo(b.x, b.y);
@@ -2511,11 +2665,12 @@ let bgNetworkRelease = null;
       }
     }
     for(const p of particles){
-      ctx.fillStyle = `rgba(${netRgb},.75)`;
+      ctx.fillStyle = `rgba(${netRgb},${.75 * boost})`;
       ctx.beginPath();
       ctx.arc(p.x, p.y, 1.6, 0, Math.PI * 2);
       ctx.fill();
     }
+
     raf = (!document.hidden && !reduceMotion) ? requestAnimationFrame(step) : null;
   }
 
@@ -2551,6 +2706,58 @@ let bgNetworkRelease = null;
     phase = "releasing";
     phaseStart = performance.now();
   };
+  bgNetworkSetIntensity = function(factor){
+    intensity = Math.max(0, Math.min(1, factor || 0));
+  };
+})();
+
+// Celebração (demanda concluída, rotina concluída etc.): canvas PRÓPRIO, por cima de toda a
+// UI (ver #fx-canvas, z-index:500) -- desenhar isso junto com #bg-network (atrás de tudo,
+// z-index:0) deixava o estouro escondido atrás do próprio card/UI que disparou a ação.
+(function initCelebrationFX(){
+  const canvas = document.getElementById("fx-canvas");
+  const ctx = canvas.getContext("2d");
+  const reduceMotion = window.matchMedia && window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+  const dpr = Math.min(window.devicePixelRatio || 1, 2);
+  let particles = [];
+  let raf = null;
+
+  function resize(){
+    const w = window.innerWidth, h = window.innerHeight;
+    canvas.width = w * dpr; canvas.height = h * dpr;
+    canvas.style.width = w + "px"; canvas.style.height = h + "px";
+    ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+  }
+  window.addEventListener("resize", resize);
+  resize();
+
+  function step(){
+    const w = window.innerWidth, h = window.innerHeight;
+    ctx.clearRect(0, 0, w, h);
+    for(const p of particles){
+      p.x += p.vx; p.y += p.vy; p.vx *= 0.96; p.vy *= 0.96; p.life -= p.decay;
+      ctx.fillStyle = `rgba(212,15,58,${Math.max(0, p.life)})`;
+      ctx.beginPath();
+      ctx.arc(p.x, p.y, 2.6, 0, Math.PI * 2);
+      ctx.fill();
+    }
+    particles = particles.filter(p => p.life > 0);
+    raf = particles.length ? requestAnimationFrame(step) : null;
+  }
+
+  bgNetworkCelebrate = function(x, y){
+    if(reduceMotion) return;
+    const count = 28;
+    for(let i = 0; i < count; i++){
+      const angle = (i / count) * Math.PI * 2 + (Math.random() - 0.5) * 0.3;
+      const speed = 3 + Math.random() * 5;
+      particles.push({
+        x, y, vx: Math.cos(angle) * speed, vy: Math.sin(angle) * speed,
+        life: 1, decay: 0.02 + Math.random() * 0.015,
+      });
+    }
+    if(!raf) raf = requestAnimationFrame(step);
+  };
 })();
 
 // E-mail do administrador "bootstrap": a primeira vez que essa conta fizer login,
@@ -2577,6 +2784,23 @@ let stRef, stUploadBytes, stGetDownloadURL, stDeleteObject;
 
 let currentUser = null; // { uid, email, role, assignedAreas }
 let editingUid = null; // uid do acesso sendo editado no formulário "Novo acesso", ou null em modo de criação
+
+// Motion (motion.dev) é só reforço visual (voo de card entre colunas, revelação ao rolar) --
+// carregada à parte do Firebase e sem bloquear o boot; se a CDN falhar ou estiver bloqueada,
+// segue tudo funcionando normal, só sem esses efeitos extras (mesmo espírito do initFirebase).
+let motionAnimate, motionInView;
+let motionReady = false;
+async function initMotion(){
+  try{
+    const mod = await import("https://cdn.jsdelivr.net/npm/motion@11/+esm");
+    motionAnimate = mod.animate;
+    motionInView = mod.inView;
+    motionReady = true;
+  }catch(e){
+    console.error("Motion indisponível — seguindo sem as animações extras:", e);
+    motionReady = false;
+  }
+}
 
 async function initFirebase(){
   try{
@@ -2849,6 +3073,49 @@ function sectorLabel(key){
 // Gráfico de rosca em SVG puro (sem biblioteca): cada fatia é um arco de círculo desenhado
 // via stroke-dasharray, girado pra começar no topo. `segments` é [{value, color}], o total vai
 // escrito no centro. Usado em todos os gráficos da Visão Geral, no lugar das barrinhas de CSS.
+// Faz os arcos crescerem do zero na primeira vez que um container de rosca é preenchido
+// (a 1a impressão fica mais viva), mas só a primeira -- um WeakSet lembra quais containers
+// já animaram, pra re-renders com dado novo (KPI mudou, filtro mudou) não ficarem "reiniciando"
+// o gráfico toda hora, o que seria barulho, não graça.
+const donutGrownIn = new WeakSet();
+function animateDonutGrowIn(container){
+  if(!container || donutGrownIn.has(container) || prefersReducedMotion()) return;
+  donutGrownIn.add(container);
+  const circles = container.querySelectorAll("svg circle[stroke-dasharray]");
+  if(!circles.length) return;
+  const targets = Array.from(circles, c => c.getAttribute("stroke-dasharray"));
+  circles.forEach((c, i) => {
+    const total = targets[i].split(" ").reduce((sum, n) => sum + (parseFloat(n) || 0), 0);
+    c.style.transition = "none";
+    c.setAttribute("stroke-dasharray", `0 ${total}`);
+  });
+  void container.offsetWidth; // força reflow antes de religar a transição
+  circles.forEach((c, i) => {
+    c.style.transition = "";
+    c.setAttribute("stroke-dasharray", targets[i]);
+  });
+}
+
+// Blocos abaixo da dobra na Visão Geral (setores, tempo de resolução, ranking) só disparam a
+// entrada em cascata dos seus itens (--i) quando entram na tela ao rolar, em vez de tudo animar
+// de uma vez no primeiro render mesmo fora da vista. Um WeakSet lembra quem já revelou -- assim
+// como o crescimento das roscas, é coisa de primeira impressão, não repete a cada re-render.
+const scrollRevealed = new WeakSet();
+function setupScrollReveal(container){
+  if(!container) return;
+  container.classList.add("reveal-on-scroll");
+  if(scrollRevealed.has(container)){ container.classList.add("in-view"); return; }
+  if(!motionReady || prefersReducedMotion()){
+    scrollRevealed.add(container);
+    container.classList.add("in-view");
+    return;
+  }
+  motionInView(container, () => {
+    scrollRevealed.add(container);
+    container.classList.add("in-view");
+  }, { margin: "0px 0px -10% 0px" });
+}
+
 function donutSVG(segments, opts){
   const size = (opts && opts.size) || 120;
   const stroke = (opts && opts.stroke) || 16;
@@ -2973,9 +3240,8 @@ function showActionToast(message, cls){
   toast.className = `toast ${cls || "success"}`;
   toast.innerHTML = `<div class="toast-title"><span>${escapeHtml(message)}</span></div>`;
   stack.appendChild(toast);
-  const reduceMotion = window.matchMedia && window.matchMedia("(prefers-reduced-motion: reduce)").matches;
   setTimeout(() => {
-    if(reduceMotion){ toast.remove(); return; }
+    if(prefersReducedMotion()){ toast.remove(); return; }
     toast.classList.add("leaving");
     toast.addEventListener("animationend", () => toast.remove(), { once: true });
   }, 3200);
@@ -3342,7 +3608,54 @@ function demandDetailBlocksHTML(item){
   `;
 }
 
-function cardHTML(item){
+// Card "voando" entre colunas do board (técnica FLIP) + card que sai de vez do board (mudou
+// de status pra fora do filtro, foi pro backlog, foi arquivado etc.) sumindo com um "fantasma"
+// em vez de cortar seco -- os dois reaproveitam a mesma captura de posição por data-id, porque
+// render() reconstrói o board inteiro via innerHTML a cada mudança (não preserva o nó do DOM).
+function captureCardRects(container){
+  const rects = {};
+  container.querySelectorAll(".card[data-id]").forEach(el => {
+    rects[el.dataset.id] = { rect: el.getBoundingClientRect(), el };
+  });
+  return rects;
+}
+function playCardTransitions(container, prevRects){
+  if(!motionReady || prefersReducedMotion()) return;
+  const seenIds = new Set();
+  container.querySelectorAll(".card[data-id]").forEach(el => {
+    const prev = prevRects[el.dataset.id];
+    if(!prev) return; // card novo -- a entrada em cascata (--i) já cuida dele
+    seenIds.add(el.dataset.id);
+    const after = el.getBoundingClientRect();
+    const dx = prev.rect.left - after.left;
+    const dy = prev.rect.top - after.top;
+    if(Math.abs(dx) < 1 && Math.abs(dy) < 1) return; // não mudou de lugar, nada a fazer
+    motionAnimate(el, { x: [dx, 0], y: [dy, 0] }, { duration: .38, easing: [.25, 1, .5, 1] });
+  });
+  Object.keys(prevRects).forEach(id => {
+    if(seenIds.has(id)) return;
+    const { rect, el } = prevRects[id];
+    const ghost = el.cloneNode(true);
+    ghost.removeAttribute("draggable");
+    ghost.style.position = "fixed";
+    ghost.style.left = `${rect.left}px`;
+    ghost.style.top = `${rect.top}px`;
+    ghost.style.width = `${rect.width}px`;
+    ghost.style.margin = "0";
+    ghost.style.pointerEvents = "none";
+    ghost.style.zIndex = "500";
+    document.body.appendChild(ghost);
+    const anim = motionAnimate(ghost, { opacity: [1, 0], scale: [1, .92], y: [0, -6] }, { duration: .28, easing: "ease" });
+    // Se a aba estiver em segundo plano, requestAnimationFrame pode travar e .finished nunca
+    // resolver -- o setTimeout garante que o fantasma some de qualquer jeito.
+    let removed = false;
+    const removeGhost = () => { if(!removed){ removed = true; ghost.remove(); } };
+    (anim.finished || Promise.resolve()).then(removeGhost).catch(removeGhost);
+    setTimeout(removeGhost, 1000);
+  });
+}
+
+function cardHTML(item, index){
   const draggable = state.tab === "board" && state.view === "status";
   const stage = itemStage(item);
   const assignee = itemAssignee(item);
@@ -3351,7 +3664,7 @@ function cardHTML(item){
   const completed = completedByInfo(item);
   const validation = validationInfo(item);
   return `
-    <div class="card" style="--rail:${sectorColor(item.area)};" data-sev="${item.sev}" data-id="${item.id}" ${draggable ? 'draggable="true"' : ''}>
+    <div class="card" style="--rail:${sectorColor(item.area)}; --i:${Math.min(index || 0, 10)};" data-sev="${item.sev}" data-id="${item.id}" ${due.state === "atrasado" ? 'data-overdue="true"' : ''} ${draggable ? 'draggable="true"' : ''}>
       <div class="card-top">
         <span style="display:flex; align-items:center; gap:6px; flex-wrap:wrap;">
           <span class="tag">${item.id}</span>
@@ -3649,6 +3962,7 @@ function render(){
   const board = document.getElementById("board");
   if(!board) return;
 
+  const prevCardRects = captureCardRects(board);
   const focus = preserveFocusedObsDraft();
   board.innerHTML = "";
 
@@ -3666,7 +3980,7 @@ function render(){
         <span class="name"><span class="rail-dot"${dotStyle}></span>${group.label}</span>
         <span class="count">${items.length}</span>
       </div>
-      <div class="col-body">${items.map(it => cardHTML(it)).join("") || '<p class="snippet" style="padding:8px 2px;">Nenhum item nesse filtro.</p>'}</div>
+      <div class="col-body">${items.map((it, i) => cardHTML(it, i)).join("") || '<p class="snippet" style="padding:8px 2px;">Nenhum item nesse filtro.</p>'}</div>
     `;
     board.appendChild(col);
   });
@@ -3696,6 +4010,7 @@ function render(){
   if(addBtn) addBtn.style.display = canManage() ? "" : "none";
 
   updateSummary();
+  playCardTransitions(board, prevCardRects);
 }
 
 function renderBacklog(){
@@ -3703,7 +4018,7 @@ function renderBacklog(){
   if(!list) return;
   const focus = preserveFocusedObsDraft();
   const items = DATA.filter(d => itemStage(d) === "backlog" && !isArchived(d) && passesFilter(d));
-  list.innerHTML = items.map(it => cardHTML(it)).join("") || '<p class="snippet" style="padding:8px 2px;">Backlog vazio.</p>';
+  list.innerHTML = items.map((it, i) => cardHTML(it, i)).join("") || '<p class="snippet" style="padding:8px 2px;">Backlog vazio.</p>';
   wireCardListeners(list);
   restoreFocusedObs(focus);
   const addBtn = document.getElementById("open-add-modal-backlog");
@@ -3715,7 +4030,7 @@ function renderValidations(){
   if(!list) return;
   const focus = preserveFocusedObsDraft();
   const items = DATA.filter(d => d.status === "concluido" && !validationInfo(d) && passesFilterIgnoringStatus(d));
-  list.innerHTML = items.map(it => cardHTML(it)).join("") || '<p class="snippet" style="padding:8px 2px;">Nada pendente de validação no momento.</p>';
+  list.innerHTML = items.map((it, i) => cardHTML(it, i)).join("") || '<p class="snippet" style="padding:8px 2px;">Nada pendente de validação no momento.</p>';
   wireCardListeners(list);
   restoreFocusedObs(focus);
 }
@@ -3852,7 +4167,7 @@ function renderArchive(){
   const query = state.archiveSearch.trim().toLowerCase();
   const items = DATA.filter(d => isArchived(d) && passesFilterIgnoringStatus(d))
     .filter(d => !query || d.title.toLowerCase().includes(query) || d.id.toLowerCase().includes(query));
-  list.innerHTML = items.map(it => cardHTML(it)).join("") || '<p class="snippet" style="padding:8px 2px;">Nenhuma demanda arquivada encontrada.</p>';
+  list.innerHTML = items.map((it, i) => cardHTML(it, i)).join("") || '<p class="snippet" style="padding:8px 2px;">Nenhuma demanda arquivada encontrada.</p>';
   wireCardListeners(list);
   restoreFocusedObs(focus);
   renderArchiveTrend();
@@ -4631,6 +4946,7 @@ async function toggleRoutineCompletion(id, dateStr){
       : [...(r.completions || []), { period, at: new Date().toISOString(), byUid: currentUser ? currentUser.uid : "", byName: currentUser ? (currentUser.name || currentUser.email) : "" }];
     return { ...r, completions };
   });
+  if(!done && bgNetworkCelebrate) bgNetworkCelebrate(lastMouseX, lastMouseY);
   await saveRoutinesArray(newRoutines);
   showActionToast(done ? `"${routine.title}" marcada como pendente` : `"${routine.title}" concluída`);
 }
@@ -4766,6 +5082,7 @@ function renderOverview(){
   statusDonutEl.querySelectorAll(".donut-legend-item[data-status-filter]").forEach(item => {
     item.addEventListener("click", () => applyOverviewDonutFilter("status", item.dataset.statusFilter));
   });
+  animateDonutGrowIn(statusDonutEl);
 
   const critica = opData.filter(d => d.sev === "critica").length;
   const alta = opData.filter(d => d.sev === "alta").length;
@@ -4785,6 +5102,7 @@ function renderOverview(){
   priorityDonutEl.querySelectorAll(".donut-legend-item[data-sev-filter]").forEach(item => {
     item.addEventListener("click", () => applyOverviewDonutFilter("sev", item.dataset.sevFilter));
   });
+  animateDonutGrowIn(priorityDonutEl);
 
   // Progresso por setor: uma rosca pequena por setor (aberto/andamento/concluído), lado a lado.
   const scopedSectors = SECTORS.filter(s => scopeAreas.includes(s.key) && (state.area === "todos" || s.key === state.area));
@@ -4833,6 +5151,7 @@ function renderOverview(){
       }).join("")}
     </div>
   ` : '<p class="snippet">Nenhuma demanda ativa com responsável atribuído.</p>';
+  animateDonutGrowIn(workloadDonutEl);
 
   // Não existe timestamp de criação da demanda (itens seed nunca tiveram data, e itens novos
   // também não guardam uma) — a melhor aproximação com o dado que realmente existe é medir da
@@ -4926,6 +5245,10 @@ function renderOverview(){
       `).join("")}
     `;
   }
+
+  setupScrollReveal(sectorsEl);
+  setupScrollReveal(resolutionEl);
+  setupScrollReveal(topAssigneesEl);
 }
 
 function greetingByHour(){
@@ -4997,7 +5320,22 @@ function applyRoleLayout(){
   }
 }
 
+let lastRenderedTab = null;
 function renderTabs(){
+  // Só vale a pena pagar o custo de um View Transition quando a aba muda de verdade --
+  // renderTabs() também é chamado a cada atualização de dado na MESMA aba (toggle de
+  // filtro, edição de card etc.), e disparar a transição nesses casos piscaria a tela
+  // sem motivo.
+  const tabChanged = state.tab !== lastRenderedTab;
+  lastRenderedTab = state.tab;
+  if(tabChanged && document.startViewTransition && !prefersReducedMotion()){
+    document.startViewTransition(() => renderTabsInner());
+  }else{
+    renderTabsInner();
+  }
+}
+
+function renderTabsInner(){
   const overviewTab = document.getElementById("overview-tab");
   const boardTab = document.getElementById("board-tab");
   const backlogTab = document.getElementById("backlog-tab");
@@ -5097,11 +5435,12 @@ function renderGlobalSearchResults(query){
     return;
   }
   let html = "";
+  let i = 0;
   if(items.length){
     html += '<div class="gsearch-group-label">Demandas</div>';
     html += items.map(it => {
       const where = isArchived(it) ? "Arquivada" : (itemStage(it) === "backlog" ? "Backlog" : "Board");
-      return `<div class="gsearch-result" data-gsearch-item="${escapeHtml(it.id)}">
+      return `<div class="gsearch-result" style="--i:${i++};" data-gsearch-item="${escapeHtml(it.id)}">
         <span class="gsearch-result-title">${escapeHtml(it.title)}</span>
         <span class="gsearch-result-meta">${escapeHtml(it.id)} · ${escapeHtml(sectorLabel(it.area))} · ${where}</span>
       </div>`;
@@ -5109,7 +5448,7 @@ function renderGlobalSearchResults(query){
   }
   if(routines.length){
     html += '<div class="gsearch-group-label">Rotinas</div>';
-    html += routines.map(r => `<div class="gsearch-result" data-gsearch-routine="${escapeHtml(r.id)}">
+    html += routines.map(r => `<div class="gsearch-result" style="--i:${i++};" data-gsearch-routine="${escapeHtml(r.id)}">
         <span class="gsearch-result-title">${escapeHtml(r.title)}</span>
         <span class="gsearch-result-meta">${escapeHtml(sectorLabel(r.sector))} · ${FREQ_LABEL[r.frequency] || r.frequency}</span>
       </div>`).join("");
@@ -5174,6 +5513,10 @@ function closeGlobalSearch(){
 // na hora — só quando o valor realmente muda (guarda o último valor por chave, já que a
 // Visão Geral reconstrói os elementos do zero a cada render, então não dá pra guardar o
 // valor anterior no próprio elemento). Respeita prefers-reduced-motion.
+function prefersReducedMotion(){
+  return !!(window.matchMedia && window.matchMedia("(prefers-reduced-motion: reduce)").matches);
+}
+
 const kpiPrevValues = {};
 function animateCountTo(el, target){
   if(!el) return;
@@ -5184,8 +5527,7 @@ function animateCountTo(el, target){
   kpiPrevValues[key] = target;
   const startVal = prev === undefined ? 0 : prev;
   if(startVal === target){ el.textContent = target; return; }
-  const reduceMotion = window.matchMedia && window.matchMedia("(prefers-reduced-motion: reduce)").matches;
-  if(reduceMotion){ el.textContent = target; return; }
+  if(prefersReducedMotion()){ el.textContent = target; return; }
   const duration = 500;
   const startTime = performance.now();
   function frame(now){
@@ -5199,8 +5541,10 @@ function animateCountTo(el, target){
 }
 function updateSummary(){
   const vd = visibleData().filter(d => itemStage(d) === "board" && !isArchived(d));
+  const criticaCount = vd.filter(d=>d.sev==="critica").length;
+  if(bgNetworkSetIntensity) bgNetworkSetIntensity(criticaCount / 5); // fundo mais intenso quanto mais demandas críticas em aberto
   animateCountTo(document.getElementById("sum-total"), vd.length);
-  animateCountTo(document.getElementById("sum-critica"), vd.filter(d=>d.sev==="critica").length);
+  animateCountTo(document.getElementById("sum-critica"), criticaCount);
   animateCountTo(document.getElementById("sum-alta"), vd.filter(d=>d.sev==="alta").length);
   animateCountTo(document.getElementById("sum-media"), vd.filter(d=>d.sev==="media").length);
   animateCountTo(document.getElementById("sum-st-aberto"), vd.filter(d=>d.status==="aberto").length);
@@ -5234,6 +5578,7 @@ async function updateStatus(id, value, reason){
   // novo por quem gerencia, senão o selo "Validado" ficaria mostrando uma checagem antiga.
   const enteringConcluido = value === "concluido" && previousStatus !== "concluido";
   if(enteringConcluido) item.validated = null;
+  if(enteringConcluido && bgNetworkCelebrate) bgNetworkCelebrate(lastMouseX, lastMouseY);
 
   updateSummary();
   if(state.tab === "board") render(); else if(state.tab === "backlog") renderBacklog();
@@ -5867,6 +6212,40 @@ document.getElementById("filters-area").addEventListener("click", (e) => {
   renderTabs();
 });
 
+// Inclinação 3D leve nos blocos da Visão Geral ao passar o mouse (efeito "bento tilt") --
+// delegado no container, que é markup estático (nunca recriado via innerHTML), então não
+// precisa ser religado a cada renderOverview().
+function resetBentoTilt(){
+  document.querySelectorAll(".bento-tile").forEach(t => { t.style.transform = ""; });
+}
+// Brilho reflexivo no vidro: um único listener delegado no document (em vez de um por
+// elemento) já resolve, porque as superfícies de vidro são recriadas o tempo todo via
+// innerHTML -- religar listener por elemento a cada render seria um transtorno à toa.
+const GLASS_SHEEN_SELECTOR = ".column, .card, .kpi-card, .donut-block, .sumcard, .donut-multiple-item, .main-nav, .modal";
+document.addEventListener("mousemove", (e) => {
+  lastMouseX = e.clientX; lastMouseY = e.clientY; // usado pela celebração de conclusão (ver bgNetworkCelebrate)
+  if(prefersReducedMotion()) return;
+  const el = e.target.closest(GLASS_SHEEN_SELECTOR);
+  if(!el) return;
+  const rect = el.getBoundingClientRect();
+  el.style.setProperty("--sheen-x", `${e.clientX - rect.left}px`);
+  el.style.setProperty("--sheen-y", `${e.clientY - rect.top}px`);
+});
+
+const bentoGrid = document.querySelector(".bento-grid");
+if(bentoGrid){
+  bentoGrid.addEventListener("mousemove", (e) => {
+    if(prefersReducedMotion()) return;
+    const tile = e.target.closest(".bento-tile");
+    if(!tile){ resetBentoTilt(); return; }
+    const rect = tile.getBoundingClientRect();
+    const px = (e.clientX - rect.left) / rect.width - 0.5;
+    const py = (e.clientY - rect.top) / rect.height - 0.5;
+    tile.style.transform = `rotateX(${(-py * 7).toFixed(2)}deg) rotateY(${(px * 7).toFixed(2)}deg)`;
+  });
+  bentoGrid.addEventListener("mouseleave", resetBentoTilt);
+}
+
 document.getElementById("filter-assignee").addEventListener("change", (e) => {
   state.assignee = e.target.value;
   updateFiltersBadge();
@@ -6443,6 +6822,7 @@ async function handlePasswordResetLink(oobCode){
 }
 
 (async function init(){
+  initMotion(); // não espera -- é só reforço visual, não pode atrasar o boot
   await initFirebase();
 
   if(resetOobCode && firebaseReady && auth){
