@@ -405,6 +405,19 @@
   .st-andamento-col .rail-dot{background:var(--st-andamento);}
   .st-concluido-col .rail-dot{background:var(--st-concluido);}
 
+  .skeleton-block{
+    background:linear-gradient(90deg, var(--ink-2) 25%, var(--ink-3) 37%, var(--ink-2) 63%);
+    background-size:400% 100%; border-radius:8px; animation:skeletonShimmer 1.4s ease infinite;
+  }
+  @keyframes skeletonShimmer{0%{background-position:100% 0;} 100%{background-position:0 0;}}
+  .skeleton-card{background:var(--ink-2); border:1px solid var(--hairline); border-radius:10px; padding:14px; display:flex; flex-direction:column; gap:9px;}
+  .skeleton-card .skeleton-block:nth-child(1){height:13px; width:80%;}
+  .skeleton-card .skeleton-block:nth-child(2){height:10px; width:55%;}
+  .skeleton-head{height:15px; width:45%; margin:16px 18px;}
+  @media (prefers-reduced-motion:reduce){
+    .skeleton-block{animation:none; background:var(--ink-2);}
+  }
+
   .card{
     background:var(--ink-2); border:1px solid var(--hairline); border-left:3px solid var(--rail, var(--text-low));
     border-radius:10px; padding:14px 14px 13px;
@@ -887,7 +900,11 @@
   }
   .toast.soon{border-left-color:var(--sev-alta);}
   .toast.routines{border-left-color:var(--pa);}
+  .toast.success{border-left-color:var(--st-concluido);}
+  .toast.success .toast-title{justify-content:flex-start;}
+  .toast.leaving{animation:toastOut .25s ease forwards;}
   @keyframes toastIn{from{opacity:0; transform:translateX(16px);} to{opacity:1; transform:translateX(0);}}
+  @keyframes toastOut{from{opacity:1; transform:translateX(0);} to{opacity:0; transform:translateX(16px);}}
   .toast-title{font-size:12.5px; font-weight:600; color:var(--text-hi); display:flex; justify-content:space-between; gap:8px;}
   .toast-close{background:none; border:none; color:var(--text-low); cursor:pointer; font-size:12px; padding:0; flex-shrink:0;}
   .toast-close:hover{color:var(--text-hi);}
@@ -897,6 +914,7 @@
   }
   @media (prefers-reduced-motion:reduce){
     .toast{animation:none; opacity:1;}
+    .toast.leaving{animation:none;}
   }
 
   .admin-list-item.disabled-user{opacity:.55;}
@@ -1095,6 +1113,8 @@
   .donut-legend-item .dl-label{overflow:hidden; text-overflow:ellipsis; white-space:nowrap; min-width:0;}
   .donut-legend-dot{width:9px; height:9px; border-radius:2px; flex-shrink:0;}
   .donut-legend-item b{color:var(--text-hi); margin-left:auto; font-family:var(--font-mono); font-weight:600; padding-left:10px;}
+  .donut-legend-item.clickable{cursor:pointer; border-radius:6px; padding:3px 6px; margin:0 -6px; transition:background .15s ease;}
+  .donut-legend-item.clickable:hover{background:var(--surface-hover, rgba(127,127,127,.12));}
   .donut-multiples{display:grid; grid-template-columns:repeat(auto-fill, minmax(150px, 1fr)); gap:14px;}
   .donut-multiple-item{
     display:flex; flex-direction:column; align-items:center; gap:8px; text-align:center;
@@ -1669,7 +1689,31 @@
 
     <div class="storage-note" id="storage-note">⏳ Carregando dados salvos…</div>
 
-    <div class="board" id="board"></div>
+    <div class="board" id="board">
+      <div class="column">
+        <div class="skeleton-block skeleton-head"></div>
+        <div class="col-body">
+          <div class="skeleton-card"><div class="skeleton-block"></div><div class="skeleton-block"></div></div>
+          <div class="skeleton-card"><div class="skeleton-block"></div><div class="skeleton-block"></div></div>
+          <div class="skeleton-card"><div class="skeleton-block"></div><div class="skeleton-block"></div></div>
+        </div>
+      </div>
+      <div class="column">
+        <div class="skeleton-block skeleton-head"></div>
+        <div class="col-body">
+          <div class="skeleton-card"><div class="skeleton-block"></div><div class="skeleton-block"></div></div>
+          <div class="skeleton-card"><div class="skeleton-block"></div><div class="skeleton-block"></div></div>
+        </div>
+      </div>
+      <div class="column">
+        <div class="skeleton-block skeleton-head"></div>
+        <div class="col-body">
+          <div class="skeleton-card"><div class="skeleton-block"></div><div class="skeleton-block"></div></div>
+          <div class="skeleton-card"><div class="skeleton-block"></div><div class="skeleton-block"></div></div>
+          <div class="skeleton-card"><div class="skeleton-block"></div><div class="skeleton-block"></div></div>
+        </div>
+      </div>
+    </div>
   </div>
 
   <div class="tab-panel" id="backlog-tab" style="display:none;">
@@ -1678,7 +1722,11 @@
       <button class="add-btn" id="open-add-modal-backlog">+ Nova demanda</button>
     </div>
     <p class="sub" style="margin-bottom:18px;">Demandas ainda não priorizadas. Quem tem permissão de gestão pode movê-las para o Board quando estiverem prontas para entrar em andamento.</p>
-    <div class="backlog-list" id="backlog-list"></div>
+    <div class="backlog-list" id="backlog-list">
+      <div class="skeleton-card"><div class="skeleton-block"></div><div class="skeleton-block"></div></div>
+      <div class="skeleton-card"><div class="skeleton-block"></div><div class="skeleton-block"></div></div>
+      <div class="skeleton-card"><div class="skeleton-block"></div><div class="skeleton-block"></div></div>
+    </div>
   </div>
 
   <div class="tab-panel" id="routines-tab" style="display:none;">
@@ -2916,6 +2964,21 @@ function renderAlertsToasts(data){
       if(toast) toast.remove();
     });
   });
+}
+
+function showActionToast(message, cls){
+  const stack = document.getElementById("alerts-toast-stack");
+  if(!stack) return;
+  const toast = document.createElement("div");
+  toast.className = `toast ${cls || "success"}`;
+  toast.innerHTML = `<div class="toast-title"><span>${escapeHtml(message)}</span></div>`;
+  stack.appendChild(toast);
+  const reduceMotion = window.matchMedia && window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+  setTimeout(() => {
+    if(reduceMotion){ toast.remove(); return; }
+    toast.classList.add("leaving");
+    toast.addEventListener("animationend", () => toast.remove(), { once: true });
+  }, 3200);
 }
 
 const ALERTS_INTERVAL_MS = 3 * 60 * 60 * 1000; // repete de 3 em 3 horas, não só ao entrar
@@ -4569,6 +4632,7 @@ async function toggleRoutineCompletion(id, dateStr){
     return { ...r, completions };
   });
   await saveRoutinesArray(newRoutines);
+  showActionToast(done ? `"${routine.title}" marcada como pendente` : `"${routine.title}" concluída`);
 }
 
 function syncRoutineDaysField(frequency){
@@ -4674,17 +4738,19 @@ function renderOverview(){
   const pctConcluidas = total ? Math.round((concluidas / total) * 100) : 0;
 
   kpiEl.innerHTML = `
-    <div class="kpi-card kpi-primary"><div class="n">${total}</div><div class="l">Total de demandas</div></div>
-    <div class="kpi-card"><div class="n" style="color:var(--st-concluido);">${concluidas}</div><div class="l">Concluídas (${pctConcluidas}%)</div></div>
-    <div class="kpi-card"><div class="n" style="color:var(--st-andamento);">${andamento}</div><div class="l">Em andamento</div></div>
-    <div class="kpi-card"><div class="n" style="color:var(--st-aberto);">${aberto}</div><div class="l">Em aberto</div></div>
-    <div class="kpi-card"><div class="n" style="color:var(--text-low);">${backlogCount}</div><div class="l">No backlog</div></div>
-    <div class="kpi-card${atrasadas ? " kpi-alert" : ""}"><div class="n" style="color:var(--sev-critica);">${atrasadas}</div><div class="l">Atrasadas</div></div>
-    <div class="kpi-card${pendentesValidacao ? " kpi-alert-pa" : ""}"><div class="n" style="color:var(--pa);">${pendentesValidacao}</div><div class="l">Pendentes de validação</div></div>
+    <div class="kpi-card kpi-primary"><div class="n" data-kpi-key="ov-total">${total}</div><div class="l">Total de demandas</div></div>
+    <div class="kpi-card"><div class="n" data-kpi-key="ov-concluidas" style="color:var(--st-concluido);">${concluidas}</div><div class="l">Concluídas (${pctConcluidas}%)</div></div>
+    <div class="kpi-card"><div class="n" data-kpi-key="ov-andamento" style="color:var(--st-andamento);">${andamento}</div><div class="l">Em andamento</div></div>
+    <div class="kpi-card"><div class="n" data-kpi-key="ov-aberto" style="color:var(--st-aberto);">${aberto}</div><div class="l">Em aberto</div></div>
+    <div class="kpi-card"><div class="n" data-kpi-key="ov-backlog" style="color:var(--text-low);">${backlogCount}</div><div class="l">No backlog</div></div>
+    <div class="kpi-card${atrasadas ? " kpi-alert" : ""}"><div class="n" data-kpi-key="ov-atrasadas" style="color:var(--sev-critica);">${atrasadas}</div><div class="l">Atrasadas</div></div>
+    <div class="kpi-card${pendentesValidacao ? " kpi-alert-pa" : ""}"><div class="n" data-kpi-key="ov-pendentes" style="color:var(--pa);">${pendentesValidacao}</div><div class="l">Pendentes de validação</div></div>
   `;
+  kpiEl.querySelectorAll(".n[data-kpi-key]").forEach(el => animateCountTo(el, el.textContent));
 
   // Status e prioridade: rosca simples de proporção — o total de demandas do recorte atual
-  // vai escrito no centro do anel.
+  // vai escrito no centro do anel. As legendas são clicáveis: clicar aplica aquele filtro
+  // de status/prioridade direto no Board, em vez de servirem só de decoração.
   statusDonutEl.innerHTML = `
     ${donutSVG([
       { value: aberto, color: "var(--st-aberto)", label: "Em aberto" },
@@ -4692,11 +4758,14 @@ function renderOverview(){
       { value: concluidas, color: "var(--st-concluido)", label: "Concluído" },
     ], { ariaLabel: "Distribuição por status" })}
     <div class="donut-legend">
-      <div class="donut-legend-item"><span class="donut-legend-dot" style="background:var(--st-aberto);"></span>Em aberto<b>${aberto}</b></div>
-      <div class="donut-legend-item"><span class="donut-legend-dot" style="background:var(--st-andamento);"></span>Em andamento<b>${andamento}</b></div>
-      <div class="donut-legend-item"><span class="donut-legend-dot" style="background:var(--st-concluido);"></span>Concluído<b>${concluidas}</b></div>
+      <div class="donut-legend-item clickable" data-status-filter="aberto"><span class="donut-legend-dot" style="background:var(--st-aberto);"></span>Em aberto<b>${aberto}</b></div>
+      <div class="donut-legend-item clickable" data-status-filter="andamento"><span class="donut-legend-dot" style="background:var(--st-andamento);"></span>Em andamento<b>${andamento}</b></div>
+      <div class="donut-legend-item clickable" data-status-filter="concluido"><span class="donut-legend-dot" style="background:var(--st-concluido);"></span>Concluído<b>${concluidas}</b></div>
     </div>
   `;
+  statusDonutEl.querySelectorAll(".donut-legend-item[data-status-filter]").forEach(item => {
+    item.addEventListener("click", () => applyOverviewDonutFilter("status", item.dataset.statusFilter));
+  });
 
   const critica = opData.filter(d => d.sev === "critica").length;
   const alta = opData.filter(d => d.sev === "alta").length;
@@ -4708,11 +4777,14 @@ function renderOverview(){
       { value: media, color: "var(--sev-media)", label: "Média" },
     ], { ariaLabel: "Distribuição por prioridade" })}
     <div class="donut-legend">
-      <div class="donut-legend-item"><span class="donut-legend-dot" style="background:var(--sev-critica);"></span>Crítica<b>${critica}</b></div>
-      <div class="donut-legend-item"><span class="donut-legend-dot" style="background:var(--sev-alta);"></span>Alta<b>${alta}</b></div>
-      <div class="donut-legend-item"><span class="donut-legend-dot" style="background:var(--sev-media);"></span>Média<b>${media}</b></div>
+      <div class="donut-legend-item clickable" data-sev-filter="critica"><span class="donut-legend-dot" style="background:var(--sev-critica);"></span>Crítica<b>${critica}</b></div>
+      <div class="donut-legend-item clickable" data-sev-filter="alta"><span class="donut-legend-dot" style="background:var(--sev-alta);"></span>Alta<b>${alta}</b></div>
+      <div class="donut-legend-item clickable" data-sev-filter="media"><span class="donut-legend-dot" style="background:var(--sev-media);"></span>Média<b>${media}</b></div>
     </div>
   `;
+  priorityDonutEl.querySelectorAll(".donut-legend-item[data-sev-filter]").forEach(item => {
+    item.addEventListener("click", () => applyOverviewDonutFilter("sev", item.dataset.sevFilter));
+  });
 
   // Progresso por setor: uma rosca pequena por setor (aberto/andamento/concluído), lado a lado.
   const scopedSectors = SECTORS.filter(s => scopeAreas.includes(s.key) && (state.area === "todos" || s.key === state.area));
@@ -5098,15 +5170,42 @@ function closeGlobalSearch(){
   if(overlay) overlay.classList.remove("open");
 }
 
+// Anima um número de KPI subindo/descendo do valor anterior até o novo, em vez de trocar
+// na hora — só quando o valor realmente muda (guarda o último valor por chave, já que a
+// Visão Geral reconstrói os elementos do zero a cada render, então não dá pra guardar o
+// valor anterior no próprio elemento). Respeita prefers-reduced-motion.
+const kpiPrevValues = {};
+function animateCountTo(el, target){
+  if(!el) return;
+  target = Number(target) || 0;
+  const key = el.id || el.dataset.kpiKey;
+  if(!key){ el.textContent = target; return; }
+  const prev = kpiPrevValues[key];
+  kpiPrevValues[key] = target;
+  const startVal = prev === undefined ? 0 : prev;
+  if(startVal === target){ el.textContent = target; return; }
+  const reduceMotion = window.matchMedia && window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+  if(reduceMotion){ el.textContent = target; return; }
+  const duration = 500;
+  const startTime = performance.now();
+  function frame(now){
+    const t = Math.min(1, (now - startTime) / duration);
+    const eased = 1 - Math.pow(1 - t, 3);
+    el.textContent = Math.round(startVal + (target - startVal) * eased);
+    if(t < 1) requestAnimationFrame(frame);
+    else el.textContent = target;
+  }
+  requestAnimationFrame(frame);
+}
 function updateSummary(){
   const vd = visibleData().filter(d => itemStage(d) === "board" && !isArchived(d));
-  document.getElementById("sum-total").textContent = vd.length;
-  document.getElementById("sum-critica").textContent = vd.filter(d=>d.sev==="critica").length;
-  document.getElementById("sum-alta").textContent = vd.filter(d=>d.sev==="alta").length;
-  document.getElementById("sum-media").textContent = vd.filter(d=>d.sev==="media").length;
-  document.getElementById("sum-st-aberto").textContent = vd.filter(d=>d.status==="aberto").length;
-  document.getElementById("sum-st-andamento").textContent = vd.filter(d=>d.status==="andamento").length;
-  document.getElementById("sum-st-concluido").textContent = vd.filter(d=>d.status==="concluido").length;
+  animateCountTo(document.getElementById("sum-total"), vd.length);
+  animateCountTo(document.getElementById("sum-critica"), vd.filter(d=>d.sev==="critica").length);
+  animateCountTo(document.getElementById("sum-alta"), vd.filter(d=>d.sev==="alta").length);
+  animateCountTo(document.getElementById("sum-media"), vd.filter(d=>d.sev==="media").length);
+  animateCountTo(document.getElementById("sum-st-aberto"), vd.filter(d=>d.status==="aberto").length);
+  animateCountTo(document.getElementById("sum-st-andamento"), vd.filter(d=>d.status==="andamento").length);
+  animateCountTo(document.getElementById("sum-st-concluido"), vd.filter(d=>d.status==="concluido").length);
 }
 
 async function updateStatus(id, value, reason){
@@ -5185,7 +5284,10 @@ async function updateAssignee(id, value){
 async function updateStage(id, value){
   const item = DATA.find(d => d.id === id);
   if(!item) return;
-  try{ await updateFieldPathMap("stages", stagesMap, id, value); }catch(err){ console.error("Falha ao mover item:", err); }
+  try{
+    await updateFieldPathMap("stages", stagesMap, id, value);
+    showActionToast(`"${item.title}" movida para ${value === "backlog" ? "o backlog" : "o board"}`);
+  }catch(err){ console.error("Falha ao mover item:", err); }
   renderTabs();
 }
 
@@ -5402,6 +5504,7 @@ async function markValidated(id){
   renderTabs();
   try{
     await persistValidated(id, entry);
+    showActionToast(`"${item.title}" validada`);
   }catch(err){
     console.error("Falha ao salvar validação:", err);
   }
@@ -5720,6 +5823,19 @@ document.getElementById("add-form").addEventListener("submit", withSubmitGuard(a
   }
   closeModal();
 }));
+
+function applyOverviewDonutFilter(kind, value){
+  if(kind === "status"){
+    document.querySelectorAll("#filters-status .filter-btn").forEach(b => b.classList.toggle("active", b.dataset.statusFilter === value));
+    state.status = value;
+  }else{
+    document.querySelectorAll("#filters-sev .filter-btn").forEach(b => b.classList.toggle("active", b.dataset.filter === value));
+    state.sev = value;
+  }
+  state.tab = "board";
+  updateFiltersBadge();
+  renderTabs();
+}
 
 document.getElementById("filters-sev").addEventListener("click", (e) => {
   const btn = e.target.closest(".filter-btn");
