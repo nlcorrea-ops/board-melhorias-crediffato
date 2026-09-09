@@ -2656,10 +2656,18 @@ function mondayOfWeek(date){
   d.setDate(d.getDate() - day);
   return d;
 }
-function currentPeriodKey(frequency, date){
+function currentPeriodKey(frequency, date, scheduledDays){
   const d = date || new Date();
   if(frequency === "diaria") return `${d.getFullYear()}-${pad2(d.getMonth() + 1)}-${pad2(d.getDate())}`;
   if(frequency === "semanal"){
+    // Rotina com dias específicos da semana (ex.: segunda E sexta) precisa de uma chave
+    // por DIA exato, não por semana inteira — senão marcar a de segunda também "conclui"
+    // a de sexta pro resto da semana, já que as duas cairiam na mesma chave "semana-...".
+    // Sem dias específicos, o período continua sendo a semana toda (só precisa acontecer
+    // uma vez, em qualquer dia).
+    if(scheduledDays && scheduledDays.length){
+      return `${d.getFullYear()}-${pad2(d.getMonth() + 1)}-${pad2(d.getDate())}`;
+    }
     const m = mondayOfWeek(d);
     return `semana-${m.getFullYear()}-${pad2(m.getMonth() + 1)}-${pad2(m.getDate())}`;
   }
@@ -2667,8 +2675,24 @@ function currentPeriodKey(frequency, date){
   if(frequency === "anual") return `${d.getFullYear()}`;
   return "";
 }
-function routineStatus(r){
-  const period = currentPeriodKey(r.frequency);
+// Pra exibições que não estão olhando um dia específico (rings de progresso, placar,
+// atividade recente, lista "pendentes" fora da agenda) — em vez de checar exatamente
+// hoje (o que faria uma rotina de segunda/sexta parecer "pendente" numa quarta-feira,
+// dia em que ela nem deveria acontecer), usa o último dia programado até hoje.
+function mostRecentScheduledOccurrence(scheduledDays, refDate){
+  const d = refDate || new Date();
+  if(!scheduledDays || !scheduledDays.length) return d;
+  for(let back = 0; back < 7; back++){
+    const candidate = new Date(d.getFullYear(), d.getMonth(), d.getDate() - back);
+    if(scheduledDays.includes(candidate.getDay())) return candidate;
+  }
+  return d;
+}
+function routineStatus(r, date){
+  const refDate = date || (r.frequency === "semanal" && (r.scheduledDays || []).length
+    ? mostRecentScheduledOccurrence(r.scheduledDays)
+    : new Date());
+  const period = currentPeriodKey(r.frequency, refDate, r.scheduledDays);
   const completion = (r.completions || []).find(c => c.period === period) || null;
   return { period, done: !!completion, completion };
 }
@@ -4148,8 +4172,12 @@ const ICON_DELETE_SMALL = '<svg width="13" height="13" viewBox="0 0 16 16" fill=
 // responsável) cabe numa única linha discreta em vez de vários selos coloridos — bem mais
 // calmo de ler que o cartão anterior, que empilhava ícone + selos + descrição + status +
 // botões tudo junto.
-function routineCardHTML(r){
-  const { done, completion } = routineStatus(r);
+function routineCardHTML(r, viewDate){
+  const { done, completion } = routineStatus(r, viewDate);
+  // A data exibida (o dia selecionado na agenda) vai junto no botão, pra concluir/desfazer
+  // valer pra ESSE dia específico — sem isso, marcar a rotina enquanto se olha sexta-feira
+  // acabava sempre concluindo "hoje", mesmo que hoje fosse outro dia.
+  const toggleDateAttr = viewDate ? `${viewDate.getFullYear()}-${pad2(viewDate.getMonth() + 1)}-${pad2(viewDate.getDate())}` : "";
   const assigneeUser = DIRECTORY.find(u => u.uid === r.assigneeUid);
   const sector = SECTORS.find(s => s.key === r.sector);
   const canComplete = canCompleteRoutine(r);
@@ -4177,7 +4205,7 @@ function routineCardHTML(r){
       <div class="routine-check-meta">${metaParts.join(" · ")}</div>
       ${r.description ? `<div class="routine-check-desc">${escapeHtml(r.description)}</div>` : ""}
     </div>
-    ${canComplete ? `<button type="button" class="routine-check-action${done ? " undo" : ""}" data-toggle-routine="${r.id}">${done ? "Desfazer" : "Concluir"}</button>` : ""}
+    ${canComplete ? `<button type="button" class="routine-check-action${done ? " undo" : ""}" data-toggle-routine="${r.id}" data-toggle-date="${toggleDateAttr}">${done ? "Desfazer" : "Concluir"}</button>` : ""}
     ${canEdit ? `<button type="button" class="routine-check-icon-btn" data-edit-routine="${r.id}" title="Editar" aria-label="Editar">${ICON_EDIT_SMALL}</button>` : ""}
     ${canEdit ? `<button type="button" class="routine-check-icon-btn danger" data-delete-routine="${r.id}" title="Excluir" aria-label="Excluir">${ICON_DELETE_SMALL}</button>` : ""}
   </div>`;
@@ -4186,7 +4214,7 @@ function routineCardHTML(r){
 function wireRoutineListEvents(container){
   if(!container) return;
   container.querySelectorAll("[data-toggle-routine]").forEach(btn => {
-    btn.addEventListener("click", () => toggleRoutineCompletion(btn.getAttribute("data-toggle-routine")));
+    btn.addEventListener("click", () => toggleRoutineCompletion(btn.getAttribute("data-toggle-routine"), btn.getAttribute("data-toggle-date")));
   });
   container.querySelectorAll("[data-edit-routine]").forEach(btn => {
     btn.addEventListener("click", () => startEditRoutine(btn.getAttribute("data-edit-routine")));
@@ -4239,7 +4267,7 @@ function timeAgo(iso){
 function recentRoutineCompletions(routines, limit){
   const items = [];
   routines.forEach(r => {
-    const period = currentPeriodKey(r.frequency);
+    const { period } = routineStatus(r);
     const c = (r.completions || []).find(c => c.period === period);
     if(c && c.at) items.push({ routineTitle: r.title, byName: c.byName, at: c.at });
   });
@@ -4385,7 +4413,7 @@ function renderRoutinesAgenda(){
     dayRoutines = dayRoutines.concat(scoped.filter(r => (r.frequency === "mensal" || r.frequency === "anual") && !routineStatus(r).done));
   }
   dayRoutines.sort((a, b) => (a.title || "").localeCompare(b.title || ""));
-  const doneCount = dayRoutines.filter(r => routineStatus(r).done).length;
+  const doneCount = dayRoutines.filter(r => routineStatus(r, selectedDate).done).length;
 
   const headEl = document.getElementById("routines-agenda-head");
   if(headEl){
@@ -4402,7 +4430,7 @@ function renderRoutinesAgenda(){
   const listEl = document.getElementById("routines-list-agenda");
   if(listEl){
     listEl.innerHTML = dayRoutines.length
-      ? dayRoutines.map(routineCardHTML).join("")
+      ? dayRoutines.map(r => routineCardHTML(r, selectedDate)).join("")
       : `<div class="admin-list-item">${scoped.length ? "Nada programado para este dia." : "Nenhuma rotina cadastrada ainda."}</div>`;
     wireRoutineListEvents(listEl);
   }
@@ -4458,7 +4486,7 @@ function renderRoutinesDetail(){
     <div class="overview-block">
       <div class="summary-label" style="display:flex; align-items:center; gap:8px;">${ROUTINE_FREQ_ICON[g.key] || ""} ${g.label}</div>
       <div class="routine-list">
-        ${rows.length ? rows.map(routineCardHTML).join("") : `<div class="admin-list-item">Nenhuma rotina ${g.label.toLowerCase()} ${isManager ? "cadastrada" : "pendente"} para este setor.</div>`}
+        ${rows.length ? rows.map(r => routineCardHTML(r)).join("") : `<div class="admin-list-item">Nenhuma rotina ${g.label.toLowerCase()} ${isManager ? "cadastrada" : "pendente"} para este setor.</div>`}
       </div>
     </div>`;
   }).join("");
@@ -4525,10 +4553,14 @@ async function deleteRoutine(id){
   await saveRoutinesArray(newRoutines);
 }
 
-async function toggleRoutineCompletion(id){
+async function toggleRoutineCompletion(id, dateStr){
   const routine = ROUTINES.find(r => r.id === id);
   if(!routine || !canCompleteRoutine(routine)) return;
-  const { period, done } = routineStatus(routine);
+  // dateStr vem do dia selecionado na agenda (ver routineCardHTML) — concluir/desfazer
+  // vale pra esse dia específico, não pra "hoje" fixo, senão uma rotina de segunda+sexta
+  // marcada enquanto se vê sexta acabaria concluindo o dia errado.
+  const viewDate = dateStr ? new Date(`${dateStr}T00:00:00`) : undefined;
+  const { period, done } = routineStatus(routine, viewDate);
   const newRoutines = ROUTINES.map(r => {
     if(r.id !== id) return r;
     const completions = done
