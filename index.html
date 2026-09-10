@@ -4518,16 +4518,17 @@ const AGORASEI_MODELS = {
   standard: { id: "Qwen2.5-3B-Instruct-q4f16_1-MLC", label: "Padrão (mais preciso)" },
 };
 const AGORASEI_WEBLLM_URL = "https://cdn.jsdelivr.net/npm/@mlc-ai/web-llm@0.2.85/+esm";
-const AGORASEI_SYSTEM_PROMPT = `Você é o "Agora Eu Sei", o assistente interno da Crediffato que tira dúvida sobre os procedimentos da empresa (convênio, negociações, ouvidoria e outros temas cadastrados).
+const AGORASEI_SYSTEM_PROMPT = `Você é o "Agora Eu Sei", o assistente interno da Crediffato que ajuda no atendimento e tira dúvida sobre os procedimentos da empresa (convênio, negociações, ouvidoria e outros temas cadastrados).
 Regras:
 - Fale como uma pessoa experiente do setor ajudando um colega — natural, direto, sem soar como um manual ou uma resposta automática. Nada de linguagem robótica ou de aviso de sistema.
-- Perguntas sobre procedimentos: responda SOMENTE com base no CONTEXTO fornecido abaixo. Nunca invente um procedimento que não esteja lá.
-- Se o contexto não tiver a resposta pra uma pergunta sobre procedimento, diga isso com naturalidade (não como uma mensagem de erro) e sugira procurar o responsável do setor — não tente adivinhar.
+- Se a pergunta bater com algo no CONTEXTO fornecido abaixo, responda SOMENTE com base nele. Nunca invente um procedimento oficial que não esteja lá, e nunca misture sugestão sua com procedimento oficial na mesma resposta.
+- Se o contexto não cobrir a pergunta, mas ela for sobre uma situação de atendimento (ex: cliente nervoso, caso incomum, dúvida que não tem procedimento cadastrado), pode ajudar com uma sugestão de bom senso pra conduzir a situação, considerando que a Crediffato trabalha com convênio, negociação de dívida e ouvidoria. Só que sempre deixando claro que é uma sugestão sua, não um procedimento oficial da empresa, e recomendando confirmar com o responsável do setor antes de agir em algo que comprometa a empresa ou o cliente.
 - Cumprimentos e perguntas gerais/fora do tema (ex: "oi", "tudo bem?", "quem é você?") responda normalmente e com simpatia, sem precisar do contexto.
 - Se o contexto avisar que a pergunta pode se referir a mais de um procedimento diferente, pergunte com naturalidade qual deles a pessoa quer saber, em vez de escolher um e responder por adivinhação.
 - Seja conciso — vá direto ao ponto, sem enrolar quem só quer resolver rápido.
 - Quando existir, mencione o nome do procedimento usado, mas de forma natural dentro da frase, não como uma citação formal repetida sempre do mesmo jeito.
 - Responda em português do Brasil.`;
+const AGORASEI_NO_MATCH_CONTEXT = "(nenhum procedimento cadastrado bate com essa pergunta — se for uma situação de atendimento, pode sugerir algo por bom senso, deixando claro que não é procedimento oficial)";
 
 let agoraseiEngine = null;
 let agoraseiWorker = null;
@@ -4816,13 +4817,13 @@ async function sendAgoraseiMessage(question){
 
   let contextText;
   if(agoraseiLooksLikeGreeting(question)){
-    contextText = "(nenhum procedimento cadastrado bate com essa pergunta)";
+    contextText = AGORASEI_NO_MATCH_CONTEXT;
   }else{
     const priorHistory = agoraseiMessages.slice(0, -1); // tudo antes da pergunta atual, que já foi empilhada
     const routing = await routeAgoraseiQuestion(question, priorHistory);
     if(routing.routed){
       if(!routing.matched.length){
-        contextText = "(nenhum procedimento cadastrado bate com essa pergunta)";
+        contextText = AGORASEI_NO_MATCH_CONTEXT;
       }else{
         contextText = routing.matched.map(kb => `## ${kb.title}\n${kb.content}`).join("\n\n");
         if(routing.matched.length > 1) contextText += agoraseiAmbiguousNote(routing.matched.map(kb => kb.title));
@@ -4831,7 +4832,7 @@ async function sendAgoraseiMessage(question){
       // a triagem por IA não seguiu o formato esperado (ou falhou) — cai pro método por
       // palavra-chave, pra garantir que a pessoa sempre recebe alguma resposta.
       const retrieval = retrieveAgoraseiContext(question, 3200);
-      contextText = retrieval.blocks.length ? retrieval.blocks.join("\n\n") : "(nenhum procedimento cadastrado bate com essa pergunta)";
+      contextText = retrieval.blocks.length ? retrieval.blocks.join("\n\n") : AGORASEI_NO_MATCH_CONTEXT;
       if(retrieval.ambiguous) contextText += agoraseiAmbiguousNote(retrieval.candidates);
     }
   }
