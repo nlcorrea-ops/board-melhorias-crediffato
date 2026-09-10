@@ -4959,7 +4959,10 @@ async function sendAgoraseiMessage(question){
     agoraseiMessages.push({ role: "assistant", content: full });
   }catch(err){
     console.error("Falha ao gerar resposta do Agora Eu Sei:", err);
-    if(assistantBubble){ assistantBubble.classList.remove("typing"); assistantBubble.textContent = "Deu um erro ao gerar a resposta. Tente de novo."; }
+    // Mostra o motivo real do erro direto no chat (curto) em vez de só "deu erro" — sem isso,
+    // diagnosticar um problema como esse exige abrir o console do navegador toda vez.
+    const errDetail = (err && (err.message || String(err))) || "erro desconhecido";
+    if(assistantBubble){ assistantBubble.classList.remove("typing"); assistantBubble.textContent = `Deu um erro ao gerar a resposta. Tente de novo.\n\n[detalhe técnico: ${errDetail.slice(0, 300)}]`; }
   }finally{
     agoraseiGenerating = false;
     if(sendBtn) sendBtn.disabled = false;
