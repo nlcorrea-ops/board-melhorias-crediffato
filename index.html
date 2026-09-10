@@ -1635,6 +1635,7 @@
   .agorasei-kb-item-actions button{background:none; border:none; color:var(--text-low); cursor:pointer; font-size:12px; padding:2px 6px;}
   .agorasei-kb-item-actions button:hover{color:var(--text-hi);}
   .agorasei-kb-item-preview{margin:6px 0 0; font-size:12px; color:var(--text-mid); max-height:3.2em; overflow:hidden;}
+  .agorasei-kb-item-tags{margin:6px 0 0; font-size:11px; color:var(--pa);}
 </style>
 </head>
 <body>
@@ -2168,6 +2169,10 @@
         <label class="field">
           <span class="field-label">Conteúdo *</span>
           <textarea id="agorasei-kb-content" rows="6" maxlength="20000" required placeholder="Descreva o procedimento com o máximo de detalhe possível"></textarea>
+        </label>
+        <label class="field">
+          <span class="field-label">Sinônimos / palavras-chave (opcional)</span>
+          <input type="text" id="agorasei-kb-tags" maxlength="300" placeholder="Ex: anuidade, taxa, tarifa do cartão" />
         </label>
         <div class="modal-actions">
           <button type="button" class="btn-secondary" id="agorasei-kb-cancel-edit" style="display:none;">Cancelar edição</button>
@@ -4685,6 +4690,7 @@ function renderAgoraseiKBList(){
   listEl.innerHTML = entries.map(([id, kb]) => {
     const preview = (kb.content || "").slice(0, 160);
     const ellipsis = (kb.content || "").length > 160 ? "…" : "";
+    const tagsLine = kb.tags ? `<p class="agorasei-kb-item-tags">Sinônimos: ${escapeHtml(kb.tags)}</p>` : "";
     return `
     <div class="agorasei-kb-item">
       <div class="agorasei-kb-item-head">
@@ -4695,12 +4701,13 @@ function renderAgoraseiKBList(){
         </div>
       </div>
       <p class="agorasei-kb-item-preview">${escapeHtml(preview)}${ellipsis}</p>
+      ${tagsLine}
     </div>`;
   }).join("");
 }
 
-async function saveAgoraseiKBEntry(id, title, content){
-  const entry = { title, content, updatedAt: new Date().toISOString(), updatedByName: (currentUser && (currentUser.name || currentUser.email)) || "" };
+async function saveAgoraseiKBEntry(id, title, content, tags){
+  const entry = { title, content, tags: tags || "", updatedAt: new Date().toISOString(), updatedByName: (currentUser && (currentUser.name || currentUser.email)) || "" };
   AGORASEI_KB = { ...AGORASEI_KB, [id]: entry };
   if(storageMode === "firebase" && firebaseReady){
     const path = new fsFieldPath("kb", id);
@@ -4733,9 +4740,10 @@ async function importAgoraseiKBBatch(items){
   for(const item of items){
     const title = String((item && item.title) || "").trim();
     const content = String((item && item.content) || "").trim();
+    const tags = String((item && item.tags) || "").trim();
     if(!title || !content) continue;
     const id = "kb_" + Date.now().toString(36) + Math.random().toString(36).slice(2, 7) + count;
-    merged[id] = { title, content, updatedAt: new Date().toISOString(), updatedByName: (currentUser && (currentUser.name || currentUser.email)) || "" };
+    merged[id] = { title, content, tags, updatedAt: new Date().toISOString(), updatedByName: (currentUser && (currentUser.name || currentUser.email)) || "" };
     count++;
   }
   if(!count) return 0;
@@ -4774,8 +4782,11 @@ function retrieveAgoraseiContext(query, maxChars){
     const tokens = agoraseiTokens(`${kb.title} ${kb.content}`);
     let score = 0;
     tokens.forEach(t => { if(queryTokens.has(t)) score++; });
-    // título pesa mais que o corpo — bate direto no que a pessoa quer saber
+    // título e sinônimos pesam mais que o corpo — são a "porta de entrada" curada pro
+    // procedimento, então bater neles é sinal bem mais forte do que bater em qualquer
+    // palavra solta no meio do texto.
     agoraseiTokens(kb.title).forEach(t => { if(queryTokens.has(t)) score += 3; });
+    agoraseiTokens(kb.tags || "").forEach(t => { if(queryTokens.has(t)) score += 3; });
     return { kb, score };
   }).filter(s => s.score > 0).sort((a, b) => b.score - a.score);
 
@@ -4810,7 +4821,10 @@ function agoraseiAmbiguousNote(titles){
 async function routeAgoraseiQuestion(question, history){
   const entries = Object.values(AGORASEI_KB);
   if(!entries.length) return { matched: [], routed: true };
-  const titleList = entries.map(kb => kb.title).join("\n");
+  // Sinônimos entram como dica entre colchetes — ajuda a achar procedimento cuja palavra só
+  // aparece no corpo do texto (ex: "anuidade" dentro de "Cartão Crediffato"), sem precisar
+  // mandar o conteúdo inteiro de cada procedimento (isso deixaria a lista gigante e lenta).
+  const titleList = entries.map(kb => kb.tags ? `${kb.title} [sinônimos: ${kb.tags}]` : kb.title).join("\n");
   // Manda as últimas trocas da conversa junto — sem isso, uma pergunta de continuação (tipo
   // "e pra pessoa jurídica?", que só faz sentido junto do que foi perguntado antes) chega pra
   // triagem sem nenhuma pista do assunto e ela não acha nada.
@@ -4818,7 +4832,7 @@ async function routeAgoraseiQuestion(question, history){
   try{
     const resp = await agoraseiEngine.chat.completions.create({
       messages: [
-        { role: "system", content: `Você escolhe, de uma lista de procedimentos cadastrados, qual(is) respondem a pergunta mais recente de um usuário. Use o histórico da conversa pra entender o assunto quando a pergunta for uma continuação (ex: "e pra pessoa jurídica?" só faz sentido junto do que foi perguntado antes). Responda APENAS com os títulos exatos que combinam, um por linha, copiados exatamente como estão na lista — sem nenhum texto além disso. Se nenhum combinar, responda só a palavra NENHUM.` },
+        { role: "system", content: `Você escolhe, de uma lista de procedimentos cadastrados, qual(is) respondem a pergunta mais recente de um usuário. Cada linha da lista é um título, às vezes seguido de sinônimos entre colchetes — use os sinônimos só pra decidir, nunca os inclua na resposta. Use o histórico da conversa pra entender o assunto quando a pergunta for uma continuação (ex: "e pra pessoa jurídica?" só faz sentido junto do que foi perguntado antes). Responda APENAS com os títulos exatos que combinam, um por linha, SEM os colchetes de sinônimos, copiados exatamente como estão na lista — sem nenhum texto além disso. Se nenhum combinar, responda só a palavra NENHUM.` },
         { role: "user", content: `Lista de procedimentos:\n${titleList}${historyText ? `\n\nHistórico recente da conversa:\n${historyText}` : ""}\n\nPergunta mais recente do usuário: "${question}"\n\nQuais títulos da lista combinam com essa pergunta?` },
       ],
       stream: false,
@@ -4827,7 +4841,7 @@ async function routeAgoraseiQuestion(question, history){
     });
     const raw = (resp.choices[0] && resp.choices[0].message && resp.choices[0].message.content) || "";
     if(/^\s*nenhum\W*\s*$/i.test(raw.trim())) return { matched: [], routed: true };
-    const lines = raw.split("\n").map(l => l.trim().replace(/^[-*\d.)\s]+/, "")).filter(Boolean);
+    const lines = raw.split("\n").map(l => l.trim().replace(/^[-*\d.)\s]+/, "").replace(/\s*\[.*$/, "").trim()).filter(Boolean);
     const matched = entries.filter(kb => lines.some(l => l.toLowerCase() === kb.title.toLowerCase()));
     if(!matched.length) return { matched: [], routed: false }; // não seguiu o formato esperado — não dá pra confiar
     return { matched, routed: true };
@@ -4981,6 +4995,7 @@ document.getElementById("agorasei-kb-list").addEventListener("click", (e) => {
     document.getElementById("agorasei-kb-edit-id").value = id;
     document.getElementById("agorasei-kb-title").value = entry.title || "";
     document.getElementById("agorasei-kb-content").value = entry.content || "";
+    document.getElementById("agorasei-kb-tags").value = entry.tags || "";
     document.getElementById("agorasei-kb-submit-btn").textContent = "Salvar alterações";
     document.getElementById("agorasei-kb-cancel-edit").style.display = "";
     document.getElementById("agorasei-kb-title").focus();
@@ -4995,11 +5010,12 @@ document.getElementById("agorasei-kb-form").addEventListener("submit", withSubmi
   msgEl.style.color = ""; msgEl.textContent = "";
   const title = document.getElementById("agorasei-kb-title").value.trim();
   const content = document.getElementById("agorasei-kb-content").value.trim();
+  const tags = document.getElementById("agorasei-kb-tags").value.trim();
   if(!title || !content){ msgEl.textContent = "Preencha título e conteúdo."; return; }
   if(!firebaseReady || storageMode !== "firebase"){ msgEl.textContent = "Indisponível no momento (sem conexão com o banco compartilhado)."; return; }
   const id = agoraseiKBEditingId || ("kb_" + Date.now().toString(36) + Math.random().toString(36).slice(2, 7));
   try{
-    await saveAgoraseiKBEntry(id, title, content);
+    await saveAgoraseiKBEntry(id, title, content, tags);
     agoraseiKBEditingId = null;
     document.getElementById("agorasei-kb-form").reset();
     document.getElementById("agorasei-kb-edit-id").value = "";
