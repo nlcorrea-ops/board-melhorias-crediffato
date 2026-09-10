@@ -2117,7 +2117,7 @@
     <div class="agorasei-layout" id="agorasei-chat-layout" style="display:none;">
       <div class="agorasei-privacy-note">
         <svg width="14" height="14" viewBox="0 0 16 16" fill="none" aria-hidden="true"><path d="M8 1.3 2.3 3.4v4c0 4 2.4 6.6 5.7 8 3.3-1.4 5.7-4 5.7-8v-4L8 1.3Z" stroke="currentColor" stroke-width="1.2" stroke-linejoin="round"/><path d="M5.6 8.1 7.3 9.8l3.1-3.6" stroke="currentColor" stroke-width="1.2" stroke-linecap="round" stroke-linejoin="round"/></svg>
-        <span>O modelo roda aqui no seu navegador — as perguntas não são enviadas pra nenhum servidor e não ficam salvas em lugar nenhum.</span>
+        <span>As perguntas passam por um serviço externo (Groq) só pra gerar a resposta rápido — ele não treina modelos com esse conteúdo nem guarda o histórico. Não fica salvo em nenhum servidor da Crediffato.</span>
       </div>
       <div class="agorasei-model-bar" id="agorasei-model-bar">
         <span id="agorasei-model-status">Preparando...</span>
@@ -4543,10 +4543,13 @@ document.getElementById("routines-detail-area-filter").addEventListener("click",
 // procedimentos abaixo (documento à parte, AGORASEI_DOC) é compartilhada via Firestore, igual
 // ao resto da plataforma; as conversas em si nunca são salvas em lugar nenhum, nem localmente.
 const AGORASEI_MODELS = {
-  light: { id: "Qwen2.5-1.5B-Instruct-q4f16_1-MLC", label: "Leve (mais rápido)" },
-  standard: { id: "Qwen2.5-3B-Instruct-q4f16_1-MLC", label: "Padrão (mais preciso)" },
+  light: { id: "openai/gpt-oss-20b", label: "Leve (mais rápido)" },
+  standard: { id: "openai/gpt-oss-120b", label: "Padrão (mais preciso)" },
 };
-const AGORASEI_WEBLLM_URL = "https://cdn.jsdelivr.net/npm/@mlc-ai/web-llm@0.2.85/+esm";
+// URL do Cloudflare Worker que guarda a chave da Groq em segredo e confere o login antes de
+// repassar o pedido — o navegador nunca fala direto com a Groq. Preencher depois de publicar o
+// Worker (ver cloudflare-worker/worker.js neste repositório).
+const AGORASEI_PROXY_URL = "SUBSTITUA_PELA_URL_DO_WORKER";
 const AGORASEI_SYSTEM_PROMPT = `Você é o "Agora Eu Sei", o assistente interno da Crediffato que ajuda no atendimento e tira dúvida sobre os procedimentos da empresa (convênio, negociações, ouvidoria e outros temas cadastrados).
 Regras:
 - Fale como uma pessoa experiente do setor ajudando um colega — natural, direto, sem soar como um manual ou uma resposta automática. Nada de linguagem robótica ou de aviso de sistema.
@@ -4558,22 +4561,21 @@ Regras:
 - Quando existir, mencione o nome do procedimento usado, mas de forma natural dentro da frase, não como uma citação formal repetida sempre do mesmo jeito.
 - Responda em português do Brasil.`;
 const AGORASEI_NO_MATCH_CONTEXT = "(nenhum procedimento cadastrado bate com essa pergunta — se for uma situação de atendimento, pode sugerir algo por bom senso, deixando claro que não é procedimento oficial)";
-// Teto por procedimento individual — sem isso, um procedimento bem completo (a base real tem
-// alguns com mais de 10 mil caracteres) ia inteiro pro contexto sem limite nenhum, e se a
-// triagem casasse com 2+ procedimentos longos ao mesmo tempo, o prompt total podia estourar a
-// janela de contexto do modelo (4096 tokens) e o pedido de geração simplesmente falhava.
-const AGORASEI_MAX_ENTRY_CHARS = 1200;
+// Teto por procedimento individual — a Groq processa cada pergunta numa janela de contexto bem
+// maior (o gpt-oss aceita mais de 100 mil tokens), então não corre mais risco de estourar e
+// falhar como acontecia com o modelo local. O teto aqui existe só pra manter a resposta rápida
+// (menos texto pra "ler" antes de responder) e o uso dentro do limite gratuito da Groq.
+const AGORASEI_MAX_ENTRY_CHARS = 4000;
 function agoraseiContextBlock(kb){
   const content = kb.content.length > AGORASEI_MAX_ENTRY_CHARS ? kb.content.slice(0, AGORASEI_MAX_ENTRY_CHARS) + "…" : kb.content;
   return `## ${kb.title}\n${content}`;
 }
 
-let agoraseiEngine = null;
-let agoraseiWorker = null;
-let agoraseiEngineStatus = "idle"; // idle | loading | ready | unsupported | error
-let agoraseiProgress = null;
+let agoraseiEngineStatus = "idle"; // idle | loading | ready | error
 let agoraseiErrorMessage = "";
-let agoraseiModelKey = (() => { try{ return localStorage.getItem("agoraseiModel") || "light"; }catch(e){ return "light"; } })();
+// "standard" como padrão: com a Groq, o modelo mais preciso roda no servidor deles (não mais
+// na placa de vídeo do atendente), então não custa mais velocidade nenhuma escolher ele.
+let agoraseiModelKey = (() => { try{ return localStorage.getItem("agoraseiModel") || "standard"; }catch(e){ return "standard"; } })();
 let agoraseiMessages = []; // [{role, content}] — só em memória, some ao recarregar a página
 let agoraseiGenerating = false;
 let agoraseiKBEditingId = null;
@@ -4603,36 +4605,21 @@ function agoraseiSubmitQuestion(text){
   sendAgoraseiMessage(text);
 }
 
+// Confere se dá pra falar com o Worker (tem sessão logada pra gerar o token de autenticação) —
+// não tem modelo pra baixar, então isso é quase instantâneo, diferente da versão anterior que
+// rodava o modelo no navegador via WebGPU.
 async function initAgoraseiEngine(){
   if(agoraseiEngineStatus === "loading" || agoraseiEngineStatus === "ready") return;
-  if(!navigator.gpu){
-    agoraseiEngineStatus = "unsupported";
+  agoraseiEngineStatus = "loading";
+  renderAgoraseiStatus();
+  if(!auth || !auth.currentUser){
+    agoraseiEngineStatus = "error";
+    agoraseiErrorMessage = "Sua sessão expirou. Atualize a página e faça login de novo.";
     renderAgoraseiStatus();
     return;
   }
-  agoraseiEngineStatus = "loading";
-  agoraseiProgress = null;
+  agoraseiEngineStatus = "ready";
   renderAgoraseiStatus();
-  try{
-    const webllm = await import(AGORASEI_WEBLLM_URL);
-    const modelId = (AGORASEI_MODELS[agoraseiModelKey] || AGORASEI_MODELS.light).id;
-    // Roda o modelo numa Web Worker (thread separada da interface) — assim o download, o
-    // carregamento e a geração de cada resposta não travam nem deixam o resto da página lenta
-    // enquanto a IA está trabalhando.
-    const workerSource = `import * as webllm from "${AGORASEI_WEBLLM_URL}";\nconst handler = new webllm.WebWorkerMLCEngineHandler();\nself.onmessage = (msg) => handler.onmessage(msg);\n`;
-    const workerBlobUrl = URL.createObjectURL(new Blob([workerSource], { type: "application/javascript" }));
-    agoraseiWorker = new Worker(workerBlobUrl, { type: "module" });
-    agoraseiEngine = await webllm.CreateWebWorkerMLCEngine(agoraseiWorker, modelId, {
-      initProgressCallback: (report) => { agoraseiProgress = report; renderAgoraseiStatus(); },
-    });
-    agoraseiEngineStatus = "ready";
-    renderAgoraseiStatus();
-  }catch(err){
-    console.error("Falha ao carregar o modelo do Agora Eu Sei:", err);
-    agoraseiEngineStatus = "error";
-    agoraseiErrorMessage = "Não foi possível baixar o modelo de IA agora. Verifique sua conexão (ou se a rede da empresa bloqueia o download) e tente de novo.";
-    renderAgoraseiStatus();
-  }
 }
 
 function renderAgoraseiStatus(){
@@ -4655,28 +4642,43 @@ function renderAgoraseiStatus(){
   }
   chatLayout.style.display = "none";
   teaser.style.display = "";
-  if(retryBtn) retryBtn.style.display = (agoraseiEngineStatus === "error" || agoraseiEngineStatus === "unsupported") ? "" : "none";
+  if(retryBtn) retryBtn.style.display = agoraseiEngineStatus === "error" ? "" : "none";
 
-  if(agoraseiEngineStatus === "unsupported"){
-    if(eyebrow) eyebrow.innerHTML = `<span class="dot"></span>Indisponível neste navegador`;
-    if(title) title.textContent = "Seu navegador não suporta o assistente";
-    if(sub) sub.textContent = "O Agora Eu Sei roda direto no navegador via WebGPU. Use uma versão recente do Chrome ou Edge pra acessar.";
-    return;
-  }
   if(agoraseiEngineStatus === "error"){
-    if(eyebrow) eyebrow.innerHTML = `<span class="dot"></span>Erro ao carregar`;
-    if(title) title.textContent = "Não deu pra carregar o modelo";
+    if(eyebrow) eyebrow.innerHTML = `<span class="dot"></span>Erro ao conectar`;
+    if(title) title.textContent = "Não deu pra conectar o assistente";
     if(sub) sub.textContent = agoraseiErrorMessage || "Tente novamente em instantes.";
     return;
   }
   // loading
-  if(eyebrow) eyebrow.innerHTML = `<span class="dot"></span>Carregando`;
+  if(eyebrow) eyebrow.innerHTML = `<span class="dot"></span>Conectando`;
   if(title) title.textContent = "Preparando o assistente";
-  const pct = (agoraseiProgress && typeof agoraseiProgress.progress === "number") ? Math.round(agoraseiProgress.progress * 100) : 0;
-  const text = (agoraseiProgress && agoraseiProgress.text) ? agoraseiProgress.text : "Baixando o modelo de IA (só na primeira vez — depois fica salvo no navegador)...";
-  if(sub) sub.textContent = text;
-  if(statusEl) statusEl.textContent = text;
-  if(fillEl) fillEl.style.width = pct + "%";
+  if(sub) sub.textContent = "Só um instante...";
+  if(statusEl) statusEl.textContent = "Conectando...";
+  if(fillEl) fillEl.style.width = "40%";
+}
+
+// Todo pedido de IA passa por aqui: pega o token de login do Firebase (prova pro Worker que
+// quem está chamando é um usuário autenticado do board, não qualquer um na internet) e manda
+// pro Worker, que troca esse token por uma chamada de verdade pra Groq usando a chave secreta
+// dele (a chave nunca aparece no navegador).
+async function agoraseiCallGroq({ messages, model, stream, temperature, max_tokens, signal }){
+  if(!AGORASEI_PROXY_URL || AGORASEI_PROXY_URL.startsWith("SUBSTITUA")){
+    throw new Error("Assistente ainda não configurado — falta publicar o proxy (AGORASEI_PROXY_URL).");
+  }
+  if(!auth || !auth.currentUser) throw new Error("Sessão expirada — faça login novamente.");
+  const idToken = await auth.currentUser.getIdToken();
+  const resp = await fetch(AGORASEI_PROXY_URL, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ idToken, messages, model, stream: !!stream, temperature, max_tokens }),
+    signal,
+  });
+  if(!resp.ok){
+    const text = await resp.text().catch(() => "");
+    throw new Error(`HTTP ${resp.status}${text ? ": " + text.slice(0, 200) : ""}`);
+  }
+  return resp;
 }
 
 function renderAgoraseiKBList(){
@@ -4835,16 +4837,18 @@ async function routeAgoraseiQuestion(question, history){
   // triagem sem nenhuma pista do assunto e ela não acha nada.
   const historyText = (history || []).slice(-4).map(m => `${m.role === "user" ? "Usuário" : "Assistente"}: ${m.content}`).join("\n");
   try{
-    const resp = await agoraseiEngine.chat.completions.create({
+    const resp = await agoraseiCallGroq({
       messages: [
         { role: "system", content: `Você escolhe, de uma lista de procedimentos cadastrados, qual(is) respondem a pergunta mais recente de um usuário. Cada linha da lista é um título, às vezes seguido de sinônimos entre colchetes — use os sinônimos só pra decidir, nunca os inclua na resposta. Use o histórico da conversa pra entender o assunto quando a pergunta for uma continuação (ex: "e pra pessoa jurídica?" só faz sentido junto do que foi perguntado antes). Responda APENAS com os títulos exatos que combinam, um por linha, SEM os colchetes de sinônimos, copiados exatamente como estão na lista — sem nenhum texto além disso. Se nenhum combinar, responda só a palavra NENHUM.` },
         { role: "user", content: `Lista de procedimentos:\n${titleList}${historyText ? `\n\nHistórico recente da conversa:\n${historyText}` : ""}\n\nPergunta mais recente do usuário: "${question}"\n\nQuais títulos da lista combinam com essa pergunta?` },
       ],
+      model: (AGORASEI_MODELS[agoraseiModelKey] || AGORASEI_MODELS.light).id,
       stream: false,
       temperature: 0,
       max_tokens: 100,
     });
-    const raw = (resp.choices[0] && resp.choices[0].message && resp.choices[0].message.content) || "";
+    const data = await resp.json();
+    const raw = (data.choices[0] && data.choices[0].message && data.choices[0].message.content) || "";
     if(/^\s*nenhum\W*\s*$/i.test(raw.trim())) return { matched: [], routed: true };
     const lines = raw.split("\n").map(l => l.trim().replace(/^[-*\d.)\s]+/, "").replace(/\s*\[.*$/, "").trim()).filter(Boolean);
     const matched = entries.filter(kb => lines.some(l => l.toLowerCase() === kb.title.toLowerCase()));
@@ -4878,7 +4882,7 @@ function agoraseiAppendMessage(role, content){
 
 async function sendAgoraseiMessage(question){
   if(agoraseiGenerating || !question.trim()) return;
-  if(agoraseiEngineStatus !== "ready" || !agoraseiEngine) return;
+  if(agoraseiEngineStatus !== "ready") return;
   agoraseiGenerating = true;
   const sendBtn = document.getElementById("agorasei-send-btn");
   if(sendBtn) sendBtn.disabled = true;
@@ -4902,20 +4906,13 @@ async function sendAgoraseiMessage(question){
     // já acha um procedimento claramente melhor que os outros, usa direto — poupa uma rodada
     // inteira de geração da IA, que é o maior peso no tempo de resposta. Só cai pra triagem por
     // IA (mais lenta, mas entende sinônimo) quando a busca simples não teve um vencedor claro.
-    const fast = retrieveAgoraseiContext(question, 1200);
+    const fast = retrieveAgoraseiContext(question, AGORASEI_MAX_ENTRY_CHARS);
     const fastConfident = fast.blocks.length > 0 && !fast.ambiguous && fast.topScore >= 4;
     if(fastConfident){
       contextText = fast.blocks[0];
     }else{
       const priorHistory = agoraseiMessages.slice(0, -1); // tudo antes da pergunta atual, que já foi empilhada
       const routing = await routeAgoraseiQuestion(question, priorHistory);
-      // Pausa curta antes de chamar a engine de novo pra gerar a resposta — bug conhecido e
-      // ainda sem correção oficial do WebLLM (github.com/mlc-ai/web-llm issue #497): às vezes a
-      // geração seguinte tenta ler um resultado antes da GPU realmente terminar o trabalho da
-      // chamada anterior ("Buffer was unmapped before mapping was resolved"), mais comum em
-      // placas de vídeo mais lentas. Não resolve 100% (é bug de biblioteca de terceiro), mas dá
-      // um tempo pra GPU assentar entre uma chamada e outra, reduzindo a chance da corrida.
-      await new Promise(r => setTimeout(r, 150));
       if(routing.routed && routing.matched.length){
         // Manda o conteúdo completo de só 1 procedimento (o primeiro que a triagem escolheu) —
         // os outros (se houver) entram só como título na nota de ambiguidade, não o texto
@@ -4939,45 +4936,35 @@ async function sendAgoraseiMessage(question){
       }
     }
   }
-  // Guarda também o texto EXATO que vai ser mandado pra engine nesta pergunta (com o contexto
-  // já embutido) — precisamos disso pra reconstruir o histórico de um jeito que bata
-  // exatamente com o que a engine already processou, senão a comparação de cache do WebLLM
-  // nunca reconhece a conversa como "a mesma de antes" (ver explicação abaixo).
+  // Guarda também o texto EXATO que vai ser mandado pra API nesta pergunta (com o contexto já
+  // embutido) — precisamos disso pra reconstruir o histórico de um jeito que bata exatamente
+  // com o que foi mandado antes, o que ajuda o cache automático de prompt da Groq (prefixo
+  // idêntico entre pedidos processa mais rápido) sempre que o caminho rápido (sem triagem) for
+  // usado, já que aí o prefixo (sistema + histórico) fica igual de uma pergunta pra outra.
   agoraseiMessages[agoraseiMessages.length - 1].apiContent = `Contexto:\n${contextText}\n\nPergunta: ${question}`;
   const priorTurns = agoraseiMessages.slice(0, -1).slice(-3).map(m =>
     m.role === "user" ? { role: "user", content: m.apiContent || m.content } : { role: "assistant", content: m.content }
   ); // até 3 trocas anteriores, sem a pergunta atual — turno de usuário replicado com o mesmo texto que foi realmente enviado antes
 
-  // O WebLLM só reaproveita o processamento já feito (cache da conversa) quando TUDO antes da
-  // última mensagem bate exatamente com a chamada anterior — a última mensagem em si nunca entra
-  // nessa comparação, é sempre tratada como entrada nova. Por isso o contexto recuperado (que
-  // muda a cada pergunta) vai junto da pergunta na ÚLTIMA mensagem, não dentro do prompt do
-  // sistema: assim o "prefixo" (sistema + histórico) fica idêntico de uma pergunta pra outra
-  // sempre que o caminho rápido (sem triagem) for usado, e a engine reaproveita o que já
-  // processou em vez de recalcular tudo do zero — mesmo padrão recomendado pra cache de prompt
-  // em RAG (contexto variável fica perto da pergunta, não misturado com as instruções fixas).
   const systemMsg = { role: "system", content: AGORASEI_SYSTEM_PROMPT };
   function buildFinalUserMsg(ctx){
     return { role: "user", content: `Contexto:\n${ctx}\n\nPergunta: ${question}` };
   }
 
-  // Faz uma tentativa de geração e transmite o resultado pra dentro da bolha. Extraído numa
-  // função à parte porque tentamos duas vezes: uma com o contexto normal, e — só se essa
-  // primeira falhar — uma segunda vez com um pedido bem mais enxuto (sem contexto extra, sem
-  // histórico), pra dar uma chance da pessoa ainda receber alguma resposta em vez de só um erro.
-  async function attemptGeneration(messages){
-    const stream = await agoraseiEngine.chat.completions.create({
+  // Chama a Groq (via proxy) pedindo streaming e vai transmitindo cada pedaço pra dentro da
+  // bolha assim que chega, no formato SSE padrão da API compatível com OpenAI (linhas
+  // "data: {...}", terminando em "data: [DONE]").
+  async function attemptGeneration(messages, signal){
+    const resp = await agoraseiCallGroq({
       messages,
+      model: (AGORASEI_MODELS[agoraseiModelKey] || AGORASEI_MODELS.light).id,
       stream: true,
       temperature: 0.6,
-      max_tokens: 300,
+      max_tokens: 500,
+      signal,
     });
     let full = "";
     let firstChunk = true;
-    // Rolar a tela até embaixo força a página a recalcular o layout inteiro — fazer isso a
-    // cada palavra que chega (em vez de uma vez por quadro de tela) desperdiça processamento
-    // que, num PC com placa de vídeo integrada, compete pelo mesmo recurso que o modelo está
-    // usando pra gerar a resposta. Agrupa isso pra no máximo 1x por quadro de tela.
     const messagesEl = document.getElementById("agorasei-messages");
     let scrollScheduled = false;
     function scheduleScroll(){
@@ -4985,61 +4972,61 @@ async function sendAgoraseiMessage(question){
       scrollScheduled = true;
       requestAnimationFrame(() => { scrollScheduled = false; if(messagesEl) messagesEl.scrollTop = messagesEl.scrollHeight; });
     }
-    for await (const chunk of stream){
-      const delta = chunk.choices[0] && chunk.choices[0].delta && chunk.choices[0].delta.content;
-      if(delta){
-        if(firstChunk){
-          if(assistantBubble){ assistantBubble.classList.remove("typing"); assistantBubble.textContent = ""; }
-          firstChunk = false;
+    const reader = resp.body.getReader();
+    const decoder = new TextDecoder();
+    let buffer = "";
+    while(true){
+      const { done, value } = await reader.read();
+      if(done) break;
+      buffer += decoder.decode(value, { stream: true });
+      const lines = buffer.split("\n");
+      buffer = lines.pop(); // linha incompleta (ainda sem \n) fica pro próximo pedaço lido
+      for(const line of lines){
+        const trimmed = line.trim();
+        if(!trimmed.startsWith("data:")) continue;
+        const payload = trimmed.slice(5).trim();
+        if(payload === "[DONE]") continue;
+        let json;
+        try{ json = JSON.parse(payload); }catch(e){ continue; }
+        const delta = json.choices && json.choices[0] && json.choices[0].delta && json.choices[0].delta.content;
+        if(delta){
+          if(firstChunk){
+            if(assistantBubble){ assistantBubble.classList.remove("typing"); assistantBubble.textContent = ""; }
+            firstChunk = false;
+          }
+          full += delta;
+          if(assistantBubble) assistantBubble.textContent = full;
+          scheduleScroll();
         }
-        full += delta;
-        if(assistantBubble) assistantBubble.textContent = full;
-        scheduleScroll();
       }
     }
     return full || "Não consegui gerar uma resposta agora. Tente reformular a pergunta.";
   }
 
-  // IMPORTANTE: nada de chamar resetChat() e tentar de novo automaticamente aqui — chegamos a
-  // fazer isso, mas "Object/Module has already been disposed" é um bug conhecido do próprio
-  // WebLLM ao reaproveitar a engine entre chamadas de formato diferente (github.com/mlc-ai/
-  // web-llm issues #486 e #560), e um reset+nova tentativa imediata parece disparar exatamente
-  // essa corrida em vez de evitá-la. Mais seguro deixar o erro aparecer claro e a pessoa mandar
-  // de novo manualmente — um envio novo passa pelo fluxo normal, sem essa corrida.
-  // Trava de segurança: se o stream não terminar em até 45s (a engine travou de vez, sem nem
-  // gerar erro — já aconteceu), desiste sozinho em vez de deixar a tela presa pra sempre sem
-  // dar pra mandar outra pergunta. Tenta interromper a geração travada antes de desistir.
+  // Trava de segurança: se a resposta não terminar em até 45s (rede lenta, provedor fora do
+  // ar), cancela sozinho em vez de deixar a tela presa sem dar pra mandar outra pergunta.
   const AGORASEI_STALL_TIMEOUT_MS = 45000;
-  function agoraseiStallTimeout(){
-    return new Promise((_, reject) => setTimeout(() => reject(new Error("TRAVOU: a resposta não terminou em 45 segundos.")), AGORASEI_STALL_TIMEOUT_MS));
-  }
+  const stallController = new AbortController();
+  const stallTimer = setTimeout(() => stallController.abort(), AGORASEI_STALL_TIMEOUT_MS);
 
   try{
-    const full = await Promise.race([
-      attemptGeneration([systemMsg, ...priorTurns, buildFinalUserMsg(contextText)]),
-      agoraseiStallTimeout(),
-    ]);
+    const full = await attemptGeneration([systemMsg, ...priorTurns, buildFinalUserMsg(contextText)], stallController.signal);
+    clearTimeout(stallTimer);
     if(assistantBubble){ assistantBubble.classList.remove("typing"); assistantBubble.textContent = full; }
     agoraseiMessages.push({ role: "assistant", content: full });
   }catch(err){
+    clearTimeout(stallTimer);
     console.error("Falha ao gerar resposta do Agora Eu Sei:", err);
+    const isStall = err && err.name === "AbortError";
     const errDetail = (err && (err.message || String(err))) || "erro desconhecido";
-    const isStall = /^TRAVOU:/.test(errDetail);
-    if(isStall){
-      // Tenta cancelar a geração que ficou presa, pra não deixar a engine ocupada com um
-      // pedido morto na próxima pergunta.
-      try{ agoraseiEngine.interruptGenerate(); }catch(e){ console.error("Falha ao interromper geração travada:", e); }
-    }
-    // Mostra o motivo real do erro direto no chat (curto) em vez de só "deu erro" — sem isso,
-    // diagnosticar um problema como esse exige abrir o console do navegador toda vez.
-    // "disposed"/"mapAsync"/"unmapped" são sinais de um bug conhecido do WebLLM (corrida na
-    // GPU, sem correção oficial ainda) — nesse caso avisa que é provavelmente passageiro,
-    // em vez de deixar parecer que é um problema permanente.
-    const looksTransient = /dispos|mapasync|unmapped|device was lost/i.test(errDetail);
+    const isRateLimit = /HTTP 429/.test(errDetail);
+    const isAuth = /HTTP 401/.test(errDetail);
     const userMsg = isStall
-      ? `A resposta travou e não terminou a tempo. Cancelei o pedido — pode tentar mandar a pergunta de novo.`
-      : looksTransient
-      ? `Deu uma falha passageira na placa de vídeo ao gerar a resposta (bug conhecido do motor de IA, não é da base de procedimentos). Tenta mandar a pergunta de novo — geralmente resolve.\n\n[detalhe técnico: ${errDetail.slice(0, 300)}]`
+      ? `A resposta demorou demais e foi cancelada. Pode tentar mandar a pergunta de novo.`
+      : isRateLimit
+      ? `Muita gente perguntando ao mesmo tempo agora. Espera alguns segundos e tenta de novo.`
+      : isAuth
+      ? `Sua sessão expirou. Atualize a página e faça login de novo.`
       : `Deu um erro ao gerar a resposta. Tente mandar a pergunta de novo.\n\n[detalhe técnico: ${errDetail.slice(0, 300)}]`;
     if(assistantBubble){ assistantBubble.classList.remove("typing"); assistantBubble.textContent = userMsg; }
   }finally{
@@ -5157,23 +5144,12 @@ document.getElementById("agorasei-input").addEventListener("input", (e) => {
   e.target.style.height = Math.min(e.target.scrollHeight, 120) + "px";
 });
 document.getElementById("agorasei-model-select").value = agoraseiModelKey;
-document.getElementById("agorasei-model-select").addEventListener("change", async (e) => {
+document.getElementById("agorasei-model-select").addEventListener("change", (e) => {
+  // Trocar de modelo não precisa mais "recarregar" nada — cada pergunta já manda o modelo
+  // escolhido junto no pedido pra Groq, então a troca vale a partir da próxima pergunta.
   agoraseiModelKey = e.target.value;
   try{ localStorage.setItem("agoraseiModel", agoraseiModelKey); }catch(err){}
-  if(agoraseiEngineStatus === "ready" && agoraseiEngine){
-    agoraseiEngineStatus = "loading";
-    agoraseiProgress = null;
-    renderAgoraseiStatus();
-    try{
-      await agoraseiEngine.reload(AGORASEI_MODELS[agoraseiModelKey].id);
-      agoraseiEngineStatus = "ready";
-    }catch(err){
-      console.error("Falha ao trocar modelo do Agora Eu Sei:", err);
-      agoraseiEngineStatus = "error";
-      agoraseiErrorMessage = "Não foi possível trocar de modelo agora. Tente novamente.";
-    }
-    renderAgoraseiStatus();
-  }
+  renderAgoraseiStatus();
 });
 document.getElementById("agorasei-retry-btn").addEventListener("click", () => {
   agoraseiEngineStatus = "idle";
