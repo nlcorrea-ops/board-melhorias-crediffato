@@ -4520,6 +4520,7 @@ Regras:
 - Quando existir, cite o nome do procedimento usado na resposta.`;
 
 let agoraseiEngine = null;
+let agoraseiWorker = null;
 let agoraseiEngineStatus = "idle"; // idle | loading | ready | unsupported | error
 let agoraseiProgress = null;
 let agoraseiErrorMessage = "";
@@ -4548,7 +4549,13 @@ async function initAgoraseiEngine(){
   try{
     const webllm = await import(AGORASEI_WEBLLM_URL);
     const modelId = (AGORASEI_MODELS[agoraseiModelKey] || AGORASEI_MODELS.light).id;
-    agoraseiEngine = await webllm.CreateMLCEngine(modelId, {
+    // Roda o modelo numa Web Worker (thread separada da interface) — assim o download, o
+    // carregamento e a geração de cada resposta não travam nem deixam o resto da página lenta
+    // enquanto a IA está trabalhando.
+    const workerSource = `import * as webllm from "${AGORASEI_WEBLLM_URL}";\nconst handler = new webllm.WebWorkerMLCEngineHandler();\nself.onmessage = (msg) => handler.onmessage(msg);\n`;
+    const workerBlobUrl = URL.createObjectURL(new Blob([workerSource], { type: "application/javascript" }));
+    agoraseiWorker = new Worker(workerBlobUrl, { type: "module" });
+    agoraseiEngine = await webllm.CreateWebWorkerMLCEngine(agoraseiWorker, modelId, {
       initProgressCallback: (report) => { agoraseiProgress = report; renderAgoraseiStatus(); },
     });
     agoraseiEngineStatus = "ready";
