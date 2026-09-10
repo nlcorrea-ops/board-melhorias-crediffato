@@ -5171,50 +5171,50 @@ async function sendAgoraseiMessage(question){
   // sem ambiguidade nenhuma — pergunta que serve pra mais de um procedimento, ou que caiu no
   // caminho de "bom senso" sem procedimento cadastrado, nunca usa nem alimenta o cache.
   let matchedKbId = null;
-  if(agoraseiLooksLikeGreeting(question)){
+  // A busca por palavra-chave roda SEMPRE primeiro, mesmo pra mensagem com cara de saudação —
+  // ela é instantânea (não chama modelo nenhum) e é o que evita o bug de tratar uma mensagem
+  // curta e sem "?" (ex: alguém colando o próprio título de um procedimento, tipo "Negociações:
+  // Script - REFINANCIAMENTO") como se fosse só um "oi" e pular a base de procedimentos inteira
+  // sem nem olhar. Só cai no atalho de saudação quando NEM a busca por palavra-chave acha
+  // qualquer pista — aí sim é seguro assumir que não é uma pergunta de procedimento de verdade.
+  const fast = retrieveAgoraseiContext(question, AGORASEI_MAX_ENTRY_CHARS);
+  const fastConfident = fast.blocks.length > 0 && !fast.ambiguous && fast.topScore >= 4;
+  if(fastConfident){
+    contextText = fast.blocks[0];
+    matchedKbId = fast.topId;
+  }else if(agoraseiLooksLikeGreeting(question) && !fast.blocks.length){
     contextText = AGORASEI_NO_MATCH_CONTEXT;
   }else{
-    // Caminho rápido: a busca por palavra-chave é instantânea (não chama o modelo). Quando ela
-    // já acha um procedimento claramente melhor que os outros, usa direto — poupa uma rodada
-    // inteira de geração da IA, que é o maior peso no tempo de resposta. Só cai pra triagem por
-    // IA (mais lenta, mas entende sinônimo) quando a busca simples não teve um vencedor claro.
-    const fast = retrieveAgoraseiContext(question, AGORASEI_MAX_ENTRY_CHARS);
-    const fastConfident = fast.blocks.length > 0 && !fast.ambiguous && fast.topScore >= 4;
-    if(fastConfident){
-      contextText = fast.blocks[0];
-      matchedKbId = fast.topId;
-    }else{
-      const priorHistory = agoraseiMessages.slice(0, -1); // tudo antes da pergunta atual, que já foi empilhada
-      const routing = await routeAgoraseiQuestion(question, priorHistory);
-      if(routing.routed && routing.matched.length){
-        // Manda o conteúdo completo de só 1 procedimento (o primeiro que a triagem escolheu) —
-        // os outros (se houver) entram só como título na nota de ambiguidade, não o texto
-        // inteiro. Isso mantém o prompt pequeno mesmo quando vários procedimentos combinam.
-        contextText = agoraseiContextBlock(routing.matched[0]);
-        if(routing.matched.length > 1){
-          contextText += agoraseiAmbiguousNote(routing.matched.map(kb => kb.title));
-        }else{
-          matchedKbId = routing.matched[0].id;
-        }
-      }else if(fast.blocks.length){
-        // A triagem por IA só enxerga o TÍTULO de cada procedimento (não o conteúdo) — então
-        // pode dizer "não achei nada" pra uma palavra que só aparece dentro do texto (ex:
-        // "anuidade" pode estar só no corpo de "Cartão Crediffato", não no título). Antes de
-        // aceitar esse "não achei" como resposta final, confere se a busca por palavra-chave
-        // (que olha o conteúdo inteiro) encontrou alguma coisa — se achou, usa isso em vez de
-        // desistir.
-        contextText = fast.blocks.join("\n\n");
-        if(fast.ambiguous){
-          contextText += agoraseiAmbiguousNote(fast.candidates);
-        }else if(fast.blocks.length === 1){
-          matchedKbId = fast.topId;
-        }
+    const priorHistory = agoraseiMessages.slice(0, -1); // tudo antes da pergunta atual, que já foi empilhada
+    const routing = await routeAgoraseiQuestion(question, priorHistory);
+    if(routing.routed && routing.matched.length){
+      // Manda o conteúdo completo de só 1 procedimento (o primeiro que a triagem escolheu) —
+      // os outros (se houver) entram só como título na nota de ambiguidade, não o texto
+      // inteiro. Isso mantém o prompt pequeno mesmo quando vários procedimentos combinam.
+      contextText = agoraseiContextBlock(routing.matched[0]);
+      if(routing.matched.length > 1){
+        contextText += agoraseiAmbiguousNote(routing.matched.map(kb => kb.title));
       }else{
-        // Nem a triagem por IA nem a busca por palavra-chave acharam nada — seja porque a
-        // triagem respondeu "NENHUM" de verdade, seja porque a resposta dela não seguiu o
-        // formato esperado. Sem pista nenhuma das duas fontes, não tem o que usar como contexto.
-        contextText = AGORASEI_NO_MATCH_CONTEXT;
+        matchedKbId = routing.matched[0].id;
       }
+    }else if(fast.blocks.length){
+      // A triagem por IA só enxerga o TÍTULO de cada procedimento (não o conteúdo) — então
+      // pode dizer "não achei nada" pra uma palavra que só aparece dentro do texto (ex:
+      // "anuidade" pode estar só no corpo de "Cartão Crediffato", não no título). Antes de
+      // aceitar esse "não achei" como resposta final, confere se a busca por palavra-chave
+      // (que olha o conteúdo inteiro) encontrou alguma coisa — se achou, usa isso em vez de
+      // desistir.
+      contextText = fast.blocks.join("\n\n");
+      if(fast.ambiguous){
+        contextText += agoraseiAmbiguousNote(fast.candidates);
+      }else if(fast.blocks.length === 1){
+        matchedKbId = fast.topId;
+      }
+    }else{
+      // Nem a triagem por IA nem a busca por palavra-chave acharam nada — seja porque a
+      // triagem respondeu "NENHUM" de verdade, seja porque a resposta dela não seguiu o
+      // formato esperado. Sem pista nenhuma das duas fontes, não tem o que usar como contexto.
+      contextText = AGORASEI_NO_MATCH_CONTEXT;
     }
   }
   // Guarda também o texto EXATO que vai ser mandado pra API nesta pergunta (com o contexto já
