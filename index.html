@@ -4783,7 +4783,7 @@ function retrieveAgoraseiContext(query, maxChars){
     used += block.length;
     if(picked.length >= 5) break;
   }
-  return { blocks: picked, ambiguous, candidates: scored.slice(0, 5).map(s => s.kb.title) };
+  return { blocks: picked, ambiguous, candidates: scored.slice(0, 5).map(s => s.kb.title), topScore: scored.length ? scored[0].score : 0 };
 }
 
 function agoraseiAmbiguousNote(titles){
@@ -4812,7 +4812,7 @@ async function routeAgoraseiQuestion(question, history){
       ],
       stream: false,
       temperature: 0,
-      max_tokens: 150,
+      max_tokens: 100,
     });
     const raw = (resp.choices[0] && resp.choices[0].message && resp.choices[0].message.content) || "";
     if(/^\s*nenhum\W*\s*$/i.test(raw.trim())) return { matched: [], routed: true };
@@ -4868,21 +4868,30 @@ async function sendAgoraseiMessage(question){
   if(agoraseiLooksLikeGreeting(question)){
     contextText = AGORASEI_NO_MATCH_CONTEXT;
   }else{
-    const priorHistory = agoraseiMessages.slice(0, -1); // tudo antes da pergunta atual, que já foi empilhada
-    const routing = await routeAgoraseiQuestion(question, priorHistory);
-    if(routing.routed){
-      if(!routing.matched.length){
-        contextText = AGORASEI_NO_MATCH_CONTEXT;
-      }else{
-        contextText = routing.matched.map(kb => `## ${kb.title}\n${kb.content}`).join("\n\n");
-        if(routing.matched.length > 1) contextText += agoraseiAmbiguousNote(routing.matched.map(kb => kb.title));
-      }
+    // Caminho rápido: a busca por palavra-chave é instantânea (não chama o modelo). Quando ela
+    // já acha um procedimento claramente melhor que os outros, usa direto — poupa uma rodada
+    // inteira de geração da IA, que é o maior peso no tempo de resposta. Só cai pra triagem por
+    // IA (mais lenta, mas entende sinônimo) quando a busca simples não teve um vencedor claro.
+    const fast = retrieveAgoraseiContext(question, 3200);
+    const fastConfident = fast.blocks.length > 0 && !fast.ambiguous && fast.topScore >= 4;
+    if(fastConfident){
+      contextText = fast.blocks[0];
     }else{
-      // a triagem por IA não seguiu o formato esperado (ou falhou) — cai pro método por
-      // palavra-chave, pra garantir que a pessoa sempre recebe alguma resposta.
-      const retrieval = retrieveAgoraseiContext(question, 3200);
-      contextText = retrieval.blocks.length ? retrieval.blocks.join("\n\n") : AGORASEI_NO_MATCH_CONTEXT;
-      if(retrieval.ambiguous) contextText += agoraseiAmbiguousNote(retrieval.candidates);
+      const priorHistory = agoraseiMessages.slice(0, -1); // tudo antes da pergunta atual, que já foi empilhada
+      const routing = await routeAgoraseiQuestion(question, priorHistory);
+      if(routing.routed){
+        if(!routing.matched.length){
+          contextText = AGORASEI_NO_MATCH_CONTEXT;
+        }else{
+          contextText = routing.matched.map(kb => `## ${kb.title}\n${kb.content}`).join("\n\n");
+          if(routing.matched.length > 1) contextText += agoraseiAmbiguousNote(routing.matched.map(kb => kb.title));
+        }
+      }else{
+        // a triagem por IA não seguiu o formato esperado (ou falhou) — cai pro método por
+        // palavra-chave, pra garantir que a pessoa sempre recebe alguma resposta.
+        contextText = fast.blocks.length ? fast.blocks.join("\n\n") : AGORASEI_NO_MATCH_CONTEXT;
+        if(fast.ambiguous) contextText += agoraseiAmbiguousNote(fast.candidates);
+      }
     }
   }
   const systemMsg = { role: "system", content: `${AGORASEI_SYSTEM_PROMPT}\n\nCONTEXTO:\n${contextText}` };
@@ -4893,7 +4902,7 @@ async function sendAgoraseiMessage(question){
       messages: [systemMsg, ...recentHistory],
       stream: true,
       temperature: 0.6,
-      max_tokens: 450,
+      max_tokens: 320,
     });
     let full = "";
     let firstChunk = true;
