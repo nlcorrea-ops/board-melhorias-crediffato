@@ -4872,7 +4872,7 @@ async function sendAgoraseiMessage(question){
     // já acha um procedimento claramente melhor que os outros, usa direto — poupa uma rodada
     // inteira de geração da IA, que é o maior peso no tempo de resposta. Só cai pra triagem por
     // IA (mais lenta, mas entende sinônimo) quando a busca simples não teve um vencedor claro.
-    const fast = retrieveAgoraseiContext(question, 3200);
+    const fast = retrieveAgoraseiContext(question, 1800);
     const fastConfident = fast.blocks.length > 0 && !fast.ambiguous && fast.topScore >= 4;
     if(fastConfident){
       contextText = fast.blocks[0];
@@ -4895,7 +4895,7 @@ async function sendAgoraseiMessage(question){
     }
   }
   const systemMsg = { role: "system", content: `${AGORASEI_SYSTEM_PROMPT}\n\nCONTEXTO:\n${contextText}` };
-  const recentHistory = agoraseiMessages.slice(-6);
+  const recentHistory = agoraseiMessages.slice(-4);
 
   try{
     const stream = await agoraseiEngine.chat.completions.create({
