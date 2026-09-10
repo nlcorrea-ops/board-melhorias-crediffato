@@ -4981,18 +4981,43 @@ function agoraseiLooksLikeGreeting(question){
   return !AGORASEI_QUESTION_STARTERS.test(trimmed);
 }
 
+// Quantos procedimentos diferentes contêm cada palavra (pelo menos 1 vez) — a base pra pesar
+// palavra rara mais que palavra comum na busca (ver retrieveAgoraseiContext).
+function agoraseiTermDocFrequency(){
+  const df = {};
+  Object.values(AGORASEI_KB).forEach(kb => {
+    const seen = new Set(agoraseiTokens(`${kb.title} ${kb.content} ${kb.tags || ""}`));
+    seen.forEach(t => { df[t] = (df[t] || 0) + 1; });
+  });
+  return df;
+}
+
 function retrieveAgoraseiContext(query, maxChars){
   const queryTokens = new Set(agoraseiTokens(query));
   if(!queryTokens.size) return { blocks: [], ambiguous: false, candidates: [] };
+  const totalDocs = Object.keys(AGORASEI_KB).length || 1;
+  const df = agoraseiTermDocFrequency();
+  // Palavra que aparece em quase todo procedimento (tipo "valor", "cartão", "cliente") não ajuda
+  // em nada a distinguir QUAL procedimento é o certo — todo mundo bate nela. Palavra rara (tipo
+  // "anuidade", que só aparece em 1 ou 2 procedimentos) é um sinal bem mais forte de que achou o
+  // certo. Sem isso, um procedimento de título genérico podia "ganhar" no placar só por ter mais
+  // palavra comum em comum, mesmo quando o termo realmente específico da pergunta só existe no
+  // CORPO de outro procedimento com título diferente — pesa cada palavra pelo inverso de quantos
+  // procedimentos ela aparece, em vez de tratar toda palavra batida como igual.
+  const idf = (t) => Math.log(1 + totalDocs / (df[t] || totalDocs));
   const scored = Object.entries(AGORASEI_KB).map(([id, kb]) => {
-    const tokens = agoraseiTokens(`${kb.title} ${kb.content}`);
+    // Set (não array) — cada palavra conta 1 vez por procedimento, não 1 vez por repetição.
+    // Sem isso, um procedimento bem mais longo (que repete as mesmas palavras várias vezes ao
+    // longo do texto) acumula pontuação inflada só por ser extenso, e vence um procedimento
+    // curto e certeiro que menciona o termo certo uma única vez.
+    const tokens = new Set(agoraseiTokens(`${kb.title} ${kb.content}`));
     let score = 0;
-    tokens.forEach(t => { if(queryTokens.has(t)) score++; });
+    tokens.forEach(t => { if(queryTokens.has(t)) score += idf(t); });
     // título e sinônimos pesam mais que o corpo — são a "porta de entrada" curada pro
     // procedimento, então bater neles é sinal bem mais forte do que bater em qualquer
     // palavra solta no meio do texto.
-    agoraseiTokens(kb.title).forEach(t => { if(queryTokens.has(t)) score += 3; });
-    agoraseiTokens(kb.tags || "").forEach(t => { if(queryTokens.has(t)) score += 3; });
+    new Set(agoraseiTokens(kb.title)).forEach(t => { if(queryTokens.has(t)) score += idf(t) * 3; });
+    new Set(agoraseiTokens(kb.tags || "")).forEach(t => { if(queryTokens.has(t)) score += idf(t) * 3; });
     return { id, kb, score };
   }).filter(s => s.score > 0).sort((a, b) => b.score - a.score);
 
@@ -5024,7 +5049,7 @@ function agoraseiAmbiguousNote(titles){
 // em comum, e ainda cabe num modelo pequeno porque "escolher de uma lista" é uma tarefa simples.
 // Se a resposta não vier num formato reconhecível, devolve routed:false e quem chamou cai pro
 // método por palavra-chave, pra nunca ficar sem contexto nenhum por causa disso.
-async function routeAgoraseiQuestion(question, history){
+async function routeAgoraseiQuestion(question, history, hintTitles){
   const entries = Object.entries(AGORASEI_KB).map(([id, kb]) => ({ id, ...kb }));
   if(!entries.length) return { matched: [], routed: true };
   // Sinônimos entram como dica entre colchetes — ajuda a achar procedimento cuja palavra só
@@ -5035,11 +5060,17 @@ async function routeAgoraseiQuestion(question, history){
   // "e pra pessoa jurídica?", que só faz sentido junto do que foi perguntado antes) chega pra
   // triagem sem nenhuma pista do assunto e ela não acha nada.
   const historyText = (history || []).slice(-4).map(m => `${m.role === "user" ? "Usuário" : "Assistente"}: ${m.content}`).join("\n");
+  // A triagem só enxerga TÍTULO (+ sinônimos), nunca o corpo do texto — então quando a resposta
+  // certa está enterrada no meio de um procedimento com título genérico (ex: o valor da anuidade
+  // dentro de "Cartão Crediffato", sem a palavra "anuidade" aparecer no título), ela não tem
+  // como adivinhar sozinha. A busca por palavra-chave (que olha o conteúdo inteiro) já achou
+  // esses candidatos antes de chegar aqui — repassa como pista, sem obrigar a escolher um deles.
+  const hintLine = (hintTitles || []).length ? `\n\nPista (a busca por palavra-chave no conteúdo completo já indica esses como prováveis, mas decida por conta própria): ${hintTitles.join(", ")}` : "";
   try{
     const resp = await agoraseiCallGroq({
       messages: [
-        { role: "system", content: `Você escolhe, de uma lista de procedimentos cadastrados, qual(is) respondem a pergunta mais recente de um usuário. Cada linha da lista é um título, às vezes seguido de sinônimos entre colchetes — use os sinônimos só pra decidir, nunca os inclua na resposta. Use o histórico da conversa pra entender o assunto quando a pergunta for uma continuação (ex: "e pra pessoa jurídica?" só faz sentido junto do que foi perguntado antes). Responda APENAS com os títulos exatos que combinam, um por linha, SEM os colchetes de sinônimos, copiados exatamente como estão na lista — sem nenhum texto além disso. Se nenhum combinar, responda só a palavra NENHUM.` },
-        { role: "user", content: `Lista de procedimentos:\n${titleList}${historyText ? `\n\nHistórico recente da conversa:\n${historyText}` : ""}\n\nPergunta mais recente do usuário: "${question}"\n\nQuais títulos da lista combinam com essa pergunta?` },
+        { role: "system", content: `Você escolhe, de uma lista de procedimentos cadastrados, qual(is) respondem a pergunta mais recente de um usuário. Cada linha da lista é um título, às vezes seguido de sinônimos entre colchetes — use os sinônimos só pra decidir, nunca os inclua na resposta. Use o histórico da conversa pra entender o assunto quando a pergunta for uma continuação (ex: "e pra pessoa jurídica?" só faz sentido junto do que foi perguntado antes). Quando houver uma "Pista" indicando candidatos prováveis, leve em conta que ela veio de uma busca no conteúdo completo (não só no título) e pode saber de algo que o título sozinho não revela. Responda APENAS com os títulos exatos que combinam, um por linha, SEM os colchetes de sinônimos, copiados exatamente como estão na lista — sem nenhum texto além disso. Se nenhum combinar, responda só a palavra NENHUM.` },
+        { role: "user", content: `Lista de procedimentos:\n${titleList}${historyText ? `\n\nHistórico recente da conversa:\n${historyText}` : ""}${hintLine}\n\nPergunta mais recente do usuário: "${question}"\n\nQuais títulos da lista combinam com essa pergunta?` },
       ],
       model: AGORASEI_ROUTING_MODEL_ID,
       stream: false,
@@ -5186,7 +5217,7 @@ async function sendAgoraseiMessage(question){
     contextText = AGORASEI_NO_MATCH_CONTEXT;
   }else{
     const priorHistory = agoraseiMessages.slice(0, -1); // tudo antes da pergunta atual, que já foi empilhada
-    const routing = await routeAgoraseiQuestion(question, priorHistory);
+    const routing = await routeAgoraseiQuestion(question, priorHistory, fast.candidates);
     if(routing.routed && routing.matched.length){
       // Manda o conteúdo completo de só 1 procedimento (o primeiro que a triagem escolheu) —
       // os outros (se houver) entram só como título na nota de ambiguidade, não o texto
