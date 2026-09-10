@@ -1591,7 +1591,10 @@
     flex:1; overflow-y:auto; display:flex; flex-direction:column; gap:14px;
     background:var(--ink-1); border:1px solid var(--hairline); border-radius:16px; padding:18px;
   }
-  .agorasei-empty{margin:auto; text-align:center; color:var(--text-low); font-size:13px; max-width:38ch;}
+  .agorasei-empty{margin:auto; text-align:center; color:var(--text-low); font-size:13px; max-width:46ch; display:flex; flex-direction:column; align-items:center; gap:14px;}
+  .agorasei-suggestions{display:flex; flex-wrap:wrap; gap:8px; justify-content:center;}
+  .agorasei-suggestion-chip{background:var(--ink-2); border:1px solid var(--hairline); border-radius:999px; padding:7px 14px; font-size:12px; color:var(--text-hi); cursor:pointer; transition:border-color .15s ease, color .15s ease;}
+  .agorasei-suggestion-chip:hover{border-color:var(--pa); color:var(--pa);}
   .agorasei-msg{display:flex; gap:10px; max-width:78%;}
   .agorasei-msg-user{align-self:flex-end; flex-direction:row-reverse;}
   .agorasei-msg-avatar{
@@ -2122,7 +2125,10 @@
         </select>
       </div>
       <div class="agorasei-messages" id="agorasei-messages">
-        <p class="agorasei-empty">Pergunte algo sobre os procedimentos da Crediffato — convênio, negociações, ouvidoria e mais.</p>
+        <div class="agorasei-empty" id="agorasei-empty-state">
+          <p>Pergunte algo sobre os procedimentos da Crediffato — convênio, negociações, ouvidoria e mais.</p>
+          <div class="agorasei-suggestions" id="agorasei-suggestions"></div>
+        </div>
       </div>
       <form class="agorasei-input-row" id="agorasei-form">
         <textarea id="agorasei-input" rows="1" maxlength="1000" placeholder="Digite sua pergunta..." required></textarea>
@@ -4537,7 +4543,25 @@ function renderAgorasei(){
   const kbBtn = document.getElementById("open-agorasei-kb-btn");
   if(kbBtn) kbBtn.style.display = canManage() ? "" : "none";
   renderAgoraseiKBList();
+  renderAgoraseiSuggestions();
   if(agoraseiEngineStatus === "idle") initAgoraseiEngine();
+}
+
+// Sugestões clicáveis com os títulos cadastrados, mostradas só na tela vazia (antes da
+// primeira mensagem) — ajuda quem não sabe nem como formular a pergunta a começar por um
+// clique em vez de digitar do zero.
+function renderAgoraseiSuggestions(){
+  const wrap = document.getElementById("agorasei-suggestions");
+  if(!wrap) return;
+  const titles = Object.values(AGORASEI_KB).map(kb => kb.title).slice(0, 6);
+  wrap.innerHTML = titles.map(t => `<button type="button" class="agorasei-suggestion-chip" data-suggestion="${escapeHtml(t)}">${escapeHtml(t)}</button>`).join("");
+}
+
+function agoraseiSubmitQuestion(text){
+  if(!text || !text.trim()) return;
+  const input = document.getElementById("agorasei-input");
+  if(input){ input.value = ""; input.style.height = "auto"; }
+  sendAgoraseiMessage(text);
 }
 
 async function initAgoraseiEngine(){
@@ -4722,15 +4746,19 @@ function agoraseiAmbiguousNote(titles){
 // em comum, e ainda cabe num modelo pequeno porque "escolher de uma lista" é uma tarefa simples.
 // Se a resposta não vier num formato reconhecível, devolve routed:false e quem chamou cai pro
 // método por palavra-chave, pra nunca ficar sem contexto nenhum por causa disso.
-async function routeAgoraseiQuestion(question){
+async function routeAgoraseiQuestion(question, history){
   const entries = Object.values(AGORASEI_KB);
   if(!entries.length) return { matched: [], routed: true };
   const titleList = entries.map(kb => kb.title).join("\n");
+  // Manda as últimas trocas da conversa junto — sem isso, uma pergunta de continuação (tipo
+  // "e pra pessoa jurídica?", que só faz sentido junto do que foi perguntado antes) chega pra
+  // triagem sem nenhuma pista do assunto e ela não acha nada.
+  const historyText = (history || []).slice(-4).map(m => `${m.role === "user" ? "Usuário" : "Assistente"}: ${m.content}`).join("\n");
   try{
     const resp = await agoraseiEngine.chat.completions.create({
       messages: [
-        { role: "system", content: `Você escolhe, de uma lista de procedimentos cadastrados, qual(is) respondem a pergunta de um usuário. Responda APENAS com os títulos exatos que combinam, um por linha, copiados exatamente como estão na lista — sem nenhum texto além disso. Se nenhum combinar, responda só a palavra NENHUM.` },
-        { role: "user", content: `Lista de procedimentos:\n${titleList}\n\nPergunta do usuário: "${question}"\n\nQuais títulos da lista combinam com essa pergunta?` },
+        { role: "system", content: `Você escolhe, de uma lista de procedimentos cadastrados, qual(is) respondem a pergunta mais recente de um usuário. Use o histórico da conversa pra entender o assunto quando a pergunta for uma continuação (ex: "e pra pessoa jurídica?" só faz sentido junto do que foi perguntado antes). Responda APENAS com os títulos exatos que combinam, um por linha, copiados exatamente como estão na lista — sem nenhum texto além disso. Se nenhum combinar, responda só a palavra NENHUM.` },
+        { role: "user", content: `Lista de procedimentos:\n${titleList}${historyText ? `\n\nHistórico recente da conversa:\n${historyText}` : ""}\n\nPergunta mais recente do usuário: "${question}"\n\nQuais títulos da lista combinam com essa pergunta?` },
       ],
       stream: false,
       temperature: 0,
@@ -4790,7 +4818,8 @@ async function sendAgoraseiMessage(question){
   if(agoraseiLooksLikeGreeting(question)){
     contextText = "(nenhum procedimento cadastrado bate com essa pergunta)";
   }else{
-    const routing = await routeAgoraseiQuestion(question);
+    const priorHistory = agoraseiMessages.slice(0, -1); // tudo antes da pergunta atual, que já foi empilhada
+    const routing = await routeAgoraseiQuestion(question, priorHistory);
     if(routing.routed){
       if(!routing.matched.length){
         contextText = "(nenhum procedimento cadastrado bate com essa pergunta)";
@@ -4912,11 +4941,11 @@ document.getElementById("agorasei-kb-form").addEventListener("submit", withSubmi
 document.getElementById("agorasei-form").addEventListener("submit", (e) => {
   e.preventDefault();
   const input = document.getElementById("agorasei-input");
-  const question = input.value;
-  if(!question.trim()) return;
-  input.value = "";
-  input.style.height = "auto";
-  sendAgoraseiMessage(question);
+  agoraseiSubmitQuestion(input.value);
+});
+document.getElementById("agorasei-messages").addEventListener("click", (e) => {
+  const chip = e.target.closest("[data-suggestion]");
+  if(chip) agoraseiSubmitQuestion(chip.getAttribute("data-suggestion"));
 });
 document.getElementById("agorasei-input").addEventListener("keydown", (e) => {
   if(e.key === "Enter" && !e.shiftKey){
