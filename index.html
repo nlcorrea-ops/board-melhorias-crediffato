@@ -1711,6 +1711,10 @@
   .agorasei-kb-item-actions button:hover{color:var(--text-hi);}
   .agorasei-kb-item-preview{margin:6px 0 0; font-size:12px; color:var(--text-mid); max-height:3.2em; overflow:hidden;}
   .agorasei-kb-item-tags{margin:6px 0 0; font-size:11px; color:var(--pa);}
+  .agorasei-kb-item-cache{margin:8px 0 0; font-size:11px; color:var(--text-mid); display:flex; align-items:center; gap:8px; flex-wrap:wrap;}
+  .agorasei-kb-item-cache-empty{color:var(--text-low);}
+  .agorasei-kb-cache-forget{font-size:11px; color:var(--pa); background:none; border:1px solid var(--hairline); border-radius:6px; padding:2px 8px; cursor:pointer;}
+  .agorasei-kb-cache-forget:hover{color:var(--text-hi); border-color:var(--pa);}
 </style>
 </head>
 <body>
@@ -3289,6 +3293,11 @@ let SECTORS = DEFAULT_SECTORS.slice();
 let DIRECTORY = []; // [{uid, email, role, assignedAreas}]
 let ROUTINES = []; // [{id, title, description, sector, frequency, assigneeUid, wholeSector, scheduledDays, createdBy, createdByName, createdAt, completions:[{period, at, byUid, byName}]}]
 let AGORASEI_KB = {}; // { [id]: {title, content, updatedAt, updatedByName} } — base de procedimentos compartilhada (só isso vai pro Firestore; as conversas do chat nunca saem do navegador)
+// "Cérebro" de respostas memorizadas: { [kbId]: {answer, hash, updatedAt} } — quando a mesma
+// pergunta (primeira da conversa) bate de novo no mesmo procedimento, reaproveita a resposta já
+// gerada em vez de gastar IA de novo. hash amarra a resposta memorizada à versão do procedimento
+// que a gerou; editar o procedimento invalida sozinho (hash não bate mais → gera de novo).
+let AGORASEI_ANSWER_CACHE = {};
 // scheduledDays: só usado quando frequency === "semanal" — array de dias da semana (0=domingo
 // ... 6=sábado, igual Date.getDay()) em que a rotina cai. Vazio/ausente = "qualquer dia da
 // semana", o comportamento de sempre (mantém compatibilidade com rotinas já cadastradas).
@@ -3614,7 +3623,7 @@ async function ensurePresenceDoc(){
 async function ensureAgoraseiDoc(){
   const snap = await fsGetDoc(AGORASEI_DOC);
   if(!snap.exists()){
-    const initial = { kb:{} };
+    const initial = { kb:{}, cache:{} };
     await fsSetDoc(AGORASEI_DOC, initial);
     return initial;
   }
@@ -4824,6 +4833,13 @@ function renderAgoraseiKBList(){
     const preview = (kb.content || "").slice(0, 160);
     const ellipsis = (kb.content || "").length > 160 ? "…" : "";
     const tagsLine = kb.tags ? `<p class="agorasei-kb-item-tags">Sinônimos: ${escapeHtml(kb.tags)}</p>` : "";
+    // Resposta memorizada válida = existe no cache E o procedimento não foi editado desde que
+    // ela foi gerada (senão o hash não bate e ela já não vale mais, mesmo antes de alguém clicar
+    // em "esquecer").
+    const hasCache = !!agoraseiGetCachedAnswer(id);
+    const cacheLine = hasCache
+      ? `<p class="agorasei-kb-item-cache">🧠 Resposta memorizada — próximas perguntas sobre isso saem na hora, sem gastar IA. <button type="button" class="agorasei-kb-cache-forget" data-kb-forget="${escapeHtml(id)}">Esquecer e gerar de novo</button></p>`
+      : `<p class="agorasei-kb-item-cache agorasei-kb-item-cache-empty">Ainda sem resposta memorizada — a primeira pergunta sobre isso gera e guarda pras próximas.</p>`;
     return `
     <div class="agorasei-kb-item">
       <div class="agorasei-kb-item-head">
@@ -4835,6 +4851,7 @@ function renderAgoraseiKBList(){
       </div>
       <p class="agorasei-kb-item-preview">${escapeHtml(preview)}${ellipsis}</p>
       ${tagsLine}
+      ${cacheLine}
     </div>`;
   }).join("");
 }
@@ -4846,6 +4863,10 @@ async function saveAgoraseiKBEntry(id, title, content, tags){
     const path = new fsFieldPath("kb", id);
     await fsUpdateDoc(AGORASEI_DOC, path, entry);
   }
+  // O procedimento mudou de conteúdo — a resposta memorizada antiga não vale mais (o hash dela
+  // não vai bater com o hash do texto novo mesmo assim, mas apaga de vez em vez de deixar lixo
+  // acumulando no documento à toa).
+  await clearAgoraseiAnswerCache(id);
   renderAgoraseiKBList();
 }
 
@@ -4860,7 +4881,54 @@ async function deleteAgoraseiKBEntry(id){
     const path = new fsFieldPath("kb", id);
     await fsUpdateDoc(AGORASEI_DOC, path, fsDeleteField());
   }
+  await clearAgoraseiAnswerCache(id);
   renderAgoraseiKBList();
+}
+
+// Hash simples (não-criptográfico, só pra detectar mudança) do título+conteúdo de um
+// procedimento — amarra uma resposta memorizada à versão exata do texto que a gerou.
+function agoraseiSimpleHash(str){
+  let h = 0;
+  for(let i = 0; i < str.length; i++){ h = (Math.imul(31, h) + str.charCodeAt(i)) | 0; }
+  return (h >>> 0).toString(36);
+}
+function agoraseiKbHash(kb){
+  return agoraseiSimpleHash(`${kb.title || ""}\n${kb.content || ""}`);
+}
+
+// Devolve a resposta já memorizada pra esse procedimento, só se o procedimento não tiver
+// mudado desde que ela foi gerada (hash bate). Se o procedimento foi editado depois, o hash
+// não bate mais e devolve null — cai pra gerar uma resposta nova (e memorizar essa, atualizada).
+function agoraseiGetCachedAnswer(kbId){
+  const cached = AGORASEI_ANSWER_CACHE[kbId];
+  const kb = AGORASEI_KB[kbId];
+  if(!cached || !kb) return null;
+  if(cached.hash !== agoraseiKbHash(kb)) return null;
+  return cached.answer;
+}
+
+async function saveAgoraseiAnswerCache(kbId, answer){
+  const kb = AGORASEI_KB[kbId];
+  if(!kb) return;
+  const entry = { answer, hash: agoraseiKbHash(kb), updatedAt: new Date().toISOString() };
+  AGORASEI_ANSWER_CACHE = { ...AGORASEI_ANSWER_CACHE, [kbId]: entry };
+  if(storageMode === "firebase" && firebaseReady){
+    const path = new fsFieldPath("cache", kbId);
+    await fsUpdateDoc(AGORASEI_DOC, path, entry);
+  }
+}
+
+// Botão manual (na base de procedimentos) pra "esquecer" a resposta memorizada de um item sem
+// precisar editar o texto — força a próxima pergunta sobre ele a gerar uma resposta nova.
+async function clearAgoraseiAnswerCache(kbId){
+  if(!AGORASEI_ANSWER_CACHE[kbId]) return;
+  const next = { ...AGORASEI_ANSWER_CACHE };
+  delete next[kbId];
+  AGORASEI_ANSWER_CACHE = next;
+  if(storageMode === "firebase" && firebaseReady){
+    const path = new fsFieldPath("cache", kbId);
+    await fsUpdateDoc(AGORASEI_DOC, path, fsDeleteField());
+  }
 }
 
 // Importação em lote: usada pra carregar de uma vez uma base grande já pronta (ex: exportada
@@ -4916,7 +4984,7 @@ function agoraseiLooksLikeGreeting(question){
 function retrieveAgoraseiContext(query, maxChars){
   const queryTokens = new Set(agoraseiTokens(query));
   if(!queryTokens.size) return { blocks: [], ambiguous: false, candidates: [] };
-  const scored = Object.values(AGORASEI_KB).map(kb => {
+  const scored = Object.entries(AGORASEI_KB).map(([id, kb]) => {
     const tokens = agoraseiTokens(`${kb.title} ${kb.content}`);
     let score = 0;
     tokens.forEach(t => { if(queryTokens.has(t)) score++; });
@@ -4925,7 +4993,7 @@ function retrieveAgoraseiContext(query, maxChars){
     // palavra solta no meio do texto.
     agoraseiTokens(kb.title).forEach(t => { if(queryTokens.has(t)) score += 3; });
     agoraseiTokens(kb.tags || "").forEach(t => { if(queryTokens.has(t)) score += 3; });
-    return { kb, score };
+    return { id, kb, score };
   }).filter(s => s.score > 0).sort((a, b) => b.score - a.score);
 
   // Divergência: dois ou mais procedimentos diferentes com pontuação parecida, sem um se
@@ -4943,7 +5011,7 @@ function retrieveAgoraseiContext(query, maxChars){
     used += block.length;
     if(picked.length >= 5) break;
   }
-  return { blocks: picked, ambiguous, candidates: scored.slice(0, 5).map(s => s.kb.title), topScore: scored.length ? scored[0].score : 0 };
+  return { blocks: picked, ambiguous, candidates: scored.slice(0, 5).map(s => s.kb.title), topScore: scored.length ? scored[0].score : 0, topId: scored.length ? scored[0].id : null };
 }
 
 function agoraseiAmbiguousNote(titles){
@@ -4957,7 +5025,7 @@ function agoraseiAmbiguousNote(titles){
 // Se a resposta não vier num formato reconhecível, devolve routed:false e quem chamou cai pro
 // método por palavra-chave, pra nunca ficar sem contexto nenhum por causa disso.
 async function routeAgoraseiQuestion(question, history){
-  const entries = Object.values(AGORASEI_KB);
+  const entries = Object.entries(AGORASEI_KB).map(([id, kb]) => ({ id, ...kb }));
   if(!entries.length) return { matched: [], routed: true };
   // Sinônimos entram como dica entre colchetes — ajuda a achar procedimento cuja palavra só
   // aparece no corpo do texto (ex: "anuidade" dentro de "Cartão Crediffato"), sem precisar
@@ -5099,6 +5167,10 @@ async function sendAgoraseiMessage(question){
   }
 
   let contextText;
+  // Só marca um procedimento como "cacheável" quando ele é o único que bateu com a pergunta,
+  // sem ambiguidade nenhuma — pergunta que serve pra mais de um procedimento, ou que caiu no
+  // caminho de "bom senso" sem procedimento cadastrado, nunca usa nem alimenta o cache.
+  let matchedKbId = null;
   if(agoraseiLooksLikeGreeting(question)){
     contextText = AGORASEI_NO_MATCH_CONTEXT;
   }else{
@@ -5110,6 +5182,7 @@ async function sendAgoraseiMessage(question){
     const fastConfident = fast.blocks.length > 0 && !fast.ambiguous && fast.topScore >= 4;
     if(fastConfident){
       contextText = fast.blocks[0];
+      matchedKbId = fast.topId;
     }else{
       const priorHistory = agoraseiMessages.slice(0, -1); // tudo antes da pergunta atual, que já foi empilhada
       const routing = await routeAgoraseiQuestion(question, priorHistory);
@@ -5118,7 +5191,11 @@ async function sendAgoraseiMessage(question){
         // os outros (se houver) entram só como título na nota de ambiguidade, não o texto
         // inteiro. Isso mantém o prompt pequeno mesmo quando vários procedimentos combinam.
         contextText = agoraseiContextBlock(routing.matched[0]);
-        if(routing.matched.length > 1) contextText += agoraseiAmbiguousNote(routing.matched.map(kb => kb.title));
+        if(routing.matched.length > 1){
+          contextText += agoraseiAmbiguousNote(routing.matched.map(kb => kb.title));
+        }else{
+          matchedKbId = routing.matched[0].id;
+        }
       }else if(fast.blocks.length){
         // A triagem por IA só enxerga o TÍTULO de cada procedimento (não o conteúdo) — então
         // pode dizer "não achei nada" pra uma palavra que só aparece dentro do texto (ex:
@@ -5127,7 +5204,11 @@ async function sendAgoraseiMessage(question){
         // (que olha o conteúdo inteiro) encontrou alguma coisa — se achou, usa isso em vez de
         // desistir.
         contextText = fast.blocks.join("\n\n");
-        if(fast.ambiguous) contextText += agoraseiAmbiguousNote(fast.candidates);
+        if(fast.ambiguous){
+          contextText += agoraseiAmbiguousNote(fast.candidates);
+        }else if(fast.blocks.length === 1){
+          matchedKbId = fast.topId;
+        }
       }else{
         // Nem a triagem por IA nem a busca por palavra-chave acharam nada — seja porque a
         // triagem respondeu "NENHUM" de verdade, seja porque a resposta dela não seguiu o
@@ -5142,6 +5223,24 @@ async function sendAgoraseiMessage(question){
   // idêntico entre pedidos processa mais rápido) sempre que o caminho rápido (sem triagem) for
   // usado, já que aí o prefixo (sistema + histórico) fica igual de uma pergunta pra outra.
   agoraseiMessages[agoraseiMessages.length - 1].apiContent = `Contexto:\n${contextText}\n\nPergunta: ${question}`;
+
+  // "Cérebro" de respostas memorizadas: só reaproveita quando essa é a PRIMEIRA pergunta da
+  // conversa (uma pergunta de acompanhamento pode depender do que já foi dito antes, então
+  // nunca serve resposta memorizada nesse caso) e bateu num único procedimento sem ambiguidade.
+  // Isso é o que segura o teto grátis com volume alto: pergunta repetida sobre o mesmo
+  // procedimento não gasta IA nenhuma depois da primeira vez.
+  const isFirstTurn = agoraseiMessages.length === 1;
+  const cachedAnswer = matchedKbId && isFirstTurn ? agoraseiGetCachedAnswer(matchedKbId) : null;
+  if(cachedAnswer){
+    if(assistantBubble){ assistantBubble.classList.remove("typing"); assistantBubble.textContent = cachedAnswer; }
+    agoraseiMessages.push({ role: "assistant", content: cachedAnswer });
+    setAgoraseiMascotState("happy");
+    setTimeout(() => setAgoraseiMascotState("idle"), 2000);
+    agoraseiGenerating = false;
+    if(sendBtn) sendBtn.disabled = false;
+    return;
+  }
+
   const priorTurns = agoraseiMessages.slice(0, -1).slice(-3).map(m =>
     m.role === "user" ? { role: "user", content: m.apiContent || m.content } : { role: "assistant", content: m.content }
   ); // até 3 trocas anteriores, sem a pergunta atual — turno de usuário replicado com o mesmo texto que foi realmente enviado antes
@@ -5235,6 +5334,13 @@ async function sendAgoraseiMessage(question){
     clearTimeout(stallTimer);
     if(assistantBubble){ assistantBubble.classList.remove("typing"); assistantBubble.textContent = full; }
     agoraseiMessages.push({ role: "assistant", content: full });
+    // Primeira vez que esse procedimento é respondido nesta conversa (sem ambiguidade) — memoriza
+    // a resposta pra da próxima vez que alguém perguntar sobre o mesmo procedimento (também como
+    // primeira pergunta de uma conversa nova) sair na hora, sem gastar IA de novo. Nunca memoriza
+    // a mensagem de erro genérica (isso ia "grudar" um erro como se fosse resposta de verdade).
+    if(matchedKbId && isFirstTurn && full !== "Não consegui gerar uma resposta agora. Tente reformular a pergunta."){
+      saveAgoraseiAnswerCache(matchedKbId, full).catch(err => console.error("Falha ao memorizar resposta do Agora Eu Sei:", err));
+    }
     setAgoraseiMascotState("happy");
     setTimeout(() => setAgoraseiMascotState("idle"), 2000);
   }catch(err){
@@ -5303,7 +5409,11 @@ document.getElementById("agorasei-kb-list").addEventListener("click", (e) => {
     return;
   }
   const delBtn = e.target.closest("[data-kb-delete]");
-  if(delBtn) deleteAgoraseiKBEntry(delBtn.getAttribute("data-kb-delete"));
+  if(delBtn){ deleteAgoraseiKBEntry(delBtn.getAttribute("data-kb-delete")); return; }
+  const forgetBtn = e.target.closest("[data-kb-forget]");
+  if(forgetBtn){
+    clearAgoraseiAnswerCache(forgetBtn.getAttribute("data-kb-forget")).then(renderAgoraseiKBList);
+  }
 });
 document.getElementById("agorasei-kb-form").addEventListener("submit", withSubmitGuard(async (e) => {
   e.preventDefault();
@@ -7630,6 +7740,7 @@ async function handleAuthedUser(fbUser){
         agoraseiSnapUnsub = fsOnSnapshot(AGORASEI_DOC, (snap) => {
           if(snap.exists()){
             AGORASEI_KB = snap.data().kb || {};
+            AGORASEI_ANSWER_CACHE = snap.data().cache || {};
             renderAgoraseiKBList();
             renderAgoraseiSuggestions();
           }
