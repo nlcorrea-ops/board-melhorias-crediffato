@@ -4698,6 +4698,42 @@ function retrieveAgoraseiContext(query, maxChars){
   return { blocks: picked, ambiguous, candidates: scored.slice(0, 5).map(s => s.kb.title) };
 }
 
+function agoraseiAmbiguousNote(titles){
+  return `\n\n[NOTA: a pergunta pode se referir a mais de um procedimento diferente (${titles.join(", ")}) e não ficou claro qual deles é o certo. Se não estiver óbvio qual desses a pergunta quer dizer, pergunte ao usuário qual procedimento ele quer saber antes de responder em detalhe, em vez de adivinhar.]`;
+}
+
+// Antes de responder, pede pro próprio modelo escolher (numa lista curta de títulos) qual
+// procedimento combina com a pergunta — é uma tarefa de entendimento de linguagem de verdade
+// (pega sinônimo, pergunta reformulada etc.), bem mais confiável nisso do que contar palavra
+// em comum, e ainda cabe num modelo pequeno porque "escolher de uma lista" é uma tarefa simples.
+// Se a resposta não vier num formato reconhecível, devolve routed:false e quem chamou cai pro
+// método por palavra-chave, pra nunca ficar sem contexto nenhum por causa disso.
+async function routeAgoraseiQuestion(question){
+  const entries = Object.values(AGORASEI_KB);
+  if(!entries.length) return { matched: [], routed: true };
+  const titleList = entries.map(kb => kb.title).join("\n");
+  try{
+    const resp = await agoraseiEngine.chat.completions.create({
+      messages: [
+        { role: "system", content: `Você escolhe, de uma lista de procedimentos cadastrados, qual(is) respondem a pergunta de um usuário. Responda APENAS com os títulos exatos que combinam, um por linha, copiados exatamente como estão na lista — sem nenhum texto além disso. Se nenhum combinar, responda só a palavra NENHUM.` },
+        { role: "user", content: `Lista de procedimentos:\n${titleList}\n\nPergunta do usuário: "${question}"\n\nQuais títulos da lista combinam com essa pergunta?` },
+      ],
+      stream: false,
+      temperature: 0,
+      max_tokens: 150,
+    });
+    const raw = (resp.choices[0] && resp.choices[0].message && resp.choices[0].message.content) || "";
+    if(/^\s*nenhum\W*\s*$/i.test(raw.trim())) return { matched: [], routed: true };
+    const lines = raw.split("\n").map(l => l.trim().replace(/^[-*\d.)\s]+/, "")).filter(Boolean);
+    const matched = entries.filter(kb => lines.some(l => l.toLowerCase() === kb.title.toLowerCase()));
+    if(!matched.length) return { matched: [], routed: false }; // não seguiu o formato esperado — não dá pra confiar
+    return { matched, routed: true };
+  }catch(err){
+    console.error("Falha na triagem do Agora Eu Sei:", err);
+    return { matched: [], routed: false };
+  }
+}
+
 function agoraseiAppendMessage(role, content){
   const messagesEl = document.getElementById("agorasei-messages");
   if(!messagesEl) return null;
@@ -4728,19 +4764,32 @@ async function sendAgoraseiMessage(question){
   agoraseiAppendMessage("user", question);
   agoraseiMessages.push({ role: "user", content: question });
 
-  const retrieval = retrieveAgoraseiContext(question, 3200);
-  let contextText = retrieval.blocks.length ? retrieval.blocks.join("\n\n") : "(nenhum procedimento cadastrado bate com essa pergunta)";
-  if(retrieval.ambiguous){
-    contextText += `\n\n[NOTA: a pergunta pode se referir a mais de um procedimento diferente (${retrieval.candidates.join(", ")}) e nenhum se destacou com clareza sobre os outros. Se não estiver óbvio qual desses a pergunta quer dizer, pergunte ao usuário qual procedimento ele quer saber antes de responder em detalhe, em vez de adivinhar.]`;
-  }
-  const systemMsg = { role: "system", content: `${AGORASEI_SYSTEM_PROMPT}\n\nCONTEXTO:\n${contextText}` };
-  const recentHistory = agoraseiMessages.slice(-6);
-
+  // Aparece já — cobre tanto a etapa de triagem quanto a geração da resposta, pra pessoa não
+  // ficar sem nenhum feedback visual enquanto o modelo decide qual procedimento usar.
   const assistantBubble = agoraseiAppendMessage("assistant", "");
   if(assistantBubble){
     assistantBubble.classList.add("typing");
     assistantBubble.innerHTML = `<span class="agorasei-typing-dots"><span></span><span></span><span></span></span>`;
   }
+
+  let contextText;
+  const routing = await routeAgoraseiQuestion(question);
+  if(routing.routed){
+    if(!routing.matched.length){
+      contextText = "(nenhum procedimento cadastrado bate com essa pergunta)";
+    }else{
+      contextText = routing.matched.map(kb => `## ${kb.title}\n${kb.content}`).join("\n\n");
+      if(routing.matched.length > 1) contextText += agoraseiAmbiguousNote(routing.matched.map(kb => kb.title));
+    }
+  }else{
+    // a triagem por IA não seguiu o formato esperado (ou falhou) — cai pro método por
+    // palavra-chave, pra garantir que a pessoa sempre recebe alguma resposta.
+    const retrieval = retrieveAgoraseiContext(question, 3200);
+    contextText = retrieval.blocks.length ? retrieval.blocks.join("\n\n") : "(nenhum procedimento cadastrado bate com essa pergunta)";
+    if(retrieval.ambiguous) contextText += agoraseiAmbiguousNote(retrieval.candidates);
+  }
+  const systemMsg = { role: "system", content: `${AGORASEI_SYSTEM_PROMPT}\n\nCONTEXTO:\n${contextText}` };
+  const recentHistory = agoraseiMessages.slice(-6);
 
   try{
     const stream = await agoraseiEngine.chat.completions.create({
