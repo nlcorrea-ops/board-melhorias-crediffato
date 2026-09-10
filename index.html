@@ -4549,7 +4549,7 @@ const AGORASEI_MODELS = {
 // URL do Cloudflare Worker que guarda a chave da Groq em segredo e confere o login antes de
 // repassar o pedido — o navegador nunca fala direto com a Groq. Preencher depois de publicar o
 // Worker (ver cloudflare-worker/worker.js neste repositório).
-const AGORASEI_PROXY_URL = "SUBSTITUA_PELA_URL_DO_WORKER";
+const AGORASEI_PROXY_URL = "https://agorasei-ai-proxy.nllcoorrea.workers.dev";
 const AGORASEI_SYSTEM_PROMPT = `Você é o "Agora Eu Sei", o assistente interno da Crediffato que ajuda no atendimento e tira dúvida sobre os procedimentos da empresa (convênio, negociações, ouvidoria e outros temas cadastrados).
 Regras:
 - Fale como uma pessoa experiente do setor ajudando um colega — natural, direto, sem soar como um manual ou uma resposta automática. Nada de linguagem robótica ou de aviso de sistema.
