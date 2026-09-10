@@ -4932,7 +4932,27 @@ async function sendAgoraseiMessage(question){
       }
     }
   }
-  const recentHistory = agoraseiMessages.slice(-4);
+  // Guarda também o texto EXATO que vai ser mandado pra engine nesta pergunta (com o contexto
+  // já embutido) — precisamos disso pra reconstruir o histórico de um jeito que bata
+  // exatamente com o que a engine already processou, senão a comparação de cache do WebLLM
+  // nunca reconhece a conversa como "a mesma de antes" (ver explicação abaixo).
+  agoraseiMessages[agoraseiMessages.length - 1].apiContent = `Contexto:\n${contextText}\n\nPergunta: ${question}`;
+  const priorTurns = agoraseiMessages.slice(0, -1).slice(-3).map(m =>
+    m.role === "user" ? { role: "user", content: m.apiContent || m.content } : { role: "assistant", content: m.content }
+  ); // até 3 trocas anteriores, sem a pergunta atual — turno de usuário replicado com o mesmo texto que foi realmente enviado antes
+
+  // O WebLLM só reaproveita o processamento já feito (cache da conversa) quando TUDO antes da
+  // última mensagem bate exatamente com a chamada anterior — a última mensagem em si nunca entra
+  // nessa comparação, é sempre tratada como entrada nova. Por isso o contexto recuperado (que
+  // muda a cada pergunta) vai junto da pergunta na ÚLTIMA mensagem, não dentro do prompt do
+  // sistema: assim o "prefixo" (sistema + histórico) fica idêntico de uma pergunta pra outra
+  // sempre que o caminho rápido (sem triagem) for usado, e a engine reaproveita o que já
+  // processou em vez de recalcular tudo do zero — mesmo padrão recomendado pra cache de prompt
+  // em RAG (contexto variável fica perto da pergunta, não misturado com as instruções fixas).
+  const systemMsg = { role: "system", content: AGORASEI_SYSTEM_PROMPT };
+  function buildFinalUserMsg(ctx){
+    return { role: "user", content: `Contexto:\n${ctx}\n\nPergunta: ${question}` };
+  }
 
   // Faz uma tentativa de geração e transmite o resultado pra dentro da bolha. Extraído numa
   // função à parte porque tentamos duas vezes: uma com o contexto normal, e — só se essa
@@ -4964,15 +4984,13 @@ async function sendAgoraseiMessage(question){
   }
 
   try{
-    const systemMsg = { role: "system", content: `${AGORASEI_SYSTEM_PROMPT}\n\nCONTEXTO:\n${contextText}` };
     let full;
     try{
-      full = await attemptGeneration([systemMsg, ...recentHistory]);
+      full = await attemptGeneration([systemMsg, ...priorTurns, buildFinalUserMsg(contextText)]);
     }catch(firstErr){
       console.error("Falha na primeira tentativa de resposta do Agora Eu Sei, tentando de novo com pedido mais simples:", firstErr);
       try{ await agoraseiEngine.resetChat(); }catch(resetErr){ console.error("Falha ao reiniciar a conversa da engine:", resetErr); }
-      const fallbackSystemMsg = { role: "system", content: `${AGORASEI_SYSTEM_PROMPT}\n\nCONTEXTO:\n${AGORASEI_NO_MATCH_CONTEXT}` };
-      full = await attemptGeneration([fallbackSystemMsg, { role: "user", content: question }]);
+      full = await attemptGeneration([systemMsg, buildFinalUserMsg(AGORASEI_NO_MATCH_CONTEXT)]);
     }
     if(assistantBubble){ assistantBubble.classList.remove("typing"); assistantBubble.textContent = full; }
     agoraseiMessages.push({ role: "assistant", content: full });
