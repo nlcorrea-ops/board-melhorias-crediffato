@@ -113,7 +113,7 @@ export default {
         return new Response("Invalid JSON", { status: 400, headers: corsHeaders() });
       }
 
-      const { idToken, messages, model, stream, temperature, max_tokens } = body || {};
+      const { idToken, messages, model, stream, temperature, max_tokens, reasoning_effort } = body || {};
       if(!Array.isArray(messages) || !model){
         return new Response("Missing fields", { status: 400, headers: corsHeaders() });
       }
@@ -129,6 +129,10 @@ export default {
         stream: !!stream,
         temperature: typeof temperature === "number" ? temperature : 0.6,
         max_tokens: typeof max_tokens === "number" ? max_tokens : 500,
+        // Pede pouco raciocínio interno ao gpt-oss (modelo "raciocinador") -- sem isso ele gasta
+        // parte da resposta "pensando" antes de escrever a resposta final, o que come tempo e
+        // parte do teto de tokens à toa numa pergunta direta de procedimento.
+        reasoning_effort: typeof reasoning_effort === "string" ? reasoning_effort : "low",
       };
 
       let upstream;

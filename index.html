@@ -4671,7 +4671,11 @@ async function agoraseiCallGroq({ messages, model, stream, temperature, max_toke
   const resp = await fetch(AGORASEI_PROXY_URL, {
     method: "POST",
     headers: { "Content-Type": "application/json" },
-    body: JSON.stringify({ idToken, messages, model, stream: !!stream, temperature, max_tokens }),
+    // reasoning_effort baixo: o gpt-oss é um modelo "raciocinador" que gasta parte da resposta
+    // pensando antes de escrever a resposta final (canal separado) — isso não ajuda muito numa
+    // pergunta direta de procedimento, só consome tempo e parte do teto de tokens, então pede
+    // pouco raciocínio (mais rápido e sobra mais espaço pra resposta em si).
+    body: JSON.stringify({ idToken, messages, model, stream: !!stream, temperature, max_tokens, reasoning_effort: "low" }),
     signal,
   });
   if(!resp.ok){
@@ -4845,10 +4849,10 @@ async function routeAgoraseiQuestion(question, history){
       model: (AGORASEI_MODELS[agoraseiModelKey] || AGORASEI_MODELS.light).id,
       stream: false,
       temperature: 0,
-      max_tokens: 100,
+      max_tokens: 150,
     });
     const data = await resp.json();
-    const raw = (data.choices[0] && data.choices[0].message && data.choices[0].message.content) || "";
+    const raw = agoraseiExtractFinal((data.choices[0] && data.choices[0].message && data.choices[0].message.content) || "");
     if(/^\s*nenhum\W*\s*$/i.test(raw.trim())) return { matched: [], routed: true };
     const lines = raw.split("\n").map(l => l.trim().replace(/^[-*\d.)\s]+/, "").replace(/\s*\[.*$/, "").trim()).filter(Boolean);
     const matched = entries.filter(kb => lines.some(l => l.toLowerCase() === kb.title.toLowerCase()));
@@ -4858,6 +4862,22 @@ async function routeAgoraseiQuestion(question, history){
     console.error("Falha na triagem do Agora Eu Sei:", err);
     return { matched: [], routed: false };
   }
+}
+
+// O gpt-oss às vezes vaza o "canal" de raciocínio interno (formato Harmony da OpenAI) junto do
+// texto visível em vez de mandar só a resposta final — já vimos isso tanto com o marcador
+// correto (<|channel|>final<|message|>) quanto com ele saindo quebrado como texto solto
+// ("assistantfinal"). Se algum desses aparecer, mostra só o que vem depois — é a resposta de
+// verdade; o que vem antes é o "pensamento" que nunca devia aparecer pra quem pergunta.
+function agoraseiExtractFinal(text){
+  const markers = ["<|channel|>final<|message|>", "assistantfinal"];
+  let cut = -1, markerLen = 0;
+  for(const m of markers){
+    const i = text.lastIndexOf(m);
+    if(i > cut){ cut = i; markerLen = m.length; }
+  }
+  const sliced = cut >= 0 ? text.slice(cut + markerLen) : text;
+  return sliced.replace(/<\|[a-z_]+\|>/gi, "").trim();
 }
 
 function agoraseiAppendMessage(role, content){
@@ -4960,7 +4980,7 @@ async function sendAgoraseiMessage(question){
       model: (AGORASEI_MODELS[agoraseiModelKey] || AGORASEI_MODELS.light).id,
       stream: true,
       temperature: 0.6,
-      max_tokens: 500,
+      max_tokens: 900,
       signal,
     });
     let full = "";
@@ -4995,12 +5015,16 @@ async function sendAgoraseiMessage(question){
             firstChunk = false;
           }
           full += delta;
-          if(assistantBubble) assistantBubble.textContent = full;
+          // Recalcula a cada pedaço: se não tiver nenhum vazamento de raciocínio (o caso normal),
+          // isso devolve o texto inteiro sem alterar nada, então o efeito de "digitando" continua
+          // igual. Só filtra de verdade nos casos raros em que o canal interno vaza.
+          if(assistantBubble) assistantBubble.textContent = agoraseiExtractFinal(full);
           scheduleScroll();
         }
       }
     }
-    return full || "Não consegui gerar uma resposta agora. Tente reformular a pergunta.";
+    const display = agoraseiExtractFinal(full);
+    return display || "Não consegui gerar uma resposta agora. Tente reformular a pergunta.";
   }
 
   // Trava de segurança: se a resposta não terminar em até 45s (rede lenta, provedor fora do
