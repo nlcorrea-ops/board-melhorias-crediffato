@@ -100,55 +100,65 @@ export default {
       return new Response("Method not allowed", { status: 405, headers: corsHeaders() });
     }
 
-    let body;
+    // Tudo dentro de um try/catch geral: se QUALQUER coisa aqui dentro quebrar de um jeito
+    // inesperado (rede, variável de ambiente faltando etc.), ainda assim devolve uma resposta
+    // com os cabeçalhos de CORS certos. Sem isso, uma exceção não tratada vira uma página de
+    // erro genérica do Cloudflare sem CORS, e o navegador esconde o erro de verdade atrás de um
+    // "Failed to fetch" que não ajuda em nada a diagnosticar.
     try{
-      body = await request.json();
-    }catch(e){
-      return new Response("Invalid JSON", { status: 400, headers: corsHeaders() });
-    }
-
-    const { idToken, messages, model, stream, temperature, max_tokens } = body || {};
-    if(!Array.isArray(messages) || !model){
-      return new Response("Missing fields", { status: 400, headers: corsHeaders() });
-    }
-
-    const authorized = await isValidFirebaseSession(idToken, env);
-    if(!authorized){
-      return new Response("Unauthorized", { status: 401, headers: corsHeaders() });
-    }
-
-    const payload = {
-      model,
-      messages,
-      stream: !!stream,
-      temperature: typeof temperature === "number" ? temperature : 0.6,
-      max_tokens: typeof max_tokens === "number" ? max_tokens : 500,
-    };
-
-    let upstream;
-    let provider;
-    if(!env.GROQ_API_KEY){
-      // Sem chave da Groq configurada — nem tenta, vai direto pro Cloudflare.
-      upstream = await callCloudflareBackup(env, payload);
-      provider = "cloudflare";
-    }else{
-      provider = "groq";
+      let body;
       try{
-        upstream = await callGroq(env, payload);
-        if(!upstream.ok && (upstream.status === 429 || upstream.status >= 500)){
+        body = await request.json();
+      }catch(e){
+        return new Response("Invalid JSON", { status: 400, headers: corsHeaders() });
+      }
+
+      const { idToken, messages, model, stream, temperature, max_tokens } = body || {};
+      if(!Array.isArray(messages) || !model){
+        return new Response("Missing fields", { status: 400, headers: corsHeaders() });
+      }
+
+      const authorized = await isValidFirebaseSession(idToken, env);
+      if(!authorized){
+        return new Response("Unauthorized", { status: 401, headers: corsHeaders() });
+      }
+
+      const payload = {
+        model,
+        messages,
+        stream: !!stream,
+        temperature: typeof temperature === "number" ? temperature : 0.6,
+        max_tokens: typeof max_tokens === "number" ? max_tokens : 500,
+      };
+
+      let upstream;
+      let provider;
+      if(!env.GROQ_API_KEY){
+        // Sem chave da Groq configurada — nem tenta, vai direto pro Cloudflare.
+        upstream = await callCloudflareBackup(env, payload);
+        provider = "cloudflare";
+      }else{
+        provider = "groq";
+        try{
+          upstream = await callGroq(env, payload);
+          if(!upstream.ok && (upstream.status === 429 || upstream.status >= 500)){
+            upstream = await callCloudflareBackup(env, payload);
+            provider = "cloudflare";
+          }
+        }catch(err){
+          // Timeout (AbortError) ou a Groq caiu de vez / não deu pra alcançar — tenta o backup.
           upstream = await callCloudflareBackup(env, payload);
           provider = "cloudflare";
         }
-      }catch(err){
-        // Timeout (AbortError) ou a Groq caiu de vez / não deu pra alcançar — tenta o backup.
-        upstream = await callCloudflareBackup(env, payload);
-        provider = "cloudflare";
       }
-    }
 
-    const headers = new Headers(corsHeaders());
-    headers.set("Content-Type", upstream.headers.get("Content-Type") || "application/json");
-    headers.set("X-Agorasei-Provider", provider);
-    return new Response(upstream.body, { status: upstream.status, headers });
+      const headers = new Headers(corsHeaders());
+      headers.set("Content-Type", upstream.headers.get("Content-Type") || "application/json");
+      headers.set("X-Agorasei-Provider", provider);
+      return new Response(upstream.body, { status: upstream.status, headers });
+    }catch(err){
+      const detail = (err && (err.message || String(err))) || "erro desconhecido";
+      return new Response(`Proxy error: ${detail}`, { status: 500, headers: corsHeaders() });
+    }
   },
 };
