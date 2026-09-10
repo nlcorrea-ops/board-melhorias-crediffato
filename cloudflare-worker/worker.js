@@ -1,22 +1,25 @@
-// Proxy do "Agora Eu Sei" pra IA — Groq como principal (mais rápida), com troca automática pra
-// Cloudflare Workers AI se a Groq estiver lenta, sobrecarregada ou fora do ar.
+// Proxy do "Agora Eu Sei" pra IA — tenta a Groq primeiro (quando configurada) e cai pro
+// Cloudflare Workers AI se a Groq estiver lenta, sobrecarregada, inacessível ou não configurada.
 //
 // Por que isso existe: o board é um site estático (GitHub Pages), sem servidor próprio. Se o
-// navegador chamasse a Groq direto, a chave da API ficaria visível pra qualquer um que abrisse
+// navegador chamasse a IA direto, a chave da API ficaria visível pra qualquer um que abrisse
 // o código-fonte da página — e essa chave é o que controla o uso gratuito (e o custo, se um dia
 // passar a pagar). Este Worker fica no meio: guarda as chaves como segredo do lado do Cloudflare
 // (nunca chegam ao navegador) e só repassa o pedido depois de confirmar que quem está chamando
 // tem uma sessão válida no Firebase Auth do board — assim só gente logada na plataforma consegue
 // usar, não qualquer visitante da internet.
 //
-// Troca de dados: navegador -> este Worker -> Groq (ou Cloudflare, se a Groq falhar) -> este
-// Worker -> navegador. Nenhum dos dois provedores treina modelo com o conteúdo, e este Worker
-// não grava nada em lugar nenhum (sem log de conteúdo, sem banco de dados).
+// Troca de dados: navegador -> este Worker -> Groq ou Cloudflare -> este Worker -> navegador.
+// Nenhum dos dois provedores treina modelo com o conteúdo, e este Worker não grava nada em lugar
+// nenhum (sem log de conteúdo, sem banco de dados).
 //
-// Backup automático: os dois provedores rodam exatamente os mesmos modelos (gpt-oss-20b e
-// gpt-oss-120b da OpenAI, em versão aberta), então trocar de um pro outro no meio não muda o
-// jeito que o assistente responde — só de onde a resposta vem. Cai pro backup quando a Groq nem
-// responde a tempo (timeout) ou responde com erro de sobrecarga/instabilidade (429 ou 5xx); um
+// GROQ_API_KEY é opcional: se não tiver esse segredo configurado, o Worker nem tenta a Groq e
+// já chama o Cloudflare Workers AI direto como principal — dá pra publicar isso funcionando
+// só com os segredos do Cloudflare, sem precisar ter conta na Groq. Os dois provedores rodam
+// exatamente os mesmos modelos (gpt-oss-20b e gpt-oss-120b da OpenAI, em versão aberta), então
+// trocar de um pro outro não muda o jeito que o assistente responde — só de onde a resposta
+// vem. Com a Groq configurada, só cai pro backup quando ela nem responde a tempo (timeout),
+// não responde (fora do ar/inacessível) ou responde com erro de sobrecarga (429 ou 5xx); um
 // erro do próprio pedido (4xx que não seja 429) não cai pro backup, porque ia dar o mesmo erro
 // nos dois lados.
 
@@ -123,17 +126,24 @@ export default {
     };
 
     let upstream;
-    let provider = "groq";
-    try{
-      upstream = await callGroq(env, payload);
-      if(!upstream.ok && (upstream.status === 429 || upstream.status >= 500)){
+    let provider;
+    if(!env.GROQ_API_KEY){
+      // Sem chave da Groq configurada — nem tenta, vai direto pro Cloudflare.
+      upstream = await callCloudflareBackup(env, payload);
+      provider = "cloudflare";
+    }else{
+      provider = "groq";
+      try{
+        upstream = await callGroq(env, payload);
+        if(!upstream.ok && (upstream.status === 429 || upstream.status >= 500)){
+          upstream = await callCloudflareBackup(env, payload);
+          provider = "cloudflare";
+        }
+      }catch(err){
+        // Timeout (AbortError) ou a Groq caiu de vez / não deu pra alcançar — tenta o backup.
         upstream = await callCloudflareBackup(env, payload);
         provider = "cloudflare";
       }
-    }catch(err){
-      // Timeout (AbortError) ou a Groq caiu de vez antes de responder — tenta o backup.
-      upstream = await callCloudflareBackup(env, payload);
-      provider = "cloudflare";
     }
 
     const headers = new Headers(corsHeaders());
