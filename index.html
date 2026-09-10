@@ -1569,6 +1569,67 @@
   :root[data-theme="claro"] .teaser-eyebrow{color:#5b4fd1;}
   :root[data-theme="claro"] .teaser-eyebrow .dot{background:#5b4fd1; animation-name:eyebrowPulseLight;}
   @keyframes eyebrowPulseLight{0%,100%{box-shadow:0 0 0 0 #5b4fd155;} 70%{box-shadow:0 0 0 7px #5b4fd100;}}
+
+  /* ---------- Agora Eu Sei: chat ---------- */
+  /* O modelo roda inteiro no navegador de quem usa (WebGPU) — nada do que é perguntado ou
+     respondido aqui passa por servidor nenhum, nem fica salvo no Firestore. Só a base de
+     procedimentos (agorasei-kb) é compartilhada entre todo mundo. */
+  .agorasei-layout{display:flex; flex-direction:column; gap:14px; margin-top:14px; height:calc(100vh - 220px); min-height:420px;}
+  .agorasei-privacy-note{
+    display:flex; align-items:center; gap:8px; font-size:11.5px; color:var(--text-low);
+    background:var(--ink-1); border:1px solid var(--hairline); border-radius:10px; padding:9px 12px;
+  }
+  .agorasei-privacy-note svg{flex-shrink:0; color:var(--op);}
+  .agorasei-model-bar{
+    display:flex; align-items:center; gap:12px; font-size:12px; color:var(--text-mid);
+    background:var(--ink-1); border:1px solid var(--hairline); border-radius:10px; padding:9px 12px;
+  }
+  .agorasei-model-bar .progress-track{flex:1; height:6px; border-radius:3px; background:var(--ink-3); overflow:hidden;}
+  .agorasei-model-bar .progress-fill{height:100%; background:var(--pa); border-radius:3px; transition:width .25s ease; width:0%;}
+  .agorasei-model-bar select{background:var(--ink-2); color:var(--text-hi); border:1px solid var(--hairline); border-radius:8px; padding:4px 8px; font-size:11.5px;}
+  .agorasei-messages{
+    flex:1; overflow-y:auto; display:flex; flex-direction:column; gap:14px;
+    background:var(--ink-1); border:1px solid var(--hairline); border-radius:16px; padding:18px;
+  }
+  .agorasei-empty{margin:auto; text-align:center; color:var(--text-low); font-size:13px; max-width:38ch;}
+  .agorasei-msg{display:flex; gap:10px; max-width:78%;}
+  .agorasei-msg-user{align-self:flex-end; flex-direction:row-reverse;}
+  .agorasei-msg-avatar{
+    width:28px; height:28px; border-radius:50%; flex-shrink:0; display:flex; align-items:center; justify-content:center;
+    font-size:11px; font-weight:700; background:var(--ink-3); color:var(--text-mid);
+  }
+  .agorasei-msg-user .agorasei-msg-avatar{background:var(--brand-red-dim); color:var(--brand-red);}
+  .agorasei-msg-assistant .agorasei-msg-avatar{background:#8b8dfb2e; color:var(--pa);}
+  .agorasei-msg-bubble{
+    background:var(--ink-2); border:1px solid var(--hairline); border-radius:14px; padding:10px 13px;
+    font-size:13.5px; line-height:1.5; white-space:pre-wrap; word-break:break-word;
+  }
+  .agorasei-msg-user .agorasei-msg-bubble{background:var(--brand-red-dim); border-color:var(--brand-red-dim);}
+  .agorasei-msg-bubble.typing{color:var(--text-low);}
+  .agorasei-typing-dots{display:inline-flex; gap:3px; vertical-align:middle;}
+  .agorasei-typing-dots span{width:5px; height:5px; border-radius:50%; background:var(--text-low); animation:agoraseiTyping 1s ease-in-out infinite;}
+  .agorasei-typing-dots span:nth-child(2){animation-delay:.15s;}
+  .agorasei-typing-dots span:nth-child(3){animation-delay:.3s;}
+  @keyframes agoraseiTyping{0%,60%,100%{opacity:.3; transform:translateY(0);} 30%{opacity:1; transform:translateY(-2px);}}
+  .agorasei-input-row{display:flex; gap:10px; align-items:flex-end;}
+  .agorasei-input-row textarea{
+    flex:1; resize:none; max-height:120px; background:var(--ink-1); border:1px solid var(--hairline); border-radius:12px;
+    color:var(--text-hi); font-family:var(--font-display); font-size:13.5px; padding:11px 14px;
+  }
+  .agorasei-input-row textarea:focus-visible{outline:none; border-color:var(--pa);}
+  .agorasei-unsupported{
+    display:flex; flex-direction:column; align-items:center; justify-content:center; gap:10px; text-align:center;
+    color:var(--text-mid); font-size:13px; max-width:44ch; margin:0 auto; padding:8px 0;
+  }
+  .agorasei-kb-btn{margin-left:auto;}
+  .agorasei-kb-list{display:flex; flex-direction:column; gap:10px; max-height:360px; overflow-y:auto; margin-top:14px;}
+  .agorasei-kb-item{background:var(--ink-2); border:1px solid var(--hairline); border-radius:12px; padding:12px 14px;}
+  .agorasei-kb-item-head{display:flex; align-items:center; justify-content:space-between; gap:10px;}
+  .agorasei-kb-item-head h4{margin:0; font-size:13.5px; font-weight:600;}
+  .agorasei-kb-item-actions{display:flex; gap:6px; flex-shrink:0;}
+  .agorasei-kb-item-actions button{background:none; border:none; color:var(--text-low); cursor:pointer; font-size:12px; padding:2px 6px;}
+  .agorasei-kb-item-actions button:hover{color:var(--text-hi);}
+  .agorasei-kb-item-preview{margin:6px 0 0; font-size:12px; color:var(--text-mid); max-height:3.2em; overflow:hidden;}
 </style>
 </head>
 <body>
@@ -2043,8 +2104,32 @@
   <div class="tab-panel" id="agorasei-tab" style="display:none;">
     <div class="tab-panel-head">
       <h2>Agora Eu Sei</h2>
+      <button type="button" class="btn-secondary agorasei-kb-btn" id="open-agorasei-kb-btn" style="display:none;">Base de procedimentos</button>
     </div>
-    <p class="sub" style="margin-bottom:14px;">Assistente de IA pra tirar dúvidas rápidas sobre convênio, negociações, ouvidoria e mais — em breve por aqui.</p>
+    <p class="sub" style="margin-bottom:14px;">Assistente de IA pra tirar dúvidas rápidas sobre convênio, negociações, ouvidoria e mais.</p>
+
+    <div class="agorasei-layout" id="agorasei-chat-layout" style="display:none;">
+      <div class="agorasei-privacy-note">
+        <svg width="14" height="14" viewBox="0 0 16 16" fill="none" aria-hidden="true"><path d="M8 1.3 2.3 3.4v4c0 4 2.4 6.6 5.7 8 3.3-1.4 5.7-4 5.7-8v-4L8 1.3Z" stroke="currentColor" stroke-width="1.2" stroke-linejoin="round"/><path d="M5.6 8.1 7.3 9.8l3.1-3.6" stroke="currentColor" stroke-width="1.2" stroke-linecap="round" stroke-linejoin="round"/></svg>
+        <span>O modelo roda aqui no seu navegador — as perguntas não são enviadas pra nenhum servidor e não ficam salvas em lugar nenhum.</span>
+      </div>
+      <div class="agorasei-model-bar" id="agorasei-model-bar">
+        <span id="agorasei-model-status">Preparando...</span>
+        <div class="progress-track"><div class="progress-fill" id="agorasei-progress-fill"></div></div>
+        <select id="agorasei-model-select" title="Modelo de IA">
+          <option value="light">Leve (mais rápido)</option>
+          <option value="standard">Padrão (mais preciso)</option>
+        </select>
+      </div>
+      <div class="agorasei-messages" id="agorasei-messages">
+        <p class="agorasei-empty">Pergunte algo sobre os procedimentos da Crediffato — convênio, negociações, ouvidoria e mais.</p>
+      </div>
+      <form class="agorasei-input-row" id="agorasei-form">
+        <textarea id="agorasei-input" rows="1" maxlength="1000" placeholder="Digite sua pergunta..." required></textarea>
+        <button type="submit" class="btn-primary" id="agorasei-send-btn">Enviar</button>
+      </form>
+    </div>
+
     <div class="teaser-card" id="agorasei-teaser-card">
       <div class="mist-blob mist-blob-1" aria-hidden="true"></div>
       <div class="mist-blob mist-blob-2" aria-hidden="true"></div>
@@ -2052,9 +2137,37 @@
       <div class="net-wrap">
         <svg id="agorasei-bulb-svg" viewBox="0 0 340 260"></svg>
       </div>
-      <div class="teaser-eyebrow"><span class="dot"></span>Em construção</div>
-      <p class="teaser-title">O Fato está tomando forma por aqui</p>
-      <p class="teaser-sub">Prepare suas perguntas — a resposta está a caminho.</p>
+      <div class="teaser-eyebrow" id="agorasei-teaser-eyebrow"><span class="dot"></span>Carregando</div>
+      <p class="teaser-title" id="agorasei-teaser-title">O Fato está tomando forma por aqui</p>
+      <p class="teaser-sub" id="agorasei-teaser-sub">Preparando o assistente...</p>
+      <button type="button" class="btn-secondary" id="agorasei-retry-btn" style="display:none;">Tentar novamente</button>
+    </div>
+  </div>
+
+  <div class="modal-overlay" id="agorasei-kb-modal-overlay">
+    <div class="modal" role="dialog" aria-modal="true" aria-labelledby="agorasei-kb-modal-title">
+      <div class="modal-head">
+        <h2 id="agorasei-kb-modal-title">Base de procedimentos</h2>
+        <button class="modal-close" id="agorasei-kb-modal-close" aria-label="Fechar">✕</button>
+      </div>
+      <p class="sub" style="margin-bottom:14px;">O que estiver aqui é o que o assistente usa pra responder — quanto mais claro e completo, melhores as respostas. Visível só pra quem gerencia.</p>
+      <form id="agorasei-kb-form">
+        <input type="hidden" id="agorasei-kb-edit-id" value="" />
+        <label class="field">
+          <span class="field-label">Título do procedimento *</span>
+          <input type="text" id="agorasei-kb-title" required maxlength="120" placeholder="Ex: Como abrir uma negociação" />
+        </label>
+        <label class="field">
+          <span class="field-label">Conteúdo *</span>
+          <textarea id="agorasei-kb-content" rows="6" maxlength="6000" required placeholder="Descreva o procedimento com o máximo de detalhe possível"></textarea>
+        </label>
+        <div class="modal-actions">
+          <button type="button" class="btn-secondary" id="agorasei-kb-cancel-edit" style="display:none;">Cancelar edição</button>
+          <button type="submit" class="btn-primary" id="agorasei-kb-submit-btn">Adicionar procedimento</button>
+        </div>
+        <p class="form-msg" id="agorasei-kb-msg"></p>
+      </form>
+      <div class="agorasei-kb-list" id="agorasei-kb-list"></div>
     </div>
   </div>
 
@@ -2299,7 +2412,7 @@
 // que a comparação ">"/"<" abaixo saiba qual versão é mais nova) — é a única forma de o mecanismo
 // perceber que existe uma versão nova. Só funciona pra quem está conectado ao Firestore (modo de
 // contingência sem Firebase não tem sincronização em tempo real de nada, essa checagem incluída).
-const APP_VERSION = "2026-08-31T13:15:14Z";
+const APP_VERSION = "2026-09-10T01:01:34Z";
 
 // Desloga e recarrega — usado tanto pela verificação de versão nova quanto pelos sinais de
 // desconexão manual (shutdown geral ou alguém sendo desconectado individualmente).
@@ -3062,6 +3175,7 @@ const DEFAULT_SECTORS = [
 let SECTORS = DEFAULT_SECTORS.slice();
 let DIRECTORY = []; // [{uid, email, role, assignedAreas}]
 let ROUTINES = []; // [{id, title, description, sector, frequency, assigneeUid, wholeSector, scheduledDays, createdBy, createdByName, createdAt, completions:[{period, at, byUid, byName}]}]
+let AGORASEI_KB = {}; // { [id]: {title, content, updatedAt, updatedByName} } — base de procedimentos compartilhada (só isso vai pro Firestore; as conversas do chat nunca saem do navegador)
 // scheduledDays: só usado quando frequency === "semanal" — array de dias da semana (0=domingo
 // ... 6=sábado, igual Date.getDay()) em que a rotina cai. Vazio/ausente = "qualquer dia da
 // semana", o comportamento de sempre (mantém compatibilidade com rotinas já cadastradas).
@@ -3364,7 +3478,7 @@ let storageMode = hasClaudeStorage ? "shared" : (hasLocalStorage ? "local" : "no
 async function ensureBoardDoc(){
   const snap = await fsGetDoc(BOARD_DOC);
   if(!snap.exists()){
-    const initial = { statuses:{}, customItems:[], observacoes:{}, comentarios:{}, sectors:DEFAULT_SECTORS.slice(), directory:[], stages:{}, assignees:{}, dueDates:{}, statusHistory:{}, attachments:{}, related:{}, validated:{}, routines:[] };
+    const initial = { statuses:{}, customItems:[], observacoes:{}, comentarios:{}, sectors:DEFAULT_SECTORS.slice(), directory:[], stages:{}, assignees:{}, dueDates:{}, statusHistory:{}, attachments:{}, related:{}, validated:{}, routines:[], agoraseiKB:{} };
     await fsSetDoc(BOARD_DOC, initial);
     return initial;
   }
@@ -3492,6 +3606,7 @@ function applyRemoteState(data){
   SECTORS = (data.sectors && data.sectors.length) ? data.sectors : DEFAULT_SECTORS.slice();
   DIRECTORY = data.directory || [];
   ROUTINES = data.routines || [];
+  AGORASEI_KB = data.agoraseiKB || {};
   const baseItems = DATA.filter(d => !d.custom);
   const customItems = (data.customItems || []).slice();
   DATA.length = 0;
@@ -4386,6 +4501,371 @@ document.getElementById("routines-detail-area-filter").addEventListener("click",
   state.routineDetailArea = btn.dataset.routineDetailArea;
   renderRoutines();
 });
+
+// ===================== Agora Eu Sei: assistente de IA (roda no navegador) =====================
+// O modelo (WebLLM/WebGPU) roda inteiro na máquina de quem usa — nenhuma pergunta ou resposta
+// sai do navegador, não tem API nem chave nem provedor externo envolvido. Só a base de
+// procedimentos abaixo (agoraseiKB) é compartilhada via Firestore, igual ao resto da
+// plataforma; as conversas em si nunca são salvas em lugar nenhum, nem localmente.
+const AGORASEI_MODELS = {
+  light: { id: "Qwen2.5-1.5B-Instruct-q4f16_1-MLC", label: "Leve (mais rápido)" },
+  standard: { id: "Qwen2.5-3B-Instruct-q4f16_1-MLC", label: "Padrão (mais preciso)" },
+};
+const AGORASEI_WEBLLM_URL = "https://cdn.jsdelivr.net/npm/@mlc-ai/web-llm@0.2.85/+esm";
+const AGORASEI_SYSTEM_PROMPT = `Você é o "Agora Eu Sei", assistente interno da Crediffato que responde dúvidas sobre os procedimentos da empresa (convênio, negociações, ouvidoria e outros temas cadastrados).
+Regras:
+- Responda SOMENTE com base no CONTEXTO fornecido abaixo. Nunca invente um procedimento que não esteja lá.
+- Se o contexto não tiver a resposta, diga claramente que não encontrou isso na base de procedimentos e sugira procurar o responsável do setor — não tente adivinhar.
+- Seja direto e objetivo, em português do Brasil.
+- Quando existir, cite o nome do procedimento usado na resposta.`;
+
+let agoraseiEngine = null;
+let agoraseiEngineStatus = "idle"; // idle | loading | ready | unsupported | error
+let agoraseiProgress = null;
+let agoraseiErrorMessage = "";
+let agoraseiModelKey = (() => { try{ return localStorage.getItem("agoraseiModel") || "light"; }catch(e){ return "light"; } })();
+let agoraseiMessages = []; // [{role, content}] — só em memória, some ao recarregar a página
+let agoraseiGenerating = false;
+let agoraseiKBEditingId = null;
+
+function renderAgorasei(){
+  const kbBtn = document.getElementById("open-agorasei-kb-btn");
+  if(kbBtn) kbBtn.style.display = canManage() ? "" : "none";
+  renderAgoraseiKBList();
+  if(agoraseiEngineStatus === "idle") initAgoraseiEngine();
+}
+
+async function initAgoraseiEngine(){
+  if(agoraseiEngineStatus === "loading" || agoraseiEngineStatus === "ready") return;
+  if(!navigator.gpu){
+    agoraseiEngineStatus = "unsupported";
+    renderAgoraseiStatus();
+    return;
+  }
+  agoraseiEngineStatus = "loading";
+  agoraseiProgress = null;
+  renderAgoraseiStatus();
+  try{
+    const webllm = await import(AGORASEI_WEBLLM_URL);
+    const modelId = (AGORASEI_MODELS[agoraseiModelKey] || AGORASEI_MODELS.light).id;
+    agoraseiEngine = await webllm.CreateMLCEngine(modelId, {
+      initProgressCallback: (report) => { agoraseiProgress = report; renderAgoraseiStatus(); },
+    });
+    agoraseiEngineStatus = "ready";
+    renderAgoraseiStatus();
+  }catch(err){
+    console.error("Falha ao carregar o modelo do Agora Eu Sei:", err);
+    agoraseiEngineStatus = "error";
+    agoraseiErrorMessage = "Não foi possível baixar o modelo de IA agora. Verifique sua conexão (ou se a rede da empresa bloqueia o download) e tente de novo.";
+    renderAgoraseiStatus();
+  }
+}
+
+function renderAgoraseiStatus(){
+  const teaser = document.getElementById("agorasei-teaser-card");
+  const chatLayout = document.getElementById("agorasei-chat-layout");
+  if(!teaser || !chatLayout) return;
+  const eyebrow = document.getElementById("agorasei-teaser-eyebrow");
+  const title = document.getElementById("agorasei-teaser-title");
+  const sub = document.getElementById("agorasei-teaser-sub");
+  const retryBtn = document.getElementById("agorasei-retry-btn");
+  const statusEl = document.getElementById("agorasei-model-status");
+  const fillEl = document.getElementById("agorasei-progress-fill");
+
+  if(agoraseiEngineStatus === "ready"){
+    teaser.style.display = "none";
+    chatLayout.style.display = "";
+    return;
+  }
+  chatLayout.style.display = "none";
+  teaser.style.display = "";
+  if(retryBtn) retryBtn.style.display = (agoraseiEngineStatus === "error" || agoraseiEngineStatus === "unsupported") ? "" : "none";
+
+  if(agoraseiEngineStatus === "unsupported"){
+    if(eyebrow) eyebrow.innerHTML = `<span class="dot"></span>Indisponível neste navegador`;
+    if(title) title.textContent = "Seu navegador não suporta o assistente";
+    if(sub) sub.textContent = "O Agora Eu Sei roda direto no navegador via WebGPU. Use uma versão recente do Chrome ou Edge pra acessar.";
+    return;
+  }
+  if(agoraseiEngineStatus === "error"){
+    if(eyebrow) eyebrow.innerHTML = `<span class="dot"></span>Erro ao carregar`;
+    if(title) title.textContent = "Não deu pra carregar o modelo";
+    if(sub) sub.textContent = agoraseiErrorMessage || "Tente novamente em instantes.";
+    return;
+  }
+  // loading
+  if(eyebrow) eyebrow.innerHTML = `<span class="dot"></span>Carregando`;
+  if(title) title.textContent = "Preparando o assistente";
+  const pct = (agoraseiProgress && typeof agoraseiProgress.progress === "number") ? Math.round(agoraseiProgress.progress * 100) : 0;
+  const text = (agoraseiProgress && agoraseiProgress.text) ? agoraseiProgress.text : "Baixando o modelo de IA (só na primeira vez — depois fica salvo no navegador)...";
+  if(sub) sub.textContent = text;
+  if(statusEl) statusEl.textContent = text;
+  if(fillEl) fillEl.style.width = pct + "%";
+}
+
+function renderAgoraseiKBList(){
+  const listEl = document.getElementById("agorasei-kb-list");
+  if(!listEl) return;
+  const entries = Object.entries(AGORASEI_KB).sort((a, b) => (a[1].title || "").localeCompare(b[1].title || "", "pt-BR"));
+  if(!entries.length){
+    listEl.innerHTML = `<p class="sub">Nenhum procedimento cadastrado ainda.</p>`;
+    return;
+  }
+  listEl.innerHTML = entries.map(([id, kb]) => {
+    const preview = (kb.content || "").slice(0, 160);
+    const ellipsis = (kb.content || "").length > 160 ? "…" : "";
+    return `
+    <div class="agorasei-kb-item">
+      <div class="agorasei-kb-item-head">
+        <h4>${escapeHtml(kb.title || "")}</h4>
+        <div class="agorasei-kb-item-actions">
+          <button type="button" data-kb-edit="${escapeHtml(id)}">Editar</button>
+          <button type="button" data-kb-delete="${escapeHtml(id)}">Excluir</button>
+        </div>
+      </div>
+      <p class="agorasei-kb-item-preview">${escapeHtml(preview)}${ellipsis}</p>
+    </div>`;
+  }).join("");
+}
+
+async function saveAgoraseiKBEntry(id, title, content){
+  const entry = { title, content, updatedAt: new Date().toISOString(), updatedByName: (currentUser && (currentUser.name || currentUser.email)) || "" };
+  AGORASEI_KB = { ...AGORASEI_KB, [id]: entry };
+  if(storageMode === "firebase" && firebaseReady){
+    const path = new fsFieldPath("agoraseiKB", id);
+    await fsUpdateDoc(BOARD_DOC, path, entry);
+  }
+  renderAgoraseiKBList();
+}
+
+async function deleteAgoraseiKBEntry(id){
+  const entry = AGORASEI_KB[id];
+  if(!entry) return;
+  if(!confirm(`Excluir o procedimento "${entry.title}"? Isso não pode ser desfeito.`)) return;
+  const next = { ...AGORASEI_KB };
+  delete next[id];
+  AGORASEI_KB = next;
+  if(storageMode === "firebase" && firebaseReady){
+    const path = new fsFieldPath("agoraseiKB", id);
+    await fsUpdateDoc(BOARD_DOC, path, fsDeleteField());
+  }
+  renderAgoraseiKBList();
+}
+
+function agoraseiNormalize(str){
+  return String(str || "").toLowerCase().normalize("NFD").replace(/[̀-ͯ]/g, "").replace(/[^a-z0-9\s]/g, " ");
+}
+const AGORASEI_STOPWORDS = new Set(["a","o","as","os","de","da","do","das","dos","em","um","uma","uns","umas","para","por","com","sem","que","e","ou","se","no","na","nos","nas","ao","aos","como","qual","quais","quando","onde","porque","e","sao","ser","tem","tem","meu","minha","seu","sua","isso","essa","esse","este","esta","pode","posso","preciso","gostaria","the"]);
+function agoraseiTokens(str){
+  return agoraseiNormalize(str).split(/\s+/).filter(t => t.length > 2 && !AGORASEI_STOPWORDS.has(t));
+}
+function retrieveAgoraseiContext(query, maxChars){
+  const queryTokens = new Set(agoraseiTokens(query));
+  if(!queryTokens.size) return [];
+  const scored = Object.values(AGORASEI_KB).map(kb => {
+    const tokens = agoraseiTokens(`${kb.title} ${kb.content}`);
+    let score = 0;
+    tokens.forEach(t => { if(queryTokens.has(t)) score++; });
+    // título pesa mais que o corpo — bate direto no que a pessoa quer saber
+    agoraseiTokens(kb.title).forEach(t => { if(queryTokens.has(t)) score += 3; });
+    return { kb, score };
+  }).filter(s => s.score > 0).sort((a, b) => b.score - a.score);
+  const picked = [];
+  let used = 0;
+  for(const s of scored){
+    const block = `## ${s.kb.title}\n${s.kb.content}`;
+    if(used + block.length > maxChars && picked.length) break;
+    picked.push(block);
+    used += block.length;
+    if(picked.length >= 5) break;
+  }
+  return picked;
+}
+
+function agoraseiAppendMessage(role, content){
+  const messagesEl = document.getElementById("agorasei-messages");
+  if(!messagesEl) return null;
+  const empty = messagesEl.querySelector(".agorasei-empty");
+  if(empty) empty.remove();
+  const wrap = document.createElement("div");
+  wrap.className = `agorasei-msg agorasei-msg-${role}`;
+  const avatar = document.createElement("div");
+  avatar.className = "agorasei-msg-avatar";
+  avatar.textContent = role === "user" ? initialsFromName((currentUser && (currentUser.name || currentUser.email)) || "Você") : "IA";
+  const bubble = document.createElement("div");
+  bubble.className = "agorasei-msg-bubble";
+  bubble.textContent = content;
+  wrap.appendChild(avatar);
+  wrap.appendChild(bubble);
+  messagesEl.appendChild(wrap);
+  messagesEl.scrollTop = messagesEl.scrollHeight;
+  return bubble;
+}
+
+async function sendAgoraseiMessage(question){
+  if(agoraseiGenerating || !question.trim()) return;
+  if(agoraseiEngineStatus !== "ready" || !agoraseiEngine) return;
+  agoraseiGenerating = true;
+  const sendBtn = document.getElementById("agorasei-send-btn");
+  if(sendBtn) sendBtn.disabled = true;
+
+  agoraseiAppendMessage("user", question);
+  agoraseiMessages.push({ role: "user", content: question });
+
+  const contextBlocks = retrieveAgoraseiContext(question, 3200);
+  const contextText = contextBlocks.length ? contextBlocks.join("\n\n") : "(nenhum procedimento cadastrado bate com essa pergunta)";
+  const systemMsg = { role: "system", content: `${AGORASEI_SYSTEM_PROMPT}\n\nCONTEXTO:\n${contextText}` };
+  const recentHistory = agoraseiMessages.slice(-6);
+
+  const assistantBubble = agoraseiAppendMessage("assistant", "");
+  if(assistantBubble){
+    assistantBubble.classList.add("typing");
+    assistantBubble.innerHTML = `<span class="agorasei-typing-dots"><span></span><span></span><span></span></span>`;
+  }
+
+  try{
+    const stream = await agoraseiEngine.chat.completions.create({
+      messages: [systemMsg, ...recentHistory],
+      stream: true,
+      temperature: 0.4,
+      max_tokens: 700,
+    });
+    let full = "";
+    let firstChunk = true;
+    for await (const chunk of stream){
+      const delta = chunk.choices[0] && chunk.choices[0].delta && chunk.choices[0].delta.content;
+      if(delta){
+        if(firstChunk){
+          if(assistantBubble){ assistantBubble.classList.remove("typing"); assistantBubble.textContent = ""; }
+          firstChunk = false;
+        }
+        full += delta;
+        if(assistantBubble) assistantBubble.textContent = full;
+        const messagesEl = document.getElementById("agorasei-messages");
+        if(messagesEl) messagesEl.scrollTop = messagesEl.scrollHeight;
+      }
+    }
+    if(!full) full = "Não consegui gerar uma resposta agora. Tente reformular a pergunta.";
+    if(assistantBubble){ assistantBubble.classList.remove("typing"); assistantBubble.textContent = full; }
+    agoraseiMessages.push({ role: "assistant", content: full });
+  }catch(err){
+    console.error("Falha ao gerar resposta do Agora Eu Sei:", err);
+    if(assistantBubble){ assistantBubble.classList.remove("typing"); assistantBubble.textContent = "Deu um erro ao gerar a resposta. Tente de novo."; }
+  }finally{
+    agoraseiGenerating = false;
+    if(sendBtn) sendBtn.disabled = false;
+  }
+}
+
+document.getElementById("open-agorasei-kb-btn").addEventListener("click", () => {
+  agoraseiKBEditingId = null;
+  document.getElementById("agorasei-kb-form").reset();
+  document.getElementById("agorasei-kb-edit-id").value = "";
+  document.getElementById("agorasei-kb-submit-btn").textContent = "Adicionar procedimento";
+  document.getElementById("agorasei-kb-cancel-edit").style.display = "none";
+  document.getElementById("agorasei-kb-msg").textContent = "";
+  renderAgoraseiKBList();
+  document.getElementById("agorasei-kb-modal-overlay").classList.add("open");
+});
+function closeAgoraseiKBModal(){
+  document.getElementById("agorasei-kb-modal-overlay").classList.remove("open");
+}
+document.getElementById("agorasei-kb-modal-close").addEventListener("click", closeAgoraseiKBModal);
+document.getElementById("agorasei-kb-modal-overlay").addEventListener("click", (e) => {
+  if(e.target.id === "agorasei-kb-modal-overlay") closeAgoraseiKBModal();
+});
+document.getElementById("agorasei-kb-cancel-edit").addEventListener("click", () => {
+  agoraseiKBEditingId = null;
+  document.getElementById("agorasei-kb-form").reset();
+  document.getElementById("agorasei-kb-edit-id").value = "";
+  document.getElementById("agorasei-kb-submit-btn").textContent = "Adicionar procedimento";
+  document.getElementById("agorasei-kb-cancel-edit").style.display = "none";
+});
+document.getElementById("agorasei-kb-list").addEventListener("click", (e) => {
+  const editBtn = e.target.closest("[data-kb-edit]");
+  if(editBtn){
+    const id = editBtn.getAttribute("data-kb-edit");
+    const entry = AGORASEI_KB[id];
+    if(!entry) return;
+    agoraseiKBEditingId = id;
+    document.getElementById("agorasei-kb-edit-id").value = id;
+    document.getElementById("agorasei-kb-title").value = entry.title || "";
+    document.getElementById("agorasei-kb-content").value = entry.content || "";
+    document.getElementById("agorasei-kb-submit-btn").textContent = "Salvar alterações";
+    document.getElementById("agorasei-kb-cancel-edit").style.display = "";
+    document.getElementById("agorasei-kb-title").focus();
+    return;
+  }
+  const delBtn = e.target.closest("[data-kb-delete]");
+  if(delBtn) deleteAgoraseiKBEntry(delBtn.getAttribute("data-kb-delete"));
+});
+document.getElementById("agorasei-kb-form").addEventListener("submit", withSubmitGuard(async (e) => {
+  e.preventDefault();
+  const msgEl = document.getElementById("agorasei-kb-msg");
+  msgEl.style.color = ""; msgEl.textContent = "";
+  const title = document.getElementById("agorasei-kb-title").value.trim();
+  const content = document.getElementById("agorasei-kb-content").value.trim();
+  if(!title || !content){ msgEl.textContent = "Preencha título e conteúdo."; return; }
+  if(!firebaseReady || storageMode !== "firebase"){ msgEl.textContent = "Indisponível no momento (sem conexão com o banco compartilhado)."; return; }
+  const id = agoraseiKBEditingId || ("kb_" + Date.now().toString(36) + Math.random().toString(36).slice(2, 7));
+  try{
+    await saveAgoraseiKBEntry(id, title, content);
+    agoraseiKBEditingId = null;
+    document.getElementById("agorasei-kb-form").reset();
+    document.getElementById("agorasei-kb-edit-id").value = "";
+    document.getElementById("agorasei-kb-submit-btn").textContent = "Adicionar procedimento";
+    document.getElementById("agorasei-kb-cancel-edit").style.display = "none";
+    msgEl.style.color = "var(--st-concluido)";
+    msgEl.textContent = "Procedimento salvo.";
+  }catch(err){
+    console.error("Falha ao salvar procedimento:", err);
+    msgEl.textContent = "Erro ao salvar. Tente novamente.";
+  }
+}));
+
+document.getElementById("agorasei-form").addEventListener("submit", (e) => {
+  e.preventDefault();
+  const input = document.getElementById("agorasei-input");
+  const question = input.value;
+  if(!question.trim()) return;
+  input.value = "";
+  input.style.height = "auto";
+  sendAgoraseiMessage(question);
+});
+document.getElementById("agorasei-input").addEventListener("keydown", (e) => {
+  if(e.key === "Enter" && !e.shiftKey){
+    e.preventDefault();
+    document.getElementById("agorasei-form").requestSubmit();
+  }
+});
+document.getElementById("agorasei-input").addEventListener("input", (e) => {
+  e.target.style.height = "auto";
+  e.target.style.height = Math.min(e.target.scrollHeight, 120) + "px";
+});
+document.getElementById("agorasei-model-select").value = agoraseiModelKey;
+document.getElementById("agorasei-model-select").addEventListener("change", async (e) => {
+  agoraseiModelKey = e.target.value;
+  try{ localStorage.setItem("agoraseiModel", agoraseiModelKey); }catch(err){}
+  if(agoraseiEngineStatus === "ready" && agoraseiEngine){
+    agoraseiEngineStatus = "loading";
+    agoraseiProgress = null;
+    renderAgoraseiStatus();
+    try{
+      await agoraseiEngine.reload(AGORASEI_MODELS[agoraseiModelKey].id);
+      agoraseiEngineStatus = "ready";
+    }catch(err){
+      console.error("Falha ao trocar modelo do Agora Eu Sei:", err);
+      agoraseiEngineStatus = "error";
+      agoraseiErrorMessage = "Não foi possível trocar de modelo agora. Tente novamente.";
+    }
+    renderAgoraseiStatus();
+  }
+});
+document.getElementById("agorasei-retry-btn").addEventListener("click", () => {
+  agoraseiEngineStatus = "idle";
+  initAgoraseiEngine();
+});
+
 // Trava o botão de salvar enquanto o envio ainda está em andamento — sem isso, um
 // clique duplo ou Enter repetido antes da primeira gravação terminar dispara o
 // mesmo formulário duas vezes, criando item/rotina/setor/usuário/acesso duplicado.
@@ -5376,6 +5856,7 @@ function renderTabs(){
   else if(state.tab === "validations") renderValidations();
   else if(state.tab === "archive") renderArchive();
   else if(state.tab === "admin") renderAdminLists();
+  else if(state.tab === "agorasei") renderAgorasei();
 
   updateSummary();
   updateSideNavIndicator();
