@@ -4983,23 +4983,22 @@ async function sendAgoraseiMessage(question){
     return full || "Não consegui gerar uma resposta agora. Tente reformular a pergunta.";
   }
 
+  // IMPORTANTE: nada de chamar resetChat() e tentar de novo automaticamente aqui — chegamos a
+  // fazer isso, mas "Object/Module has already been disposed" é um bug conhecido do próprio
+  // WebLLM ao reaproveitar a engine entre chamadas de formato diferente (github.com/mlc-ai/
+  // web-llm issues #486 e #560), e um reset+nova tentativa imediata parece disparar exatamente
+  // essa corrida em vez de evitá-la. Mais seguro deixar o erro aparecer claro e a pessoa mandar
+  // de novo manualmente — um envio novo passa pelo fluxo normal, sem essa corrida.
   try{
-    let full;
-    try{
-      full = await attemptGeneration([systemMsg, ...priorTurns, buildFinalUserMsg(contextText)]);
-    }catch(firstErr){
-      console.error("Falha na primeira tentativa de resposta do Agora Eu Sei, tentando de novo com pedido mais simples:", firstErr);
-      try{ await agoraseiEngine.resetChat(); }catch(resetErr){ console.error("Falha ao reiniciar a conversa da engine:", resetErr); }
-      full = await attemptGeneration([systemMsg, buildFinalUserMsg(AGORASEI_NO_MATCH_CONTEXT)]);
-    }
+    const full = await attemptGeneration([systemMsg, ...priorTurns, buildFinalUserMsg(contextText)]);
     if(assistantBubble){ assistantBubble.classList.remove("typing"); assistantBubble.textContent = full; }
     agoraseiMessages.push({ role: "assistant", content: full });
   }catch(err){
-    console.error("Falha ao gerar resposta do Agora Eu Sei (as duas tentativas falharam):", err);
+    console.error("Falha ao gerar resposta do Agora Eu Sei:", err);
     // Mostra o motivo real do erro direto no chat (curto) em vez de só "deu erro" — sem isso,
     // diagnosticar um problema como esse exige abrir o console do navegador toda vez.
     const errDetail = (err && (err.message || String(err))) || "erro desconhecido";
-    if(assistantBubble){ assistantBubble.classList.remove("typing"); assistantBubble.textContent = `Deu um erro ao gerar a resposta, mesmo numa segunda tentativa mais simples. Tente de novo.\n\n[detalhe técnico: ${errDetail.slice(0, 300)}]`; }
+    if(assistantBubble){ assistantBubble.classList.remove("typing"); assistantBubble.textContent = `Deu um erro ao gerar a resposta. Tente mandar a pergunta de novo.\n\n[detalhe técnico: ${errDetail.slice(0, 300)}]`; }
   }finally{
     agoraseiGenerating = false;
     if(sendBtn) sendBtn.disabled = false;
