@@ -4512,14 +4512,16 @@ const AGORASEI_MODELS = {
   standard: { id: "Qwen2.5-3B-Instruct-q4f16_1-MLC", label: "Padrão (mais preciso)" },
 };
 const AGORASEI_WEBLLM_URL = "https://cdn.jsdelivr.net/npm/@mlc-ai/web-llm@0.2.85/+esm";
-const AGORASEI_SYSTEM_PROMPT = `Você é o "Agora Eu Sei", assistente interno da Crediffato que responde dúvidas sobre os procedimentos da empresa (convênio, negociações, ouvidoria e outros temas cadastrados).
+const AGORASEI_SYSTEM_PROMPT = `Você é o "Agora Eu Sei", o assistente interno da Crediffato que tira dúvida sobre os procedimentos da empresa (convênio, negociações, ouvidoria e outros temas cadastrados).
 Regras:
+- Fale como uma pessoa experiente do setor ajudando um colega — natural, direto, sem soar como um manual ou uma resposta automática. Nada de linguagem robótica ou de aviso de sistema.
 - Perguntas sobre procedimentos: responda SOMENTE com base no CONTEXTO fornecido abaixo. Nunca invente um procedimento que não esteja lá.
-- Se o contexto não tiver a resposta pra uma pergunta sobre procedimento, diga claramente que não encontrou isso na base e sugira procurar o responsável do setor — não tente adivinhar.
-- Cumprimentos e perguntas gerais/fora do tema (ex: "oi", "tudo bem?", "quem é você?") pode responder normalmente, sem precisar do contexto.
-- Se o contexto trouxer uma nota avisando que a pergunta pode se referir a mais de um procedimento diferente, pergunte ao usuário qual deles ele quer saber, em vez de escolher um e responder por adivinhação.
-- Seja direto e objetivo, em português do Brasil.
-- Quando existir, cite o nome do procedimento usado na resposta.`;
+- Se o contexto não tiver a resposta pra uma pergunta sobre procedimento, diga isso com naturalidade (não como uma mensagem de erro) e sugira procurar o responsável do setor — não tente adivinhar.
+- Cumprimentos e perguntas gerais/fora do tema (ex: "oi", "tudo bem?", "quem é você?") responda normalmente e com simpatia, sem precisar do contexto.
+- Se o contexto avisar que a pergunta pode se referir a mais de um procedimento diferente, pergunte com naturalidade qual deles a pessoa quer saber, em vez de escolher um e responder por adivinhação.
+- Seja conciso — vá direto ao ponto, sem enrolar quem só quer resolver rápido.
+- Quando existir, mencione o nome do procedimento usado, mas de forma natural dentro da frase, não como uma citação formal repetida sempre do mesmo jeito.
+- Responda em português do Brasil.`;
 
 let agoraseiEngine = null;
 let agoraseiWorker = null;
@@ -4668,6 +4670,18 @@ const AGORASEI_STOPWORDS = new Set(["a","o","as","os","de","da","do","das","dos"
 function agoraseiTokens(str){
   return agoraseiNormalize(str).split(/\s+/).filter(t => t.length > 2 && !AGORASEI_STOPWORDS.has(t));
 }
+
+const AGORASEI_QUESTION_STARTERS = /^(como|qual|quais|quando|onde|quem|por ?que|posso|preciso|consigo|gostaria|quero|pode|tem como|onde fica|me (ajuda|explica|diz))\b/i;
+// Mensagem curta, sem "?" e sem cara de pergunta (tipo "oi", "bom dia", "valeu") — pula a
+// triagem por IA nesses casos: é uma etapa a mais que só serve pra pergunta de verdade, então
+// pular ela aqui deixa a conversa mais ágil sem perder precisão em nenhuma pergunta real.
+function agoraseiLooksLikeGreeting(question){
+  const trimmed = question.trim();
+  if(trimmed.includes("?")) return false;
+  if(trimmed.split(/\s+/).filter(Boolean).length > 4) return false;
+  return !AGORASEI_QUESTION_STARTERS.test(trimmed);
+}
+
 function retrieveAgoraseiContext(query, maxChars){
   const queryTokens = new Set(agoraseiTokens(query));
   if(!queryTokens.size) return { blocks: [], ambiguous: false, candidates: [] };
@@ -4773,20 +4787,24 @@ async function sendAgoraseiMessage(question){
   }
 
   let contextText;
-  const routing = await routeAgoraseiQuestion(question);
-  if(routing.routed){
-    if(!routing.matched.length){
-      contextText = "(nenhum procedimento cadastrado bate com essa pergunta)";
-    }else{
-      contextText = routing.matched.map(kb => `## ${kb.title}\n${kb.content}`).join("\n\n");
-      if(routing.matched.length > 1) contextText += agoraseiAmbiguousNote(routing.matched.map(kb => kb.title));
-    }
+  if(agoraseiLooksLikeGreeting(question)){
+    contextText = "(nenhum procedimento cadastrado bate com essa pergunta)";
   }else{
-    // a triagem por IA não seguiu o formato esperado (ou falhou) — cai pro método por
-    // palavra-chave, pra garantir que a pessoa sempre recebe alguma resposta.
-    const retrieval = retrieveAgoraseiContext(question, 3200);
-    contextText = retrieval.blocks.length ? retrieval.blocks.join("\n\n") : "(nenhum procedimento cadastrado bate com essa pergunta)";
-    if(retrieval.ambiguous) contextText += agoraseiAmbiguousNote(retrieval.candidates);
+    const routing = await routeAgoraseiQuestion(question);
+    if(routing.routed){
+      if(!routing.matched.length){
+        contextText = "(nenhum procedimento cadastrado bate com essa pergunta)";
+      }else{
+        contextText = routing.matched.map(kb => `## ${kb.title}\n${kb.content}`).join("\n\n");
+        if(routing.matched.length > 1) contextText += agoraseiAmbiguousNote(routing.matched.map(kb => kb.title));
+      }
+    }else{
+      // a triagem por IA não seguiu o formato esperado (ou falhou) — cai pro método por
+      // palavra-chave, pra garantir que a pessoa sempre recebe alguma resposta.
+      const retrieval = retrieveAgoraseiContext(question, 3200);
+      contextText = retrieval.blocks.length ? retrieval.blocks.join("\n\n") : "(nenhum procedimento cadastrado bate com essa pergunta)";
+      if(retrieval.ambiguous) contextText += agoraseiAmbiguousNote(retrieval.candidates);
+    }
   }
   const systemMsg = { role: "system", content: `${AGORASEI_SYSTEM_PROMPT}\n\nCONTEXTO:\n${contextText}` };
   const recentHistory = agoraseiMessages.slice(-6);
@@ -4795,8 +4813,8 @@ async function sendAgoraseiMessage(question){
     const stream = await agoraseiEngine.chat.completions.create({
       messages: [systemMsg, ...recentHistory],
       stream: true,
-      temperature: 0.4,
-      max_tokens: 700,
+      temperature: 0.6,
+      max_tokens: 450,
     });
     let full = "";
     let firstChunk = true;
