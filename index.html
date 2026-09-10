@@ -4562,7 +4562,7 @@ const AGORASEI_NO_MATCH_CONTEXT = "(nenhum procedimento cadastrado bate com essa
 // alguns com mais de 10 mil caracteres) ia inteiro pro contexto sem limite nenhum, e se a
 // triagem casasse com 2+ procedimentos longos ao mesmo tempo, o prompt total podia estourar a
 // janela de contexto do modelo (4096 tokens) e o pedido de geração simplesmente falhava.
-const AGORASEI_MAX_ENTRY_CHARS = 1800;
+const AGORASEI_MAX_ENTRY_CHARS = 1200;
 function agoraseiContextBlock(kb){
   const content = kb.content.length > AGORASEI_MAX_ENTRY_CHARS ? kb.content.slice(0, AGORASEI_MAX_ENTRY_CHARS) + "…" : kb.content;
   return `## ${kb.title}\n${content}`;
@@ -4902,7 +4902,7 @@ async function sendAgoraseiMessage(question){
     // já acha um procedimento claramente melhor que os outros, usa direto — poupa uma rodada
     // inteira de geração da IA, que é o maior peso no tempo de resposta. Só cai pra triagem por
     // IA (mais lenta, mas entende sinônimo) quando a busca simples não teve um vencedor claro.
-    const fast = retrieveAgoraseiContext(question, 1800);
+    const fast = retrieveAgoraseiContext(question, 1200);
     const fastConfident = fast.blocks.length > 0 && !fast.ambiguous && fast.topScore >= 4;
     if(fastConfident){
       contextText = fast.blocks[0];
@@ -4910,7 +4910,10 @@ async function sendAgoraseiMessage(question){
       const priorHistory = agoraseiMessages.slice(0, -1); // tudo antes da pergunta atual, que já foi empilhada
       const routing = await routeAgoraseiQuestion(question, priorHistory);
       if(routing.routed && routing.matched.length){
-        contextText = routing.matched.slice(0, 2).map(kb => agoraseiContextBlock(kb)).join("\n\n");
+        // Manda o conteúdo completo de só 1 procedimento (o primeiro que a triagem escolheu) —
+        // os outros (se houver) entram só como título na nota de ambiguidade, não o texto
+        // inteiro. Isso mantém o prompt pequeno mesmo quando vários procedimentos combinam.
+        contextText = agoraseiContextBlock(routing.matched[0]);
         if(routing.matched.length > 1) contextText += agoraseiAmbiguousNote(routing.matched.map(kb => kb.title));
       }else if(fast.blocks.length){
         // A triagem por IA só enxerga o TÍTULO de cada procedimento (não o conteúdo) — então
@@ -4929,12 +4932,15 @@ async function sendAgoraseiMessage(question){
       }
     }
   }
-  const systemMsg = { role: "system", content: `${AGORASEI_SYSTEM_PROMPT}\n\nCONTEXTO:\n${contextText}` };
   const recentHistory = agoraseiMessages.slice(-4);
 
-  try{
+  // Faz uma tentativa de geração e transmite o resultado pra dentro da bolha. Extraído numa
+  // função à parte porque tentamos duas vezes: uma com o contexto normal, e — só se essa
+  // primeira falhar — uma segunda vez com um pedido bem mais enxuto (sem contexto extra, sem
+  // histórico), pra dar uma chance da pessoa ainda receber alguma resposta em vez de só um erro.
+  async function attemptGeneration(messages){
     const stream = await agoraseiEngine.chat.completions.create({
-      messages: [systemMsg, ...recentHistory],
+      messages,
       stream: true,
       temperature: 0.6,
       max_tokens: 220,
@@ -4954,15 +4960,28 @@ async function sendAgoraseiMessage(question){
         if(messagesEl) messagesEl.scrollTop = messagesEl.scrollHeight;
       }
     }
-    if(!full) full = "Não consegui gerar uma resposta agora. Tente reformular a pergunta.";
+    return full || "Não consegui gerar uma resposta agora. Tente reformular a pergunta.";
+  }
+
+  try{
+    const systemMsg = { role: "system", content: `${AGORASEI_SYSTEM_PROMPT}\n\nCONTEXTO:\n${contextText}` };
+    let full;
+    try{
+      full = await attemptGeneration([systemMsg, ...recentHistory]);
+    }catch(firstErr){
+      console.error("Falha na primeira tentativa de resposta do Agora Eu Sei, tentando de novo com pedido mais simples:", firstErr);
+      try{ await agoraseiEngine.resetChat(); }catch(resetErr){ console.error("Falha ao reiniciar a conversa da engine:", resetErr); }
+      const fallbackSystemMsg = { role: "system", content: `${AGORASEI_SYSTEM_PROMPT}\n\nCONTEXTO:\n${AGORASEI_NO_MATCH_CONTEXT}` };
+      full = await attemptGeneration([fallbackSystemMsg, { role: "user", content: question }]);
+    }
     if(assistantBubble){ assistantBubble.classList.remove("typing"); assistantBubble.textContent = full; }
     agoraseiMessages.push({ role: "assistant", content: full });
   }catch(err){
-    console.error("Falha ao gerar resposta do Agora Eu Sei:", err);
+    console.error("Falha ao gerar resposta do Agora Eu Sei (as duas tentativas falharam):", err);
     // Mostra o motivo real do erro direto no chat (curto) em vez de só "deu erro" — sem isso,
     // diagnosticar um problema como esse exige abrir o console do navegador toda vez.
     const errDetail = (err && (err.message || String(err))) || "erro desconhecido";
-    if(assistantBubble){ assistantBubble.classList.remove("typing"); assistantBubble.textContent = `Deu um erro ao gerar a resposta. Tente de novo.\n\n[detalhe técnico: ${errDetail.slice(0, 300)}]`; }
+    if(assistantBubble){ assistantBubble.classList.remove("typing"); assistantBubble.textContent = `Deu um erro ao gerar a resposta, mesmo numa segunda tentativa mais simples. Tente de novo.\n\n[detalhe técnico: ${errDetail.slice(0, 300)}]`; }
   }finally{
     agoraseiGenerating = false;
     if(sendBtn) sendBtn.disabled = false;
