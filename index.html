@@ -4559,6 +4559,7 @@ Regras:
 - Se o contexto avisar que a pergunta pode se referir a mais de um procedimento diferente, pergunte com naturalidade qual deles a pessoa quer saber, em vez de escolher um e responder por adivinhação.
 - Seja conciso — vá direto ao ponto, sem enrolar quem só quer resolver rápido.
 - Quando existir, mencione o nome do procedimento usado, mas de forma natural dentro da frase, não como uma citação formal repetida sempre do mesmo jeito.
+- Nunca use formatação Markdown (nada de #, ##, **, __, listas com - ou *, tabelas, blocos de código). Escreva em texto corrido, com frases e parágrafos, como numa mensagem de chat normal entre colegas — mesmo se a pergunta pedir um texto pra mandar pro cliente ou uma lista de passos, organize isso com palavras (ex: "primeiro... depois... por fim") em vez de símbolos.
 - Responda em português do Brasil.`;
 const AGORASEI_NO_MATCH_CONTEXT = "(nenhum procedimento cadastrado bate com essa pergunta — se for uma situação de atendimento, pode sugerir algo por bom senso, deixando claro que não é procedimento oficial)";
 // Teto por procedimento individual — a Groq processa cada pergunta numa janela de contexto bem
@@ -4877,7 +4878,27 @@ function agoraseiExtractFinal(text){
     if(i > cut){ cut = i; markerLen = m.length; }
   }
   const sliced = cut >= 0 ? text.slice(cut + markerLen) : text;
-  return sliced.replace(/<\|[a-z_]+\|>/gi, "").trim();
+  return agoraseiStripMarkdown(sliced.replace(/<\|[a-z_]+\|>/gi, "").trim());
+}
+
+// O prompt já pede pra não usar Markdown, mas o modelo foi treinado em cima de muito texto
+// formatado assim e às vezes volta a usar de qualquer forma — a bolha do chat mostra texto
+// puro (sem renderizar Markdown), então símbolos como # e ** apareceriam literalmente na tela
+// em vez de virar título ou negrito, o que fica com cara de robô. Limpa esses símbolos mantendo
+// o texto em si.
+function agoraseiStripMarkdown(text){
+  return text
+    .replace(/^#{1,6}\s+/gm, "") // ## Título -> Título
+    .replace(/```[a-z]*\n?/gi, "").replace(/```/g, "") // ```bloco de código```
+    .replace(/`([^`]+)`/g, "$1") // `código` -> código
+    .replace(/\*\*([^*]+)\*\*/g, "$1") // **negrito** -> negrito
+    .replace(/__([^_]+)__/g, "$1") // __negrito__ -> negrito
+    .replace(/(?<!\*)\*([^*\n]+)\*(?!\*)/g, "$1") // *itálico* -> itálico
+    .replace(/^[ \t]*[-*+]\s+/gm, "") // - item / * item -> item
+    .replace(/^[ \t]*>\s?/gm, "") // > citação -> citação
+    .replace(/^[ \t]*(-{3,}|_{3,}|\*{3,})[ \t]*$/gm, "") // linhas ---
+    .replace(/\n{3,}/g, "\n\n") // várias linhas em branco seguidas (sobra de remover títulos/regras)
+    .trim();
 }
 
 function agoraseiAppendMessage(role, content){
