@@ -4630,6 +4630,12 @@ document.getElementById("routines-detail-area-filter").addEventListener("click",
 // de procedimentos abaixo (documento à parte, AGORASEI_DOC) é compartilhada via Firestore, igual
 // ao resto da plataforma; as conversas em si nunca são salvas em lugar nenhum, nem localmente.
 const AGORASEI_MODEL_ID = "openai/gpt-oss-120b";
+// A triagem (escolher qual procedimento cadastrado combina com a pergunta, numa lista de
+// títulos) é uma tarefa bem mais simples que responder de verdade — um modelo menor dá conta
+// igual. Usar o modelo pequeno só nessa etapa gasta uma fração do teto grátis (Groq/Cloudflare
+// cobram bem menos por token do 20b), sobrando muito mais orçamento pro 120b na resposta real,
+// sem abrir mão de qualidade onde ela importa.
+const AGORASEI_ROUTING_MODEL_ID = "openai/gpt-oss-20b";
 // URL do Cloudflare Worker que guarda a chave da Groq em segredo e confere o login antes de
 // repassar o pedido — o navegador nunca fala direto com a Groq. Preencher depois de publicar o
 // Worker (ver cloudflare-worker/worker.js neste repositório).
@@ -4967,7 +4973,7 @@ async function routeAgoraseiQuestion(question, history){
         { role: "system", content: `Você escolhe, de uma lista de procedimentos cadastrados, qual(is) respondem a pergunta mais recente de um usuário. Cada linha da lista é um título, às vezes seguido de sinônimos entre colchetes — use os sinônimos só pra decidir, nunca os inclua na resposta. Use o histórico da conversa pra entender o assunto quando a pergunta for uma continuação (ex: "e pra pessoa jurídica?" só faz sentido junto do que foi perguntado antes). Responda APENAS com os títulos exatos que combinam, um por linha, SEM os colchetes de sinônimos, copiados exatamente como estão na lista — sem nenhum texto além disso. Se nenhum combinar, responda só a palavra NENHUM.` },
         { role: "user", content: `Lista de procedimentos:\n${titleList}${historyText ? `\n\nHistórico recente da conversa:\n${historyText}` : ""}\n\nPergunta mais recente do usuário: "${question}"\n\nQuais títulos da lista combinam com essa pergunta?` },
       ],
-      model: AGORASEI_MODEL_ID,
+      model: AGORASEI_ROUTING_MODEL_ID,
       stream: false,
       temperature: 0,
       max_tokens: 150,
