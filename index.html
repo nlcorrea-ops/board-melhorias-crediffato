@@ -4974,6 +4974,17 @@ async function sendAgoraseiMessage(question){
     });
     let full = "";
     let firstChunk = true;
+    // Rolar a tela até embaixo força a página a recalcular o layout inteiro — fazer isso a
+    // cada palavra que chega (em vez de uma vez por quadro de tela) desperdiça processamento
+    // que, num PC com placa de vídeo integrada, compete pelo mesmo recurso que o modelo está
+    // usando pra gerar a resposta. Agrupa isso pra no máximo 1x por quadro de tela.
+    const messagesEl = document.getElementById("agorasei-messages");
+    let scrollScheduled = false;
+    function scheduleScroll(){
+      if(scrollScheduled) return;
+      scrollScheduled = true;
+      requestAnimationFrame(() => { scrollScheduled = false; if(messagesEl) messagesEl.scrollTop = messagesEl.scrollHeight; });
+    }
     for await (const chunk of stream){
       const delta = chunk.choices[0] && chunk.choices[0].delta && chunk.choices[0].delta.content;
       if(delta){
@@ -4983,8 +4994,7 @@ async function sendAgoraseiMessage(question){
         }
         full += delta;
         if(assistantBubble) assistantBubble.textContent = full;
-        const messagesEl = document.getElementById("agorasei-messages");
-        if(messagesEl) messagesEl.scrollTop = messagesEl.scrollHeight;
+        scheduleScroll();
       }
     }
     return full || "Não consegui gerar uma resposta agora. Tente reformular a pergunta.";
