@@ -4642,6 +4642,7 @@ Regras:
 - Cumprimentos e perguntas gerais/fora do tema (ex: "oi", "tudo bem?", "quem é você?") responda normalmente e com simpatia, sem precisar do contexto.
 - Se o contexto avisar que a pergunta pode se referir a mais de um procedimento diferente, pergunte com naturalidade qual deles a pessoa quer saber, em vez de escolher um e responder por adivinhação.
 - Seja conciso — vá direto ao ponto, sem enrolar quem só quer resolver rápido. Curto não pode virar incompleto: responda o que foi perguntado por inteiro, só cortando enchimento (sem repetir a pergunta, sem frases de fechamento tipo "boa sorte" ou "qualquer dúvida estou à disposição", sem ressalvas óbvias repetidas em toda resposta).
+- Seu espaço de resposta é curto (equivale a uns 2 parágrafos enxutos). Planeje o texto pra concluir dentro desse espaço e nunca parar no meio de uma frase. Se o assunto exigir mais que isso, priorize responder o essencial por completo e ofereça detalhar mais se a pessoa quiser, em vez de tentar encaixar tudo e arriscar ser cortado.
 - Quando existir, mencione o nome do procedimento usado, mas de forma natural dentro da frase, não como uma citação formal repetida sempre do mesmo jeito.
 - Nunca use formatação Markdown (nada de #, ##, **, __, listas com - ou *, tabelas, blocos de código). Escreva em texto corrido, com frases e parágrafos, como numa mensagem de chat normal entre colegas — mesmo se a pergunta pedir um texto pra mandar pro cliente ou uma lista de passos, organize isso com palavras (ex: "primeiro... depois... por fim") em vez de símbolos.
 - Responda em português do Brasil.`;
@@ -5025,6 +5026,16 @@ function agoraseiStripMarkdown(text){
 // resposta de verdade -- é um problema conhecido de modelo, não tem como evitar 100% do lado de
 // cá. Detecta isso olhando só o final do texto (onde o loop está acontecendo agora) e procura
 // um trecho curto que se repete colado nele mesmo várias vezes seguidas.
+// Mesmo avisado do teto no prompt, o modelo às vezes ainda estoura o limite de tokens no meio
+// de uma frase (o assunto era mais longo do que ele calculou). Quando isso acontece, o corte é
+// abrupto (às vezes no meio de uma palavra) -- em vez de mostrar assim, volta até o último ponto
+// final/exclamação/interrogação e avisa que a resposta foi resumida por falta de espaço.
+function agoraseiTrimTruncated(text){
+  const lastEnd = Math.max(text.lastIndexOf("."), text.lastIndexOf("!"), text.lastIndexOf("?"));
+  const trimmed = lastEnd > text.length * 0.4 ? text.slice(0, lastEnd + 1) : text;
+  return `${trimmed.trim()}\n\n(Resposta resumida por limite de tamanho — pergunte de novo pedindo mais detalhe se precisar.)`;
+}
+
 function agoraseiHasRepetitionLoop(text){
   const tail = text.slice(-500);
   for(let len = 1; len <= 30; len++){
@@ -5148,6 +5159,7 @@ async function sendAgoraseiMessage(question){
     });
     let full = "";
     let firstChunk = true;
+    let finishReason = null;
     const messagesEl = document.getElementById("agorasei-messages");
     let scrollScheduled = false;
     function scheduleScroll(){
@@ -5171,6 +5183,8 @@ async function sendAgoraseiMessage(question){
         if(payload === "[DONE]") continue;
         let json;
         try{ json = JSON.parse(payload); }catch(e){ continue; }
+        const fr = json.choices && json.choices[0] && json.choices[0].finish_reason;
+        if(fr) finishReason = fr;
         const delta = json.choices && json.choices[0] && json.choices[0].delta && json.choices[0].delta.content;
         if(delta){
           if(firstChunk){
@@ -5199,7 +5213,8 @@ async function sendAgoraseiMessage(question){
         }
       }
     }
-    const display = agoraseiExtractFinal(full);
+    let display = agoraseiExtractFinal(full);
+    if(finishReason === "length" && display) display = agoraseiTrimTruncated(display);
     return display || "Não consegui gerar uma resposta agora. Tente reformular a pergunta.";
   }
 
