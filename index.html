@@ -4890,18 +4890,23 @@ async function sendAgoraseiMessage(question){
     }else{
       const priorHistory = agoraseiMessages.slice(0, -1); // tudo antes da pergunta atual, que já foi empilhada
       const routing = await routeAgoraseiQuestion(question, priorHistory);
-      if(routing.routed){
-        if(!routing.matched.length){
-          contextText = AGORASEI_NO_MATCH_CONTEXT;
-        }else{
-          contextText = routing.matched.slice(0, 2).map(kb => agoraseiContextBlock(kb)).join("\n\n");
-          if(routing.matched.length > 1) contextText += agoraseiAmbiguousNote(routing.matched.map(kb => kb.title));
-        }
-      }else{
-        // a triagem por IA não seguiu o formato esperado (ou falhou) — cai pro método por
-        // palavra-chave, pra garantir que a pessoa sempre recebe alguma resposta.
-        contextText = fast.blocks.length ? fast.blocks.join("\n\n") : AGORASEI_NO_MATCH_CONTEXT;
+      if(routing.routed && routing.matched.length){
+        contextText = routing.matched.slice(0, 2).map(kb => agoraseiContextBlock(kb)).join("\n\n");
+        if(routing.matched.length > 1) contextText += agoraseiAmbiguousNote(routing.matched.map(kb => kb.title));
+      }else if(fast.blocks.length){
+        // A triagem por IA só enxerga o TÍTULO de cada procedimento (não o conteúdo) — então
+        // pode dizer "não achei nada" pra uma palavra que só aparece dentro do texto (ex:
+        // "anuidade" pode estar só no corpo de "Cartão Crediffato", não no título). Antes de
+        // aceitar esse "não achei" como resposta final, confere se a busca por palavra-chave
+        // (que olha o conteúdo inteiro) encontrou alguma coisa — se achou, usa isso em vez de
+        // desistir.
+        contextText = fast.blocks.join("\n\n");
         if(fast.ambiguous) contextText += agoraseiAmbiguousNote(fast.candidates);
+      }else{
+        // Nem a triagem por IA nem a busca por palavra-chave acharam nada — seja porque a
+        // triagem respondeu "NENHUM" de verdade, seja porque a resposta dela não seguiu o
+        // formato esperado. Sem pista nenhuma das duas fontes, não tem o que usar como contexto.
+        contextText = AGORASEI_NO_MATCH_CONTEXT;
       }
     }
   }
