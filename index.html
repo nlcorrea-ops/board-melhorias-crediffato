@@ -1625,6 +1625,8 @@
     color:var(--text-mid); font-size:13px; max-width:44ch; margin:0 auto; padding:8px 0;
   }
   .agorasei-kb-btn{margin-left:auto;}
+  .agorasei-kb-import-row{display:flex; align-items:center; gap:10px; margin-top:14px; padding-top:14px; border-top:1px solid var(--hairline);}
+  .agorasei-kb-import-btn{cursor:pointer; display:inline-flex;}
   .agorasei-kb-list{display:flex; flex-direction:column; gap:10px; max-height:360px; overflow-y:auto; margin-top:14px;}
   .agorasei-kb-item{background:var(--ink-2); border:1px solid var(--hairline); border-radius:12px; padding:12px 14px;}
   .agorasei-kb-item-head{display:flex; align-items:center; justify-content:space-between; gap:10px;}
@@ -2165,7 +2167,7 @@
         </label>
         <label class="field">
           <span class="field-label">Conteúdo *</span>
-          <textarea id="agorasei-kb-content" rows="6" maxlength="6000" required placeholder="Descreva o procedimento com o máximo de detalhe possível"></textarea>
+          <textarea id="agorasei-kb-content" rows="6" maxlength="20000" required placeholder="Descreva o procedimento com o máximo de detalhe possível"></textarea>
         </label>
         <div class="modal-actions">
           <button type="button" class="btn-secondary" id="agorasei-kb-cancel-edit" style="display:none;">Cancelar edição</button>
@@ -2173,6 +2175,11 @@
         </div>
         <p class="form-msg" id="agorasei-kb-msg"></p>
       </form>
+      <div class="agorasei-kb-import-row">
+        <label class="btn-secondary agorasei-kb-import-btn" for="agorasei-kb-import-file">Importar em lote (arquivo .json)</label>
+        <input type="file" id="agorasei-kb-import-file" accept="application/json,.json" style="display:none;" />
+        <span class="form-msg" id="agorasei-kb-import-msg"></span>
+      </div>
       <div class="agorasei-kb-list" id="agorasei-kb-list"></div>
     </div>
   </div>
@@ -2901,9 +2908,16 @@ let firebaseReady = false;
 let BOARD_DOC = null;
 let boardDocCache = null;
 let PRESENCE_DOC = null;
+// Documento à parte do board principal — a base de procedimentos do Agora Eu Sei pode crescer
+// bastante (textos longos de vários procedimentos), e misturar isso no mesmo documento que
+// statuses/customItems/routines arrisca estourar o limite de 1MB por documento do Firestore
+// à medida que o board (e a base) crescem com o tempo. Mesma lógica do PRESENCE_DOC: escritas
+// e leituras de cada um não precisam disparar re-render do outro.
+let AGORASEI_DOC = null;
 let onlineMap = {}; // uid -> {name, email, at}
 let boardSnapUnsub = null;
 let presenceSnapUnsub = null;
+let agoraseiSnapUnsub = null;
 let presenceHeartbeatTimer = null;
 let onlineListRerenderTimer = null;
 let fsDoc, fsGetDoc, fsSetDoc, fsUpdateDoc, fsDeleteDoc, fsOnSnapshot, fsFieldPath, fsDeleteField, fsArrayUnion, fsArrayRemove, fsRunTransaction;
@@ -2959,6 +2973,7 @@ async function initFirebase(){
     fbStorage = storageMod.getStorage(fbApp);
     BOARD_DOC = fsDoc(db, "boards", "crediffato");
     PRESENCE_DOC = fsDoc(db, "boards", "crediffato-presence");
+    AGORASEI_DOC = fsDoc(db, "boards", "crediffato-agorasei");
     firebaseReady = true;
   }catch(e){
     console.error("Firebase indisponível — seguindo sem sincronização em nuvem:", e);
@@ -3484,7 +3499,7 @@ let storageMode = hasClaudeStorage ? "shared" : (hasLocalStorage ? "local" : "no
 async function ensureBoardDoc(){
   const snap = await fsGetDoc(BOARD_DOC);
   if(!snap.exists()){
-    const initial = { statuses:{}, customItems:[], observacoes:{}, comentarios:{}, sectors:DEFAULT_SECTORS.slice(), directory:[], stages:{}, assignees:{}, dueDates:{}, statusHistory:{}, attachments:{}, related:{}, validated:{}, routines:[], agoraseiKB:{} };
+    const initial = { statuses:{}, customItems:[], observacoes:{}, comentarios:{}, sectors:DEFAULT_SECTORS.slice(), directory:[], stages:{}, assignees:{}, dueDates:{}, statusHistory:{}, attachments:{}, related:{}, validated:{}, routines:[] };
     await fsSetDoc(BOARD_DOC, initial);
     return initial;
   }
@@ -3499,6 +3514,16 @@ async function ensurePresenceDoc(){
   if(!snap.exists()){
     const initial = { online:{}, kicks:{} };
     await fsSetDoc(PRESENCE_DOC, initial);
+    return initial;
+  }
+  return snap.data();
+}
+
+async function ensureAgoraseiDoc(){
+  const snap = await fsGetDoc(AGORASEI_DOC);
+  if(!snap.exists()){
+    const initial = { kb:{} };
+    await fsSetDoc(AGORASEI_DOC, initial);
     return initial;
   }
   return snap.data();
@@ -3612,7 +3637,6 @@ function applyRemoteState(data){
   SECTORS = (data.sectors && data.sectors.length) ? data.sectors : DEFAULT_SECTORS.slice();
   DIRECTORY = data.directory || [];
   ROUTINES = data.routines || [];
-  AGORASEI_KB = data.agoraseiKB || {};
   const baseItems = DATA.filter(d => !d.custom);
   const customItems = (data.customItems || []).slice();
   DATA.length = 0;
@@ -4511,8 +4535,8 @@ document.getElementById("routines-detail-area-filter").addEventListener("click",
 // ===================== Agora Eu Sei: assistente de IA (roda no navegador) =====================
 // O modelo (WebLLM/WebGPU) roda inteiro na máquina de quem usa — nenhuma pergunta ou resposta
 // sai do navegador, não tem API nem chave nem provedor externo envolvido. Só a base de
-// procedimentos abaixo (agoraseiKB) é compartilhada via Firestore, igual ao resto da
-// plataforma; as conversas em si nunca são salvas em lugar nenhum, nem localmente.
+// procedimentos abaixo (documento à parte, AGORASEI_DOC) é compartilhada via Firestore, igual
+// ao resto da plataforma; as conversas em si nunca são salvas em lugar nenhum, nem localmente.
 const AGORASEI_MODELS = {
   light: { id: "Qwen2.5-1.5B-Instruct-q4f16_1-MLC", label: "Leve (mais rápido)" },
   standard: { id: "Qwen2.5-3B-Instruct-q4f16_1-MLC", label: "Padrão (mais preciso)" },
@@ -4668,8 +4692,8 @@ async function saveAgoraseiKBEntry(id, title, content){
   const entry = { title, content, updatedAt: new Date().toISOString(), updatedByName: (currentUser && (currentUser.name || currentUser.email)) || "" };
   AGORASEI_KB = { ...AGORASEI_KB, [id]: entry };
   if(storageMode === "firebase" && firebaseReady){
-    const path = new fsFieldPath("agoraseiKB", id);
-    await fsUpdateDoc(BOARD_DOC, path, entry);
+    const path = new fsFieldPath("kb", id);
+    await fsUpdateDoc(AGORASEI_DOC, path, entry);
   }
   renderAgoraseiKBList();
 }
@@ -4682,10 +4706,35 @@ async function deleteAgoraseiKBEntry(id){
   delete next[id];
   AGORASEI_KB = next;
   if(storageMode === "firebase" && firebaseReady){
-    const path = new fsFieldPath("agoraseiKB", id);
-    await fsUpdateDoc(BOARD_DOC, path, fsDeleteField());
+    const path = new fsFieldPath("kb", id);
+    await fsUpdateDoc(AGORASEI_DOC, path, fsDeleteField());
   }
   renderAgoraseiKBList();
+}
+
+// Importação em lote: usada pra carregar de uma vez uma base grande já pronta (ex: exportada
+// de um sistema de conhecimento existente), em vez de cadastrar um por um pelo formulário.
+// Faz uma única escrita no documento (bem mais leve que 1 escrita por item) e preserva o que
+// já estava cadastrado, mesclando por cima.
+async function importAgoraseiKBBatch(items){
+  const merged = { ...AGORASEI_KB };
+  let count = 0;
+  for(const item of items){
+    const title = String((item && item.title) || "").trim();
+    const content = String((item && item.content) || "").trim();
+    if(!title || !content) continue;
+    const id = "kb_" + Date.now().toString(36) + Math.random().toString(36).slice(2, 7) + count;
+    merged[id] = { title, content, updatedAt: new Date().toISOString(), updatedByName: (currentUser && (currentUser.name || currentUser.email)) || "" };
+    count++;
+  }
+  if(!count) return 0;
+  AGORASEI_KB = merged;
+  if(storageMode === "firebase" && firebaseReady){
+    await fsUpdateDoc(AGORASEI_DOC, "kb", merged);
+  }
+  renderAgoraseiKBList();
+  renderAgoraseiSuggestions();
+  return count;
 }
 
 function agoraseiNormalize(str){
@@ -4938,6 +4987,27 @@ document.getElementById("agorasei-kb-form").addEventListener("submit", withSubmi
     msgEl.textContent = "Erro ao salvar. Tente novamente.";
   }
 }));
+
+document.getElementById("agorasei-kb-import-file").addEventListener("change", async (e) => {
+  const file = e.target.files && e.target.files[0];
+  e.target.value = ""; // permite selecionar o mesmo arquivo de novo depois, se precisar reimportar
+  if(!file) return;
+  const msgEl = document.getElementById("agorasei-kb-import-msg");
+  msgEl.style.color = ""; msgEl.textContent = "Importando...";
+  if(!firebaseReady || storageMode !== "firebase"){ msgEl.textContent = "Indisponível no momento (sem conexão com o banco compartilhado)."; return; }
+  try{
+    const text = await file.text();
+    const items = JSON.parse(text);
+    if(!Array.isArray(items)) throw new Error("O arquivo precisa ser uma lista (array) de itens {title, content}.");
+    const count = await importAgoraseiKBBatch(items);
+    msgEl.style.color = "var(--st-concluido)";
+    msgEl.textContent = `${count} procedimento${count === 1 ? "" : "s"} importado${count === 1 ? "" : "s"}.`;
+  }catch(err){
+    console.error("Falha ao importar base em lote:", err);
+    msgEl.style.color = "";
+    msgEl.textContent = "Não deu pra importar esse arquivo — confira se é um .json válido no formato certo.";
+  }
+});
 
 document.getElementById("agorasei-form").addEventListener("submit", (e) => {
   e.preventDefault();
@@ -7230,6 +7300,21 @@ async function handleAuthedUser(fbUser){
         startPresenceHeartbeat();
       }catch(e){
         console.error("Falha ao iniciar presença:", e);
+      }
+      try{
+        await ensureAgoraseiDoc();
+        if(agoraseiSnapUnsub){ try{ agoraseiSnapUnsub(); }catch(e){} }
+        agoraseiSnapUnsub = fsOnSnapshot(AGORASEI_DOC, (snap) => {
+          if(snap.exists()){
+            AGORASEI_KB = snap.data().kb || {};
+            renderAgoraseiKBList();
+            renderAgoraseiSuggestions();
+          }
+        }, (err) => {
+          console.error("Erro na sincronização da base do Agora Eu Sei:", err);
+        });
+      }catch(e){
+        console.error("Falha ao iniciar a base do Agora Eu Sei:", e);
       }
       note.textContent = "☁ Conectado ao banco compartilhado — dados sincronizados em tempo real para todos que acessam este link.";
       startAlertsInterval();
