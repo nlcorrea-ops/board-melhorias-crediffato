@@ -4733,17 +4733,22 @@ async function deleteAgoraseiKBEntry(id){
 // Importação em lote: usada pra carregar de uma vez uma base grande já pronta (ex: exportada
 // de um sistema de conhecimento existente), em vez de cadastrar um por um pelo formulário.
 // Faz uma única escrita no documento (bem mais leve que 1 escrita por item) e preserva o que
-// já estava cadastrado, mesclando por cima.
+// já estava cadastrado, mesclando por cima. Item cujo título já existe ATUALIZA o procedimento
+// existente (mesmo id) em vez de duplicar — assim reimportar um export mais completo (ex: com
+// sinônimos adicionados) refresca o que já estava lá em vez de criar tudo de novo do lado.
 async function importAgoraseiKBBatch(items){
   const merged = { ...AGORASEI_KB };
+  const idByTitle = {};
+  Object.entries(merged).forEach(([id, kb]) => { idByTitle[(kb.title || "").trim().toLowerCase()] = id; });
   let count = 0;
   for(const item of items){
     const title = String((item && item.title) || "").trim();
     const content = String((item && item.content) || "").trim();
     const tags = String((item && item.tags) || "").trim();
     if(!title || !content) continue;
-    const id = "kb_" + Date.now().toString(36) + Math.random().toString(36).slice(2, 7) + count;
+    const id = idByTitle[title.toLowerCase()] || ("kb_" + Date.now().toString(36) + Math.random().toString(36).slice(2, 7) + count);
     merged[id] = { title, content, tags, updatedAt: new Date().toISOString(), updatedByName: (currentUser && (currentUser.name || currentUser.email)) || "" };
+    idByTitle[title.toLowerCase()] = id;
     count++;
   }
   if(!count) return 0;
