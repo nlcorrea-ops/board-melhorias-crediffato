@@ -4517,6 +4517,7 @@ Regras:
 - Perguntas sobre procedimentos: responda SOMENTE com base no CONTEXTO fornecido abaixo. Nunca invente um procedimento que não esteja lá.
 - Se o contexto não tiver a resposta pra uma pergunta sobre procedimento, diga claramente que não encontrou isso na base e sugira procurar o responsável do setor — não tente adivinhar.
 - Cumprimentos e perguntas gerais/fora do tema (ex: "oi", "tudo bem?", "quem é você?") pode responder normalmente, sem precisar do contexto.
+- Se o contexto trouxer uma nota avisando que a pergunta pode se referir a mais de um procedimento diferente, pergunte ao usuário qual deles ele quer saber, em vez de escolher um e responder por adivinhação.
 - Seja direto e objetivo, em português do Brasil.
 - Quando existir, cite o nome do procedimento usado na resposta.`;
 
@@ -4669,7 +4670,7 @@ function agoraseiTokens(str){
 }
 function retrieveAgoraseiContext(query, maxChars){
   const queryTokens = new Set(agoraseiTokens(query));
-  if(!queryTokens.size) return [];
+  if(!queryTokens.size) return { blocks: [], ambiguous: false, candidates: [] };
   const scored = Object.values(AGORASEI_KB).map(kb => {
     const tokens = agoraseiTokens(`${kb.title} ${kb.content}`);
     let score = 0;
@@ -4678,6 +4679,13 @@ function retrieveAgoraseiContext(query, maxChars){
     agoraseiTokens(kb.title).forEach(t => { if(queryTokens.has(t)) score += 3; });
     return { kb, score };
   }).filter(s => s.score > 0).sort((a, b) => b.score - a.score);
+
+  // Divergência: dois ou mais procedimentos diferentes com pontuação parecida, sem um se
+  // destacar claramente como "o" procedimento certo — sinal de que a pergunta pode servir
+  // pra mais de um assunto cadastrado. Não é entendimento de verdade, é só uma pista pro
+  // modelo saber que vale mais perguntar do que adivinhar.
+  const ambiguous = scored.length >= 2 && scored[1].score >= scored[0].score * 0.6;
+
   const picked = [];
   let used = 0;
   for(const s of scored){
@@ -4687,7 +4695,7 @@ function retrieveAgoraseiContext(query, maxChars){
     used += block.length;
     if(picked.length >= 5) break;
   }
-  return picked;
+  return { blocks: picked, ambiguous, candidates: scored.slice(0, 5).map(s => s.kb.title) };
 }
 
 function agoraseiAppendMessage(role, content){
@@ -4720,8 +4728,11 @@ async function sendAgoraseiMessage(question){
   agoraseiAppendMessage("user", question);
   agoraseiMessages.push({ role: "user", content: question });
 
-  const contextBlocks = retrieveAgoraseiContext(question, 3200);
-  const contextText = contextBlocks.length ? contextBlocks.join("\n\n") : "(nenhum procedimento cadastrado bate com essa pergunta)";
+  const retrieval = retrieveAgoraseiContext(question, 3200);
+  let contextText = retrieval.blocks.length ? retrieval.blocks.join("\n\n") : "(nenhum procedimento cadastrado bate com essa pergunta)";
+  if(retrieval.ambiguous){
+    contextText += `\n\n[NOTA: a pergunta pode se referir a mais de um procedimento diferente (${retrieval.candidates.join(", ")}) e nenhum se destacou com clareza sobre os outros. Se não estiver óbvio qual desses a pergunta quer dizer, pergunte ao usuário qual procedimento ele quer saber antes de responder em detalhe, em vez de adivinhar.]`;
+  }
   const systemMsg = { role: "system", content: `${AGORASEI_SYSTEM_PROMPT}\n\nCONTEXTO:\n${contextText}` };
   const recentHistory = agoraseiMessages.slice(-6);
 
