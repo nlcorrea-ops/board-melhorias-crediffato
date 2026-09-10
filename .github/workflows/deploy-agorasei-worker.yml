@@ -1,0 +1,24 @@
+name: Publicar Worker do Agora Eu Sei
+
+# Publica sozinho no Cloudflare toda vez que cloudflare-worker/worker.js muda e vai pra main --
+# sem isso, cada ajuste no proxy tinha que ser colado manualmente no painel do Cloudflare.
+# Os segredos do Worker (GROQ_API_KEY, FIREBASE_WEB_API_KEY, CF_ACCOUNT_ID, CF_API_TOKEN)
+# continuam configurados direto no Cloudflare e não são mexidos por este workflow.
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - "cloudflare-worker/**"
+  workflow_dispatch: {}
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: cloudflare/wrangler-action@v4
+        with:
+          apiToken: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+          accountId: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
+          workingDirectory: cloudflare-worker
