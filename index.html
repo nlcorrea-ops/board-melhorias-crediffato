@@ -4970,7 +4970,7 @@ async function sendAgoraseiMessage(question){
       messages,
       stream: true,
       temperature: 0.6,
-      max_tokens: 220,
+      max_tokens: 300,
     });
     let full = "";
     let firstChunk = true;
@@ -4996,20 +4996,39 @@ async function sendAgoraseiMessage(question){
   // web-llm issues #486 e #560), e um reset+nova tentativa imediata parece disparar exatamente
   // essa corrida em vez de evitá-la. Mais seguro deixar o erro aparecer claro e a pessoa mandar
   // de novo manualmente — um envio novo passa pelo fluxo normal, sem essa corrida.
+  // Trava de segurança: se o stream não terminar em até 45s (a engine travou de vez, sem nem
+  // gerar erro — já aconteceu), desiste sozinho em vez de deixar a tela presa pra sempre sem
+  // dar pra mandar outra pergunta. Tenta interromper a geração travada antes de desistir.
+  const AGORASEI_STALL_TIMEOUT_MS = 45000;
+  function agoraseiStallTimeout(){
+    return new Promise((_, reject) => setTimeout(() => reject(new Error("TRAVOU: a resposta não terminou em 45 segundos.")), AGORASEI_STALL_TIMEOUT_MS));
+  }
+
   try{
-    const full = await attemptGeneration([systemMsg, ...priorTurns, buildFinalUserMsg(contextText)]);
+    const full = await Promise.race([
+      attemptGeneration([systemMsg, ...priorTurns, buildFinalUserMsg(contextText)]),
+      agoraseiStallTimeout(),
+    ]);
     if(assistantBubble){ assistantBubble.classList.remove("typing"); assistantBubble.textContent = full; }
     agoraseiMessages.push({ role: "assistant", content: full });
   }catch(err){
     console.error("Falha ao gerar resposta do Agora Eu Sei:", err);
+    const errDetail = (err && (err.message || String(err))) || "erro desconhecido";
+    const isStall = /^TRAVOU:/.test(errDetail);
+    if(isStall){
+      // Tenta cancelar a geração que ficou presa, pra não deixar a engine ocupada com um
+      // pedido morto na próxima pergunta.
+      try{ agoraseiEngine.interruptGenerate(); }catch(e){ console.error("Falha ao interromper geração travada:", e); }
+    }
     // Mostra o motivo real do erro direto no chat (curto) em vez de só "deu erro" — sem isso,
     // diagnosticar um problema como esse exige abrir o console do navegador toda vez.
-    const errDetail = (err && (err.message || String(err))) || "erro desconhecido";
     // "disposed"/"mapAsync"/"unmapped" são sinais de um bug conhecido do WebLLM (corrida na
     // GPU, sem correção oficial ainda) — nesse caso avisa que é provavelmente passageiro,
     // em vez de deixar parecer que é um problema permanente.
     const looksTransient = /dispos|mapasync|unmapped|device was lost/i.test(errDetail);
-    const userMsg = looksTransient
+    const userMsg = isStall
+      ? `A resposta travou e não terminou a tempo. Cancelei o pedido — pode tentar mandar a pergunta de novo.`
+      : looksTransient
       ? `Deu uma falha passageira na placa de vídeo ao gerar a resposta (bug conhecido do motor de IA, não é da base de procedimentos). Tenta mandar a pergunta de novo — geralmente resolve.\n\n[detalhe técnico: ${errDetail.slice(0, 300)}]`
       : `Deu um erro ao gerar a resposta. Tente mandar a pergunta de novo.\n\n[detalhe técnico: ${errDetail.slice(0, 300)}]`;
     if(assistantBubble){ assistantBubble.classList.remove("typing"); assistantBubble.textContent = userMsg; }
