@@ -4913,7 +4913,7 @@ async function sendAgoraseiMessage(question){
       messages: [systemMsg, ...recentHistory],
       stream: true,
       temperature: 0.6,
-      max_tokens: 320,
+      max_tokens: 220,
     });
     let full = "";
     let firstChunk = true;
