@@ -4553,6 +4553,15 @@ Regras:
 - Quando existir, mencione o nome do procedimento usado, mas de forma natural dentro da frase, não como uma citação formal repetida sempre do mesmo jeito.
 - Responda em português do Brasil.`;
 const AGORASEI_NO_MATCH_CONTEXT = "(nenhum procedimento cadastrado bate com essa pergunta — se for uma situação de atendimento, pode sugerir algo por bom senso, deixando claro que não é procedimento oficial)";
+// Teto por procedimento individual — sem isso, um procedimento bem completo (a base real tem
+// alguns com mais de 10 mil caracteres) ia inteiro pro contexto sem limite nenhum, e se a
+// triagem casasse com 2+ procedimentos longos ao mesmo tempo, o prompt total podia estourar a
+// janela de contexto do modelo (4096 tokens) e o pedido de geração simplesmente falhava.
+const AGORASEI_MAX_ENTRY_CHARS = 1800;
+function agoraseiContextBlock(kb){
+  const content = kb.content.length > AGORASEI_MAX_ENTRY_CHARS ? kb.content.slice(0, AGORASEI_MAX_ENTRY_CHARS) + "…" : kb.content;
+  return `## ${kb.title}\n${content}`;
+}
 
 let agoraseiEngine = null;
 let agoraseiWorker = null;
@@ -4635,6 +4644,8 @@ function renderAgoraseiStatus(){
   if(agoraseiEngineStatus === "ready"){
     teaser.style.display = "none";
     chatLayout.style.display = "";
+    if(statusEl) statusEl.textContent = `Pronto (${(AGORASEI_MODELS[agoraseiModelKey] || AGORASEI_MODELS.light).label})`;
+    if(fillEl) fillEl.style.width = "100%";
     return;
   }
   chatLayout.style.display = "none";
@@ -4777,7 +4788,7 @@ function retrieveAgoraseiContext(query, maxChars){
   const picked = [];
   let used = 0;
   for(const s of scored){
-    const block = `## ${s.kb.title}\n${s.kb.content}`;
+    const block = agoraseiContextBlock(s.kb);
     if(used + block.length > maxChars && picked.length) break;
     picked.push(block);
     used += block.length;
@@ -4883,7 +4894,7 @@ async function sendAgoraseiMessage(question){
         if(!routing.matched.length){
           contextText = AGORASEI_NO_MATCH_CONTEXT;
         }else{
-          contextText = routing.matched.map(kb => `## ${kb.title}\n${kb.content}`).join("\n\n");
+          contextText = routing.matched.slice(0, 2).map(kb => agoraseiContextBlock(kb)).join("\n\n");
           if(routing.matched.length > 1) contextText += agoraseiAmbiguousNote(routing.matched.map(kb => kb.title));
         }
       }else{
