@@ -4641,7 +4641,7 @@ Regras:
 - Se o contexto não cobrir a pergunta, mas ela for sobre uma situação de atendimento (ex: cliente nervoso, caso incomum, dúvida que não tem procedimento cadastrado), pode ajudar com uma sugestão de bom senso pra conduzir a situação, considerando que a Crediffato trabalha com convênio, negociação de dívida e ouvidoria. Só que sempre deixando claro que é uma sugestão sua, não um procedimento oficial da empresa, e recomendando confirmar com o responsável do setor antes de agir em algo que comprometa a empresa ou o cliente.
 - Cumprimentos e perguntas gerais/fora do tema (ex: "oi", "tudo bem?", "quem é você?") responda normalmente e com simpatia, sem precisar do contexto.
 - Se o contexto avisar que a pergunta pode se referir a mais de um procedimento diferente, pergunte com naturalidade qual deles a pessoa quer saber, em vez de escolher um e responder por adivinhação.
-- Seja conciso — vá direto ao ponto, sem enrolar quem só quer resolver rápido.
+- Seja conciso — vá direto ao ponto, sem enrolar quem só quer resolver rápido. Curto não pode virar incompleto: responda o que foi perguntado por inteiro, só cortando enchimento (sem repetir a pergunta, sem frases de fechamento tipo "boa sorte" ou "qualquer dúvida estou à disposição", sem ressalvas óbvias repetidas em toda resposta).
 - Quando existir, mencione o nome do procedimento usado, mas de forma natural dentro da frase, não como uma citação formal repetida sempre do mesmo jeito.
 - Nunca use formatação Markdown (nada de #, ##, **, __, listas com - ou *, tabelas, blocos de código). Escreva em texto corrido, com frases e parágrafos, como numa mensagem de chat normal entre colegas — mesmo se a pergunta pedir um texto pra mandar pro cliente ou uma lista de passos, organize isso com palavras (ex: "primeiro... depois... por fim") em vez de símbolos.
 - Responda em português do Brasil.`;
@@ -5020,6 +5020,28 @@ function agoraseiStripMarkdown(text){
     .trim();
 }
 
+// De vez em quando o modelo entra num loop de repetição (mesma palavra ou trecho curto colado
+// várias vezes seguidas, tipo "Oi Oi Oi Oi..." ou "diff diff diff...") em vez de gerar uma
+// resposta de verdade -- é um problema conhecido de modelo, não tem como evitar 100% do lado de
+// cá. Detecta isso olhando só o final do texto (onde o loop está acontecendo agora) e procura
+// um trecho curto que se repete colado nele mesmo várias vezes seguidas.
+function agoraseiHasRepetitionLoop(text){
+  const tail = text.slice(-500);
+  for(let len = 1; len <= 30; len++){
+    if(tail.length < len * 6) continue;
+    const unit = tail.slice(tail.length - len);
+    if(!unit.trim()) continue;
+    let repeats = 1;
+    let pos = tail.length - len;
+    while(pos - len >= 0 && tail.slice(pos - len, pos) === unit){
+      repeats++;
+      pos -= len;
+      if(repeats >= 6) return true;
+    }
+  }
+  return false;
+}
+
 function agoraseiAppendMessage(role, content){
   const messagesEl = document.getElementById("agorasei-messages");
   if(!messagesEl) return null;
@@ -5121,7 +5143,7 @@ async function sendAgoraseiMessage(question){
       model: AGORASEI_MODEL_ID,
       stream: true,
       temperature: 0.6,
-      max_tokens: 900,
+      max_tokens: 550,
       signal,
     });
     let full = "";
@@ -5156,6 +5178,14 @@ async function sendAgoraseiMessage(question){
             firstChunk = false;
           }
           full += delta;
+          // De vez em quando o modelo entra num loop de repetição (a mesma palavra ou trecho
+          // curto colado várias vezes seguidas) em vez de responder de verdade -- detecta isso
+          // cedo (olhando só o final do texto acumulado) e desiste, em vez de deixar rolar até
+          // o teto de tokens só acumulando lixo na tela.
+          if(agoraseiHasRepetitionLoop(full)){
+            reader.cancel().catch(() => {});
+            throw new Error("LOOP: a resposta entrou num loop de repetição.");
+          }
           // Recalcula a cada pedaço: se não tiver nenhum vazamento de raciocínio (o caso normal),
           // isso devolve o texto inteiro sem alterar nada, então o efeito de "digitando" continua
           // igual. Só filtra de verdade nos casos raros em que o canal interno vaza.
@@ -5191,10 +5221,13 @@ async function sendAgoraseiMessage(question){
     console.error("Falha ao gerar resposta do Agora Eu Sei:", err);
     const isStall = err && err.name === "AbortError";
     const errDetail = (err && (err.message || String(err))) || "erro desconhecido";
+    const isLoop = /^LOOP:/.test(errDetail);
     const isRateLimit = /HTTP 429/.test(errDetail);
     const isAuth = /HTTP 401/.test(errDetail);
     const userMsg = isStall
       ? `A resposta demorou demais e foi cancelada. Pode tentar mandar a pergunta de novo.`
+      : isLoop
+      ? `A resposta travou repetindo a mesma coisa sem parar (bug conhecido do modelo). Cancelei — tenta mandar a pergunta de novo, geralmente resolve.`
       : isRateLimit
       ? `Muita gente perguntando ao mesmo tempo agora. Espera alguns segundos e tenta de novo.`
       : isAuth
