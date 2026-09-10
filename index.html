@@ -4909,6 +4909,13 @@ async function sendAgoraseiMessage(question){
     }else{
       const priorHistory = agoraseiMessages.slice(0, -1); // tudo antes da pergunta atual, que já foi empilhada
       const routing = await routeAgoraseiQuestion(question, priorHistory);
+      // Pausa curta antes de chamar a engine de novo pra gerar a resposta — bug conhecido e
+      // ainda sem correção oficial do WebLLM (github.com/mlc-ai/web-llm issue #497): às vezes a
+      // geração seguinte tenta ler um resultado antes da GPU realmente terminar o trabalho da
+      // chamada anterior ("Buffer was unmapped before mapping was resolved"), mais comum em
+      // placas de vídeo mais lentas. Não resolve 100% (é bug de biblioteca de terceiro), mas dá
+      // um tempo pra GPU assentar entre uma chamada e outra, reduzindo a chance da corrida.
+      await new Promise(r => setTimeout(r, 150));
       if(routing.routed && routing.matched.length){
         // Manda o conteúdo completo de só 1 procedimento (o primeiro que a triagem escolheu) —
         // os outros (se houver) entram só como título na nota de ambiguidade, não o texto
@@ -4998,7 +5005,14 @@ async function sendAgoraseiMessage(question){
     // Mostra o motivo real do erro direto no chat (curto) em vez de só "deu erro" — sem isso,
     // diagnosticar um problema como esse exige abrir o console do navegador toda vez.
     const errDetail = (err && (err.message || String(err))) || "erro desconhecido";
-    if(assistantBubble){ assistantBubble.classList.remove("typing"); assistantBubble.textContent = `Deu um erro ao gerar a resposta. Tente mandar a pergunta de novo.\n\n[detalhe técnico: ${errDetail.slice(0, 300)}]`; }
+    // "disposed"/"mapAsync"/"unmapped" são sinais de um bug conhecido do WebLLM (corrida na
+    // GPU, sem correção oficial ainda) — nesse caso avisa que é provavelmente passageiro,
+    // em vez de deixar parecer que é um problema permanente.
+    const looksTransient = /dispos|mapasync|unmapped|device was lost/i.test(errDetail);
+    const userMsg = looksTransient
+      ? `Deu uma falha passageira na placa de vídeo ao gerar a resposta (bug conhecido do motor de IA, não é da base de procedimentos). Tenta mandar a pergunta de novo — geralmente resolve.\n\n[detalhe técnico: ${errDetail.slice(0, 300)}]`
+      : `Deu um erro ao gerar a resposta. Tente mandar a pergunta de novo.\n\n[detalhe técnico: ${errDetail.slice(0, 300)}]`;
+    if(assistantBubble){ assistantBubble.classList.remove("typing"); assistantBubble.textContent = userMsg; }
   }finally{
     agoraseiGenerating = false;
     if(sendBtn) sendBtn.disabled = false;
