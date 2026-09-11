@@ -132,10 +132,14 @@
 
   .wrap{position:relative; z-index:1; max-width:1320px;margin:0 auto; animation:appFadeIn .45s ease;}
   @keyframes appFadeIn{from{opacity:0;} to{opacity:1;}}
-  .wrap.portal-reveal{animation:portalReveal .75s cubic-bezier(.16,1,.3,1) both;}
+  /* Só opacidade -- chegou a escalar o .wrap inteiro (scale .93->1), mas é um elemento
+     grande, agora com dezenas de painéis de vidro/gráficos dentro, e escalar ele ao mesmo
+     tempo que o fundo ainda está no meio da explosão de partículas somava peso demais no
+     mesmo instante, travando a entrada no app. */
+  .wrap.portal-reveal{animation:portalReveal .5s ease both;}
   @keyframes portalReveal{
-    from{ opacity:0; transform:scale(.93); }
-    to{ opacity:1; transform:scale(1); }
+    from{ opacity:0; }
+    to{ opacity:1; }
   }
 
   .app-shell{display:flex; align-items:flex-start; gap:28px;}
@@ -289,7 +293,7 @@
   .main-nav{
     position:sticky; top:24px; z-index:2;
     display:flex; flex-direction:column; align-items:center; gap:6px;
-    background:var(--glass-1); -webkit-backdrop-filter:blur(10px) saturate(1.2); backdrop-filter:blur(10px) saturate(1.2);
+    background:var(--glass-1);
     border:1px solid var(--hairline); border-radius:16px;
     padding:12px 8px; width:60px; flex-shrink:0;
   }
@@ -348,7 +352,7 @@
   .summary{display:grid; grid-template-columns:repeat(4, 1fr); gap:14px;}
   .summary.status{grid-template-columns:repeat(3, 1fr);}
   .sumcard{
-    background:var(--glass-1); -webkit-backdrop-filter:blur(8px); backdrop-filter:blur(8px);
+    background:var(--glass-1);
     border:1px solid var(--hairline); border-radius:var(--radius); padding:14px 16px;
   }
   .sumcard .n{font-family:var(--font-mono); font-size:22px; font-weight:600; transition:color .2s ease;}
@@ -409,7 +413,7 @@
 
   .board{display:grid; grid-template-columns:repeat(3, 1fr); gap:20px; align-items:start;}
   .column{
-    background:var(--glass-1); -webkit-backdrop-filter:blur(10px) saturate(1.2); backdrop-filter:blur(10px) saturate(1.2);
+    background:var(--glass-1);
     border:1px solid var(--hairline); border-radius:18px; overflow:hidden; transition:border-color .15s ease;
   }
   .column.drag-over{border-color:var(--brand-red); box-shadow:0 0 0 1px var(--brand-red) inset; animation:dragOverPulse 1.1s ease-in-out infinite;}
@@ -651,7 +655,7 @@
   .modal-overlay.open{display:flex; animation:overlayFadeIn .2s ease;}
   @keyframes overlayFadeIn{from{opacity:0;} to{opacity:1;}}
   .modal{
-    background:var(--glass-1); -webkit-backdrop-filter:blur(14px) saturate(1.2); backdrop-filter:blur(14px) saturate(1.2);
+    background:var(--glass-1);
     border:1px solid var(--hairline); border-radius:16px;
     width:100%; max-width:480px; max-height:90vh; overflow-y:auto;
     padding:22px 24px 24px; box-shadow:0 20px 60px #00000066;
@@ -1182,7 +1186,7 @@
 
   .kpi-row{display:grid; grid-template-columns:repeat(7, 1fr); gap:14px; margin-bottom:28px;}
   .kpi-card{
-    background:var(--glass-1); -webkit-backdrop-filter:blur(8px); backdrop-filter:blur(8px);
+    background:var(--glass-1);
     border:1px solid var(--hairline); border-radius:var(--radius); padding:16px; transition:border-color .2s ease, background-color .2s ease;
   }
   .kpi-card.kpi-alert{border-color:#e2564f66; background:#e2564f0f;}
@@ -1232,7 +1236,7 @@
     .bento-tile{transform:none !important; transition:none;}
   }
   .donut-block{
-    background:var(--glass-1); -webkit-backdrop-filter:blur(8px); backdrop-filter:blur(8px);
+    background:var(--glass-1);
     border:1px solid var(--hairline); border-radius:var(--radius); padding:16px; margin-bottom:0;
   }
   .donut-chart{display:flex; align-items:center; gap:16px; flex-wrap:wrap;}
@@ -2549,7 +2553,13 @@ let lastMouseX = -9999, lastMouseY = -9999;
     canvas.width = w * dpr; canvas.height = h * dpr;
     canvas.style.width = w + "px"; canvas.style.height = h + "px";
     ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
-    const count = Math.min(100, Math.round((w * h) / 14000));
+    // Não recria as partículas com uma transição de login em andamento -- as novas partículas
+    // não têm startX/startY (convergindo) nem burstVx/burstVy (explodindo), então a posição
+    // vira NaN e a rede trava/some no meio da animação. Gatilho real: teclado do celular
+    // fechando ao enviar o formulário dispara "resize" bem nesse instante. O canvas em si já
+    // foi redimensionado acima; só a malha de partículas espera a transição acabar.
+    if(phase !== "idle") return;
+    const count = Math.min(60, Math.round((w * h) / 18000));
     // orbitAngle e burstAngle são distribuídos em partes iguais ao redor do círculo (com um
     // leve desvio pra não ficar mecânico), nunca sorteados soltos — com poucas dezenas de
     // partículas, ângulo puramente aleatório concentra por acaso mais pontos de um lado que
