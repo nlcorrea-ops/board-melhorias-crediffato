@@ -5254,13 +5254,6 @@ async function sendAgoraseiMessage(question){
       contextText = AGORASEI_NO_MATCH_CONTEXT;
     }
   }
-  // Guarda também o texto EXATO que vai ser mandado pra API nesta pergunta (com o contexto já
-  // embutido) — precisamos disso pra reconstruir o histórico de um jeito que bata exatamente
-  // com o que foi mandado antes, o que ajuda o cache automático de prompt da Groq (prefixo
-  // idêntico entre pedidos processa mais rápido) sempre que o caminho rápido (sem triagem) for
-  // usado, já que aí o prefixo (sistema + histórico) fica igual de uma pergunta pra outra.
-  agoraseiMessages[agoraseiMessages.length - 1].apiContent = `Contexto:\n${contextText}\n\nPergunta: ${question}`;
-
   // "Cérebro" de respostas memorizadas: só reaproveita quando essa é a PRIMEIRA pergunta da
   // conversa (uma pergunta de acompanhamento pode depender do que já foi dito antes, então
   // nunca serve resposta memorizada nesse caso) e bateu num único procedimento sem ambiguidade.
@@ -5278,9 +5271,14 @@ async function sendAgoraseiMessage(question){
     return;
   }
 
+  // Nas trocas ANTERIORES (não na pergunta atual), manda só a pergunta em si, sem o bloco de
+  // Contexto embutido (que pode ter até 4000 caracteres do procedimento inteiro) -- o modelo não
+  // precisa reler o texto-fonte de novo a cada resposta antiga; a resposta que ele mesmo deu
+  // naquele turno já carrega o que importava daquele contexto. Isso encolhe bastante o tanto de
+  // token gasto numa dúvida que vira várias mensagens de vai-e-vem, sem perder o fio da conversa.
   const priorTurns = agoraseiMessages.slice(0, -1).slice(-3).map(m =>
-    m.role === "user" ? { role: "user", content: m.apiContent || m.content } : { role: "assistant", content: m.content }
-  ); // até 3 trocas anteriores, sem a pergunta atual — turno de usuário replicado com o mesmo texto que foi realmente enviado antes
+    m.role === "user" ? { role: "user", content: m.content } : { role: "assistant", content: m.content }
+  ); // até 3 trocas anteriores, sem a pergunta atual
 
   const systemMsg = { role: "system", content: AGORASEI_SYSTEM_PROMPT };
   function buildFinalUserMsg(ctx){
