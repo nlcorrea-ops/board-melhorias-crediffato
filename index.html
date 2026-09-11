@@ -1711,6 +1711,9 @@
   .agorasei-kb-item-actions button:hover{color:var(--text-hi);}
   .agorasei-kb-item-preview{margin:6px 0 0; font-size:12px; color:var(--text-mid); max-height:3.2em; overflow:hidden;}
   .agorasei-kb-item-tags{margin:6px 0 0; font-size:11px; color:var(--pa);}
+  .agorasei-kb-tags-row{display:flex; gap:8px; align-items:center;}
+  .agorasei-kb-tags-row input{flex:1;}
+  #agorasei-kb-tags-ai-btn{flex-shrink:0; white-space:nowrap;}
   .agorasei-kb-item-cache{margin:8px 0 0; font-size:11px; color:var(--text-mid); display:flex; align-items:center; gap:8px; flex-wrap:wrap;}
   .agorasei-kb-item-cache-empty{color:var(--text-low);}
   .agorasei-kb-cache-forget{font-size:11px; color:var(--pa); background:none; border:1px solid var(--hairline); border-radius:6px; padding:2px 8px; cursor:pointer;}
@@ -2263,7 +2266,10 @@
         </label>
         <label class="field">
           <span class="field-label">Sinônimos / palavras-chave (opcional)</span>
-          <input type="text" id="agorasei-kb-tags" maxlength="300" placeholder="Ex: anuidade, taxa, tarifa do cartão" />
+          <div class="agorasei-kb-tags-row">
+            <input type="text" id="agorasei-kb-tags" maxlength="300" placeholder="Ex: anuidade, taxa, tarifa do cartão" />
+            <button type="button" class="btn-secondary" id="agorasei-kb-tags-ai-btn" title="Gera sugestões a partir do título e conteúdo já preenchidos">🧠 Gerar com IA</button>
+          </div>
         </label>
         <div class="modal-actions">
           <button type="button" class="btn-secondary" id="agorasei-kb-cancel-edit" style="display:none;">Cancelar edição</button>
@@ -5422,6 +5428,58 @@ document.getElementById("agorasei-kb-cancel-edit").addEventListener("click", () 
   document.getElementById("agorasei-kb-edit-id").value = "";
   document.getElementById("agorasei-kb-submit-btn").textContent = "Adicionar procedimento";
   document.getElementById("agorasei-kb-cancel-edit").style.display = "none";
+});
+
+// Gera sugestão de sinônimos/palavras-chave a partir do título+conteúdo já digitados no
+// formulário, usando o modelo pequeno (é uma tarefa de extração simples, não precisa do 120b) —
+// poupa a pessoa de ter que pensar em toda variação de palavra que alguém poderia usar pra
+// perguntar sobre aquele procedimento. A pessoa ainda revisa e pode editar antes de salvar.
+document.getElementById("agorasei-kb-tags-ai-btn").addEventListener("click", async () => {
+  const title = document.getElementById("agorasei-kb-title").value.trim();
+  const content = document.getElementById("agorasei-kb-content").value.trim();
+  const btn = document.getElementById("agorasei-kb-tags-ai-btn");
+  const msgEl = document.getElementById("agorasei-kb-msg");
+  msgEl.style.color = ""; msgEl.textContent = "";
+  if(!title || !content){
+    msgEl.textContent = "Preencha título e conteúdo antes de gerar sinônimos.";
+    return;
+  }
+  if(!firebaseReady || storageMode !== "firebase"){
+    msgEl.textContent = "Indisponível no momento (sem conexão com o banco compartilhado).";
+    return;
+  }
+  const original = btn.textContent;
+  btn.disabled = true;
+  btn.textContent = "Gerando...";
+  try{
+    const resp = await agoraseiCallGroq({
+      messages: [
+        { role: "system", content: `Você extrai sinônimos e palavras-chave de um procedimento interno de atendimento, pra ajudar uma busca a encontrá-lo mesmo quando a pergunta não usa as palavras exatas do título. Leia o título e o conteúdo abaixo e devolva de 6 a 12 termos curtos separados por vírgula: palavras ou expressões curtas que um atendente usaria pra perguntar sobre isso, mas que NÃO aparecem no título — inclua valores em R$ e prazos em dias quando existirem no texto. Responda SÓ com a lista separada por vírgula, sem numeração, sem explicação, sem repetir o título.` },
+        { role: "user", content: `Título: ${title}\n\nConteúdo:\n${content.slice(0, 6000)}` },
+      ],
+      model: AGORASEI_ROUTING_MODEL_ID,
+      stream: false,
+      temperature: 0.3,
+      max_tokens: 150,
+    });
+    const data = await resp.json();
+    const raw = agoraseiExtractFinal((data.choices[0] && data.choices[0].message && data.choices[0].message.content) || "");
+    const cleaned = raw.replace(/\n/g, ", ").replace(/\s*,\s*/g, ", ").replace(/^,\s*/, "").trim();
+    if(!cleaned){
+      msgEl.textContent = "Não consegui gerar sugestões dessa vez. Tente de novo.";
+      return;
+    }
+    const tagsInput = document.getElementById("agorasei-kb-tags");
+    tagsInput.value = tagsInput.value.trim() ? `${tagsInput.value.trim()}, ${cleaned}` : cleaned;
+    msgEl.style.color = "var(--st-concluido)";
+    msgEl.textContent = "Sinônimos sugeridos — revise antes de salvar.";
+  }catch(err){
+    console.error("Falha ao gerar sinônimos com IA:", err);
+    msgEl.textContent = "Erro ao gerar sinônimos. Tente de novo.";
+  }finally{
+    btn.disabled = false;
+    btn.textContent = original;
+  }
 });
 document.getElementById("agorasei-kb-list").addEventListener("click", (e) => {
   const editBtn = e.target.closest("[data-kb-edit]");
