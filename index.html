@@ -1573,6 +1573,155 @@
   :root[data-theme="claro"] .teaser-eyebrow{color:#5b4fd1;}
   :root[data-theme="claro"] .teaser-eyebrow .dot{background:#5b4fd1; animation-name:eyebrowPulseLight;}
   @keyframes eyebrowPulseLight{0%,100%{box-shadow:0 0 0 0 #5b4fd155;} 70%{box-shadow:0 0 0 7px #5b4fd100;}}
+
+  /* ---------- Agora Eu Sei: chat ---------- */
+  /* O modelo roda inteiro no navegador de quem usa (WebGPU) — nada do que é perguntado ou
+     respondido aqui passa por servidor nenhum, nem fica salvo no Firestore. Só a base de
+     procedimentos (agorasei-kb) é compartilhada entre todo mundo. */
+  .agorasei-layout{display:flex; gap:20px; margin-top:14px; height:calc(100vh - 220px); min-height:420px;}
+  .agorasei-chat-col{flex:1; min-width:0; display:flex; flex-direction:column; gap:14px;}
+  .agorasei-mascot-mobile-bar{
+    display:none; align-items:center; gap:10px; background:var(--ink-1); border:1px solid var(--hairline);
+    border-radius:12px; padding:8px 12px; font-size:12px; color:var(--text-mid);
+  }
+  .agorasei-mascot-mobile-stage{
+    width:38px; height:38px; border-radius:50%; position:relative; overflow:hidden; flex-shrink:0;
+    background:radial-gradient(ellipse 70% 65% at 50% 38%, #322a5c, #131022 78%); box-shadow:0 0 0 1px var(--hairline);
+  }
+  .agorasei-mascot-mobile-stage .agorasei-mascot-charwrap{width:44px; height:44px; bottom:-4px;}
+  .agorasei-messages{
+    flex:1; overflow-y:auto; display:flex; flex-direction:column; gap:14px;
+    background:var(--ink-1); border:1px solid var(--hairline); border-radius:16px; padding:18px;
+  }
+  .agorasei-empty{margin:auto; text-align:center; color:var(--text-low); font-size:13px; max-width:46ch; display:flex; flex-direction:column; align-items:center; gap:14px;}
+  .agorasei-suggestions{display:flex; flex-wrap:wrap; gap:8px; justify-content:center;}
+  .agorasei-suggestion-chip{
+    background:var(--ink-2); border:1px solid var(--hairline); border-radius:999px; padding:7px 14px; font-size:12px; color:var(--text-hi); cursor:pointer;
+    transition:border-color .15s ease, color .15s ease;
+    opacity:0; animation:agoraseiChipIn .3s ease-out forwards;
+  }
+  .agorasei-suggestion-chip:hover{border-color:var(--pa); color:var(--pa);}
+  @keyframes agoraseiChipIn{0%{opacity:0; transform:translateY(4px);} 100%{opacity:1; transform:translateY(0);}}
+  .agorasei-msg{display:flex; gap:10px; max-width:78%; animation:agoraseiMsgIn .32s ease-out;}
+  @keyframes agoraseiMsgIn{0%{opacity:0; transform:translateY(7px);} 100%{opacity:1; transform:translateY(0);}}
+  .agorasei-msg-user{align-self:flex-end; flex-direction:row-reverse;}
+  .agorasei-msg-avatar{
+    width:28px; height:28px; border-radius:50%; flex-shrink:0; display:flex; align-items:center; justify-content:center;
+    font-size:11px; font-weight:700; background:var(--ink-3); color:var(--text-mid);
+  }
+  .agorasei-msg-user .agorasei-msg-avatar{background:var(--brand-red-dim); color:var(--brand-red);}
+  .agorasei-msg-assistant .agorasei-msg-avatar{
+    background:#8b8dfb2e url("fato-idle.svg") no-repeat 50% 18%/195%;
+    color:transparent;
+  }
+  .agorasei-msg-bubble{
+    background:var(--ink-2); border:1px solid var(--hairline); border-radius:14px; padding:10px 13px;
+    font-size:13.5px; line-height:1.5; white-space:pre-wrap; word-break:break-word; position:relative;
+  }
+  .agorasei-msg-bubble::before{
+    content:""; position:absolute; top:11px; width:8px; height:8px;
+    background:var(--ink-2); border-left:1px solid var(--hairline); border-bottom:1px solid var(--hairline);
+  }
+  .agorasei-msg-assistant .agorasei-msg-bubble::before{left:-4px; transform:rotate(45deg);}
+  .agorasei-msg-user .agorasei-msg-bubble::before{right:-4px; transform:rotate(225deg); background:var(--brand-red-dim); border-color:var(--brand-red-dim);}
+  .agorasei-msg-user .agorasei-msg-bubble{background:var(--brand-red-dim); border-color:var(--brand-red-dim);}
+  .agorasei-msg-bubble.typing{color:var(--text-low);}
+  .agorasei-cursor{display:inline-block; width:2px; height:12px; background:var(--pa); margin-left:2px; vertical-align:-2px; animation:agoraseiCursorBlink .8s step-start infinite;}
+  @keyframes agoraseiCursorBlink{50%{opacity:0;}}
+  .agorasei-typing-dots{display:inline-flex; gap:3px; vertical-align:middle;}
+  .agorasei-typing-dots span{width:5px; height:5px; border-radius:50%; background:var(--text-low); animation:agoraseiTyping 1s ease-in-out infinite;}
+  .agorasei-typing-dots span:nth-child(2){animation-delay:.15s;}
+  .agorasei-typing-dots span:nth-child(3){animation-delay:.3s;}
+  @keyframes agoraseiTyping{0%,60%,100%{opacity:.3; transform:translateY(0);} 30%{opacity:1; transform:translateY(-2px);}}
+  .agorasei-input-row{display:flex; gap:10px; align-items:flex-end;}
+  .agorasei-input-row textarea{
+    flex:1; resize:none; max-height:120px; background:var(--ink-1); border:1px solid var(--hairline); border-radius:12px;
+    color:var(--text-hi); font-family:var(--font-display); font-size:13.5px; padding:11px 14px;
+  }
+  .agorasei-input-row textarea:focus-visible{outline:none; border-color:var(--pa);}
+  #agorasei-send-btn{transition:transform .1s ease, filter .15s ease;}
+  #agorasei-send-btn:active{transform:scale(.94);}
+
+  /* Mascote "Fato" — painel ao lado do chat, reage ao andamento da conversa (parado / pensando
+     enquanto gera resposta / feliz quando termina) em vez de ficar estático. */
+  .agorasei-mascot-col{
+    width:220px; flex-shrink:0; display:flex; flex-direction:column; align-items:center; justify-content:center;
+    background:radial-gradient(ellipse 75% 65% at 50% 38%, #221c48, var(--ink-1) 72%);
+    border:1px solid var(--hairline); border-radius:16px; padding:20px;
+    position:relative; overflow:hidden;
+  }
+  /* névoa roxa ao redor do mascote -- mesma linguagem visual do teaser da lâmpada (.mist-blob
+     em style.css), só que numa escala menor pra caber no painel do mascote. */
+  .agorasei-mascot-mist{position:absolute; border-radius:50%; pointer-events:none; z-index:0; filter:blur(24px);}
+  .agorasei-mascot-mist.m1{width:130px; height:130px; top:2%; left:-10%; background:radial-gradient(circle, #8b8dfb55, transparent 70%); animation:mistDrift1 14s ease-in-out infinite;}
+  .agorasei-mascot-mist.m2{width:150px; height:150px; bottom:0%; right:-14%; background:radial-gradient(circle, #8b8dfb40, transparent 70%); animation:mistDrift2 18s ease-in-out infinite -6s;}
+  .agorasei-mascot-stage{width:160px; height:160px; position:relative; z-index:1;}
+  .agorasei-mascot-charwrap{position:absolute; left:50%; bottom:-16px; width:182px; height:182px; transform:translateX(-50%);}
+  .agorasei-mascot-charwrap img{
+    width:100%; height:100%; display:block;
+    -webkit-mask-image:linear-gradient(to bottom, #000 62%, transparent 92%);
+    mask-image:linear-gradient(to bottom, #000 62%, transparent 92%);
+  }
+  .agorasei-mascot-stage[data-state="idle"] .agorasei-mascot-charwrap{animation:agoraseiBreathe 3.6s ease-in-out infinite;}
+  @keyframes agoraseiBreathe{0%,100%{transform:translateX(-50%) translateY(0);} 50%{transform:translateX(-50%) translateY(-4px);}}
+  .agorasei-mascot-stage[data-state="thinking"] .agorasei-mascot-charwrap{animation:agoraseiPonder 2.8s ease-in-out infinite; transform-origin:50% 100%;}
+  @keyframes agoraseiPonder{0%,100%{transform:translateX(-50%) rotate(0deg);} 30%{transform:translateX(-50%) rotate(-3deg);} 70%{transform:translateX(-50%) rotate(3deg);}}
+  .agorasei-mascot-stage[data-state="happy"] .agorasei-mascot-charwrap{animation:agoraseiBounceIn .6s cubic-bezier(.34,1.56,.64,1);}
+  @keyframes agoraseiBounceIn{0%{transform:translateX(-50%) scale(.85) translateY(6px);} 60%{transform:translateX(-50%) scale(1.06) translateY(-6px);} 100%{transform:translateX(-50%) scale(1) translateY(0);}}
+  .agorasei-mascot-thought{
+    position:absolute; top:16px; right:20px; width:24px; height:24px; border-radius:50%;
+    background:var(--pa); box-shadow:0 2px 10px -2px #8b8dfb99;
+    display:none; align-items:center; justify-content:center;
+    font:800 14px var(--font-display); color:#131022;
+  }
+  .agorasei-mascot-stage[data-state="thinking"] .agorasei-mascot-thought{display:flex; animation:agoraseiMarkPulse 1.6s ease-in-out infinite;}
+  @keyframes agoraseiMarkPulse{0%,100%{opacity:.55; transform:scale(.85) rotate(-8deg);} 50%{opacity:1; transform:scale(1.08) rotate(-8deg);}}
+  .agorasei-mascot-sparkle{position:absolute; font-size:15px; opacity:0; color:var(--pa);}
+  .agorasei-mascot-sparkle.s1{top:10px; left:18px;}
+  .agorasei-mascot-sparkle.s2{top:22px; right:12px;}
+  .agorasei-mascot-stage[data-state="happy"] .agorasei-mascot-sparkle.s1{animation:agoraseiSparkle 1.2s ease-out .15s;}
+  .agorasei-mascot-stage[data-state="happy"] .agorasei-mascot-sparkle.s2{animation:agoraseiSparkle 1.2s ease-out .3s;}
+  @keyframes agoraseiSparkle{0%{opacity:0; transform:scale(.4) rotate(0deg);} 40%{opacity:1; transform:scale(1.1) rotate(15deg);} 100%{opacity:0; transform:scale(.9) rotate(20deg) translateY(-10px);}}
+  .agorasei-mascot-label{margin-top:14px; text-align:center; position:relative; z-index:1; display:flex; flex-direction:column; gap:3px;}
+  .agorasei-mascot-eyebrow{font-size:10px; letter-spacing:.08em; text-transform:uppercase; color:var(--text-low); font-weight:600;}
+  .agorasei-mascot-name{font-size:15px; font-weight:700; color:var(--text-hi); display:inline-flex; align-items:center; gap:6px; justify-content:center;}
+  .agorasei-status-dot{width:6px; height:6px; border-radius:50%; background:var(--st-concluido); box-shadow:0 0 6px var(--st-concluido); animation:agoraseiStatusPulse 2s ease-in-out infinite;}
+  @keyframes agoraseiStatusPulse{0%,100%{opacity:.55;} 50%{opacity:1;}}
+  @media (max-width:900px){
+    .agorasei-mascot-col{display:none;}
+    .agorasei-mascot-mobile-bar{display:flex;}
+  }
+  @media (prefers-reduced-motion:reduce){
+    .agorasei-mascot-charwrap{animation:none !important;}
+    .agorasei-mascot-thought{animation:none !important; opacity:1;}
+    .agorasei-mascot-sparkle{animation:none !important;}
+    .agorasei-msg{animation:none !important;}
+    .agorasei-cursor{animation:none !important;}
+    .agorasei-suggestion-chip{animation:none !important; opacity:1;}
+  }
+  .agorasei-unsupported{
+    display:flex; flex-direction:column; align-items:center; justify-content:center; gap:10px; text-align:center;
+    color:var(--text-mid); font-size:13px; max-width:44ch; margin:0 auto; padding:8px 0;
+  }
+  .agorasei-kb-btn{margin-left:auto;}
+  .agorasei-kb-import-row{display:flex; align-items:center; gap:10px; margin-top:14px; padding-top:14px; border-top:1px solid var(--hairline);}
+  .agorasei-kb-import-btn{cursor:pointer; display:inline-flex;}
+  .agorasei-kb-list{display:flex; flex-direction:column; gap:10px; max-height:360px; overflow-y:auto; margin-top:14px;}
+  .agorasei-kb-item{background:var(--ink-2); border:1px solid var(--hairline); border-radius:12px; padding:12px 14px;}
+  .agorasei-kb-item-head{display:flex; align-items:center; justify-content:space-between; gap:10px;}
+  .agorasei-kb-item-head h4{margin:0; font-size:13.5px; font-weight:600;}
+  .agorasei-kb-item-actions{display:flex; gap:6px; flex-shrink:0;}
+  .agorasei-kb-item-actions button{background:none; border:none; color:var(--text-low); cursor:pointer; font-size:12px; padding:2px 6px;}
+  .agorasei-kb-item-actions button:hover{color:var(--text-hi);}
+  .agorasei-kb-item-preview{margin:6px 0 0; font-size:12px; color:var(--text-mid); max-height:3.2em; overflow:hidden;}
+  .agorasei-kb-item-tags{margin:6px 0 0; font-size:11px; color:var(--pa);}
+  .agorasei-kb-tags-row{display:flex; gap:8px; align-items:center;}
+  .agorasei-kb-tags-row input{flex:1;}
+  #agorasei-kb-tags-ai-btn{flex-shrink:0; white-space:nowrap;}
+  .agorasei-kb-item-cache{margin:8px 0 0; font-size:11px; color:var(--text-mid); display:flex; align-items:center; gap:8px; flex-wrap:wrap;}
+  .agorasei-kb-item-cache-empty{color:var(--text-low);}
+  .agorasei-kb-cache-forget{font-size:11px; color:var(--pa); background:none; border:1px solid var(--hairline); border-radius:6px; padding:2px 8px; cursor:pointer;}
+  .agorasei-kb-cache-forget:hover{color:var(--text-hi); border-color:var(--pa);}
 </style>
 </head>
 <body>
@@ -2047,8 +2196,47 @@
   <div class="tab-panel" id="agorasei-tab" style="display:none;">
     <div class="tab-panel-head">
       <h2>Agora Eu Sei</h2>
+      <button type="button" class="btn-secondary agorasei-kb-btn" id="open-agorasei-kb-btn" style="display:none;">Base de procedimentos</button>
     </div>
-    <p class="sub" style="margin-bottom:14px;">Assistente de IA pra tirar dúvidas rápidas sobre convênio, negociações, ouvidoria e mais — em breve por aqui.</p>
+    <p class="sub" style="margin-bottom:14px;">Assistente de IA pra tirar dúvidas rápidas sobre convênio, negociações, ouvidoria e mais.</p>
+
+    <div class="agorasei-layout" id="agorasei-chat-layout" style="display:none;">
+      <div class="agorasei-chat-col">
+        <div class="agorasei-mascot-mobile-bar" id="agorasei-mascot-mobile-bar">
+          <div class="agorasei-mascot-mobile-stage">
+            <div class="agorasei-mascot-charwrap"><img id="agorasei-mascot-mobile-img" src="fato-idle.svg" alt=""></div>
+          </div>
+          <span id="agorasei-mascot-mobile-text">Fato está pronto pra ajudar</span>
+        </div>
+        <div class="agorasei-messages" id="agorasei-messages">
+          <div class="agorasei-empty" id="agorasei-empty-state">
+            <p>Pergunte algo sobre os procedimentos da Crediffato — convênio, negociações, ouvidoria e mais.</p>
+            <div class="agorasei-suggestions" id="agorasei-suggestions"></div>
+          </div>
+        </div>
+        <form class="agorasei-input-row" id="agorasei-form">
+          <textarea id="agorasei-input" rows="1" maxlength="1000" placeholder="Digite sua pergunta..." required></textarea>
+          <button type="submit" class="btn-primary" id="agorasei-send-btn">Enviar</button>
+        </form>
+      </div>
+      <div class="agorasei-mascot-col">
+        <div class="agorasei-mascot-mist m1" aria-hidden="true"></div>
+        <div class="agorasei-mascot-mist m2" aria-hidden="true"></div>
+        <div class="agorasei-mascot-stage" id="agorasei-mascot-stage" data-state="idle">
+          <div class="agorasei-mascot-thought">?</div>
+          <span class="agorasei-mascot-sparkle s1">✦</span>
+          <span class="agorasei-mascot-sparkle s2">✦</span>
+          <div class="agorasei-mascot-charwrap">
+            <img id="agorasei-mascot-img" src="fato-idle.svg" alt="">
+          </div>
+        </div>
+        <div class="agorasei-mascot-label">
+          <span class="agorasei-mascot-eyebrow">Seu assistente</span>
+          <span class="agorasei-mascot-name"><span class="agorasei-status-dot"></span>Fato</span>
+        </div>
+      </div>
+    </div>
+
     <div class="teaser-card" id="agorasei-teaser-card">
       <div class="mist-blob mist-blob-1" aria-hidden="true"></div>
       <div class="mist-blob mist-blob-2" aria-hidden="true"></div>
@@ -2056,9 +2244,49 @@
       <div class="net-wrap">
         <svg id="agorasei-bulb-svg" viewBox="0 0 340 260"></svg>
       </div>
-      <div class="teaser-eyebrow"><span class="dot"></span>Em construção</div>
-      <p class="teaser-title">O Fato está tomando forma por aqui</p>
-      <p class="teaser-sub">Prepare suas perguntas — a resposta está a caminho.</p>
+      <div class="teaser-eyebrow" id="agorasei-teaser-eyebrow"><span class="dot"></span>Carregando</div>
+      <p class="teaser-title" id="agorasei-teaser-title">O Fato está tomando forma por aqui</p>
+      <p class="teaser-sub" id="agorasei-teaser-sub">Preparando o assistente...</p>
+      <button type="button" class="btn-secondary" id="agorasei-retry-btn" style="display:none;">Tentar novamente</button>
+    </div>
+  </div>
+
+  <div class="modal-overlay" id="agorasei-kb-modal-overlay">
+    <div class="modal" role="dialog" aria-modal="true" aria-labelledby="agorasei-kb-modal-title">
+      <div class="modal-head">
+        <h2 id="agorasei-kb-modal-title">Base de procedimentos</h2>
+        <button class="modal-close" id="agorasei-kb-modal-close" aria-label="Fechar">✕</button>
+      </div>
+      <p class="sub" style="margin-bottom:14px;">O que estiver aqui é o que o assistente usa pra responder — quanto mais claro e completo, melhores as respostas. Visível só pra quem gerencia.</p>
+      <form id="agorasei-kb-form">
+        <input type="hidden" id="agorasei-kb-edit-id" value="" />
+        <label class="field">
+          <span class="field-label">Título do procedimento *</span>
+          <input type="text" id="agorasei-kb-title" required maxlength="120" placeholder="Ex: Como abrir uma negociação" />
+        </label>
+        <label class="field">
+          <span class="field-label">Conteúdo *</span>
+          <textarea id="agorasei-kb-content" rows="6" maxlength="20000" required placeholder="Descreva o procedimento com o máximo de detalhe possível"></textarea>
+        </label>
+        <label class="field">
+          <span class="field-label">Sinônimos / palavras-chave (opcional)</span>
+          <div class="agorasei-kb-tags-row">
+            <input type="text" id="agorasei-kb-tags" maxlength="300" placeholder="Ex: anuidade, taxa, tarifa do cartão" />
+            <button type="button" class="btn-secondary" id="agorasei-kb-tags-ai-btn" title="Gera sugestões a partir do título e conteúdo já preenchidos">🧠 Gerar com IA</button>
+          </div>
+        </label>
+        <div class="modal-actions">
+          <button type="button" class="btn-secondary" id="agorasei-kb-cancel-edit" style="display:none;">Cancelar edição</button>
+          <button type="submit" class="btn-primary" id="agorasei-kb-submit-btn">Adicionar procedimento</button>
+        </div>
+        <p class="form-msg" id="agorasei-kb-msg"></p>
+      </form>
+      <div class="agorasei-kb-import-row">
+        <label class="btn-secondary agorasei-kb-import-btn" for="agorasei-kb-import-file">Importar em lote (arquivo .json)</label>
+        <input type="file" id="agorasei-kb-import-file" accept="application/json,.json" style="display:none;" />
+        <span class="form-msg" id="agorasei-kb-import-msg"></span>
+      </div>
+      <div class="agorasei-kb-list" id="agorasei-kb-list"></div>
     </div>
   </div>
 
@@ -2303,7 +2531,7 @@
 // que a comparação ">"/"<" abaixo saiba qual versão é mais nova) — é a única forma de o mecanismo
 // perceber que existe uma versão nova. Só funciona pra quem está conectado ao Firestore (modo de
 // contingência sem Firebase não tem sincronização em tempo real de nada, essa checagem incluída).
-const APP_VERSION = "2026-08-31T13:15:14Z";
+const APP_VERSION = "2026-09-10T01:01:34Z";
 
 // Desloga e recarrega — usado tanto pela verificação de versão nova quanto pelos sinais de
 // desconexão manual (shutdown geral ou alguém sendo desconectado individualmente).
@@ -2792,9 +3020,16 @@ let firebaseReady = false;
 let BOARD_DOC = null;
 let boardDocCache = null;
 let PRESENCE_DOC = null;
+// Documento à parte do board principal — a base de procedimentos do Agora Eu Sei pode crescer
+// bastante (textos longos de vários procedimentos), e misturar isso no mesmo documento que
+// statuses/customItems/routines arrisca estourar o limite de 1MB por documento do Firestore
+// à medida que o board (e a base) crescem com o tempo. Mesma lógica do PRESENCE_DOC: escritas
+// e leituras de cada um não precisam disparar re-render do outro.
+let AGORASEI_DOC = null;
 let onlineMap = {}; // uid -> {name, email, at}
 let boardSnapUnsub = null;
 let presenceSnapUnsub = null;
+let agoraseiSnapUnsub = null;
 let presenceHeartbeatTimer = null;
 let onlineListRerenderTimer = null;
 let fsDoc, fsGetDoc, fsSetDoc, fsUpdateDoc, fsDeleteDoc, fsOnSnapshot, fsFieldPath, fsDeleteField, fsArrayUnion, fsArrayRemove, fsRunTransaction;
@@ -2850,6 +3085,7 @@ async function initFirebase(){
     fbStorage = storageMod.getStorage(fbApp);
     BOARD_DOC = fsDoc(db, "boards", "crediffato");
     PRESENCE_DOC = fsDoc(db, "boards", "crediffato-presence");
+    AGORASEI_DOC = fsDoc(db, "boards", "crediffato-agorasei");
     firebaseReady = true;
   }catch(e){
     console.error("Firebase indisponível — seguindo sem sincronização em nuvem:", e);
@@ -3072,6 +3308,12 @@ const DEFAULT_SECTORS = [
 let SECTORS = DEFAULT_SECTORS.slice();
 let DIRECTORY = []; // [{uid, email, role, assignedAreas}]
 let ROUTINES = []; // [{id, title, description, sector, frequency, assigneeUid, wholeSector, scheduledDays, createdBy, createdByName, createdAt, completions:[{period, at, byUid, byName}]}]
+let AGORASEI_KB = {}; // { [id]: {title, content, updatedAt, updatedByName} } — base de procedimentos compartilhada (só isso vai pro Firestore; as conversas do chat nunca saem do navegador)
+// "Cérebro" de respostas memorizadas: { [kbId]: {answer, hash, updatedAt} } — quando a mesma
+// pergunta (primeira da conversa) bate de novo no mesmo procedimento, reaproveita a resposta já
+// gerada em vez de gastar IA de novo. hash amarra a resposta memorizada à versão do procedimento
+// que a gerou; editar o procedimento invalida sozinho (hash não bate mais → gera de novo).
+let AGORASEI_ANSWER_CACHE = {};
 // scheduledDays: só usado quando frequency === "semanal" — array de dias da semana (0=domingo
 // ... 6=sábado, igual Date.getDay()) em que a rotina cai. Vazio/ausente = "qualquer dia da
 // semana", o comportamento de sempre (mantém compatibilidade com rotinas já cadastradas).
@@ -3389,6 +3631,16 @@ async function ensurePresenceDoc(){
   if(!snap.exists()){
     const initial = { online:{}, kicks:{} };
     await fsSetDoc(PRESENCE_DOC, initial);
+    return initial;
+  }
+  return snap.data();
+}
+
+async function ensureAgoraseiDoc(){
+  const snap = await fsGetDoc(AGORASEI_DOC);
+  if(!snap.exists()){
+    const initial = { kb:{}, cache:{} };
+    await fsSetDoc(AGORASEI_DOC, initial);
     return initial;
   }
   return snap.data();
@@ -4396,6 +4648,940 @@ document.getElementById("routines-detail-area-filter").addEventListener("click",
   state.routineDetailArea = btn.dataset.routineDetailArea;
   renderRoutines();
 });
+
+// ===================== Agora Eu Sei: assistente de IA (via Groq/Cloudflare) =====================
+// As perguntas e respostas passam por um proxy (Cloudflare Worker) até a Groq ou o Cloudflare
+// Workers AI — nenhum dos dois treina modelo com esse conteúdo nem guarda o histórico. Só a base
+// de procedimentos abaixo (documento à parte, AGORASEI_DOC) é compartilhada via Firestore, igual
+// ao resto da plataforma; as conversas em si nunca são salvas em lugar nenhum, nem localmente.
+const AGORASEI_MODEL_ID = "openai/gpt-oss-120b";
+// A triagem (escolher qual procedimento cadastrado combina com a pergunta, numa lista de
+// títulos) é uma tarefa bem mais simples que responder de verdade — um modelo menor dá conta
+// igual. Usar o modelo pequeno só nessa etapa gasta uma fração do teto grátis (Groq/Cloudflare
+// cobram bem menos por token do 20b), sobrando muito mais orçamento pro 120b na resposta real,
+// sem abrir mão de qualidade onde ela importa.
+const AGORASEI_ROUTING_MODEL_ID = "openai/gpt-oss-20b";
+// URL do Cloudflare Worker que guarda a chave da Groq em segredo e confere o login antes de
+// repassar o pedido — o navegador nunca fala direto com a Groq. Preencher depois de publicar o
+// Worker (ver cloudflare-worker/worker.js neste repositório).
+const AGORASEI_PROXY_URL = "https://agorasei-ai-proxy.nllcoorrea.workers.dev";
+const AGORASEI_SYSTEM_PROMPT = `Você é o "Agora Eu Sei", o assistente interno da Crediffato que ajuda no atendimento e tira dúvida sobre os procedimentos da empresa (convênio, negociações, ouvidoria e outros temas cadastrados).
+Regras:
+- Fale como uma pessoa experiente do setor ajudando um colega — natural, direto, sem soar como um manual ou uma resposta automática. Nada de linguagem robótica ou de aviso de sistema.
+- Se a pergunta bater com algo no CONTEXTO fornecido abaixo, responda SOMENTE com base nele. Nunca invente um procedimento oficial que não esteja lá, e nunca misture sugestão sua com procedimento oficial na mesma resposta.
+- Se o contexto não cobrir a pergunta, mas ela for sobre uma situação de atendimento (ex: cliente nervoso, caso incomum, dúvida que não tem procedimento cadastrado), pode ajudar com uma sugestão de bom senso pra conduzir a situação, considerando que a Crediffato trabalha com convênio, negociação de dívida e ouvidoria. Só que sempre deixando claro que é uma sugestão sua, não um procedimento oficial da empresa, e recomendando confirmar com o responsável do setor antes de agir em algo que comprometa a empresa ou o cliente.
+- Cumprimentos e perguntas gerais/fora do tema (ex: "oi", "tudo bem?", "quem é você?") responda normalmente e com simpatia, sem precisar do contexto.
+- Se o contexto avisar que a pergunta pode se referir a mais de um procedimento diferente, pergunte com naturalidade qual deles a pessoa quer saber, em vez de escolher um e responder por adivinhação.
+- Seja conciso — vá direto ao ponto, sem enrolar quem só quer resolver rápido. Curto não pode virar incompleto: responda o que foi perguntado por inteiro, só cortando enchimento (sem repetir a pergunta, sem frases de fechamento tipo "boa sorte" ou "qualquer dúvida estou à disposição", sem ressalvas óbvias repetidas em toda resposta).
+- Seu espaço de resposta é curto (equivale a uns 2 parágrafos enxutos). Planeje o texto pra concluir dentro desse espaço e nunca parar no meio de uma frase. Se o assunto exigir mais que isso, priorize responder o essencial por completo e ofereça detalhar mais se a pessoa quiser, em vez de tentar encaixar tudo e arriscar ser cortado.
+- Quando existir, mencione o nome do procedimento usado, mas de forma natural dentro da frase, não como uma citação formal repetida sempre do mesmo jeito.
+- Nunca use formatação Markdown (nada de #, ##, **, __, listas com - ou *, tabelas, blocos de código). Escreva em texto corrido, com frases e parágrafos, como numa mensagem de chat normal entre colegas — mesmo se a pergunta pedir um texto pra mandar pro cliente ou uma lista de passos, organize isso com palavras (ex: "primeiro... depois... por fim") em vez de símbolos.
+- Responda em português do Brasil.`;
+const AGORASEI_NO_MATCH_CONTEXT = "(nenhum procedimento cadastrado bate com essa pergunta — se for uma situação de atendimento, pode sugerir algo por bom senso, deixando claro que não é procedimento oficial)";
+// Teto por procedimento individual — a Groq processa cada pergunta numa janela de contexto bem
+// maior (o gpt-oss aceita mais de 100 mil tokens), então não corre mais risco de estourar e
+// falhar como acontecia com o modelo local. O teto aqui existe só pra manter a resposta rápida
+// (menos texto pra "ler" antes de responder) e o uso dentro do limite gratuito da Groq.
+const AGORASEI_MAX_ENTRY_CHARS = 4000;
+function agoraseiContextBlock(kb){
+  const content = kb.content.length > AGORASEI_MAX_ENTRY_CHARS ? kb.content.slice(0, AGORASEI_MAX_ENTRY_CHARS) + "…" : kb.content;
+  return `## ${kb.title}\n${content}`;
+}
+
+let agoraseiEngineStatus = "idle"; // idle | loading | ready | error
+let agoraseiErrorMessage = "";
+let agoraseiMessages = []; // [{role, content}] — só em memória, some ao recarregar a página
+let agoraseiGenerating = false;
+let agoraseiKBEditingId = null;
+
+function renderAgorasei(){
+  const kbBtn = document.getElementById("open-agorasei-kb-btn");
+  if(kbBtn) kbBtn.style.display = canManage() ? "" : "none";
+  renderAgoraseiKBList();
+  renderAgoraseiSuggestions();
+  spawnAgoraseiMascotDust();
+  if(agoraseiEngineStatus === "idle") initAgoraseiEngine();
+}
+
+// Sugestões clicáveis com os títulos cadastrados, mostradas só na tela vazia (antes da
+// primeira mensagem) — ajuda quem não sabe nem como formular a pergunta a começar por um
+// clique em vez de digitar do zero.
+function renderAgoraseiSuggestions(){
+  const wrap = document.getElementById("agorasei-suggestions");
+  if(!wrap) return;
+  const titles = Object.values(AGORASEI_KB).map(kb => kb.title).slice(0, 6);
+  // Cada chip entra em sequência (não todos de uma vez) -- delay crescente por índice.
+  wrap.innerHTML = titles.map((t, i) => `<button type="button" class="agorasei-suggestion-chip" style="animation-delay:${i * 60}ms" data-suggestion="${escapeHtml(t)}">${escapeHtml(t)}</button>`).join("");
+}
+
+function agoraseiSubmitQuestion(text){
+  if(!text || !text.trim()) return;
+  const input = document.getElementById("agorasei-input");
+  if(input){ input.value = ""; input.style.height = "auto"; }
+  sendAgoraseiMessage(text);
+}
+
+// Confere se dá pra falar com o Worker (tem sessão logada pra gerar o token de autenticação) —
+// não tem modelo pra baixar, então isso é quase instantâneo, diferente da versão anterior que
+// rodava o modelo no navegador via WebGPU.
+async function initAgoraseiEngine(){
+  if(agoraseiEngineStatus === "loading" || agoraseiEngineStatus === "ready") return;
+  agoraseiEngineStatus = "loading";
+  renderAgoraseiStatus();
+  if(!auth || !auth.currentUser){
+    agoraseiEngineStatus = "error";
+    agoraseiErrorMessage = "Sua sessão expirou. Atualize a página e faça login de novo.";
+    renderAgoraseiStatus();
+    return;
+  }
+  agoraseiEngineStatus = "ready";
+  renderAgoraseiStatus();
+}
+
+function renderAgoraseiStatus(){
+  const teaser = document.getElementById("agorasei-teaser-card");
+  const chatLayout = document.getElementById("agorasei-chat-layout");
+  if(!teaser || !chatLayout) return;
+  const eyebrow = document.getElementById("agorasei-teaser-eyebrow");
+  const title = document.getElementById("agorasei-teaser-title");
+  const sub = document.getElementById("agorasei-teaser-sub");
+  const retryBtn = document.getElementById("agorasei-retry-btn");
+
+  if(agoraseiEngineStatus === "ready"){
+    teaser.style.display = "none";
+    chatLayout.style.display = "";
+    return;
+  }
+  chatLayout.style.display = "none";
+  teaser.style.display = "";
+  if(retryBtn) retryBtn.style.display = agoraseiEngineStatus === "error" ? "" : "none";
+
+  if(agoraseiEngineStatus === "error"){
+    if(eyebrow) eyebrow.innerHTML = `<span class="dot"></span>Erro ao conectar`;
+    if(title) title.textContent = "Não deu pra conectar o assistente";
+    if(sub) sub.textContent = agoraseiErrorMessage || "Tente novamente em instantes.";
+    return;
+  }
+  // loading
+  if(eyebrow) eyebrow.innerHTML = `<span class="dot"></span>Conectando`;
+  if(title) title.textContent = "Preparando o assistente";
+  if(sub) sub.textContent = "Só um instante...";
+}
+
+// Estado visual do mascote "Fato" — parado / pensando (enquanto espera a resposta) / feliz
+// (assim que a resposta termina). Atualiza tanto o painel grande (desktop) quanto a barrinha
+// compacta que aparece no lugar dele em telas estreitas (ver @media no CSS).
+const AGORASEI_MASCOT_MOBILE_TEXT = {
+  idle: "Fato está pronto pra ajudar",
+  thinking: "Fato está pensando...",
+  happy: "Fato respondeu!",
+};
+function setAgoraseiMascotState(state){
+  const src = state === "thinking" ? "fato-thinking.svg" : state === "happy" ? "fato-happy.svg" : "fato-idle.svg";
+  const stage = document.getElementById("agorasei-mascot-stage");
+  const img = document.getElementById("agorasei-mascot-img");
+  const mobileImg = document.getElementById("agorasei-mascot-mobile-img");
+  const mobileText = document.getElementById("agorasei-mascot-mobile-text");
+  if(stage) stage.setAttribute("data-state", state);
+  if(img) img.src = src;
+  if(mobileImg) mobileImg.src = src;
+  if(mobileText) mobileText.textContent = AGORASEI_MASCOT_MOBILE_TEXT[state] || AGORASEI_MASCOT_MOBILE_TEXT.idle;
+}
+
+// Poeira de partículas ao redor do mascote — mesma ideia do teaser da lâmpada (poucos pontinhos
+// roxos flutuando devagar, sempre presentes), só que só dentro do painel do mascote e em menor
+// quantidade. Roda uma vez só, quando a aba carrega.
+let agoraseiMascotDustSpawned = false;
+function spawnAgoraseiMascotDust(){
+  if(agoraseiMascotDustSpawned) return;
+  const col = document.querySelector(".agorasei-mascot-col");
+  if(!col) return;
+  agoraseiMascotDustSpawned = true;
+  for(let i = 0; i < 8; i++){
+    const dust = document.createElement("div");
+    dust.className = "dust-particle";
+    dust.style.left = (4 + Math.random() * 92) + "%";
+    dust.style.top = (4 + Math.random() * 92) + "%";
+    dust.style.setProperty("--dx", ((Math.random() - 0.5) * 34).toFixed(1) + "px");
+    dust.style.setProperty("--dy", ((Math.random() - 0.5) * 34).toFixed(1) + "px");
+    dust.style.animationDuration = (7 + Math.random() * 8).toFixed(1) + "s";
+    dust.style.animationDelay = (-Math.random() * 10).toFixed(1) + "s";
+    col.appendChild(dust);
+  }
+}
+
+// Todo pedido de IA passa por aqui: pega o token de login do Firebase (prova pro Worker que
+// quem está chamando é um usuário autenticado do board, não qualquer um na internet) e manda
+// pro Worker, que troca esse token por uma chamada de verdade pra Groq usando a chave secreta
+// dele (a chave nunca aparece no navegador).
+async function agoraseiCallGroq({ messages, model, stream, temperature, max_tokens, signal }){
+  if(!AGORASEI_PROXY_URL || AGORASEI_PROXY_URL.startsWith("SUBSTITUA")){
+    throw new Error("Assistente ainda não configurado — falta publicar o proxy (AGORASEI_PROXY_URL).");
+  }
+  if(!auth || !auth.currentUser) throw new Error("Sessão expirada — faça login novamente.");
+  const idToken = await auth.currentUser.getIdToken();
+  const resp = await fetch(AGORASEI_PROXY_URL, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    // reasoning_effort baixo: o gpt-oss é um modelo "raciocinador" que gasta parte da resposta
+    // pensando antes de escrever a resposta final (canal separado) — isso não ajuda muito numa
+    // pergunta direta de procedimento, só consome tempo e parte do teto de tokens, então pede
+    // pouco raciocínio (mais rápido e sobra mais espaço pra resposta em si).
+    body: JSON.stringify({ idToken, messages, model, stream: !!stream, temperature, max_tokens, reasoning_effort: "low" }),
+    signal,
+  });
+  if(!resp.ok){
+    const text = await resp.text().catch(() => "");
+    throw new Error(`HTTP ${resp.status}${text ? ": " + text.slice(0, 200) : ""}`);
+  }
+  return resp;
+}
+
+function renderAgoraseiKBList(){
+  const listEl = document.getElementById("agorasei-kb-list");
+  if(!listEl) return;
+  const entries = Object.entries(AGORASEI_KB).sort((a, b) => (a[1].title || "").localeCompare(b[1].title || "", "pt-BR"));
+  if(!entries.length){
+    listEl.innerHTML = `<p class="sub">Nenhum procedimento cadastrado ainda.</p>`;
+    return;
+  }
+  listEl.innerHTML = entries.map(([id, kb]) => {
+    const preview = (kb.content || "").slice(0, 160);
+    const ellipsis = (kb.content || "").length > 160 ? "…" : "";
+    const tagsLine = kb.tags ? `<p class="agorasei-kb-item-tags">Sinônimos: ${escapeHtml(kb.tags)}</p>` : "";
+    // Resposta memorizada válida = existe no cache E o procedimento não foi editado desde que
+    // ela foi gerada (senão o hash não bate e ela já não vale mais, mesmo antes de alguém clicar
+    // em "esquecer").
+    const hasCache = !!agoraseiGetCachedAnswer(id);
+    const cacheLine = hasCache
+      ? `<p class="agorasei-kb-item-cache">🧠 Resposta memorizada — próximas perguntas sobre isso saem na hora, sem gastar IA. <button type="button" class="agorasei-kb-cache-forget" data-kb-forget="${escapeHtml(id)}">Esquecer e gerar de novo</button></p>`
+      : `<p class="agorasei-kb-item-cache agorasei-kb-item-cache-empty">Ainda sem resposta memorizada — a primeira pergunta sobre isso gera e guarda pras próximas.</p>`;
+    return `
+    <div class="agorasei-kb-item">
+      <div class="agorasei-kb-item-head">
+        <h4>${escapeHtml(kb.title || "")}</h4>
+        <div class="agorasei-kb-item-actions">
+          <button type="button" data-kb-edit="${escapeHtml(id)}">Editar</button>
+          <button type="button" data-kb-delete="${escapeHtml(id)}">Excluir</button>
+        </div>
+      </div>
+      <p class="agorasei-kb-item-preview">${escapeHtml(preview)}${ellipsis}</p>
+      ${tagsLine}
+      ${cacheLine}
+    </div>`;
+  }).join("");
+}
+
+async function saveAgoraseiKBEntry(id, title, content, tags){
+  const entry = { title, content, tags: tags || "", updatedAt: new Date().toISOString(), updatedByName: (currentUser && (currentUser.name || currentUser.email)) || "" };
+  AGORASEI_KB = { ...AGORASEI_KB, [id]: entry };
+  if(storageMode === "firebase" && firebaseReady){
+    const path = new fsFieldPath("kb", id);
+    await fsUpdateDoc(AGORASEI_DOC, path, entry);
+  }
+  // O procedimento mudou de conteúdo — a resposta memorizada antiga não vale mais (o hash dela
+  // não vai bater com o hash do texto novo mesmo assim, mas apaga de vez em vez de deixar lixo
+  // acumulando no documento à toa).
+  await clearAgoraseiAnswerCache(id);
+  renderAgoraseiKBList();
+}
+
+async function deleteAgoraseiKBEntry(id){
+  const entry = AGORASEI_KB[id];
+  if(!entry) return;
+  if(!confirm(`Excluir o procedimento "${entry.title}"? Isso não pode ser desfeito.`)) return;
+  const next = { ...AGORASEI_KB };
+  delete next[id];
+  AGORASEI_KB = next;
+  if(storageMode === "firebase" && firebaseReady){
+    const path = new fsFieldPath("kb", id);
+    await fsUpdateDoc(AGORASEI_DOC, path, fsDeleteField());
+  }
+  await clearAgoraseiAnswerCache(id);
+  renderAgoraseiKBList();
+}
+
+// Hash simples (não-criptográfico, só pra detectar mudança) do título+conteúdo de um
+// procedimento — amarra uma resposta memorizada à versão exata do texto que a gerou.
+function agoraseiSimpleHash(str){
+  let h = 0;
+  for(let i = 0; i < str.length; i++){ h = (Math.imul(31, h) + str.charCodeAt(i)) | 0; }
+  return (h >>> 0).toString(36);
+}
+function agoraseiKbHash(kb){
+  return agoraseiSimpleHash(`${kb.title || ""}\n${kb.content || ""}`);
+}
+
+// Devolve a resposta já memorizada pra esse procedimento, só se o procedimento não tiver
+// mudado desde que ela foi gerada (hash bate). Se o procedimento foi editado depois, o hash
+// não bate mais e devolve null — cai pra gerar uma resposta nova (e memorizar essa, atualizada).
+function agoraseiGetCachedAnswer(kbId){
+  const cached = AGORASEI_ANSWER_CACHE[kbId];
+  const kb = AGORASEI_KB[kbId];
+  if(!cached || !kb) return null;
+  if(cached.hash !== agoraseiKbHash(kb)) return null;
+  return cached.answer;
+}
+
+async function saveAgoraseiAnswerCache(kbId, answer){
+  const kb = AGORASEI_KB[kbId];
+  if(!kb) return;
+  const entry = { answer, hash: agoraseiKbHash(kb), updatedAt: new Date().toISOString() };
+  AGORASEI_ANSWER_CACHE = { ...AGORASEI_ANSWER_CACHE, [kbId]: entry };
+  if(storageMode === "firebase" && firebaseReady){
+    const path = new fsFieldPath("cache", kbId);
+    await fsUpdateDoc(AGORASEI_DOC, path, entry);
+  }
+}
+
+// Botão manual (na base de procedimentos) pra "esquecer" a resposta memorizada de um item sem
+// precisar editar o texto — força a próxima pergunta sobre ele a gerar uma resposta nova.
+async function clearAgoraseiAnswerCache(kbId){
+  if(!AGORASEI_ANSWER_CACHE[kbId]) return;
+  const next = { ...AGORASEI_ANSWER_CACHE };
+  delete next[kbId];
+  AGORASEI_ANSWER_CACHE = next;
+  if(storageMode === "firebase" && firebaseReady){
+    const path = new fsFieldPath("cache", kbId);
+    await fsUpdateDoc(AGORASEI_DOC, path, fsDeleteField());
+  }
+}
+
+// Importação em lote: usada pra carregar de uma vez uma base grande já pronta (ex: exportada
+// de um sistema de conhecimento existente), em vez de cadastrar um por um pelo formulário.
+// Faz uma única escrita no documento (bem mais leve que 1 escrita por item) e preserva o que
+// já estava cadastrado, mesclando por cima. Item cujo título já existe ATUALIZA o procedimento
+// existente (mesmo id) em vez de duplicar — assim reimportar um export mais completo (ex: com
+// sinônimos adicionados) refresca o que já estava lá em vez de criar tudo de novo do lado.
+async function importAgoraseiKBBatch(items){
+  const merged = { ...AGORASEI_KB };
+  const idByTitle = {};
+  Object.entries(merged).forEach(([id, kb]) => { idByTitle[(kb.title || "").trim().toLowerCase()] = id; });
+  let count = 0;
+  for(const item of items){
+    const title = String((item && item.title) || "").trim();
+    const content = String((item && item.content) || "").trim();
+    const tags = String((item && item.tags) || "").trim();
+    if(!title || !content) continue;
+    const id = idByTitle[title.toLowerCase()] || ("kb_" + Date.now().toString(36) + Math.random().toString(36).slice(2, 7) + count);
+    merged[id] = { title, content, tags, updatedAt: new Date().toISOString(), updatedByName: (currentUser && (currentUser.name || currentUser.email)) || "" };
+    idByTitle[title.toLowerCase()] = id;
+    count++;
+  }
+  if(!count) return 0;
+  AGORASEI_KB = merged;
+  if(storageMode === "firebase" && firebaseReady){
+    await fsUpdateDoc(AGORASEI_DOC, "kb", merged);
+  }
+  renderAgoraseiKBList();
+  renderAgoraseiSuggestions();
+  return count;
+}
+
+function agoraseiNormalize(str){
+  return String(str || "").toLowerCase().normalize("NFD").replace(/[̀-ͯ]/g, "").replace(/[^a-z0-9\s]/g, " ");
+}
+const AGORASEI_STOPWORDS = new Set(["a","o","as","os","de","da","do","das","dos","em","um","uma","uns","umas","para","por","com","sem","que","e","ou","se","no","na","nos","nas","ao","aos","como","qual","quais","quando","onde","porque","e","sao","ser","tem","tem","meu","minha","seu","sua","isso","essa","esse","este","esta","pode","posso","preciso","gostaria","the"]);
+function agoraseiTokens(str){
+  return agoraseiNormalize(str).split(/\s+/).filter(t => t.length > 2 && !AGORASEI_STOPWORDS.has(t));
+}
+
+const AGORASEI_QUESTION_STARTERS = /^(como|qual|quais|quando|onde|quem|por ?que|posso|preciso|consigo|gostaria|quero|pode|tem como|onde fica|me (ajuda|explica|diz))\b/i;
+// Mensagem curta, sem "?" e sem cara de pergunta (tipo "oi", "bom dia", "valeu") — pula a
+// triagem por IA nesses casos: é uma etapa a mais que só serve pra pergunta de verdade, então
+// pular ela aqui deixa a conversa mais ágil sem perder precisão em nenhuma pergunta real.
+function agoraseiLooksLikeGreeting(question){
+  const trimmed = question.trim();
+  if(trimmed.includes("?")) return false;
+  if(trimmed.split(/\s+/).filter(Boolean).length > 4) return false;
+  return !AGORASEI_QUESTION_STARTERS.test(trimmed);
+}
+
+// Quantos procedimentos diferentes contêm cada palavra (pelo menos 1 vez) — a base pra pesar
+// palavra rara mais que palavra comum na busca (ver retrieveAgoraseiContext).
+function agoraseiTermDocFrequency(){
+  const df = {};
+  Object.values(AGORASEI_KB).forEach(kb => {
+    const seen = new Set(agoraseiTokens(`${kb.title} ${kb.content} ${kb.tags || ""}`));
+    seen.forEach(t => { df[t] = (df[t] || 0) + 1; });
+  });
+  return df;
+}
+
+function retrieveAgoraseiContext(query, maxChars){
+  const queryTokens = new Set(agoraseiTokens(query));
+  if(!queryTokens.size) return { blocks: [], ambiguous: false, candidates: [] };
+  const totalDocs = Object.keys(AGORASEI_KB).length || 1;
+  const df = agoraseiTermDocFrequency();
+  // Palavra que aparece em quase todo procedimento (tipo "valor", "cartão", "cliente") não ajuda
+  // em nada a distinguir QUAL procedimento é o certo — todo mundo bate nela. Palavra rara (tipo
+  // "anuidade", que só aparece em 1 ou 2 procedimentos) é um sinal bem mais forte de que achou o
+  // certo. Sem isso, um procedimento de título genérico podia "ganhar" no placar só por ter mais
+  // palavra comum em comum, mesmo quando o termo realmente específico da pergunta só existe no
+  // CORPO de outro procedimento com título diferente — pesa cada palavra pelo inverso de quantos
+  // procedimentos ela aparece, em vez de tratar toda palavra batida como igual.
+  const idf = (t) => Math.log(1 + totalDocs / (df[t] || totalDocs));
+  const scored = Object.entries(AGORASEI_KB).map(([id, kb]) => {
+    // Set (não array) — cada palavra conta 1 vez por procedimento, não 1 vez por repetição.
+    // Sem isso, um procedimento bem mais longo (que repete as mesmas palavras várias vezes ao
+    // longo do texto) acumula pontuação inflada só por ser extenso, e vence um procedimento
+    // curto e certeiro que menciona o termo certo uma única vez.
+    const tokens = new Set(agoraseiTokens(`${kb.title} ${kb.content}`));
+    let score = 0;
+    tokens.forEach(t => { if(queryTokens.has(t)) score += idf(t); });
+    // título e sinônimos pesam mais que o corpo — são a "porta de entrada" curada pro
+    // procedimento, então bater neles é sinal bem mais forte do que bater em qualquer
+    // palavra solta no meio do texto.
+    new Set(agoraseiTokens(kb.title)).forEach(t => { if(queryTokens.has(t)) score += idf(t) * 3; });
+    new Set(agoraseiTokens(kb.tags || "")).forEach(t => { if(queryTokens.has(t)) score += idf(t) * 3; });
+    return { id, kb, score };
+  }).filter(s => s.score > 0).sort((a, b) => b.score - a.score);
+
+  // Divergência: dois ou mais procedimentos diferentes com pontuação parecida, sem um se
+  // destacar claramente como "o" procedimento certo — sinal de que a pergunta pode servir
+  // pra mais de um assunto cadastrado. Não é entendimento de verdade, é só uma pista pro
+  // modelo saber que vale mais perguntar do que adivinhar.
+  const ambiguous = scored.length >= 2 && scored[1].score >= scored[0].score * 0.6;
+
+  const picked = [];
+  let used = 0;
+  for(const s of scored){
+    const block = agoraseiContextBlock(s.kb);
+    if(used + block.length > maxChars && picked.length) break;
+    picked.push(block);
+    used += block.length;
+    if(picked.length >= 5) break;
+  }
+  return { blocks: picked, ambiguous, candidates: scored.slice(0, 5).map(s => s.kb.title), topScore: scored.length ? scored[0].score : 0, topId: scored.length ? scored[0].id : null };
+}
+
+function agoraseiAmbiguousNote(titles){
+  return `\n\n[NOTA: a pergunta pode se referir a mais de um procedimento diferente (${titles.join(", ")}) e não ficou claro qual deles é o certo. Se não estiver óbvio qual desses a pergunta quer dizer, pergunte ao usuário qual procedimento ele quer saber antes de responder em detalhe, em vez de adivinhar.]`;
+}
+
+// Antes de responder, pede pro próprio modelo escolher (numa lista curta de títulos) qual
+// procedimento combina com a pergunta — é uma tarefa de entendimento de linguagem de verdade
+// (pega sinônimo, pergunta reformulada etc.), bem mais confiável nisso do que contar palavra
+// em comum, e ainda cabe num modelo pequeno porque "escolher de uma lista" é uma tarefa simples.
+// Se a resposta não vier num formato reconhecível, devolve routed:false e quem chamou cai pro
+// método por palavra-chave, pra nunca ficar sem contexto nenhum por causa disso.
+async function routeAgoraseiQuestion(question, history, hintTitles){
+  const entries = Object.entries(AGORASEI_KB).map(([id, kb]) => ({ id, ...kb }));
+  if(!entries.length) return { matched: [], routed: true };
+  // Sinônimos entram como dica entre colchetes — ajuda a achar procedimento cuja palavra só
+  // aparece no corpo do texto (ex: "anuidade" dentro de "Cartão Crediffato"), sem precisar
+  // mandar o conteúdo inteiro de cada procedimento (isso deixaria a lista gigante e lenta).
+  const titleList = entries.map(kb => kb.tags ? `${kb.title} [sinônimos: ${kb.tags}]` : kb.title).join("\n");
+  // Manda as últimas trocas da conversa junto — sem isso, uma pergunta de continuação (tipo
+  // "e pra pessoa jurídica?", que só faz sentido junto do que foi perguntado antes) chega pra
+  // triagem sem nenhuma pista do assunto e ela não acha nada.
+  const historyText = (history || []).slice(-4).map(m => `${m.role === "user" ? "Usuário" : "Assistente"}: ${m.content}`).join("\n");
+  // A triagem só enxerga TÍTULO (+ sinônimos), nunca o corpo do texto — então quando a resposta
+  // certa está enterrada no meio de um procedimento com título genérico (ex: o valor da anuidade
+  // dentro de "Cartão Crediffato", sem a palavra "anuidade" aparecer no título), ela não tem
+  // como adivinhar sozinha. A busca por palavra-chave (que olha o conteúdo inteiro) já achou
+  // esses candidatos antes de chegar aqui — repassa como pista, sem obrigar a escolher um deles.
+  const hintLine = (hintTitles || []).length ? `\n\nPista (a busca por palavra-chave no conteúdo completo já indica esses como prováveis, mas decida por conta própria): ${hintTitles.join(", ")}` : "";
+  try{
+    const resp = await agoraseiCallGroq({
+      messages: [
+        { role: "system", content: `Você escolhe, de uma lista de procedimentos cadastrados, qual(is) respondem a pergunta mais recente de um usuário. Cada linha da lista é um título, às vezes seguido de sinônimos entre colchetes — use os sinônimos só pra decidir, nunca os inclua na resposta. Use o histórico da conversa pra entender o assunto quando a pergunta for uma continuação (ex: "e pra pessoa jurídica?" só faz sentido junto do que foi perguntado antes). Quando houver uma "Pista" indicando candidatos prováveis, leve em conta que ela veio de uma busca no conteúdo completo (não só no título) e pode saber de algo que o título sozinho não revela. Responda APENAS com os títulos exatos que combinam, um por linha, SEM os colchetes de sinônimos, copiados exatamente como estão na lista — sem nenhum texto além disso. Se nenhum combinar, responda só a palavra NENHUM.` },
+        { role: "user", content: `Lista de procedimentos:\n${titleList}${historyText ? `\n\nHistórico recente da conversa:\n${historyText}` : ""}${hintLine}\n\nPergunta mais recente do usuário: "${question}"\n\nQuais títulos da lista combinam com essa pergunta?` },
+      ],
+      model: AGORASEI_ROUTING_MODEL_ID,
+      stream: false,
+      temperature: 0,
+      max_tokens: 150,
+    });
+    const data = await resp.json();
+    const raw = agoraseiExtractFinal((data.choices[0] && data.choices[0].message && data.choices[0].message.content) || "");
+    if(/^\s*nenhum\W*\s*$/i.test(raw.trim())) return { matched: [], routed: true };
+    const lines = raw.split("\n").map(l => l.trim().replace(/^[-*\d.)\s]+/, "").replace(/\s*\[.*$/, "").trim()).filter(Boolean);
+    const matched = entries.filter(kb => lines.some(l => l.toLowerCase() === kb.title.toLowerCase()));
+    if(!matched.length) return { matched: [], routed: false }; // não seguiu o formato esperado — não dá pra confiar
+    return { matched, routed: true };
+  }catch(err){
+    console.error("Falha na triagem do Agora Eu Sei:", err);
+    return { matched: [], routed: false };
+  }
+}
+
+// O gpt-oss às vezes vaza o "canal" de raciocínio interno (formato Harmony da OpenAI) junto do
+// texto visível em vez de mandar só a resposta final — já vimos isso tanto com o marcador
+// correto (<|channel|>final<|message|>) quanto com ele saindo quebrado como texto solto
+// ("assistantfinal"). Se algum desses aparecer, mostra só o que vem depois — é a resposta de
+// verdade; o que vem antes é o "pensamento" que nunca devia aparecer pra quem pergunta.
+function agoraseiExtractFinal(text){
+  const markers = ["<|channel|>final<|message|>", "assistantfinal"];
+  let cut = -1, markerLen = 0;
+  for(const m of markers){
+    const i = text.lastIndexOf(m);
+    if(i > cut){ cut = i; markerLen = m.length; }
+  }
+  const sliced = cut >= 0 ? text.slice(cut + markerLen) : text;
+  return agoraseiStripMarkdown(sliced.replace(/<\|[a-z_]+\|>/gi, "").trim());
+}
+
+// O prompt já pede pra não usar Markdown, mas o modelo foi treinado em cima de muito texto
+// formatado assim e às vezes volta a usar de qualquer forma — a bolha do chat mostra texto
+// puro (sem renderizar Markdown), então símbolos como # e ** apareceriam literalmente na tela
+// em vez de virar título ou negrito, o que fica com cara de robô. Limpa esses símbolos mantendo
+// o texto em si.
+function agoraseiStripMarkdown(text){
+  return text
+    .replace(/^#{1,6}\s+/gm, "") // ## Título -> Título
+    .replace(/```[a-z]*\n?/gi, "").replace(/```/g, "") // ```bloco de código```
+    .replace(/`([^`]+)`/g, "$1") // `código` -> código
+    .replace(/\*\*([^*]+)\*\*/g, "$1") // **negrito** -> negrito
+    .replace(/__([^_]+)__/g, "$1") // __negrito__ -> negrito
+    .replace(/(?<!\*)\*([^*\n]+)\*(?!\*)/g, "$1") // *itálico* -> itálico
+    .replace(/^[ \t]*[-*+]\s+/gm, "") // - item / * item -> item
+    .replace(/^[ \t]*>\s?/gm, "") // > citação -> citação
+    .replace(/^[ \t]*(-{3,}|_{3,}|\*{3,})[ \t]*$/gm, "") // linhas ---
+    .replace(/\n{3,}/g, "\n\n") // várias linhas em branco seguidas (sobra de remover títulos/regras)
+    .trim();
+}
+
+// De vez em quando o modelo entra num loop de repetição (mesma palavra ou trecho curto colado
+// várias vezes seguidas, tipo "Oi Oi Oi Oi..." ou "diff diff diff...") em vez de gerar uma
+// resposta de verdade -- é um problema conhecido de modelo, não tem como evitar 100% do lado de
+// cá. Detecta isso olhando só o final do texto (onde o loop está acontecendo agora) e procura
+// um trecho curto que se repete colado nele mesmo várias vezes seguidas.
+// Mesmo avisado do teto no prompt, o modelo às vezes ainda estoura o limite de tokens no meio
+// de uma frase (o assunto era mais longo do que ele calculou). Quando isso acontece, o corte é
+// abrupto (às vezes no meio de uma palavra) -- em vez de mostrar assim, volta até o último ponto
+// final/exclamação/interrogação e avisa que a resposta foi resumida por falta de espaço.
+function agoraseiTrimTruncated(text){
+  const lastEnd = Math.max(text.lastIndexOf("."), text.lastIndexOf("!"), text.lastIndexOf("?"));
+  const trimmed = lastEnd > text.length * 0.4 ? text.slice(0, lastEnd + 1) : text;
+  return `${trimmed.trim()}\n\n(Resposta resumida por limite de tamanho — pergunte de novo pedindo mais detalhe se precisar.)`;
+}
+
+function agoraseiHasRepetitionLoop(text){
+  const tail = text.slice(-500);
+  for(let len = 1; len <= 30; len++){
+    if(tail.length < len * 6) continue;
+    const unit = tail.slice(tail.length - len);
+    if(!unit.trim()) continue;
+    let repeats = 1;
+    let pos = tail.length - len;
+    while(pos - len >= 0 && tail.slice(pos - len, pos) === unit){
+      repeats++;
+      pos -= len;
+      if(repeats >= 6) return true;
+    }
+  }
+  return false;
+}
+
+function agoraseiAppendMessage(role, content){
+  const messagesEl = document.getElementById("agorasei-messages");
+  if(!messagesEl) return null;
+  const empty = messagesEl.querySelector(".agorasei-empty");
+  if(empty) empty.remove();
+  const wrap = document.createElement("div");
+  wrap.className = `agorasei-msg agorasei-msg-${role}`;
+  const avatar = document.createElement("div");
+  avatar.className = "agorasei-msg-avatar";
+  avatar.textContent = role === "user" ? initialsFromName((currentUser && (currentUser.name || currentUser.email)) || "Você") : "IA";
+  const bubble = document.createElement("div");
+  bubble.className = "agorasei-msg-bubble";
+  bubble.textContent = content;
+  wrap.appendChild(avatar);
+  wrap.appendChild(bubble);
+  messagesEl.appendChild(wrap);
+  messagesEl.scrollTop = messagesEl.scrollHeight;
+  return bubble;
+}
+
+async function sendAgoraseiMessage(question){
+  if(agoraseiGenerating || !question.trim()) return;
+  if(agoraseiEngineStatus !== "ready") return;
+  agoraseiGenerating = true;
+  const sendBtn = document.getElementById("agorasei-send-btn");
+  if(sendBtn) sendBtn.disabled = true;
+
+  agoraseiAppendMessage("user", question);
+  agoraseiMessages.push({ role: "user", content: question });
+  setAgoraseiMascotState("thinking");
+
+  // Aparece já — cobre tanto a etapa de triagem quanto a geração da resposta, pra pessoa não
+  // ficar sem nenhum feedback visual enquanto o modelo decide qual procedimento usar.
+  const assistantBubble = agoraseiAppendMessage("assistant", "");
+  if(assistantBubble){
+    assistantBubble.classList.add("typing");
+    assistantBubble.innerHTML = `<span class="agorasei-typing-dots"><span></span><span></span><span></span></span>`;
+  }
+
+  let contextText;
+  // Só marca um procedimento como "cacheável" quando ele é o único que bateu com a pergunta,
+  // sem ambiguidade nenhuma — pergunta que serve pra mais de um procedimento, ou que caiu no
+  // caminho de "bom senso" sem procedimento cadastrado, nunca usa nem alimenta o cache.
+  let matchedKbId = null;
+  // A busca por palavra-chave roda SEMPRE primeiro, mesmo pra mensagem com cara de saudação —
+  // ela é instantânea (não chama modelo nenhum) e é o que evita o bug de tratar uma mensagem
+  // curta e sem "?" (ex: alguém colando o próprio título de um procedimento, tipo "Negociações:
+  // Script - REFINANCIAMENTO") como se fosse só um "oi" e pular a base de procedimentos inteira
+  // sem nem olhar. Só cai no atalho de saudação quando NEM a busca por palavra-chave acha
+  // qualquer pista — aí sim é seguro assumir que não é uma pergunta de procedimento de verdade.
+  const fast = retrieveAgoraseiContext(question, AGORASEI_MAX_ENTRY_CHARS);
+  const fastConfident = fast.blocks.length > 0 && !fast.ambiguous && fast.topScore >= 4;
+  if(fastConfident){
+    contextText = fast.blocks[0];
+    matchedKbId = fast.topId;
+  }else if(agoraseiLooksLikeGreeting(question) && !fast.blocks.length){
+    contextText = AGORASEI_NO_MATCH_CONTEXT;
+  }else{
+    const priorHistory = agoraseiMessages.slice(0, -1); // tudo antes da pergunta atual, que já foi empilhada
+    const routing = await routeAgoraseiQuestion(question, priorHistory, fast.candidates);
+    if(routing.routed && routing.matched.length){
+      // Manda o conteúdo completo de só 1 procedimento (o primeiro que a triagem escolheu) —
+      // os outros (se houver) entram só como título na nota de ambiguidade, não o texto
+      // inteiro. Isso mantém o prompt pequeno mesmo quando vários procedimentos combinam.
+      contextText = agoraseiContextBlock(routing.matched[0]);
+      if(routing.matched.length > 1){
+        contextText += agoraseiAmbiguousNote(routing.matched.map(kb => kb.title));
+      }else{
+        matchedKbId = routing.matched[0].id;
+      }
+    }else if(fast.blocks.length){
+      // A triagem por IA só enxerga o TÍTULO de cada procedimento (não o conteúdo) — então
+      // pode dizer "não achei nada" pra uma palavra que só aparece dentro do texto (ex:
+      // "anuidade" pode estar só no corpo de "Cartão Crediffato", não no título). Antes de
+      // aceitar esse "não achei" como resposta final, confere se a busca por palavra-chave
+      // (que olha o conteúdo inteiro) encontrou alguma coisa — se achou, usa isso em vez de
+      // desistir.
+      contextText = fast.blocks.join("\n\n");
+      if(fast.ambiguous){
+        contextText += agoraseiAmbiguousNote(fast.candidates);
+      }else if(fast.blocks.length === 1){
+        matchedKbId = fast.topId;
+      }
+    }else{
+      // Nem a triagem por IA nem a busca por palavra-chave acharam nada — seja porque a
+      // triagem respondeu "NENHUM" de verdade, seja porque a resposta dela não seguiu o
+      // formato esperado. Sem pista nenhuma das duas fontes, não tem o que usar como contexto.
+      contextText = AGORASEI_NO_MATCH_CONTEXT;
+    }
+  }
+  // "Cérebro" de respostas memorizadas: só reaproveita quando essa é a PRIMEIRA pergunta da
+  // conversa (uma pergunta de acompanhamento pode depender do que já foi dito antes, então
+  // nunca serve resposta memorizada nesse caso) e bateu num único procedimento sem ambiguidade.
+  // Isso é o que segura o teto grátis com volume alto: pergunta repetida sobre o mesmo
+  // procedimento não gasta IA nenhuma depois da primeira vez.
+  const isFirstTurn = agoraseiMessages.length === 1;
+  const cachedAnswer = matchedKbId && isFirstTurn ? agoraseiGetCachedAnswer(matchedKbId) : null;
+  if(cachedAnswer){
+    if(assistantBubble){ assistantBubble.classList.remove("typing"); assistantBubble.textContent = cachedAnswer; }
+    agoraseiMessages.push({ role: "assistant", content: cachedAnswer });
+    setAgoraseiMascotState("happy");
+    setTimeout(() => setAgoraseiMascotState("idle"), 2000);
+    agoraseiGenerating = false;
+    if(sendBtn) sendBtn.disabled = false;
+    return;
+  }
+
+  // Nas trocas ANTERIORES (não na pergunta atual), manda só a pergunta em si, sem o bloco de
+  // Contexto embutido (que pode ter até 4000 caracteres do procedimento inteiro) -- o modelo não
+  // precisa reler o texto-fonte de novo a cada resposta antiga; a resposta que ele mesmo deu
+  // naquele turno já carrega o que importava daquele contexto. Isso encolhe bastante o tanto de
+  // token gasto numa dúvida que vira várias mensagens de vai-e-vem, sem perder o fio da conversa.
+  const priorTurns = agoraseiMessages.slice(0, -1).slice(-3).map(m =>
+    m.role === "user" ? { role: "user", content: m.content } : { role: "assistant", content: m.content }
+  ); // até 3 trocas anteriores, sem a pergunta atual
+
+  const systemMsg = { role: "system", content: AGORASEI_SYSTEM_PROMPT };
+  function buildFinalUserMsg(ctx){
+    return { role: "user", content: `Contexto:\n${ctx}\n\nPergunta: ${question}` };
+  }
+
+  // Chama a Groq (via proxy) pedindo streaming e vai transmitindo cada pedaço pra dentro da
+  // bolha assim que chega, no formato SSE padrão da API compatível com OpenAI (linhas
+  // "data: {...}", terminando em "data: [DONE]").
+  async function attemptGeneration(messages, signal){
+    const resp = await agoraseiCallGroq({
+      messages,
+      model: AGORASEI_MODEL_ID,
+      stream: true,
+      temperature: 0.6,
+      max_tokens: 550,
+      signal,
+    });
+    let full = "";
+    let firstChunk = true;
+    let finishReason = null;
+    const messagesEl = document.getElementById("agorasei-messages");
+    let scrollScheduled = false;
+    function scheduleScroll(){
+      if(scrollScheduled) return;
+      scrollScheduled = true;
+      requestAnimationFrame(() => { scrollScheduled = false; if(messagesEl) messagesEl.scrollTop = messagesEl.scrollHeight; });
+    }
+    const reader = resp.body.getReader();
+    const decoder = new TextDecoder();
+    let buffer = "";
+    while(true){
+      const { done, value } = await reader.read();
+      if(done) break;
+      buffer += decoder.decode(value, { stream: true });
+      const lines = buffer.split("\n");
+      buffer = lines.pop(); // linha incompleta (ainda sem \n) fica pro próximo pedaço lido
+      for(const line of lines){
+        const trimmed = line.trim();
+        if(!trimmed.startsWith("data:")) continue;
+        const payload = trimmed.slice(5).trim();
+        if(payload === "[DONE]") continue;
+        let json;
+        try{ json = JSON.parse(payload); }catch(e){ continue; }
+        const fr = json.choices && json.choices[0] && json.choices[0].finish_reason;
+        if(fr) finishReason = fr;
+        const delta = json.choices && json.choices[0] && json.choices[0].delta && json.choices[0].delta.content;
+        if(delta){
+          if(firstChunk){
+            if(assistantBubble){ assistantBubble.classList.remove("typing"); assistantBubble.textContent = ""; }
+            firstChunk = false;
+          }
+          full += delta;
+          // De vez em quando o modelo entra num loop de repetição (a mesma palavra ou trecho
+          // curto colado várias vezes seguidas) em vez de responder de verdade -- detecta isso
+          // cedo (olhando só o final do texto acumulado) e desiste, em vez de deixar rolar até
+          // o teto de tokens só acumulando lixo na tela.
+          if(agoraseiHasRepetitionLoop(full)){
+            reader.cancel().catch(() => {});
+            throw new Error("LOOP: a resposta entrou num loop de repetição.");
+          }
+          // Recalcula a cada pedaço: se não tiver nenhum vazamento de raciocínio (o caso normal),
+          // isso devolve o texto inteiro sem alterar nada, então o efeito de "digitando" continua
+          // igual. Só filtra de verdade nos casos raros em que o canal interno vaza.
+          // Cursor piscando no final enquanto ainda está chegando -- reforça que a resposta está
+          // sendo escrita ao vivo, não colada pronta de uma vez.
+          if(assistantBubble){
+            assistantBubble.textContent = agoraseiExtractFinal(full);
+            assistantBubble.appendChild(document.createElement("span")).className = "agorasei-cursor";
+          }
+          scheduleScroll();
+        }
+      }
+    }
+    let display = agoraseiExtractFinal(full);
+    if(finishReason === "length" && display) display = agoraseiTrimTruncated(display);
+    return display || "Não consegui gerar uma resposta agora. Tente reformular a pergunta.";
+  }
+
+  // Trava de segurança: se a resposta não terminar em até 45s (rede lenta, provedor fora do
+  // ar), cancela sozinho em vez de deixar a tela presa sem dar pra mandar outra pergunta.
+  const AGORASEI_STALL_TIMEOUT_MS = 45000;
+  const stallController = new AbortController();
+  const stallTimer = setTimeout(() => stallController.abort(), AGORASEI_STALL_TIMEOUT_MS);
+
+  try{
+    const full = await attemptGeneration([systemMsg, ...priorTurns, buildFinalUserMsg(contextText)], stallController.signal);
+    clearTimeout(stallTimer);
+    if(assistantBubble){ assistantBubble.classList.remove("typing"); assistantBubble.textContent = full; }
+    agoraseiMessages.push({ role: "assistant", content: full });
+    // Primeira vez que esse procedimento é respondido nesta conversa (sem ambiguidade) — memoriza
+    // a resposta pra da próxima vez que alguém perguntar sobre o mesmo procedimento (também como
+    // primeira pergunta de uma conversa nova) sair na hora, sem gastar IA de novo. Nunca memoriza
+    // a mensagem de erro genérica (isso ia "grudar" um erro como se fosse resposta de verdade).
+    if(matchedKbId && isFirstTurn && full !== "Não consegui gerar uma resposta agora. Tente reformular a pergunta."){
+      saveAgoraseiAnswerCache(matchedKbId, full).catch(err => console.error("Falha ao memorizar resposta do Agora Eu Sei:", err));
+    }
+    setAgoraseiMascotState("happy");
+    setTimeout(() => setAgoraseiMascotState("idle"), 2000);
+  }catch(err){
+    clearTimeout(stallTimer);
+    console.error("Falha ao gerar resposta do Agora Eu Sei:", err);
+    const isStall = err && err.name === "AbortError";
+    const errDetail = (err && (err.message || String(err))) || "erro desconhecido";
+    const isLoop = /^LOOP:/.test(errDetail);
+    const isRateLimit = /HTTP 429/.test(errDetail);
+    const isAuth = /HTTP 401/.test(errDetail);
+    const userMsg = isStall
+      ? `A resposta demorou demais e foi cancelada. Pode tentar mandar a pergunta de novo.`
+      : isLoop
+      ? `A resposta travou repetindo a mesma coisa sem parar (bug conhecido do modelo). Cancelei — tenta mandar a pergunta de novo, geralmente resolve.`
+      : isRateLimit
+      ? `Muita gente perguntando ao mesmo tempo agora. Espera alguns segundos e tenta de novo.`
+      : isAuth
+      ? `Sua sessão expirou. Atualize a página e faça login de novo.`
+      : `Deu um erro ao gerar a resposta. Tente mandar a pergunta de novo.\n\n[detalhe técnico: ${errDetail.slice(0, 300)}]`;
+    if(assistantBubble){ assistantBubble.classList.remove("typing"); assistantBubble.textContent = userMsg; }
+    setAgoraseiMascotState("idle");
+  }finally{
+    agoraseiGenerating = false;
+    if(sendBtn) sendBtn.disabled = false;
+  }
+}
+
+document.getElementById("open-agorasei-kb-btn").addEventListener("click", () => {
+  agoraseiKBEditingId = null;
+  document.getElementById("agorasei-kb-form").reset();
+  document.getElementById("agorasei-kb-edit-id").value = "";
+  document.getElementById("agorasei-kb-submit-btn").textContent = "Adicionar procedimento";
+  document.getElementById("agorasei-kb-cancel-edit").style.display = "none";
+  document.getElementById("agorasei-kb-msg").textContent = "";
+  renderAgoraseiKBList();
+  document.getElementById("agorasei-kb-modal-overlay").classList.add("open");
+});
+function closeAgoraseiKBModal(){
+  document.getElementById("agorasei-kb-modal-overlay").classList.remove("open");
+}
+document.getElementById("agorasei-kb-modal-close").addEventListener("click", closeAgoraseiKBModal);
+document.getElementById("agorasei-kb-modal-overlay").addEventListener("click", (e) => {
+  if(e.target.id === "agorasei-kb-modal-overlay") closeAgoraseiKBModal();
+});
+document.getElementById("agorasei-kb-cancel-edit").addEventListener("click", () => {
+  agoraseiKBEditingId = null;
+  document.getElementById("agorasei-kb-form").reset();
+  document.getElementById("agorasei-kb-edit-id").value = "";
+  document.getElementById("agorasei-kb-submit-btn").textContent = "Adicionar procedimento";
+  document.getElementById("agorasei-kb-cancel-edit").style.display = "none";
+});
+
+// Gera sugestão de sinônimos/palavras-chave a partir do título+conteúdo já digitados no
+// formulário, usando o modelo pequeno (é uma tarefa de extração simples, não precisa do 120b) —
+// poupa a pessoa de ter que pensar em toda variação de palavra que alguém poderia usar pra
+// perguntar sobre aquele procedimento. A pessoa ainda revisa e pode editar antes de salvar.
+document.getElementById("agorasei-kb-tags-ai-btn").addEventListener("click", async () => {
+  const title = document.getElementById("agorasei-kb-title").value.trim();
+  const content = document.getElementById("agorasei-kb-content").value.trim();
+  const btn = document.getElementById("agorasei-kb-tags-ai-btn");
+  const msgEl = document.getElementById("agorasei-kb-msg");
+  msgEl.style.color = ""; msgEl.textContent = "";
+  if(!title || !content){
+    msgEl.textContent = "Preencha título e conteúdo antes de gerar sinônimos.";
+    return;
+  }
+  if(!firebaseReady || storageMode !== "firebase"){
+    msgEl.textContent = "Indisponível no momento (sem conexão com o banco compartilhado).";
+    return;
+  }
+  const original = btn.textContent;
+  btn.disabled = true;
+  btn.textContent = "Gerando...";
+  try{
+    const resp = await agoraseiCallGroq({
+      messages: [
+        { role: "system", content: `Você extrai sinônimos e palavras-chave de um procedimento interno de atendimento, pra ajudar uma busca a encontrá-lo mesmo quando a pergunta não usa as palavras exatas do título. Leia o título e o conteúdo abaixo e devolva de 6 a 12 termos curtos separados por vírgula: palavras ou expressões curtas que um atendente usaria pra perguntar sobre isso, mas que NÃO aparecem no título — inclua valores em R$ e prazos em dias quando existirem no texto. Responda SÓ com a lista separada por vírgula, sem numeração, sem explicação, sem repetir o título.` },
+        { role: "user", content: `Título: ${title}\n\nConteúdo:\n${content.slice(0, 6000)}` },
+      ],
+      model: AGORASEI_ROUTING_MODEL_ID,
+      stream: false,
+      temperature: 0.3,
+      max_tokens: 150,
+    });
+    const data = await resp.json();
+    const raw = agoraseiExtractFinal((data.choices[0] && data.choices[0].message && data.choices[0].message.content) || "");
+    const cleaned = raw.replace(/\n/g, ", ").replace(/\s*,\s*/g, ", ").replace(/^,\s*/, "").trim();
+    if(!cleaned){
+      msgEl.textContent = "Não consegui gerar sugestões dessa vez. Tente de novo.";
+      return;
+    }
+    const tagsInput = document.getElementById("agorasei-kb-tags");
+    tagsInput.value = tagsInput.value.trim() ? `${tagsInput.value.trim()}, ${cleaned}` : cleaned;
+    msgEl.style.color = "var(--st-concluido)";
+    msgEl.textContent = "Sinônimos sugeridos — revise antes de salvar.";
+  }catch(err){
+    console.error("Falha ao gerar sinônimos com IA:", err);
+    msgEl.textContent = "Erro ao gerar sinônimos. Tente de novo.";
+  }finally{
+    btn.disabled = false;
+    btn.textContent = original;
+  }
+});
+document.getElementById("agorasei-kb-list").addEventListener("click", (e) => {
+  const editBtn = e.target.closest("[data-kb-edit]");
+  if(editBtn){
+    const id = editBtn.getAttribute("data-kb-edit");
+    const entry = AGORASEI_KB[id];
+    if(!entry) return;
+    agoraseiKBEditingId = id;
+    document.getElementById("agorasei-kb-edit-id").value = id;
+    document.getElementById("agorasei-kb-title").value = entry.title || "";
+    document.getElementById("agorasei-kb-content").value = entry.content || "";
+    document.getElementById("agorasei-kb-tags").value = entry.tags || "";
+    document.getElementById("agorasei-kb-submit-btn").textContent = "Salvar alterações";
+    document.getElementById("agorasei-kb-cancel-edit").style.display = "";
+    document.getElementById("agorasei-kb-title").focus();
+    return;
+  }
+  const delBtn = e.target.closest("[data-kb-delete]");
+  if(delBtn){ deleteAgoraseiKBEntry(delBtn.getAttribute("data-kb-delete")); return; }
+  const forgetBtn = e.target.closest("[data-kb-forget]");
+  if(forgetBtn){
+    clearAgoraseiAnswerCache(forgetBtn.getAttribute("data-kb-forget")).then(renderAgoraseiKBList);
+  }
+});
+document.getElementById("agorasei-kb-form").addEventListener("submit", withSubmitGuard(async (e) => {
+  e.preventDefault();
+  const msgEl = document.getElementById("agorasei-kb-msg");
+  msgEl.style.color = ""; msgEl.textContent = "";
+  const title = document.getElementById("agorasei-kb-title").value.trim();
+  const content = document.getElementById("agorasei-kb-content").value.trim();
+  const tags = document.getElementById("agorasei-kb-tags").value.trim();
+  if(!title || !content){ msgEl.textContent = "Preencha título e conteúdo."; return; }
+  if(!firebaseReady || storageMode !== "firebase"){ msgEl.textContent = "Indisponível no momento (sem conexão com o banco compartilhado)."; return; }
+  const id = agoraseiKBEditingId || ("kb_" + Date.now().toString(36) + Math.random().toString(36).slice(2, 7));
+  try{
+    await saveAgoraseiKBEntry(id, title, content, tags);
+    agoraseiKBEditingId = null;
+    document.getElementById("agorasei-kb-form").reset();
+    document.getElementById("agorasei-kb-edit-id").value = "";
+    document.getElementById("agorasei-kb-submit-btn").textContent = "Adicionar procedimento";
+    document.getElementById("agorasei-kb-cancel-edit").style.display = "none";
+    msgEl.style.color = "var(--st-concluido)";
+    msgEl.textContent = "Procedimento salvo.";
+  }catch(err){
+    console.error("Falha ao salvar procedimento:", err);
+    msgEl.textContent = "Erro ao salvar. Tente novamente.";
+  }
+}));
+
+document.getElementById("agorasei-kb-import-file").addEventListener("change", async (e) => {
+  const file = e.target.files && e.target.files[0];
+  e.target.value = ""; // permite selecionar o mesmo arquivo de novo depois, se precisar reimportar
+  if(!file) return;
+  const msgEl = document.getElementById("agorasei-kb-import-msg");
+  msgEl.style.color = ""; msgEl.textContent = "Importando...";
+  if(!firebaseReady || storageMode !== "firebase"){ msgEl.textContent = "Indisponível no momento (sem conexão com o banco compartilhado)."; return; }
+  try{
+    const text = await file.text();
+    const items = JSON.parse(text);
+    if(!Array.isArray(items)) throw new Error("O arquivo precisa ser uma lista (array) de itens {title, content}.");
+    const count = await importAgoraseiKBBatch(items);
+    msgEl.style.color = "var(--st-concluido)";
+    msgEl.textContent = `${count} procedimento${count === 1 ? "" : "s"} importado${count === 1 ? "" : "s"}.`;
+  }catch(err){
+    console.error("Falha ao importar base em lote:", err);
+    msgEl.style.color = "";
+    msgEl.textContent = "Não deu pra importar esse arquivo — confira se é um .json válido no formato certo.";
+  }
+});
+
+document.getElementById("agorasei-form").addEventListener("submit", (e) => {
+  e.preventDefault();
+  const input = document.getElementById("agorasei-input");
+  agoraseiSubmitQuestion(input.value);
+});
+document.getElementById("agorasei-messages").addEventListener("click", (e) => {
+  const chip = e.target.closest("[data-suggestion]");
+  if(chip) agoraseiSubmitQuestion(chip.getAttribute("data-suggestion"));
+});
+document.getElementById("agorasei-input").addEventListener("keydown", (e) => {
+  if(e.key === "Enter" && !e.shiftKey){
+    e.preventDefault();
+    document.getElementById("agorasei-form").requestSubmit();
+  }
+});
+document.getElementById("agorasei-input").addEventListener("input", (e) => {
+  e.target.style.height = "auto";
+  e.target.style.height = Math.min(e.target.scrollHeight, 120) + "px";
+});
+document.getElementById("agorasei-retry-btn").addEventListener("click", () => {
+  agoraseiEngineStatus = "idle";
+  initAgoraseiEngine();
+});
+
 // Trava o botão de salvar enquanto o envio ainda está em andamento — sem isso, um
 // clique duplo ou Enter repetido antes da primeira gravação terminar dispara o
 // mesmo formulário duas vezes, criando item/rotina/setor/usuário/acesso duplicado.
@@ -5386,6 +6572,7 @@ function renderTabs(){
   else if(state.tab === "validations") renderValidations();
   else if(state.tab === "archive") renderArchive();
   else if(state.tab === "admin") renderAdminLists();
+  else if(state.tab === "agorasei") renderAgorasei();
 
   updateSummary();
   updateSideNavIndicator();
@@ -6643,6 +7830,22 @@ async function handleAuthedUser(fbUser){
         startPresenceHeartbeat();
       }catch(e){
         console.error("Falha ao iniciar presença:", e);
+      }
+      try{
+        await ensureAgoraseiDoc();
+        if(agoraseiSnapUnsub){ try{ agoraseiSnapUnsub(); }catch(e){} }
+        agoraseiSnapUnsub = fsOnSnapshot(AGORASEI_DOC, (snap) => {
+          if(snap.exists()){
+            AGORASEI_KB = snap.data().kb || {};
+            AGORASEI_ANSWER_CACHE = snap.data().cache || {};
+            renderAgoraseiKBList();
+            renderAgoraseiSuggestions();
+          }
+        }, (err) => {
+          console.error("Erro na sincronização da base do Agora Eu Sei:", err);
+        });
+      }catch(e){
+        console.error("Falha ao iniciar a base do Agora Eu Sei:", e);
       }
       note.textContent = "☁ Conectado ao banco compartilhado — dados sincronizados em tempo real para todos que acessam este link.";
       startAlertsInterval();
