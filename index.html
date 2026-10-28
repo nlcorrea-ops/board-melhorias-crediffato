@@ -2120,6 +2120,70 @@
   .modal, .demand-modal{border-color:color-mix(in srgb, var(--tc) 30%, var(--hairline));}
   .dm-head{box-shadow:inset 0 3px 0 var(--tc);}
 
+  /* ---------- Login: vitrine animada à esquerda, cartão à direita ---------- */
+  #login-screen{gap:72px;}
+  .login-showcase{position:relative; z-index:1; width:min(520px, 46vw); transition:opacity .5s ease, transform .6s cubic-bezier(.4,0,.2,1);}
+  #login-screen:has(.login-card.converging) .login-showcase{opacity:0; transform:translateX(-40px) scale(.97);}
+  .ls-title{
+    margin:0 0 12px; font-size:clamp(30px, 3.2vw, 44px); line-height:1.08; letter-spacing:-.02em; font-weight:700; text-wrap:balance;
+    background:linear-gradient(90deg, var(--text-hi), var(--text-hi) 40%, var(--brand-red) 60%, #ff7a8f 75%, var(--text-hi) 90%);
+    background-size:250% 100%; -webkit-background-clip:text; background-clip:text; color:transparent; animation:runLine 9s linear infinite;
+  }
+  .ls-sub{margin:0 0 28px; font-size:15.5px; line-height:1.55; color:var(--text-mid); max-width:44ch;}
+  .ls-board{
+    --step:146px; position:relative; display:grid; grid-template-columns:repeat(3, 128px); gap:18px; padding:16px;
+    border-radius:16px; background:var(--glass-1); border:1px solid var(--hairline); box-shadow:inset 0 1px 0 rgba(255,255,255,.06);
+    width:max-content;
+  }
+  .lsb-col{display:flex; flex-direction:column; gap:8px; min-height:150px;}
+  .lsb-head{display:flex; align-items:center; gap:6px; font-size:12px; color:var(--text-mid); margin-bottom:2px;}
+  .lsb-head i{width:7px; height:7px; border-radius:2px;}
+  .lsb-ghost{display:block; height:44px; border-radius:8px; background:var(--ink-2); border:1px solid var(--hairline);}
+  .lsb-mover{
+    position:absolute; left:16px; top:44px; width:128px; height:52px; padding:10px 10px 10px 14px; border-radius:8px;
+    background:var(--ink-1); border:1px solid var(--hairline); display:flex; flex-direction:column; gap:7px; overflow:hidden;
+    box-shadow:0 14px 30px -12px rgba(0,0,0,.6); animation:lsMove 7s cubic-bezier(.6,0,.2,1) infinite;
+  }
+  .lsb-mover b{display:block; height:6px; width:84%; border-radius:3px; background:var(--text-mid); opacity:.55;}
+  .lsb-mover b.short{width:52%; opacity:.3;}
+  .lsb-stripe{position:absolute; left:0; top:0; bottom:0; width:4px; animation:lsStripe 7s steps(1, end) infinite;}
+  .lsb-check{
+    position:absolute; right:8px; top:50%; width:20px; height:20px; margin-top:-10px; border-radius:50%;
+    display:flex; align-items:center; justify-content:center; background:var(--st-concluido); color:var(--ink-0);
+    opacity:0; animation:lsCheck 7s ease infinite;
+  }
+  .lsb-check svg{width:12px; height:12px;}
+  @keyframes lsMove{
+    0%, 14%{transform:translate(0, 0) rotate(0); opacity:1;}
+    22%{transform:translate(calc(var(--step) * .5), -6px) rotate(-5deg) scale(1.06);}
+    30%, 48%{transform:translate(var(--step), 0) rotate(0) scale(1);}
+    56%{transform:translate(calc(var(--step) * 1.5), -6px) rotate(5deg) scale(1.06);}
+    64%, 88%{transform:translate(calc(var(--step) * 2), 0) rotate(0) scale(1); opacity:1;}
+    94%{transform:translate(calc(var(--step) * 2), 0) scale(.9); opacity:0;}
+    95%{transform:translate(0, 0); opacity:0;}
+    100%{transform:translate(0, 0); opacity:1;}
+  }
+  @keyframes lsStripe{0%{background:var(--st-aberto);} 26%{background:var(--st-andamento);} 60%{background:var(--st-concluido);} 95%{background:var(--st-aberto);}}
+  @keyframes lsCheck{0%, 64%{opacity:0; transform:scale(.3);} 70%{opacity:1; transform:scale(1.25);} 74%, 88%{opacity:1; transform:scale(1);} 94%, 100%{opacity:0;}}
+  .ls-features{list-style:none; margin:26px 0 0; padding:0; display:flex; flex-direction:column; gap:10px;}
+  .ls-features li{display:flex; align-items:center; gap:10px; font-size:14px; color:var(--text-hi); opacity:0; animation:rowIn .6s cubic-bezier(.16,1,.3,1) both;}
+  .ls-features li:nth-child(1){animation-delay:.35s;} .ls-features li:nth-child(2){animation-delay:.47s;} .ls-features li:nth-child(3){animation-delay:.59s;}
+  .ls-features i{width:8px; height:8px; border-radius:50%; background:var(--c); box-shadow:0 0 10px 1px color-mix(in srgb, var(--c) 70%, transparent);}
+  .ls-mascot{position:absolute; right:-6px; bottom:-18px; width:118px; height:auto; animation:mascotFloat 4s ease-in-out infinite; filter:drop-shadow(0 12px 18px rgba(0,0,0,.35));}
+  @keyframes mascotFloat{0%, 100%{transform:translateY(0) rotate(-2deg);} 50%{transform:translateY(-10px) rotate(2deg);}}
+
+  .login-card h2{
+    background:linear-gradient(90deg, var(--text-hi), var(--brand-red), var(--text-hi)); background-size:200% 100%;
+    -webkit-background-clip:text; background-clip:text; color:transparent; animation:runLine 6s linear infinite;
+  }
+  .login-card .field input:focus{box-shadow:0 0 0 3px var(--brand-red-dim), 0 0 22px -6px var(--brand-red);}
+  @media (max-width:980px){
+    .login-showcase{display:none;}
+  }
+  @media (prefers-reduced-motion:reduce){
+    .ls-title, .lsb-mover, .lsb-stripe, .lsb-check, .ls-features li, .ls-mascot, .login-card h2{animation:none !important; opacity:1;}
+    .lsb-mover{left:calc(16px + 2 * 146px);} .lsb-stripe{background:var(--st-concluido);} .lsb-check{opacity:1;}
+  }
   @media (prefers-reduced-motion:reduce){
     .aurora i, .particles i, header::after, .welcome-name, .beam::after, .add-btn, .btn-primary, .routine-check-action,
     .tab-panel-head h2::before, .bar-fill, .routine-check-dot.just-done, :is(.routine-check-row, .access-row, #online-list .admin-list-item, #sector-list .admin-list-item, .history-item, .comment-item, .agorasei-kb-item, .rp-activity-item){animation:none !important;}
@@ -2160,7 +2224,24 @@
 </div>
 
 <div id="login-screen">
-  <div class="login-card" id="login-card">
+  <!-- Vitrine do login (só decoração: nada aqui é dado real, a tela aparece antes de autenticar) -->
+  <section class="login-showcase" aria-hidden="true">
+    <h2 class="ls-title">Melhorias que saem do papel.</h2>
+    <p class="ls-sub">Demandas, rotinas e validações da operação num só lugar, atualizadas em tempo real pra toda a equipe.</p>
+    <div class="ls-board">
+      <div class="lsb-col"><span class="lsb-head"><i style="background:var(--st-aberto)"></i>Em aberto</span><i class="lsb-ghost"></i><i class="lsb-ghost"></i></div>
+      <div class="lsb-col"><span class="lsb-head"><i style="background:var(--st-andamento)"></i>Em andamento</span><i class="lsb-ghost"></i></div>
+      <div class="lsb-col"><span class="lsb-head"><i style="background:var(--st-concluido)"></i>Concluído</span><i class="lsb-ghost"></i><i class="lsb-ghost"></i></div>
+      <div class="lsb-mover"><span class="lsb-stripe"></span><b></b><b class="short"></b><span class="lsb-check"><svg viewBox="0 0 16 16" fill="none" aria-hidden="true"><path d="M13.5 4.5L6 12L2.5 8.5" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"/></svg></span></div>
+    </div>
+    <ul class="ls-features">
+      <li><i style="--c:var(--op)"></i>Board por setor e Kanban</li>
+      <li><i style="--c:var(--pa)"></i>Rotinas do dia a dia</li>
+      <li><i style="--c:#c792ea"></i>Agora Eu Sei, a IA dos procedimentos</li>
+    </ul>
+    <img class="ls-mascot" src="fato-happy.svg" alt="" />
+  </section>
+  <div class="login-card beam" id="login-card">
     <img src="logo.png" alt="Crediffato" />
     <h2>Crediffato - Gestão</h2>
     <p class="login-sub">Entre com sua conta para acessar a plataforma.</p>
@@ -2195,7 +2276,7 @@
     <p class="login-credit">Created by — Natanael Correa</p>
   </div>
 
-  <div class="login-card" id="reset-card" style="display:none;">
+  <div class="login-card beam" id="reset-card" style="display:none;">
     <img src="logo.png" alt="Crediffato" />
     <h2>Defina sua senha</h2>
     <p class="login-sub" id="reset-sub">Escolha uma senha para acessar a plataforma.</p>
