@@ -1722,6 +1722,53 @@
   .agorasei-kb-item-cache-empty{color:var(--text-low);}
   .agorasei-kb-cache-forget{font-size:11px; color:var(--pa); background:none; border:1px solid var(--hairline); border-radius:6px; padding:2px 8px; cursor:pointer;}
   .agorasei-kb-cache-forget:hover{color:var(--text-hi); border-color:var(--pa);}
+
+  /* Foco do dia: resumo do que pede atenção, logo abaixo da saudação */
+  .focus-chips{display:flex; flex-wrap:wrap; gap:8px; margin-top:14px;}
+  .focus-chip{
+    display:inline-flex; align-items:center; gap:7px; padding:6px 12px; border-radius:999px;
+    font-family:var(--font-mono); font-size:12px; color:var(--text-mid);
+    background:var(--glass-1); border:1px solid var(--hairline);
+  }
+  .focus-chip b{color:var(--text-hi); font-weight:600;}
+  .focus-chip i{width:7px; height:7px; border-radius:50%; background:var(--c, var(--text-low)); flex:none;}
+  .focus-chip.crit{--c:var(--sev-critica);}
+  .focus-chip.late{--c:var(--sev-critica); border-color:color-mix(in srgb, var(--sev-critica) 45%, transparent);}
+  .focus-chip.soon{--c:var(--st-andamento);}
+  .focus-chip.doing{--c:var(--st-andamento);}
+  .focus-chip.ok{--c:var(--st-concluido);}
+
+  /* Barra de progresso da operação: proporção aberto / andamento / concluído */
+  .pulse-wrap{margin-top:12px;}
+  .pulse-bar{display:flex; height:8px; border-radius:999px; overflow:hidden; background:var(--hairline); gap:2px;}
+  .pulse-bar span{height:100%; transition:flex-grow .6s cubic-bezier(.2,.8,.2,1);}
+  .pulse-bar .aberto{background:var(--st-aberto);}
+  .pulse-bar .andamento{background:var(--st-andamento);}
+  .pulse-bar .concluido{background:var(--st-concluido);}
+  .pulse-caption{display:flex; justify-content:space-between; margin-top:6px; font-family:var(--font-mono); font-size:11px; color:var(--text-low);}
+  .pulse-caption b{color:var(--st-concluido); font-weight:600;}
+
+  /* Estado vazio com o mascote Fato */
+  .empty-state{display:flex; flex-direction:column; align-items:center; text-align:center; gap:6px; padding:22px 12px;}
+  .empty-state img{width:72px; height:72px; opacity:.9;}
+  .empty-state .es-title{font-size:14px; color:var(--text-hi); font-weight:600;}
+  .empty-state .es-hint{font-size:12.5px; color:var(--text-low); max-width:260px;}
+
+  /* Atalhos de teclado */
+  .kbd-dialog{
+    border:1px solid var(--hairline); border-radius:var(--radius); padding:22px 24px; width:min(420px, calc(100vw - 32px));
+    background:var(--ink-1); color:var(--text-hi); box-shadow:0 24px 60px rgba(0,0,0,.45);
+  }
+  .kbd-dialog::backdrop{background:rgba(0,0,0,.55); backdrop-filter:blur(2px);}
+  .kbd-dialog h2{margin:0 0 14px; font-size:16px;}
+  .kbd-dialog dl{display:grid; grid-template-columns:auto 1fr; gap:10px 16px; margin:0; align-items:center;}
+  .kbd-dialog dd{margin:0; color:var(--text-mid); font-size:13.5px;}
+  .kbd-dialog kbd{
+    font-family:var(--font-mono); font-size:12px; padding:3px 8px; border-radius:6px; color:var(--text-hi);
+    border:1px solid var(--hairline); border-bottom-width:2px; background:var(--glass-1); white-space:nowrap;
+  }
+  .kbd-dialog .kbd-close{margin-top:18px; width:100%; min-height:40px;}
+  @media (prefers-reduced-motion:reduce){ .pulse-bar span{transition:none;} }
 </style>
 </head>
 <body>
@@ -1823,6 +1870,7 @@
       </div>
       <h1 id="app-title">Board de Melhorias</h1>
       <p class="sub" id="app-sub">Guia de melhorias internas e institucionais, organizado por setor e por responsável. Clique em um cartão para ver o comparativo completo; use os campos de status e responsável para acompanhar o andamento.</p>
+      <div class="focus-chips" id="focus-chips" aria-label="Foco do dia"></div>
     </div>
     <div class="meta">
       <div class="meta-icons">
@@ -1971,6 +2019,10 @@
         <div class="sumcard st-aberto"><div class="n" id="sum-st-aberto">7</div><div class="l">Em aberto</div></div>
         <div class="sumcard st-andamento"><div class="n" id="sum-st-andamento">0</div><div class="l">Em andamento</div></div>
         <div class="sumcard st-concluido"><div class="n" id="sum-st-concluido">0</div><div class="l">Concluído</div></div>
+      </div>
+      <div class="pulse-wrap">
+        <div class="pulse-bar" id="pulse-bar" role="img"></div>
+        <div class="pulse-caption" id="pulse-caption"></div>
       </div>
     </div>
 
@@ -4252,7 +4304,7 @@ function render(){
         <span class="name"><span class="rail-dot"${dotStyle}></span>${group.label}</span>
         <span class="count">${items.length}</span>
       </div>
-      <div class="col-body">${items.map((it, i) => cardHTML(it, i)).join("") || '<p class="snippet" style="padding:8px 2px;">Nenhum item nesse filtro.</p>'}</div>
+      <div class="col-body">${items.map((it, i) => cardHTML(it, i)).join("") || emptyStateHTML("Nada por aqui", "Nenhum item nesse filtro.")}</div>
     `;
     board.appendChild(col);
   });
@@ -4290,7 +4342,7 @@ function renderBacklog(){
   if(!list) return;
   const focus = preserveFocusedObsDraft();
   const items = DATA.filter(d => itemStage(d) === "backlog" && !isArchived(d) && passesFilter(d));
-  list.innerHTML = items.map((it, i) => cardHTML(it, i)).join("") || '<p class="snippet" style="padding:8px 2px;">Backlog vazio.</p>';
+  list.innerHTML = items.map((it, i) => cardHTML(it, i)).join("") || emptyStateHTML("Backlog vazio", 'Toda ideia nova começa aqui. Use "+ Nova demanda" para registrar a próxima.');
   wireCardListeners(list);
   restoreFocusedObs(focus);
   const addBtn = document.getElementById("open-add-modal-backlog");
@@ -4302,7 +4354,7 @@ function renderValidations(){
   if(!list) return;
   const focus = preserveFocusedObsDraft();
   const items = DATA.filter(d => d.status === "concluido" && !validationInfo(d) && passesFilterIgnoringStatus(d));
-  list.innerHTML = items.map((it, i) => cardHTML(it, i)).join("") || '<p class="snippet" style="padding:8px 2px;">Nada pendente de validação no momento.</p>';
+  list.innerHTML = items.map((it, i) => cardHTML(it, i)).join("") || emptyStateHTML("Tudo validado", "Nada pendente de validação no momento.", "happy");
   wireCardListeners(list);
   restoreFocusedObs(focus);
 }
@@ -4439,7 +4491,7 @@ function renderArchive(){
   const query = state.archiveSearch.trim().toLowerCase();
   const items = DATA.filter(d => isArchived(d) && passesFilterIgnoringStatus(d))
     .filter(d => !query || d.title.toLowerCase().includes(query) || d.id.toLowerCase().includes(query));
-  list.innerHTML = items.map((it, i) => cardHTML(it, i)).join("") || '<p class="snippet" style="padding:8px 2px;">Nenhuma demanda arquivada encontrada.</p>';
+  list.innerHTML = items.map((it, i) => cardHTML(it, i)).join("") || emptyStateHTML("Arquivo vazio", "Nenhuma demanda arquivada encontrada.");
   wireCardListeners(list);
   restoreFocusedObs(focus);
   renderArchiveTrend();
@@ -6731,6 +6783,45 @@ function animateCountTo(el, target){
   }
   requestAnimationFrame(frame);
 }
+// Estado vazio com o mascote: o "happy" quando não sobrou nada pendente, o "idle" no resto.
+function emptyStateHTML(title, hint, mood){
+  return `<div class="empty-state"><img src="fato-${mood || "idle"}.svg" alt="" aria-hidden="true"><div class="es-title">${title}</div><div class="es-hint">${hint}</div></div>`;
+}
+
+// Foco do dia + barra de progresso: recalculados junto com o resumo, sempre sobre o que a pessoa vê.
+function updateFocusAndPulse(vd){
+  const open = vd.filter(d => d.status !== "concluido");
+  const counts = {
+    crit: open.filter(d => d.sev === "critica").length,
+    late: open.filter(d => dueInfo(d).state === "atrasado").length,
+    soon: open.filter(d => dueInfo(d).state === "proximo").length,
+    doing: open.filter(d => d.status === "andamento").length,
+  };
+  const chipsEl = document.getElementById("focus-chips");
+  if(chipsEl){
+    const chips = [
+      ["late", counts.late, "atrasada", "atrasadas"],
+      ["crit", counts.crit, "crítica em aberto", "críticas em aberto"],
+      ["soon", counts.soon, "vence em até 3 dias", "vencem em até 3 dias"],
+      ["doing", counts.doing, "em andamento", "em andamento"],
+    ].filter(c => c[1] > 0);
+    chipsEl.innerHTML = chips.length
+      ? chips.map(([cls, n, one, many]) => `<span class="focus-chip ${cls}"><i></i><b>${n}</b> ${n === 1 ? one : many}</span>`).join("")
+      : `<span class="focus-chip ok"><i></i>Tudo em dia por aqui</span>`;
+  }
+  const bar = document.getElementById("pulse-bar");
+  const cap = document.getElementById("pulse-caption");
+  if(bar && cap){
+    const n = { aberto:0, andamento:0, concluido:0 };
+    vd.forEach(d => { if(n[d.status] !== undefined) n[d.status]++; });
+    const total = vd.length;
+    const pct = total ? Math.round((n.concluido / total) * 100) : 0;
+    bar.innerHTML = ["aberto", "andamento", "concluido"].filter(k => n[k]).map(k => `<span class="${k}" style="flex-grow:${n[k]}"></span>`).join("");
+    bar.setAttribute("aria-label", `${n.aberto} em aberto, ${n.andamento} em andamento, ${n.concluido} concluídas`);
+    cap.innerHTML = `<span>Progresso do board</span><span><b>${pct}%</b> concluído</span>`;
+  }
+}
+
 function updateSummary(){
   const vd = visibleData().filter(d => itemStage(d) === "board" && !isArchived(d));
   const criticaCount = vd.filter(d=>d.sev==="critica").length;
@@ -6742,6 +6833,7 @@ function updateSummary(){
   animateCountTo(document.getElementById("sum-st-aberto"), vd.filter(d=>d.status==="aberto").length);
   animateCountTo(document.getElementById("sum-st-andamento"), vd.filter(d=>d.status==="andamento").length);
   animateCountTo(document.getElementById("sum-st-concluido"), vd.filter(d=>d.status==="concluido").length);
+  updateFocusAndPulse(vd);
 }
 
 async function updateStatus(id, value, reason){
@@ -7283,6 +7375,31 @@ document.addEventListener("keydown", (e) => {
   }
 });
 document.getElementById("global-search-btn").addEventListener("click", openGlobalSearch);
+
+// Atalhos de uma tecla: só valem fora de campos de texto e sem nenhuma janela aberta,
+// pra nunca roubar o que a pessoa está digitando.
+document.addEventListener("keydown", (e) => {
+  if(e.ctrlKey || e.metaKey || e.altKey || e.repeat) return;
+  const t = e.target;
+  if(t && (t.isContentEditable || /^(INPUT|TEXTAREA|SELECT)$/.test(t.tagName))) return;
+  const kbd = document.getElementById("kbd-dialog");
+  if(document.querySelector(".open[id$='-overlay']") || (kbd && kbd.open)) return;
+  if(!document.getElementById("main-nav") || document.getElementById("main-nav").offsetParent === null) return;
+
+  if(e.key === "?"){ e.preventDefault(); kbd.showModal(); return; }
+  if(e.key === "/"){ e.preventDefault(); openGlobalSearch(); return; }
+  if(/^[1-8]$/.test(e.key)){
+    const tabs = [...document.querySelectorAll("#main-nav button[data-tab]")].filter(b => b.offsetParent !== null);
+    const btn = tabs[Number(e.key) - 1];
+    if(btn){ e.preventDefault(); btn.click(); }
+    return;
+  }
+  if(e.key.toLowerCase() === "n"){
+    const add = document.getElementById(state.tab === "backlog" ? "open-add-modal-backlog" : "open-add-modal");
+    if(state.tab !== "board" && state.tab !== "backlog") return;
+    if(add && add.offsetParent !== null){ e.preventDefault(); add.click(); }
+  }
+});
 document.getElementById("global-search-close").addEventListener("click", closeGlobalSearch);
 document.getElementById("global-search-overlay").addEventListener("click", (e) => {
   if(e.target.id === "global-search-overlay") closeGlobalSearch();
@@ -8269,5 +8386,16 @@ async function handlePasswordResetLink(oobCode){
   }
 })();
 </script>
+<dialog class="kbd-dialog" id="kbd-dialog" aria-labelledby="kbd-dialog-title">
+  <h2 id="kbd-dialog-title">Atalhos de teclado</h2>
+  <dl>
+    <dt><kbd>1</kbd> … <kbd>8</kbd></dt><dd>Ir para a aba do menu, na ordem</dd>
+    <dt><kbd>N</kbd></dt><dd>Nova demanda (no Board e no Backlog)</dd>
+    <dt><kbd>/</kbd> ou <kbd>Ctrl</kbd>+<kbd>K</kbd></dt><dd>Busca global</dd>
+    <dt><kbd>?</kbd></dt><dd>Mostrar estes atalhos</dd>
+    <dt><kbd>Esc</kbd></dt><dd>Fechar janelas</dd>
+  </dl>
+  <form method="dialog"><button class="add-btn kbd-close">Entendi</button></form>
+</dialog>
 </body>
 </html>
