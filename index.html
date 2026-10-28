@@ -1590,57 +1590,77 @@
   }
   .agorasei-mascot-mobile-stage .agorasei-mascot-charwrap{width:44px; height:44px; bottom:-4px;}
   .agorasei-messages{
-    flex:1; overflow-y:auto; display:flex; flex-direction:column; gap:14px;
-    background:var(--ink-1); border:1px solid var(--hairline); border-radius:16px; padding:18px;
+    flex:1; overflow-y:auto; display:flex; flex-direction:column; gap:22px; scroll-behavior:smooth;
+    contain:inline-size; /* texto longo sem quebra (fonte da resposta) não alarga a página no celular */
+    background:var(--ink-1); border:1px solid var(--hairline); border-radius:18px; padding:24px clamp(14px, 3vw, 28px);
   }
-  .agorasei-empty{margin:auto; text-align:center; color:var(--text-low); font-size:13px; max-width:46ch; display:flex; flex-direction:column; align-items:center; gap:14px;}
+  .agorasei-empty{margin:auto; text-align:center; color:var(--text-mid); font-size:13.5px; max-width:52ch; display:flex; flex-direction:column; align-items:center; gap:10px;}
+  .agorasei-empty img{width:84px; height:84px;}
+  .agorasei-empty h3{margin:4px 0 0; font-size:19px; font-weight:700; color:var(--text-hi); text-wrap:balance;}
+  .agorasei-empty p{margin:0 0 8px;}
   .agorasei-suggestions{display:flex; flex-wrap:wrap; gap:8px; justify-content:center;}
   .agorasei-suggestion-chip{
-    background:var(--ink-2); border:1px solid var(--hairline); border-radius:999px; padding:7px 14px; font-size:12px; color:var(--text-hi); cursor:pointer;
-    transition:border-color .15s ease, color .15s ease;
+    background:var(--ink-2); border:1px solid var(--hairline); border-radius:999px; padding:7px 14px; font-size:12.5px; color:var(--text-hi); cursor:pointer;
+    font-family:var(--font-display); transition:border-color .15s ease, color .15s ease, background .15s ease;
     opacity:0; animation:agoraseiChipIn .3s ease-out forwards;
   }
-  .agorasei-suggestion-chip:hover{border-color:var(--pa); color:var(--pa);}
+  .agorasei-suggestion-chip:hover{border-color:var(--pa); color:var(--pa); background:#8b8dfb14;}
   @keyframes agoraseiChipIn{0%{opacity:0; transform:translateY(4px);} 100%{opacity:1; transform:translateY(0);}}
-  .agorasei-msg{display:flex; gap:10px; max-width:78%; animation:agoraseiMsgIn .32s ease-out;}
+  .agorasei-msg{display:flex; gap:12px; min-width:0; max-width:min(78ch, 88%); animation:agoraseiMsgIn .32s ease-out;}
   @keyframes agoraseiMsgIn{0%{opacity:0; transform:translateY(7px);} 100%{opacity:1; transform:translateY(0);}}
-  .agorasei-msg-user{align-self:flex-end; flex-direction:row-reverse;}
+  .agorasei-msg-user{align-self:flex-end;}
   .agorasei-msg-avatar{
-    width:28px; height:28px; border-radius:50%; flex-shrink:0; display:flex; align-items:center; justify-content:center;
-    font-size:11px; font-weight:700; background:var(--ink-3); color:var(--text-mid);
+    width:34px; height:34px; border-radius:50%; flex-shrink:0; margin-top:2px;
+    background:#8b8dfb26 url("fato-idle.svg") no-repeat 50% 50%/118%; box-shadow:0 0 0 1px #8b8dfb40;
   }
-  .agorasei-msg-user .agorasei-msg-avatar{background:var(--brand-red-dim); color:var(--brand-red);}
-  .agorasei-msg-assistant .agorasei-msg-avatar{
-    background:#8b8dfb2e url("fato-idle.svg") no-repeat 50% 50%/118%;
-    color:transparent;
-  }
+  .agorasei-msg-body{display:flex; flex-direction:column; gap:6px; min-width:0;}
+  .agorasei-msg-head{display:flex; align-items:baseline; gap:8px; min-width:0; font-size:12px; color:var(--text-hi);}
+  .agorasei-msg-source{min-width:0; font-family:var(--font-mono); font-size:11px; color:var(--text-low); overflow:hidden; text-overflow:ellipsis; white-space:nowrap;}
   .agorasei-msg-bubble{
-    background:var(--ink-2); border:1px solid var(--hairline); border-radius:14px; padding:10px 13px;
-    font-size:13.5px; line-height:1.5; white-space:pre-wrap; word-break:break-word; position:relative;
+    font-size:14px; line-height:1.65; white-space:pre-wrap; word-break:break-word; color:var(--text-hi);
+    background:var(--ink-2); border:1px solid var(--hairline); border-radius:4px 16px 16px 16px; padding:12px 16px;
   }
-  .agorasei-msg-bubble::before{
-    content:""; position:absolute; top:11px; width:8px; height:8px;
-    background:var(--ink-2); border-left:1px solid var(--hairline); border-bottom:1px solid var(--hairline);
+  .agorasei-msg-user .agorasei-msg-bubble{
+    background:linear-gradient(135deg, #d40f3a38, #d40f3a1f); border-color:#d40f3a40; border-radius:16px 16px 4px 16px;
   }
-  .agorasei-msg-assistant .agorasei-msg-bubble::before{left:-4px; transform:rotate(45deg);}
-  .agorasei-msg-user .agorasei-msg-bubble::before{right:-4px; transform:rotate(225deg); background:var(--brand-red-dim); border-color:var(--brand-red-dim);}
-  .agorasei-msg-user .agorasei-msg-bubble{background:var(--brand-red-dim); border-color:var(--brand-red-dim);}
-  .agorasei-msg-bubble.typing{color:var(--text-low);}
-  .agorasei-cursor{display:inline-block; width:2px; height:12px; background:var(--pa); margin-left:2px; vertical-align:-2px; animation:agoraseiCursorBlink .8s step-start infinite;}
+  .agorasei-msg-bubble.typing{color:var(--text-low); width:fit-content;}
+  .agorasei-msg-bubble.is-error{background:#d8a94a14; border-color:#d8a94a40; color:var(--text-mid); font-size:13px;}
+  .agorasei-msg-actions{display:flex; flex-wrap:wrap; gap:6px; align-items:center;}
+  .agorasei-choice{animation:none; opacity:1;}
+  .agorasei-act{
+    background:none; border:1px solid transparent; border-radius:8px; padding:3px 8px; cursor:pointer;
+    font:500 11.5px var(--font-display); color:var(--text-low); transition:color .15s ease, border-color .15s ease;
+  }
+  .agorasei-act:hover{color:var(--text-hi); border-color:var(--hairline);}
+  @media (hover:hover){
+    .agorasei-msg .agorasei-act{opacity:0; transition:opacity .15s ease, color .15s ease;}
+    .agorasei-msg:hover .agorasei-act, .agorasei-act:focus-visible{opacity:1;}
+  }
+  .agorasei-cursor{display:inline-block; width:2px; height:13px; background:var(--pa); margin-left:2px; vertical-align:-2px; animation:agoraseiCursorBlink .8s step-start infinite;}
   @keyframes agoraseiCursorBlink{50%{opacity:0;}}
-  .agorasei-typing-dots{display:inline-flex; gap:3px; vertical-align:middle;}
-  .agorasei-typing-dots span{width:5px; height:5px; border-radius:50%; background:var(--text-low); animation:agoraseiTyping 1s ease-in-out infinite;}
+  .agorasei-typing-dots{display:inline-flex; gap:4px; vertical-align:middle; padding:3px 0;}
+  .agorasei-typing-dots span{width:6px; height:6px; border-radius:50%; background:var(--pa); animation:agoraseiTyping 1s ease-in-out infinite;}
   .agorasei-typing-dots span:nth-child(2){animation-delay:.15s;}
   .agorasei-typing-dots span:nth-child(3){animation-delay:.3s;}
-  @keyframes agoraseiTyping{0%,60%,100%{opacity:.3; transform:translateY(0);} 30%{opacity:1; transform:translateY(-2px);}}
-  .agorasei-input-row{display:flex; gap:10px; align-items:flex-end;}
-  .agorasei-input-row textarea{
-    flex:1; resize:none; max-height:120px; background:var(--ink-1); border:1px solid var(--hairline); border-radius:12px;
-    color:var(--text-hi); font-family:var(--font-display); font-size:13.5px; padding:11px 14px;
+  @keyframes agoraseiTyping{0%,60%,100%{opacity:.3; transform:translateY(0);} 30%{opacity:1; transform:translateY(-3px);}}
+  .agorasei-composer{display:flex; flex-direction:column; gap:6px;}
+  .agorasei-input-row{
+    display:flex; gap:8px; align-items:flex-end; background:var(--ink-1); border:1px solid var(--hairline);
+    border-radius:18px; padding:6px 6px 6px 16px; transition:border-color .15s ease, box-shadow .15s ease;
   }
-  .agorasei-input-row textarea:focus-visible{outline:none; border-color:var(--pa);}
-  #agorasei-send-btn{transition:transform .1s ease, filter .15s ease;}
-  #agorasei-send-btn:active{transform:scale(.94);}
+  .agorasei-input-row:focus-within{border-color:var(--pa); box-shadow:0 0 0 3px #8b8dfb26;}
+  .agorasei-input-row textarea{
+    flex:1; resize:none; max-height:140px; background:none; border:none; outline:none; padding:9px 0;
+    color:var(--text-hi); font-family:var(--font-display); font-size:14px; line-height:1.5;
+  }
+  #agorasei-send-btn{
+    width:40px; height:40px; border-radius:50%; border:none; flex-shrink:0; cursor:pointer; display:grid; place-items:center;
+    background:var(--brand-red); color:#fff; transition:transform .1s ease, filter .15s ease, opacity .15s ease;
+  }
+  #agorasei-send-btn:hover{filter:brightness(1.1);}
+  #agorasei-send-btn:active{transform:scale(.92);}
+  #agorasei-send-btn:disabled{opacity:.45; cursor:default;}
+  .agorasei-hint{margin:0; padding-left:16px; font-size:11px; color:var(--text-low);}
 
   /* Mascote "Fato" — painel ao lado do chat, reage ao andamento da conversa (parado / pensando
      enquanto gera resposta / feliz quando termina) em vez de ficar estático. */
@@ -2686,14 +2706,19 @@
         </div>
         <div class="agorasei-messages" id="agorasei-messages">
           <div class="agorasei-empty" id="agorasei-empty-state">
-            <p>Pergunte algo sobre os procedimentos da Crediffato — convênio, negociações, ouvidoria e mais.</p>
+            <img src="fato-happy.svg" alt="" aria-hidden="true">
+            <h3>Em que posso ajudar?</h3>
+            <p>Conte a situação do cliente do jeito que ela é: datas, valores e o que você precisa decidir. Eu respondo com base nos procedimentos da Crediffato.</p>
             <div class="agorasei-suggestions" id="agorasei-suggestions"></div>
           </div>
         </div>
-        <form class="agorasei-input-row" id="agorasei-form">
-          <textarea id="agorasei-input" rows="1" maxlength="1000" placeholder="Digite sua pergunta..." required></textarea>
-          <button type="submit" class="btn-primary" id="agorasei-send-btn">Enviar</button>
-        </form>
+        <div class="agorasei-composer">
+          <form class="agorasei-input-row" id="agorasei-form">
+            <textarea id="agorasei-input" rows="1" maxlength="1000" placeholder="Descreva a situação do cliente…" required aria-label="Sua pergunta"></textarea>
+            <button type="submit" id="agorasei-send-btn" aria-label="Enviar"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 19V5M5 12l7-7 7 7"/></svg></button>
+          </form>
+          <p class="agorasei-hint">Enter envia · Shift+Enter quebra a linha</p>
+        </div>
       </div>
       <div class="agorasei-mascot-col">
         <div class="agorasei-mascot-mist m1" aria-hidden="true"></div>
@@ -5157,7 +5182,10 @@ Regras:
 - Se a pergunta bater com algo no CONTEXTO fornecido abaixo, responda SOMENTE com base nele. Nunca invente um procedimento oficial que não esteja lá, e nunca misture sugestão sua com procedimento oficial na mesma resposta.
 - Se o contexto não cobrir a pergunta, mas ela for sobre uma situação de atendimento (ex: cliente nervoso, caso incomum, dúvida que não tem procedimento cadastrado), pode ajudar com uma sugestão de bom senso pra conduzir a situação, considerando que a Crediffato trabalha com convênio, negociação de dívida e ouvidoria. Só que sempre deixando claro que é uma sugestão sua, não um procedimento oficial da empresa, e recomendando confirmar com o responsável do setor antes de agir em algo que comprometa a empresa ou o cliente.
 - Cumprimentos e perguntas gerais/fora do tema (ex: "oi", "tudo bem?", "quem é você?") responda normalmente e com simpatia, sem precisar do contexto.
-- Se o contexto avisar que a pergunta pode se referir a mais de um procedimento diferente, pergunte com naturalidade qual deles a pessoa quer saber, em vez de escolher um e responder por adivinhação.
+- Antes de escrever, entenda a INTENÇÃO: o que a pessoa precisa decidir ou fazer agora (pode ou não pode? o que avisar ao cliente? qual o passo a passo? qual valor ou prazo?). Comece respondendo exatamente isso na primeira frase (ex: "Pode, sim, mas..." ou "Não dá, porque..."), e só depois explique o necessário.
+- Aplique os dados concretos que a pessoa deu (datas, valores, dias de atraso, tipo de cliente) às regras do procedimento e tire a conclusão por ela — use a data de hoje informada pra calcular prazos. Não devolva o procedimento inteiro quando a pergunta é sobre um ponto específico dele.
+- Se vier mais de um procedimento no contexto, use o que responde a intenção da pergunta. Só pergunte qual deles a pessoa quer quando as respostas forem realmente diferentes entre si E a pergunta não der nenhuma pista; nesse caso, pergunte em uma frase curta.
+- Pergunta curta de continuação (ex: "e no cartão?", "procedimento de parcelamento") completa a pergunta anterior: responda a dúvida original com essa nova informação, não um resumo genérico do procedimento.
 - Seja conciso — vá direto ao ponto, sem enrolar quem só quer resolver rápido. Curto não pode virar incompleto: responda o que foi perguntado por inteiro, só cortando enchimento (sem repetir a pergunta, sem frases de fechamento tipo "boa sorte" ou "qualquer dúvida estou à disposição", sem ressalvas óbvias repetidas em toda resposta).
 - Seu espaço de resposta é curto (equivale a uns 2 parágrafos enxutos). Planeje o texto pra concluir dentro desse espaço e nunca parar no meio de uma frase. Se o assunto exigir mais que isso, priorize responder o essencial por completo e ofereça detalhar mais se a pessoa quiser, em vez de tentar encaixar tudo e arriscar ser cortado.
 - Quando existir, mencione o nome do procedimento usado, mas de forma natural dentro da frase, não como uma citação formal repetida sempre do mesmo jeito.
@@ -5300,7 +5328,7 @@ function spawnAgoraseiMascotDust(){
 // quem está chamando é um usuário autenticado do board, não qualquer um na internet) e manda
 // pro Worker, que troca esse token por uma chamada de verdade pra Groq usando a chave secreta
 // dele (a chave nunca aparece no navegador).
-async function agoraseiCallGroq({ messages, model, stream, temperature, max_tokens, signal }){
+async function agoraseiCallGroq({ messages, model, stream, temperature, max_tokens, signal, reasoning_effort = "low" }){
   if(!AGORASEI_PROXY_URL || AGORASEI_PROXY_URL.startsWith("SUBSTITUA")){
     throw new Error("Assistente ainda não configurado — falta publicar o proxy (AGORASEI_PROXY_URL).");
   }
@@ -5313,7 +5341,7 @@ async function agoraseiCallGroq({ messages, model, stream, temperature, max_toke
     // pensando antes de escrever a resposta final (canal separado) — isso não ajuda muito numa
     // pergunta direta de procedimento, só consome tempo e parte do teto de tokens, então pede
     // pouco raciocínio (mais rápido e sobra mais espaço pra resposta em si).
-    body: JSON.stringify({ idToken, messages, model, stream: !!stream, temperature, max_tokens, reasoning_effort: "low" }),
+    body: JSON.stringify({ idToken, messages, model, stream: !!stream, temperature, max_tokens, reasoning_effort }),
     signal,
   });
   if(!resp.ok){
@@ -5338,10 +5366,11 @@ function renderAgoraseiKBList(){
     // Resposta memorizada válida = existe no cache E o procedimento não foi editado desde que
     // ela foi gerada (senão o hash não bate e ela já não vale mais, mesmo antes de alguém clicar
     // em "esquecer").
-    const hasCache = !!agoraseiGetCachedAnswer(id);
+    const cached = AGORASEI_ANSWER_CACHE[id];
+    const hasCache = !!(cached && cached.q && cached.hash === agoraseiKbHash(kb));
     const cacheLine = hasCache
-      ? `<p class="agorasei-kb-item-cache">🧠 Resposta memorizada — próximas perguntas sobre isso saem na hora, sem gastar IA. <button type="button" class="agorasei-kb-cache-forget" data-kb-forget="${escapeHtml(id)}">Esquecer e gerar de novo</button></p>`
-      : `<p class="agorasei-kb-item-cache agorasei-kb-item-cache-empty">Ainda sem resposta memorizada — a primeira pergunta sobre isso gera e guarda pras próximas.</p>`;
+      ? `<p class="agorasei-kb-item-cache">🧠 Resposta memorizada — a mesma pergunta sobre isso sai na hora, sem gastar IA. <button type="button" class="agorasei-kb-cache-forget" data-kb-forget="${escapeHtml(id)}">Esquecer e gerar de novo</button></p>`
+      : `<p class="agorasei-kb-item-cache agorasei-kb-item-cache-empty">Ainda sem resposta memorizada — a primeira pergunta sobre isso gera e guarda pra quando alguém perguntar o mesmo.</p>`;
     return `
     <div class="agorasei-kb-item">
       <div class="agorasei-kb-item-head">
@@ -5401,18 +5430,22 @@ function agoraseiKbHash(kb){
 // Devolve a resposta já memorizada pra esse procedimento, só se o procedimento não tiver
 // mudado desde que ela foi gerada (hash bate). Se o procedimento foi editado depois, o hash
 // não bate mais e devolve null — cai pra gerar uma resposta nova (e memorizar essa, atualizada).
-function agoraseiGetCachedAnswer(kbId){
+function agoraseiQuestionKey(question){
+  return agoraseiNormalize(question).replace(/\s+/g, " ").trim();
+}
+function agoraseiGetCachedAnswer(kbId, question){
   const cached = AGORASEI_ANSWER_CACHE[kbId];
   const kb = AGORASEI_KB[kbId];
   if(!cached || !kb) return null;
   if(cached.hash !== agoraseiKbHash(kb)) return null;
+  if(cached.q !== agoraseiQuestionKey(question)) return null; // outra pergunta, outra resposta
   return cached.answer;
 }
 
-async function saveAgoraseiAnswerCache(kbId, answer){
+async function saveAgoraseiAnswerCache(kbId, answer, question){
   const kb = AGORASEI_KB[kbId];
   if(!kb) return;
-  const entry = { answer, hash: agoraseiKbHash(kb), updatedAt: new Date().toISOString() };
+  const entry = { answer, q: agoraseiQuestionKey(question), hash: agoraseiKbHash(kb), updatedAt: new Date().toISOString() };
   AGORASEI_ANSWER_CACHE = { ...AGORASEI_ANSWER_CACHE, [kbId]: entry };
   if(storageMode === "firebase" && firebaseReady){
     const path = new fsFieldPath("cache", kbId);
@@ -5542,7 +5575,7 @@ function retrieveAgoraseiContext(query, maxChars){
 }
 
 function agoraseiAmbiguousNote(titles){
-  return `\n\n[NOTA: a pergunta pode se referir a mais de um procedimento diferente (${titles.join(", ")}) e não ficou claro qual deles é o certo. Se não estiver óbvio qual desses a pergunta quer dizer, pergunte ao usuário qual procedimento ele quer saber antes de responder em detalhe, em vez de adivinhar.]`;
+  return `\n\n[NOTA: mais de um procedimento pode servir (${titles.join(", ")}). Use o que responde a intenção da pergunta; só pergunte qual deles se as respostas forem conflitantes e a pergunta não der pista nenhuma.]`;
 }
 
 // Antes de responder, pede pro próprio modelo escolher (numa lista curta de títulos) qual
@@ -5561,7 +5594,7 @@ async function routeAgoraseiQuestion(question, history, hintTitles){
   // Manda as últimas trocas da conversa junto — sem isso, uma pergunta de continuação (tipo
   // "e pra pessoa jurídica?", que só faz sentido junto do que foi perguntado antes) chega pra
   // triagem sem nenhuma pista do assunto e ela não acha nada.
-  const historyText = (history || []).slice(-4).map(m => `${m.role === "user" ? "Usuário" : "Assistente"}: ${m.content}`).join("\n");
+  const historyText = (history || []).slice(-6).map(m => `${m.role === "user" ? "Usuário" : "Assistente"}: ${m.content}`).join("\n");
   // A triagem só enxerga TÍTULO (+ sinônimos), nunca o corpo do texto — então quando a resposta
   // certa está enterrada no meio de um procedimento com título genérico (ex: o valor da anuidade
   // dentro de "Cartão Crediffato", sem a palavra "anuidade" aparecer no título), ela não tem
@@ -5571,21 +5604,24 @@ async function routeAgoraseiQuestion(question, history, hintTitles){
   try{
     const resp = await agoraseiCallGroq({
       messages: [
-        { role: "system", content: `Você escolhe, de uma lista de procedimentos cadastrados, qual(is) respondem a pergunta mais recente de um usuário. Cada linha da lista é um título, às vezes seguido de sinônimos entre colchetes — use os sinônimos só pra decidir, nunca os inclua na resposta. Use o histórico da conversa pra entender o assunto quando a pergunta for uma continuação (ex: "e pra pessoa jurídica?" só faz sentido junto do que foi perguntado antes). Quando houver uma "Pista" indicando candidatos prováveis, leve em conta que ela veio de uma busca no conteúdo completo (não só no título) e pode saber de algo que o título sozinho não revela. Responda APENAS com os títulos exatos que combinam, um por linha, SEM os colchetes de sinônimos, copiados exatamente como estão na lista — sem nenhum texto além disso. Se nenhum combinar, responda só a palavra NENHUM.` },
+        { role: "system", content: `Você entende a pergunta mais recente de um atendente e escolhe, de uma lista de procedimentos cadastrados, qual(is) a respondem. Na PRIMEIRA linha escreva "PERGUNTA: " seguido da pergunta reescrita de forma completa e independente, juntando o que o histórico já disse (datas, valores, situação do cliente) quando a mensagem for uma continuação curta, e deixando claro o que a pessoa quer saber (ex: se pode fazer algo hoje e o que alertar). Nas linhas seguintes, os títulos. Escolha o MENOR conjunto que responde: normalmente 1 título; mais de 1 só se a pergunta realmente precisar de ambos. Cada linha da lista é um título, às vezes seguido de sinônimos entre colchetes — use os sinônimos só pra decidir, nunca os inclua na resposta. Use o histórico da conversa pra entender o assunto quando a pergunta for uma continuação (ex: "e pra pessoa jurídica?" só faz sentido junto do que foi perguntado antes). Quando houver uma "Pista" indicando candidatos prováveis, leve em conta que ela veio de uma busca no conteúdo completo (não só no título) e pode saber de algo que o título sozinho não revela. Depois da linha PERGUNTA, responda APENAS com os títulos exatos que combinam, um por linha, SEM os colchetes de sinônimos, copiados exatamente como estão na lista — sem nenhum texto além disso. Se nenhum combinar, escreva só a palavra NENHUM depois da linha PERGUNTA.` },
         { role: "user", content: `Lista de procedimentos:\n${titleList}${historyText ? `\n\nHistórico recente da conversa:\n${historyText}` : ""}${hintLine}\n\nPergunta mais recente do usuário: "${question}"\n\nQuais títulos da lista combinam com essa pergunta?` },
       ],
       model: AGORASEI_ROUTING_MODEL_ID,
       stream: false,
       temperature: 0,
-      max_tokens: 150,
+      max_tokens: 300,
     });
     const data = await resp.json();
-    const raw = agoraseiExtractFinal((data.choices[0] && data.choices[0].message && data.choices[0].message.content) || "");
-    if(/^\s*nenhum\W*\s*$/i.test(raw.trim())) return { matched: [], routed: true };
+    let raw = agoraseiExtractFinal((data.choices[0] && data.choices[0].message && data.choices[0].message.content) || "");
+    const qMatch = raw.match(/^\s*PERGUNTA:\s*(.+)$/im);
+    const standalone = qMatch ? qMatch[1].trim() : "";
+    if(qMatch) raw = raw.replace(qMatch[0], "");
+    if(/^\s*nenhum\W*\s*$/i.test(raw.trim())) return { matched: [], routed: true, standalone };
     const lines = raw.split("\n").map(l => l.trim().replace(/^[-*\d.)\s]+/, "").replace(/\s*\[.*$/, "").trim()).filter(Boolean);
     const matched = entries.filter(kb => lines.some(l => l.toLowerCase() === kb.title.toLowerCase()));
-    if(!matched.length) return { matched: [], routed: false }; // não seguiu o formato esperado — não dá pra confiar
-    return { matched, routed: true };
+    if(!matched.length) return { matched: [], routed: false, standalone }; // não seguiu o formato esperado — não dá pra confiar
+    return { matched, routed: true, standalone };
   }catch(err){
     console.error("Falha na triagem do Agora Eu Sei:", err);
     return { matched: [], routed: false };
@@ -5660,6 +5696,8 @@ function agoraseiHasRepetitionLoop(text){
   return false;
 }
 
+// Mensagem do chat. A do assistente tem cabeçalho (nome + fonte usada), corpo e uma linha de
+// ações (copiar); a do usuário é só a bolha. Devolve a bolha, que é onde o texto é escrito.
 function agoraseiAppendMessage(role, content){
   const messagesEl = document.getElementById("agorasei-messages");
   if(!messagesEl) return null;
@@ -5667,17 +5705,35 @@ function agoraseiAppendMessage(role, content){
   if(empty) empty.remove();
   const wrap = document.createElement("div");
   wrap.className = `agorasei-msg agorasei-msg-${role}`;
-  const avatar = document.createElement("div");
-  avatar.className = "agorasei-msg-avatar";
-  avatar.textContent = role === "user" ? initialsFromName((currentUser && (currentUser.name || currentUser.email)) || "Você") : "IA";
   const bubble = document.createElement("div");
   bubble.className = "agorasei-msg-bubble";
   bubble.textContent = content;
-  wrap.appendChild(avatar);
-  wrap.appendChild(bubble);
+  if(role === "assistant"){
+    wrap.innerHTML = `<div class="agorasei-msg-avatar" aria-hidden="true"></div><div class="agorasei-msg-body"><div class="agorasei-msg-head"><b>Fato</b><span class="agorasei-msg-source"></span></div></div>`;
+    wrap.querySelector(".agorasei-msg-body").appendChild(bubble);
+  }else{
+    wrap.appendChild(bubble);
+  }
   messagesEl.appendChild(wrap);
   messagesEl.scrollTop = messagesEl.scrollHeight;
   return bubble;
+}
+
+// Depois que a resposta termina: mostra de qual procedimento ela veio, botão de copiar e — se o
+// Fato terminou perguntando algo e havia mais de um procedimento possível — atalhos pra escolher.
+function agoraseiFinishMessage(bubble, { sources = [], choices = [], error = false } = {}){
+  const body = bubble && bubble.closest(".agorasei-msg-body");
+  if(!body) return;
+  if(error){ bubble.classList.add("is-error"); return; }
+  const src = body.querySelector(".agorasei-msg-source");
+  if(src && sources.length) src.textContent = `com base em ${sources.join(" + ")}`;
+  const actions = document.createElement("div");
+  actions.className = "agorasei-msg-actions";
+  actions.innerHTML = `<button type="button" class="agorasei-act" data-agorasei-copy>Copiar</button>`;
+  if(choices.length && /\?\s*$/.test(bubble.textContent)){
+    actions.insertAdjacentHTML("afterbegin", choices.map(t => `<button type="button" class="agorasei-suggestion-chip agorasei-choice" data-suggestion="${escapeHtml(`Sobre "${t}"`)}">${escapeHtml(t)}</button>`).join(""));
+  }
+  body.appendChild(actions);
 }
 
 async function sendAgoraseiMessage(question){
@@ -5700,65 +5756,68 @@ async function sendAgoraseiMessage(question){
   }
 
   let contextText;
+  let sources = [];   // títulos usados como contexto (aparecem como "com base em ...")
+  let choices = [];   // procedimentos possíveis quando a pergunta serve pra mais de um
+  let standalone = ""; // a pergunta reescrita completa (junta continuação + histórico)
   // Só marca um procedimento como "cacheável" quando ele é o único que bateu com a pergunta,
   // sem ambiguidade nenhuma — pergunta que serve pra mais de um procedimento, ou que caiu no
   // caminho de "bom senso" sem procedimento cadastrado, nunca usa nem alimenta o cache.
   let matchedKbId = null;
+  const priorHistory = agoraseiMessages.slice(0, -1); // tudo antes da pergunta atual, que já foi empilhada
   // A busca por palavra-chave roda SEMPRE primeiro, mesmo pra mensagem com cara de saudação —
-  // ela é instantânea (não chama modelo nenhum) e é o que evita o bug de tratar uma mensagem
-  // curta e sem "?" (ex: alguém colando o próprio título de um procedimento, tipo "Negociações:
-  // Script - REFINANCIAMENTO") como se fosse só um "oi" e pular a base de procedimentos inteira
-  // sem nem olhar. Só cai no atalho de saudação quando NEM a busca por palavra-chave acha
-  // qualquer pista — aí sim é seguro assumir que não é uma pergunta de procedimento de verdade.
+  // ela é instantânea (não chama modelo nenhum) e é o que evita tratar uma mensagem curta e
+  // sem "?" (ex: alguém colando o título de um procedimento) como se fosse só um "oi".
   const fast = retrieveAgoraseiContext(question, AGORASEI_MAX_ENTRY_CHARS);
-  const fastConfident = fast.blocks.length > 0 && !fast.ambiguous && fast.topScore >= 4;
+  // Contar palavra em comum não entende intenção ("refin" no título de "Antecipação de parcelas
+  // de refin" ganhava de "Parcelamento de fatura" numa pergunta sobre fazer o refin). Por isso a
+  // triagem por IA (modelo pequeno, barato) roda sempre; só pula quando a mensagem é o próprio
+  // título de um procedimento (clique numa sugestão ou título colado), sem histórico.
+  const fastConfident = !priorHistory.length && !!fast.topId && agoraseiQuestionKey(question) === agoraseiQuestionKey(AGORASEI_KB[fast.topId].title);
   if(fastConfident){
     contextText = fast.blocks[0];
     matchedKbId = fast.topId;
-  }else if(agoraseiLooksLikeGreeting(question) && !fast.blocks.length){
+    sources = [AGORASEI_KB[fast.topId].title];
+  }else if(!priorHistory.length && agoraseiLooksLikeGreeting(question) && !fast.blocks.length){
     contextText = AGORASEI_NO_MATCH_CONTEXT;
   }else{
-    const priorHistory = agoraseiMessages.slice(0, -1); // tudo antes da pergunta atual, que já foi empilhada
     const routing = await routeAgoraseiQuestion(question, priorHistory, fast.candidates);
+    standalone = routing.standalone || "";
     if(routing.routed && routing.matched.length){
-      // Manda o conteúdo completo de só 1 procedimento (o primeiro que a triagem escolheu) —
-      // os outros (se houver) entram só como título na nota de ambiguidade, não o texto
-      // inteiro. Isso mantém o prompt pequeno mesmo quando vários procedimentos combinam.
-      contextText = agoraseiContextBlock(routing.matched[0]);
+      // Até 2 procedimentos com texto completo — o modelo escolhe pelo objetivo da pergunta em
+      // vez de devolver "qual dos dois?" pra quem perguntou.
+      const used = routing.matched.slice(0, 2);
+      contextText = used.map(agoraseiContextBlock).join("\n\n");
+      sources = used.map(kb => kb.title);
       if(routing.matched.length > 1){
-        contextText += agoraseiAmbiguousNote(routing.matched.map(kb => kb.title));
+        choices = routing.matched.map(kb => kb.title);
+        contextText += agoraseiAmbiguousNote(choices);
       }else{
         matchedKbId = routing.matched[0].id;
       }
     }else if(fast.blocks.length){
-      // A triagem por IA só enxerga o TÍTULO de cada procedimento (não o conteúdo) — então
-      // pode dizer "não achei nada" pra uma palavra que só aparece dentro do texto (ex:
-      // "anuidade" pode estar só no corpo de "Cartão Crediffato", não no título). Antes de
-      // aceitar esse "não achei" como resposta final, confere se a busca por palavra-chave
-      // (que olha o conteúdo inteiro) encontrou alguma coisa — se achou, usa isso em vez de
-      // desistir.
-      contextText = fast.blocks.join("\n\n");
+      // A triagem só enxerga o TÍTULO de cada procedimento — se ela disse "não achei", confere
+      // se a busca por palavra-chave (que olha o conteúdo inteiro) achou algo antes de desistir.
+      contextText = fast.blocks.slice(0, 2).join("\n\n");
+      sources = fast.candidates.slice(0, Math.min(2, fast.blocks.length));
       if(fast.ambiguous){
+        choices = fast.candidates;
         contextText += agoraseiAmbiguousNote(fast.candidates);
       }else if(fast.blocks.length === 1){
         matchedKbId = fast.topId;
       }
     }else{
-      // Nem a triagem por IA nem a busca por palavra-chave acharam nada — seja porque a
-      // triagem respondeu "NENHUM" de verdade, seja porque a resposta dela não seguiu o
-      // formato esperado. Sem pista nenhuma das duas fontes, não tem o que usar como contexto.
       contextText = AGORASEI_NO_MATCH_CONTEXT;
     }
   }
-  // "Cérebro" de respostas memorizadas: só reaproveita quando essa é a PRIMEIRA pergunta da
-  // conversa (uma pergunta de acompanhamento pode depender do que já foi dito antes, então
-  // nunca serve resposta memorizada nesse caso) e bateu num único procedimento sem ambiguidade.
-  // Isso é o que segura o teto grátis com volume alto: pergunta repetida sobre o mesmo
-  // procedimento não gasta IA nenhuma depois da primeira vez.
+  // "Cérebro" de respostas memorizadas: só reaproveita na PRIMEIRA pergunta da conversa, num
+  // único procedimento sem ambiguidade, e só pra MESMA pergunta — duas perguntas diferentes sobre
+  // o mesmo procedimento ("quantas parcelas?" x "posso fazer hoje se fecha dia 31?") querem
+  // respostas diferentes.
   const isFirstTurn = agoraseiMessages.length === 1;
-  const cachedAnswer = matchedKbId && isFirstTurn ? agoraseiGetCachedAnswer(matchedKbId) : null;
+  const cachedAnswer = matchedKbId && isFirstTurn ? agoraseiGetCachedAnswer(matchedKbId, question) : null;
   if(cachedAnswer){
     if(assistantBubble){ assistantBubble.classList.remove("typing"); assistantBubble.textContent = cachedAnswer; }
+    agoraseiFinishMessage(assistantBubble, { sources });
     agoraseiMessages.push({ role: "assistant", content: cachedAnswer });
     setAgoraseiMascotState("happy");
     setTimeout(() => setAgoraseiMascotState("idle"), 2000);
@@ -5767,30 +5826,29 @@ async function sendAgoraseiMessage(question){
     return;
   }
 
-  // Nas trocas ANTERIORES (não na pergunta atual), manda só a pergunta em si, sem o bloco de
-  // Contexto embutido (que pode ter até 4000 caracteres do procedimento inteiro) -- o modelo não
-  // precisa reler o texto-fonte de novo a cada resposta antiga; a resposta que ele mesmo deu
-  // naquele turno já carrega o que importava daquele contexto. Isso encolhe bastante o tanto de
-  // token gasto numa dúvida que vira várias mensagens de vai-e-vem, sem perder o fio da conversa.
-  const priorTurns = agoraseiMessages.slice(0, -1).slice(-3).map(m =>
-    m.role === "user" ? { role: "user", content: m.content } : { role: "assistant", content: m.content }
-  ); // até 3 trocas anteriores, sem a pergunta atual
+  // Trocas anteriores vão sem o bloco de Contexto (só pergunta e resposta) — até 3 trocas
+  // (6 mensagens), pra pergunta original não sumir quando a pessoa responde uma confirmação.
+  const priorTurns = priorHistory.slice(-6).map(m => ({ role: m.role, content: m.content }));
 
   const systemMsg = { role: "system", content: AGORASEI_SYSTEM_PROMPT };
-  function buildFinalUserMsg(ctx){
-    return { role: "user", content: `Contexto:\n${ctx}\n\nPergunta: ${question}` };
-  }
+  const today = new Date().toLocaleDateString("pt-BR", { weekday: "long", day: "2-digit", month: "2-digit", year: "numeric" });
+  const intentLine = standalone && agoraseiNormalize(standalone).trim() !== agoraseiNormalize(question).trim()
+    ? `\nO que a pessoa quer saber (juntando com a conversa): ${standalone}` : "";
+  const finalUserMsg = { role: "user", content: `Hoje é ${today}.\n\nContexto:\n${contextText}\n\nPergunta: ${question}${intentLine}` };
 
-  // Chama a Groq (via proxy) pedindo streaming e vai transmitindo cada pedaço pra dentro da
-  // bolha assim que chega, no formato SSE padrão da API compatível com OpenAI (linhas
-  // "data: {...}", terminando em "data: [DONE]").
-  async function attemptGeneration(messages, signal){
+  // Chama a IA (via proxy) pedindo streaming e vai transmitindo cada pedaço pra dentro da
+  // bolha assim que chega, no formato SSE padrão da API compatível com OpenAI.
+  // Raciocínio "medium": o modelo pensa um pouco antes de responder (entende melhor o que foi
+  // pedido e aplica as regras aos dados da pessoa). Esse raciocínio gasta tokens do mesmo teto
+  // da resposta, por isso o max_tokens maior.
+  async function attemptGeneration(messages, signal, temperature){
     const resp = await agoraseiCallGroq({
       messages,
       model: AGORASEI_MODEL_ID,
       stream: true,
-      temperature: 0.6,
-      max_tokens: 550,
+      temperature,
+      max_tokens: 1600,
+      reasoning_effort: "medium",
       signal,
     });
     let full = "";
@@ -5828,19 +5886,12 @@ async function sendAgoraseiMessage(question){
             firstChunk = false;
           }
           full += delta;
-          // De vez em quando o modelo entra num loop de repetição (a mesma palavra ou trecho
-          // curto colado várias vezes seguidas) em vez de responder de verdade -- detecta isso
-          // cedo (olhando só o final do texto acumulado) e desiste, em vez de deixar rolar até
-          // o teto de tokens só acumulando lixo na tela.
+          // Loop de repetição (mesmo trecho colado várias vezes): desiste cedo em vez de deixar
+          // rolar até o teto de tokens acumulando lixo na tela.
           if(agoraseiHasRepetitionLoop(full)){
             reader.cancel().catch(() => {});
             throw new Error("LOOP: a resposta entrou num loop de repetição.");
           }
-          // Recalcula a cada pedaço: se não tiver nenhum vazamento de raciocínio (o caso normal),
-          // isso devolve o texto inteiro sem alterar nada, então o efeito de "digitando" continua
-          // igual. Só filtra de verdade nos casos raros em que o canal interno vaza.
-          // Cursor piscando no final enquanto ainda está chegando -- reforça que a resposta está
-          // sendo escrita ao vivo, não colada pronta de uma vez.
           if(assistantBubble){
             assistantBubble.textContent = agoraseiExtractFinal(full);
             assistantBubble.appendChild(document.createElement("span")).className = "agorasei-cursor";
@@ -5854,23 +5905,30 @@ async function sendAgoraseiMessage(question){
     return display || "Não consegui gerar uma resposta agora. Tente reformular a pergunta.";
   }
 
-  // Trava de segurança: se a resposta não terminar em até 45s (rede lenta, provedor fora do
+  // Trava de segurança: se a resposta não terminar em até 60s (rede lenta, provedor fora do
   // ar), cancela sozinho em vez de deixar a tela presa sem dar pra mandar outra pergunta.
-  const AGORASEI_STALL_TIMEOUT_MS = 45000;
+  const AGORASEI_STALL_TIMEOUT_MS = 60000;
   const stallController = new AbortController();
   const stallTimer = setTimeout(() => stallController.abort(), AGORASEI_STALL_TIMEOUT_MS);
 
   try{
-    const full = await attemptGeneration([systemMsg, ...priorTurns, buildFinalUserMsg(contextText)], stallController.signal);
+    const messages = [systemMsg, ...priorTurns, finalUserMsg];
+    let full;
+    try{
+      full = await attemptGeneration(messages, stallController.signal, 0.5);
+    }catch(err){
+      // Loop de repetição costuma não se repetir numa segunda tentativa mais "fria" — tenta de
+      // novo sozinho uma vez antes de mostrar erro pra pessoa.
+      if(!/^LOOP:/.test((err && err.message) || "")) throw err;
+      if(assistantBubble){ assistantBubble.classList.add("typing"); assistantBubble.innerHTML = `<span class="agorasei-typing-dots"><span></span><span></span><span></span></span>`; }
+      full = await attemptGeneration(messages, stallController.signal, 0.2);
+    }
     clearTimeout(stallTimer);
     if(assistantBubble){ assistantBubble.classList.remove("typing"); assistantBubble.textContent = full; }
+    agoraseiFinishMessage(assistantBubble, { sources, choices });
     agoraseiMessages.push({ role: "assistant", content: full });
-    // Primeira vez que esse procedimento é respondido nesta conversa (sem ambiguidade) — memoriza
-    // a resposta pra da próxima vez que alguém perguntar sobre o mesmo procedimento (também como
-    // primeira pergunta de uma conversa nova) sair na hora, sem gastar IA de novo. Nunca memoriza
-    // a mensagem de erro genérica (isso ia "grudar" um erro como se fosse resposta de verdade).
     if(matchedKbId && isFirstTurn && full !== "Não consegui gerar uma resposta agora. Tente reformular a pergunta."){
-      saveAgoraseiAnswerCache(matchedKbId, full).catch(err => console.error("Falha ao memorizar resposta do Agora Eu Sei:", err));
+      saveAgoraseiAnswerCache(matchedKbId, full, question).catch(err => console.error("Falha ao memorizar resposta do Agora Eu Sei:", err));
     }
     setAgoraseiMascotState("happy");
     setTimeout(() => setAgoraseiMascotState("idle"), 2000);
@@ -5885,13 +5943,14 @@ async function sendAgoraseiMessage(question){
     const userMsg = isStall
       ? `A resposta demorou demais e foi cancelada. Pode tentar mandar a pergunta de novo.`
       : isLoop
-      ? `A resposta travou repetindo a mesma coisa sem parar (bug conhecido do modelo). Cancelei — tenta mandar a pergunta de novo, geralmente resolve.`
+      ? `A resposta travou duas vezes seguidas repetindo a mesma coisa. Tenta escrever a pergunta de outro jeito.`
       : isRateLimit
       ? `Muita gente perguntando ao mesmo tempo agora. Espera alguns segundos e tenta de novo.`
       : isAuth
       ? `Sua sessão expirou. Atualize a página e faça login de novo.`
       : `Deu um erro ao gerar a resposta. Tente mandar a pergunta de novo.\n\n[detalhe técnico: ${errDetail.slice(0, 300)}]`;
     if(assistantBubble){ assistantBubble.classList.remove("typing"); assistantBubble.textContent = userMsg; }
+    agoraseiFinishMessage(assistantBubble, { error: true });
     setAgoraseiMascotState("idle");
   }finally{
     agoraseiGenerating = false;
@@ -6050,6 +6109,12 @@ document.getElementById("agorasei-form").addEventListener("submit", (e) => {
   agoraseiSubmitQuestion(input.value);
 });
 document.getElementById("agorasei-messages").addEventListener("click", (e) => {
+  const copyBtn = e.target.closest("[data-agorasei-copy]");
+  if(copyBtn){
+    const text = copyBtn.closest(".agorasei-msg-body").querySelector(".agorasei-msg-bubble").textContent;
+    navigator.clipboard.writeText(text).then(() => { copyBtn.textContent = "Copiado"; setTimeout(() => { copyBtn.textContent = "Copiar"; }, 1500); }).catch(() => {});
+    return;
+  }
   const chip = e.target.closest("[data-suggestion]");
   if(chip) agoraseiSubmitQuestion(chip.getAttribute("data-suggestion"));
 });
@@ -6061,7 +6126,7 @@ document.getElementById("agorasei-input").addEventListener("keydown", (e) => {
 });
 document.getElementById("agorasei-input").addEventListener("input", (e) => {
   e.target.style.height = "auto";
-  e.target.style.height = Math.min(e.target.scrollHeight, 120) + "px";
+  e.target.style.height = Math.min(e.target.scrollHeight, 140) + "px";
 });
 document.getElementById("agorasei-retry-btn").addEventListener("click", () => {
   agoraseiEngineStatus = "idle";
