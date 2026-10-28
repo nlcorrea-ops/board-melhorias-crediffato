@@ -27,7 +27,7 @@
     --glass-2:rgba(28,28,31,.5);
     --text-hi:#f5f5f7;
     --text-mid:#a5a5ad;
-    --text-low:#75757d;
+    --text-low:#7f7f88;
 
     --op:#37b8a6;
     --ql:#d8a94a;
@@ -192,10 +192,10 @@
     position:fixed; inset:0; z-index:9999;
     display:flex; align-items:center; justify-content:center;
     background:#05070ecc; backdrop-filter:blur(3px); -webkit-backdrop-filter:blur(3px);
-    opacity:0; pointer-events:none;
-    transition:opacity .25s ease;
+    opacity:0; pointer-events:none; visibility:hidden;
+    transition:opacity .25s ease, visibility 0s linear .25s;
   }
-  .upgrade-overlay.open{opacity:1; pointer-events:all;}
+  .upgrade-overlay.open{opacity:1; pointer-events:all; visibility:visible; transition:opacity .25s ease;}
   .upgrade-box{display:flex; flex-direction:column; align-items:center; gap:16px;}
   .upgrade-ring-wrap{position:relative; width:84px; height:84px;}
   .upgrade-ring{
@@ -933,7 +933,7 @@
     width:13px; height:13px; border-radius:50%; background:var(--ink-2); border:2px solid var(--hairline);
     transition:background-color .2s ease, border-color .2s ease, box-shadow .2s ease;
   }
-  .role-node-label{font-family:var(--font-mono); font-size:10px; color:var(--text-low); transition:color .2s ease;}
+  .role-node-label{font-family:var(--font-mono); font-size:11px; color:var(--text-low); transition:color .2s ease;}
   .role-node:hover .role-node-dot{border-color:var(--text-low);}
   .role-node.active .role-node-dot{background:var(--pa); border-color:var(--pa); box-shadow:0 0 0 4px #8b8dfb26;}
   .role-node.active .role-node-label{color:var(--text-hi); font-weight:600;}
@@ -1821,7 +1821,7 @@
   .odo{display:inline-flex; font-variant-numeric:tabular-nums;}
   .odo-d{display:inline-block; height:1.15em; line-height:1.15em; overflow:hidden;}
   .odo-s{display:flex; flex-direction:column; transition:transform .9s cubic-bezier(.25,1.2,.4,1);}
-  .odo-s span{height:1.15em;}
+  .odo-s::before{content:"0\a 1\a 2\a 3\a 4\a 5\a 6\a 7\a 8\a 9"; white-space:pre;} /* a fita fica fora do texto da página */
 
   /* Brilho que corre pela barra de progresso. */
   .pulse-bar{position:relative;}
@@ -1844,7 +1844,120 @@
   }
   @keyframes scrollRise{from{opacity:.2; translate:0 40px; scale:.96;}}
 
+  /* ---------- Visão Geral redesenhada ---------- */
+  .bento-deadlines{grid-column:span 4;}
+  .bento-status{grid-column:span 2;}
+  .bento-sectors, .bento-workload, .bento-resolution, .bento-top{grid-column:span 3;}
+  .bento-resolution, .bento-top{align-self:start;}
+  .ov-head{display:flex; align-items:baseline; justify-content:space-between; gap:12px; flex-wrap:wrap; margin-bottom:14px;}
+  .ov-title{margin:0; font-size:14px; font-weight:600; color:var(--text-hi);}
+  .ov-note{font-size:12.5px; color:var(--text-mid);}
+  .kpi-row{grid-template-columns:repeat(5, 1fr);}
+  .n-row{display:flex; align-items:baseline; gap:2px;}
+  .n-row .u{font-family:var(--font-mono); font-size:15px; color:var(--text-mid);}
+
+  .stack-group + .stack-group{margin-top:22px;}
+  .stack-title{font-size:12.5px; color:var(--text-mid); margin-bottom:8px;}
+  .stackbar{display:flex; gap:3px; height:14px; border-radius:4px; overflow:hidden; background:var(--ink-2);}
+  .stackbar .seg{height:100%; transition:flex-grow .6s cubic-bezier(.2,.8,.2,1);}
+  .stackbar .seg-empty{flex:1; background:var(--ink-2);}
+  .stack-legend{display:flex; flex-direction:column; gap:2px; margin-top:10px;}
+  .sl-item{
+    display:flex; align-items:center; gap:8px; width:100%; padding:5px 6px; margin:0 -6px; border:0; border-radius:6px;
+    background:none; color:var(--text-mid); font:inherit; font-size:12.5px; text-align:left; cursor:pointer;
+  }
+  .sl-item:hover{background:var(--ink-2); color:var(--text-hi);}
+  .sl-item:focus-visible{outline:2px solid #6c8cff; outline-offset:1px;}
+  .sl-item i{width:9px; height:9px; border-radius:2px; flex:none;}
+  .sl-item b{margin-left:auto; color:var(--text-hi); font-family:var(--font-mono); font-weight:600; font-variant-numeric:tabular-nums;}
+  .sl-item span{width:38px; text-align:right; font-family:var(--font-mono); font-variant-numeric:tabular-nums; color:var(--text-low);}
+
+  .ov-rows{display:flex; flex-direction:column; gap:14px;}
+  .ov-row-head{display:flex; align-items:center; justify-content:space-between; gap:10px; margin-bottom:6px; font-size:13px;}
+  .ov-name{display:flex; align-items:center; gap:8px; color:var(--text-hi); font-weight:500; min-width:0;}
+  .ov-ellipsis{overflow:hidden; text-overflow:ellipsis; white-space:nowrap;}
+  .ov-val{color:var(--text-mid); font-size:12.5px; white-space:nowrap; font-variant-numeric:tabular-nums;}
+  .ov-val b{color:var(--text-hi); font-family:var(--font-mono); font-weight:600;}
+  .ov-track{display:flex; gap:2px; height:8px; border-radius:999px; overflow:hidden; background:var(--ink-2);}
+  .ov-track span{height:100%; transform-origin:left; animation:trackGrow .8s cubic-bezier(.2,.8,.2,1) both; animation-delay:calc(var(--i, 0) * 70ms);}
+  .ov-row{--i:0;}
+  .ov-row .ov-track span{animation-delay:calc(var(--i) * 70ms);}
+  @keyframes trackGrow{from{transform:scaleX(0);}}
+  .ov-row-muted .ov-name{color:var(--text-mid); font-weight:400;}
+  .ov-avatar{
+    width:22px; height:22px; border-radius:50%; flex:none; display:inline-flex; align-items:center; justify-content:center;
+    font-family:var(--font-mono); font-size:10.5px; font-weight:600; background:var(--ink-3); color:var(--text-hi);
+  }
+  .vbar-chart.is-empty{min-height:0; border-bottom:0; justify-content:flex-start;}
+  .vbar-fill{background:var(--brand-red);}
+  .vbar-item.top-1 .vbar-fill{background:#d99f2b;}
+  .vbar-item.top-1 .vbar-avatar{background:#d99f2b;}
+  .vbar-avatar{background:var(--brand-red);}
+
+  /* Linha de prazos */
+  .dl-chart{position:relative; height:max(240px, calc(80px + var(--lanes) * 34px)); margin-top:4px;}
+  .dl-chart::after{content:""; position:absolute; left:0; right:0; bottom:26px; border-top:1px solid var(--hairline);}
+  .dl-late-zone{
+    position:absolute; left:0; top:0; bottom:26px; border-radius:6px 0 0 6px;
+    background:color-mix(in srgb, var(--sev-critica) 9%, transparent);
+  }
+  .dl-late-zone span{position:absolute; left:8px; top:6px; font-size:11.5px; color:var(--sev-critica);}
+  .dl-tick{position:absolute; top:0; bottom:26px; width:0; border-left:1px dashed var(--hairline);}
+  .dl-tick span{position:absolute; bottom:-22px; left:0; transform:translateX(-50%); font-size:11.5px; color:var(--text-low); white-space:nowrap; font-variant-numeric:tabular-nums;}
+  .dl-tick.dl-first span{transform:none;}
+  .dl-tick.dl-last span{transform:translateX(-100%);}
+  .dl-tick.dl-today{border-left:2px solid var(--brand-red);}
+  .dl-tick.dl-today span{color:var(--brand-red); font-weight:600;}
+  .dl-pin{
+    position:absolute; bottom:calc(36px + var(--lane) * 34px); transform:translateX(-50%);
+    display:inline-flex; align-items:center; gap:6px; height:26px; padding:0 10px 0 8px; border-radius:999px;
+    border:1px solid var(--pin, var(--hairline)); background:var(--ink-1); color:var(--text-hi);
+    font-family:var(--font-mono); font-size:11.5px; cursor:pointer; white-space:nowrap;
+    animation:pinDrop .55s cubic-bezier(.2,.9,.3,1.3) both; animation-delay:calc(var(--i) * 60ms);
+  }
+  .dl-pin::before{content:""; width:8px; height:8px; border-radius:50%; background:var(--pin, var(--text-mid));}
+  .dl-pin::after{content:""; position:absolute; left:50%; top:100%; height:calc(10px + var(--lane) * 34px); border-left:1px solid var(--pin, var(--hairline)); opacity:.6;}
+  .dl-pin:hover, .dl-pin:focus-visible{background:var(--ink-3); outline:none; box-shadow:0 0 0 2px var(--pin, var(--hairline));}
+  .dl-pin.dl-edge-l{transform:none;} .dl-pin.dl-edge-l::after{left:12px;}
+  .dl-pin.dl-edge-r{transform:translateX(-100%);} .dl-pin.dl-edge-r::after{left:auto; right:12px;}
+  .dl-pin.dl-atrasado{--pin:var(--sev-critica);}
+  .dl-pin.dl-proximo{--pin:var(--st-andamento);}
+  .dl-pin.dl-ok{--pin:var(--st-aberto);}
+  @keyframes pinDrop{from{opacity:0; translate:0 -14px;}}
+  .dl-chart.dl-chart-empty{height:150px;}
+  .dl-empty{position:absolute; inset:auto 0 44px; margin:0; text-align:center; font-size:13px; color:var(--text-mid);}
+
+  /* Barra do Board: a legenda vai em cima, com os números. */
+  .pulse-wrap{margin-top:0;}
+  .pulse-bar{height:10px;}
+  .pulse-caption{margin:0 0 8px; align-items:baseline; font-family:var(--font-display); font-size:13px; color:var(--text-mid); flex-wrap:wrap; gap:8px;}
+  .pc-legend{display:flex; gap:16px; flex-wrap:wrap;}
+  .pc-legend i{display:inline-block; width:8px; height:8px; border-radius:2px; margin-right:6px;}
+  .pc-legend i.aberto{background:var(--st-aberto);} .pc-legend i.andamento{background:var(--st-andamento);} .pc-legend i.concluido{background:var(--st-concluido);}
+  .pc-legend b, .pc-pct b{color:var(--text-hi); font-family:var(--font-mono); font-weight:600;}
+
+  /* Rótulos em caixa normal e legíveis, no lugar das microetiquetas em maiúsculas espaçadas. */
+  .eyebrow, .summary-label, .kpi-card .l, .sumcard .l, .main-nav .nav-label{
+    text-transform:none; letter-spacing:0; font-family:var(--font-display);
+  }
+  .eyebrow{font-size:13px;}
+  .summary-label, .kpi-card .l, .sumcard .l{font-size:12.5px; color:var(--text-mid);}
+  .main-nav .nav-label{font-size:12.5px;}
+  .theme-swatch-option span, .area-tag, .shared, .overdue-badge, .attachment-count-badge{font-size:11px;}
+
+  @media (max-width:900px){
+    .bento-deadlines, .bento-status, .bento-sectors, .bento-workload, .bento-resolution, .bento-top{grid-column:1 / -1;}
+    .kpi-row{grid-template-columns:repeat(2, 1fr);}
+    .kpi-row .kpi-primary{grid-column:1 / -1;}
+  }
+  @media (max-width:480px){
+    .kpi-row{grid-template-columns:repeat(2, 1fr);}
+    body{padding-left:max(16px, env(safe-area-inset-left, 0px)); padding-right:max(16px, env(safe-area-inset-right, 0px));}
+    .dl-label{font-size:11px;}
+  }
+
   @media (prefers-reduced-motion:reduce){
+    .ov-track span, .dl-pin{animation:none;}
     .pulse-bar::after, .focus-chip{animation:none;}
     .odo-s{transition:none;}
     .card.just-moved::after{display:none;}
@@ -2054,29 +2167,29 @@
     </div>
     <div class="kpi-row" id="overview-kpis"></div>
     <div class="bento-grid">
-      <div class="overview-block donut-block bento-tile bento-status">
-        <div class="summary-label">Distribuição por status</div>
-        <div class="donut-chart" id="overview-status-donut"></div>
+      <div class="overview-block donut-block bento-tile bento-deadlines">
+        <div class="ov-head"><h3 class="ov-title">Linha de prazos</h3><span class="ov-note" id="overview-deadlines-note"></span></div>
+        <div id="overview-deadlines"></div>
       </div>
-      <div class="overview-block donut-block bento-tile bento-priority">
-        <div class="summary-label">Distribuição por prioridade</div>
-        <div class="donut-chart" id="overview-priority-donut"></div>
+      <div class="overview-block donut-block bento-tile bento-status">
+        <div class="ov-head"><h3 class="ov-title">Situação das demandas</h3></div>
+        <div id="overview-status"></div>
+      </div>
+      <div class="overview-block donut-block bento-tile bento-sectors">
+        <div class="ov-head"><h3 class="ov-title">Progresso por setor</h3></div>
+        <div class="ov-rows" id="overview-sectors"></div>
       </div>
       <div class="overview-block donut-block bento-tile bento-workload">
-        <div class="summary-label">Carga de trabalho</div>
-        <div class="donut-chart" id="overview-workload-donut"></div>
+        <div class="ov-head"><h3 class="ov-title">Carga de trabalho</h3><span class="ov-note">demandas ativas por pessoa</span></div>
+        <div class="ov-rows" id="overview-workload"></div>
       </div>
-      <div class="overview-block bento-tile bento-sectors">
-        <div class="summary-label">Progresso por setor</div>
-        <div class="donut-multiples" id="overview-sectors"></div>
-      </div>
-      <div class="overview-block bento-tile bento-resolution">
-        <div class="summary-label">Tempo médio de resolução</div>
+      <div class="overview-block donut-block bento-tile bento-resolution">
+        <div class="ov-head"><h3 class="ov-title">Tempo médio de resolução</h3></div>
         <div class="resolution-block" id="overview-resolution"></div>
       </div>
       <div class="overview-block donut-block bento-tile bento-top">
-        <div class="summary-label">Top 5 demandas concluídas</div>
-        <div class="vbar-chart" id="overview-top-assignees"></div>
+        <div class="ov-head"><h3 class="ov-title">Quem mais concluiu</h3></div>
+        <div class="ov-rows" id="overview-top-assignees"></div>
       </div>
     </div>
   </div>
@@ -2084,25 +2197,9 @@
   <div class="tab-panel" id="board-tab">
 
     <div class="summary-group">
-      <div class="summary-label">Por prioridade</div>
-      <div class="summary">
-        <div class="sumcard total"><div class="n" id="sum-total">7</div><div class="l">Total de pontos</div></div>
-        <div class="sumcard crit"><div class="n" id="sum-critica">0</div><div class="l">Prioridade crítica</div></div>
-        <div class="sumcard alta"><div class="n" id="sum-alta">4</div><div class="l">Prioridade alta</div></div>
-        <div class="sumcard media"><div class="n" id="sum-media">3</div><div class="l">Prioridade média</div></div>
-      </div>
-    </div>
-
-    <div class="summary-group">
-      <div class="summary-label">Por status</div>
-      <div class="summary status">
-        <div class="sumcard st-aberto"><div class="n" id="sum-st-aberto">7</div><div class="l">Em aberto</div></div>
-        <div class="sumcard st-andamento"><div class="n" id="sum-st-andamento">0</div><div class="l">Em andamento</div></div>
-        <div class="sumcard st-concluido"><div class="n" id="sum-st-concluido">0</div><div class="l">Concluído</div></div>
-      </div>
       <div class="pulse-wrap">
-        <div class="pulse-bar" id="pulse-bar" role="img"></div>
         <div class="pulse-caption" id="pulse-caption"></div>
+        <div class="pulse-bar" id="pulse-bar" role="img"></div>
       </div>
     </div>
 
@@ -3110,6 +3207,7 @@ let lastMouseX = -9999, lastMouseY = -9999;
   }
   window.addEventListener("resize", resize);
   resize();
+  canvas.style.display = "none";
 
   function step(){
     const w = window.innerWidth, h = window.innerHeight;
@@ -3123,6 +3221,7 @@ let lastMouseX = -9999, lastMouseY = -9999;
     }
     particles = particles.filter(p => p.life > 0);
     raf = particles.length ? requestAnimationFrame(step) : null;
+    if(!raf) canvas.style.display = "none";
   }
 
   bgNetworkCelebrate = function(x, y){
@@ -3136,6 +3235,7 @@ let lastMouseX = -9999, lastMouseY = -9999;
         life: 1, decay: 0.02 + Math.random() * 0.015,
       });
     }
+    canvas.style.display = "";
     if(!raf) raf = requestAnimationFrame(step);
   };
 })();
@@ -6373,16 +6473,16 @@ function refreshAssigneeOptionsForArea(){
 
 function renderOverview(){
   const kpiEl = document.getElementById("overview-kpis");
-  const statusDonutEl = document.getElementById("overview-status-donut");
-  const priorityDonutEl = document.getElementById("overview-priority-donut");
-  const workloadDonutEl = document.getElementById("overview-workload-donut");
+  const statusEl = document.getElementById("overview-status");
+  const deadlinesEl = document.getElementById("overview-deadlines");
+  const deadlinesNote = document.getElementById("overview-deadlines-note");
   const sectorsEl = document.getElementById("overview-sectors");
+  const workloadEl = document.getElementById("overview-workload");
   const resolutionEl = document.getElementById("overview-resolution");
   const topAssigneesEl = document.getElementById("overview-top-assignees");
-  if(!kpiEl || !statusDonutEl || !priorityDonutEl || !workloadDonutEl || !sectorsEl || !resolutionEl || !topAssigneesEl) return;
+  if(!kpiEl || !statusEl || !deadlinesEl || !sectorsEl || !workloadEl || !resolutionEl || !topAssigneesEl) return;
 
-  // Vale o mesmo recorte de filtros (setor/responsável/prioridade/status) usado no Board e no
-  // Backlog: escolher "Setor: Operações" aqui mostra os gráficos só daquele setor, por exemplo.
+  // Vale o mesmo recorte de filtros (setor/responsável/prioridade/status) usado no Board e no Backlog.
   const scopeAreas = areasForUser();
   const opData = DATA.filter(d => passesFilter(d));
   const total = opData.length;
@@ -6393,111 +6493,85 @@ function renderOverview(){
   const atrasadas = opData.filter(d => dueInfo(d).state === "atrasado").length;
   const pendentesValidacao = opData.filter(d => d.status === "concluido" && !validationInfo(d)).length;
   const pctConcluidas = total ? Math.round((concluidas / total) * 100) : 0;
+  const pctOf = (v) => total ? Math.round((v / total) * 100) : 0;
+  console.assert(aberto + andamento + concluidas === total, "status não fecha com o total");
 
+  // Cinco números, cada um uma pergunta diferente (em aberto e prioridades estão nas barras abaixo).
   kpiEl.innerHTML = `
-    <div class="kpi-card kpi-primary"><div class="n" data-kpi-key="ov-total">${total}</div><div class="l">Total de demandas</div></div>
-    <div class="kpi-card"><div class="n" data-kpi-key="ov-concluidas" style="color:var(--st-concluido);">${concluidas}</div><div class="l">Concluídas (${pctConcluidas}%)</div></div>
+    <div class="kpi-card kpi-primary"><div class="n" data-kpi-key="ov-total">${total}</div><div class="l">Demandas${backlogCount ? ` · ${backlogCount} no backlog` : ""}</div></div>
+    <div class="kpi-card"><div class="n-row"><span class="n" data-kpi-key="ov-pct" style="color:var(--st-concluido);">${pctConcluidas}</span><span class="u">%</span></div><div class="l">Concluídas (${concluidas})</div></div>
     <div class="kpi-card"><div class="n" data-kpi-key="ov-andamento" style="color:var(--st-andamento);">${andamento}</div><div class="l">Em andamento</div></div>
-    <div class="kpi-card"><div class="n" data-kpi-key="ov-aberto" style="color:var(--st-aberto);">${aberto}</div><div class="l">Em aberto</div></div>
-    <div class="kpi-card"><div class="n" data-kpi-key="ov-backlog" style="color:var(--text-low);">${backlogCount}</div><div class="l">No backlog</div></div>
-    <div class="kpi-card${atrasadas ? " kpi-alert" : ""}"><div class="n" data-kpi-key="ov-atrasadas" style="color:var(--sev-critica);">${atrasadas}</div><div class="l">Atrasadas</div></div>
-    <div class="kpi-card${pendentesValidacao ? " kpi-alert-pa" : ""}"><div class="n" data-kpi-key="ov-pendentes" style="color:var(--pa);">${pendentesValidacao}</div><div class="l">Pendentes de validação</div></div>
+    <div class="kpi-card${atrasadas ? " kpi-alert" : ""}"><div class="n" data-kpi-key="ov-atrasadas" style="color:${atrasadas ? "var(--sev-critica)" : "var(--text-hi)"};">${atrasadas}</div><div class="l">Atrasadas</div></div>
+    <div class="kpi-card${pendentesValidacao ? " kpi-alert-pa" : ""}"><div class="n" data-kpi-key="ov-pendentes" style="color:${pendentesValidacao ? "var(--pa)" : "var(--text-hi)"};">${pendentesValidacao}</div><div class="l">Aguardando validação</div></div>
   `;
   kpiEl.querySelectorAll(".n[data-kpi-key]").forEach(el => animateCountTo(el, el.textContent));
 
-  // Status e prioridade: rosca simples de proporção — o total de demandas do recorte atual
-  // vai escrito no centro do anel. As legendas são clicáveis: clicar aplica aquele filtro
-  // de status/prioridade direto no Board, em vez de servirem só de decoração.
-  statusDonutEl.innerHTML = `
-    ${donutSVG([
-      { value: aberto, color: "var(--st-aberto)", label: "Em aberto" },
-      { value: andamento, color: "var(--st-andamento)", label: "Em andamento" },
-      { value: concluidas, color: "var(--st-concluido)", label: "Concluído" },
-    ], { ariaLabel: "Distribuição por status" })}
-    <div class="donut-legend">
-      <div class="donut-legend-item clickable" data-status-filter="aberto"><span class="donut-legend-dot" style="background:var(--st-aberto);"></span>Em aberto<b>${aberto}</b></div>
-      <div class="donut-legend-item clickable" data-status-filter="andamento"><span class="donut-legend-dot" style="background:var(--st-andamento);"></span>Em andamento<b>${andamento}</b></div>
-      <div class="donut-legend-item clickable" data-status-filter="concluido"><span class="donut-legend-dot" style="background:var(--st-concluido);"></span>Concluído<b>${concluidas}</b></div>
-    </div>
-  `;
-  statusDonutEl.querySelectorAll(".donut-legend-item[data-status-filter]").forEach(item => {
-    item.addEventListener("click", () => applyOverviewDonutFilter("status", item.dataset.statusFilter));
-  });
-  animateDonutGrowIn(statusDonutEl);
-
+  // Situação: duas barras 100% empilhadas no lugar das duas roscas. Clicar filtra o Board.
   const critica = opData.filter(d => d.sev === "critica").length;
   const alta = opData.filter(d => d.sev === "alta").length;
   const media = opData.filter(d => d.sev === "media").length;
-  priorityDonutEl.innerHTML = `
-    ${donutSVG([
-      { value: critica, color: "var(--sev-critica)", label: "Crítica" },
-      { value: alta, color: "var(--sev-alta)", label: "Alta" },
-      { value: media, color: "var(--sev-media)", label: "Média" },
-    ], { ariaLabel: "Distribuição por prioridade" })}
-    <div class="donut-legend">
-      <div class="donut-legend-item clickable" data-sev-filter="critica"><span class="donut-legend-dot" style="background:var(--sev-critica);"></span>Crítica<b>${critica}</b></div>
-      <div class="donut-legend-item clickable" data-sev-filter="alta"><span class="donut-legend-dot" style="background:var(--sev-alta);"></span>Alta<b>${alta}</b></div>
-      <div class="donut-legend-item clickable" data-sev-filter="media"><span class="donut-legend-dot" style="background:var(--sev-media);"></span>Média<b>${media}</b></div>
-    </div>
-  `;
-  priorityDonutEl.querySelectorAll(".donut-legend-item[data-sev-filter]").forEach(item => {
-    item.addEventListener("click", () => applyOverviewDonutFilter("sev", item.dataset.sevFilter));
-  });
-  animateDonutGrowIn(priorityDonutEl);
+  const stackHTML = (title, kind, parts) => `
+    <div class="stack-group">
+      <div class="stack-title">${title}</div>
+      <div class="stackbar" role="img" aria-label="${parts.map(p => `${p.label}: ${p.v}`).join(", ")}">
+        ${parts.filter(p => p.v).map(p => `<span class="seg" style="flex-grow:${p.v}; background:${p.c};" title="${p.label}: ${p.v}"></span>`).join("") || '<span class="seg seg-empty"></span>'}
+      </div>
+      <div class="stack-legend">
+        ${parts.map(p => `<button type="button" class="sl-item" data-${kind}="${p.k}"><i style="background:${p.c};"></i>${p.label}<b>${p.v}</b><span>${pctOf(p.v)}%</span></button>`).join("")}
+      </div>
+    </div>`;
+  statusEl.innerHTML = stackHTML("Por status", "ov-status", [
+    { k:"aberto", label:"Em aberto", v:aberto, c:"var(--st-aberto)" },
+    { k:"andamento", label:"Em andamento", v:andamento, c:"var(--st-andamento)" },
+    { k:"concluido", label:"Concluídas", v:concluidas, c:"var(--st-concluido)" },
+  ]) + stackHTML("Por prioridade", "ov-sev", [
+    { k:"critica", label:"Crítica", v:critica, c:"var(--sev-critica)" },
+    { k:"alta", label:"Alta", v:alta, c:"var(--sev-alta)" },
+    { k:"media", label:"Média", v:media, c:"var(--sev-media)" },
+  ]);
+  statusEl.querySelectorAll("[data-ov-status]").forEach(b => b.addEventListener("click", () => applyOverviewDonutFilter("status", b.dataset.ovStatus)));
+  statusEl.querySelectorAll("[data-ov-sev]").forEach(b => b.addEventListener("click", () => applyOverviewDonutFilter("sev", b.dataset.ovSev)));
 
-  // Progresso por setor: uma rosca pequena por setor (aberto/andamento/concluído), lado a lado.
+  renderDeadlineTimeline(deadlinesEl, deadlinesNote, opData);
+
+  // Progresso por setor: uma linha por setor, a barra é o próprio progresso (concluído + andamento).
   const scopedSectors = SECTORS.filter(s => scopeAreas.includes(s.key) && (state.area === "todos" || s.key === state.area));
   sectorsEl.innerHTML = scopedSectors.map((s, i) => {
     const items = opData.filter(d => d.area === s.key);
     const doneN = items.filter(d => d.status === "concluido").length;
     const andN = items.filter(d => d.status === "andamento").length;
-    const abN = items.filter(d => d.status === "aberto").length;
-    const p = items.length ? Math.round((doneN / items.length) * 100) : 0;
+    const n = items.length;
+    const p = n ? Math.round((doneN / n) * 100) : 0;
     return `
-      <div class="donut-multiple-item" style="--i:${i};">
-        ${donutSVG([
-          { value: abN, color: "var(--st-aberto)", label: "Em aberto" },
-          { value: andN, color: "var(--st-andamento)", label: "Em andamento" },
-          { value: doneN, color: "var(--st-concluido)", label: "Concluído" },
-        ], { size: 92, stroke: 12, ariaLabel: `Progresso de ${s.label}` })}
-        <div class="dm-name"><span class="rail-dot" style="background:${sectorColor(s.key)};"></span>${s.label}</div>
-        <div class="dm-sub">${doneN}/${items.length} concluídas · ${p}%</div>
-      </div>
-    `;
+      <div class="ov-row" style="--i:${i};">
+        <div class="ov-row-head"><span class="ov-name"><span class="rail-dot" style="background:${sectorColor(s.key)};"></span>${escapeHtml(s.label)}</span><span class="ov-val"><b>${doneN}</b> de ${n} · ${p}%</span></div>
+        <div class="ov-track">${n ? `<span style="width:${(doneN / n) * 100}%; background:var(--st-concluido);"></span><span style="width:${(andN / n) * 100}%; background:var(--st-andamento);"></span>` : ""}</div>
+      </div>`;
   }).join("") || '<p class="snippet">Nenhum setor sob sua gestão ainda.</p>';
 
-  // Carga de trabalho: uma única rosca com a fatia de cada pessoa no total de demandas ATIVAS
-  // (aberto + andamento) — mostra de relance quem está carregando a maior parte do trabalho
-  // agora, diferente do ranking abaixo, que é sobre desempenho histórico (quem já concluiu mais).
-  const byWorkload = {};
+  // Carga de trabalho: lista ordenada, cada barra dividida em andamento/aberto. "Sem responsável" fecha a lista.
+  const load = {};
   opData.forEach(d => {
     if(d.status === "concluido") return;
-    const a = itemAssignee(d);
-    if(!a) return;
-    if(!byWorkload[a]) byWorkload[a] = { aberto: 0, andamento: 0 };
-    byWorkload[a][d.status === "andamento" ? "andamento" : "aberto"]++;
+    const a = itemAssignee(d) || "";
+    if(!load[a]) load[a] = { aberto: 0, andamento: 0 };
+    load[a][d.status === "andamento" ? "andamento" : "aberto"]++;
   });
-  const workloadRows = Object.entries(byWorkload)
-    .map(([email, c]) => ({ email, c, load: c.aberto + c.andamento }))
-    .sort((a, b) => b.load - a.load);
-  const totalWorkload = workloadRows.reduce((s, r) => s + r.load, 0);
-  workloadDonutEl.innerHTML = workloadRows.length ? `
-    ${donutSVG(workloadRows.map((r, i) => ({ value: r.load, color: SECTOR_PALETTE[i % SECTOR_PALETTE.length] })), { ariaLabel: "Carga de trabalho por pessoa" })}
-    <div class="donut-legend">
-      ${workloadRows.map((r, i) => {
-        const person = DIRECTORY.find(u => u.email === r.email);
-        const label = ((person && person.name) ? person.name : r.email) + (person && person.disabled ? " (inativo)" : "");
-        const level = r.load >= 6 ? "alta" : r.load >= 3 ? "media" : "normal";
-        return `<div class="donut-legend-item"><span class="donut-legend-dot" style="background:${SECTOR_PALETTE[i % SECTOR_PALETTE.length]};"></span><span class="dl-label" title="${escapeHtml(label)}">${escapeHtml(label)}</span>${level === "alta" ? ` <span class="overdue-badge">${ICON_WARNING}</span>` : ""}<b>${r.load}</b></div>`;
-      }).join("")}
-    </div>
-  ` : '<p class="snippet">Nenhuma demanda ativa com responsável atribuído.</p>';
-  animateDonutGrowIn(workloadDonutEl);
+  const loadRows = Object.entries(load).map(([email, c]) => ({ email, ...c, n: c.aberto + c.andamento }))
+    .sort((x, y) => (x.email === "") - (y.email === "") || y.n - x.n);
+  const maxLoad = Math.max(1, ...loadRows.map(r => r.n));
+  workloadEl.innerHTML = loadRows.map((r, i) => {
+    const person = DIRECTORY.find(u => u.email === r.email);
+    const name = r.email === "" ? "Sem responsável" : ((person && person.name) || r.email) + (person && person.disabled ? " (inativo)" : "");
+    return `
+      <div class="ov-row${r.email === "" ? " ov-row-muted" : ""}" style="--i:${i};">
+        <div class="ov-row-head"><span class="ov-name">${r.email === "" ? "" : `<span class="ov-avatar">${escapeHtml(initialsFromName(name))}</span>`}<span class="ov-ellipsis" title="${escapeHtml(name)}">${escapeHtml(name)}</span>${r.n >= 6 ? ` <span class="overdue-badge">sobrecarga</span>` : ""}</span><span class="ov-val"><b>${r.n}</b>${r.andamento ? ` · ${r.andamento} em andamento` : ""}</span></div>
+        <div class="ov-track"><span style="width:${(r.andamento / maxLoad) * 100}%; background:var(--st-andamento);"></span><span style="width:${(r.aberto / maxLoad) * 100}%; background:var(--st-aberto);"></span></div>
+      </div>`;
+  }).join("") || '<p class="snippet">Nenhuma demanda ativa no recorte atual.</p>';
 
-  // Não existe timestamp de criação da demanda (itens seed nunca tiveram data, e itens novos
-  // também não guardam uma) — a melhor aproximação com o dado que realmente existe é medir da
-  // primeira mudança de status registrada até a entrada mais recente em "Concluído". Deixamos
-  // isso explícito no rótulo em vez de fingir que é o tempo de vida completo da demanda.
+  // Não existe timestamp de criação da demanda — mede da primeira mudança de status registrada
+  // até a entrada mais recente em "Concluído", e o rótulo diz isso.
   const resolutionSamples = [];
   opData.forEach(d => {
     if(d.status !== "concluido") return;
@@ -6510,21 +6584,14 @@ function renderOverview(){
     if(!isFinite(startAt) || !isFinite(endAt) || endAt < startAt) return;
     resolutionSamples.push({ area: d.area, days: (endAt - startAt) / 86400000 });
   });
-
   if(!resolutionSamples.length){
-    resolutionEl.innerHTML = '<p class="snippet">Ainda não há demandas concluídas com histórico suficiente pra calcular o tempo de resolução.</p>';
+    resolutionEl.innerHTML = '<p class="snippet">Aparece quando a primeira demanda for concluída com histórico de status.</p>';
   }else{
     const overallAvg = resolutionSamples.reduce((s, r) => s + r.days, 0) / resolutionSamples.length;
     const bySector = {};
-    resolutionSamples.forEach(r => {
-      if(!bySector[r.area]) bySector[r.area] = [];
-      bySector[r.area].push(r.days);
-    });
+    resolutionSamples.forEach(r => { (bySector[r.area] = bySector[r.area] || []).push(r.days); });
     const sectorRows = Object.entries(bySector)
-      .map(([area, days]) => ({
-        label: (SECTORS.find(s => s.key === area) || {}).label || area,
-        avg: days.reduce((s, dd) => s + dd, 0) / days.length,
-      }))
+      .map(([area, days]) => ({ label: (SECTORS.find(s => s.key === area) || {}).label || area, avg: days.reduce((s, dd) => s + dd, 0) / days.length }))
       .sort((a, b) => a.avg - b.avg);
     const maxAvg = Math.max(...sectorRows.map(r => r.avg), 0.001);
     const fmtDays = (n) => n < 1 ? `${Math.round(n * 24)}h` : `${n.toFixed(1)}d`;
@@ -6545,51 +6612,74 @@ function renderOverview(){
     `;
   }
 
-  // Ranking unificado (não separado por setor) de quem mais concluiu, como barras verticais —
-  // no lugar do antigo card com medalha + mini-rosca de % + fração, que misturava representações
-  // diferentes do mesmo dado e podia contradizer a própria ordenação da lista.
   const doneByAssignee = {};
   opData.forEach(d => {
     if(d.status !== "concluido") return;
     const a = itemAssignee(d);
-    if(!a) return;
-    doneByAssignee[a] = (doneByAssignee[a] || 0) + 1;
+    if(a) doneByAssignee[a] = (doneByAssignee[a] || 0) + 1;
   });
-  const topRows = Object.entries(doneByAssignee)
-    .sort((a, b) => b[1] - a[1])
-    .slice(0, 5)
-    .map(([email, count]) => {
-      const person = DIRECTORY.find(u => u.email === email);
-      const name = (person && person.name) ? person.name : email;
-      const label = name + (person && person.disabled ? " (inativo)" : "");
-      return { name, label, count };
-    });
-  if(!topRows.length){
-    topAssigneesEl.innerHTML = '<p class="snippet">Nenhuma demanda concluída com responsável atribuído ainda.</p>';
-  }else{
-    const maxCount = Math.max(...topRows.map(r => r.count));
-    // MAX_BAR_PX precisa bater com a altura de .vbar-grid no CSS — é o que faz as linhas de
-    // grade ficarem alinhadas com a área real onde as barras crescem.
-    const MAX_BAR_PX = 140;
-    topAssigneesEl.innerHTML = `
-      <div class="vbar-grid"></div>
-      ${topRows.map((r, i) => `
-        <div class="vbar-item${i === 0 ? " top-1" : ""}" style="--i:${i};">
-          ${i === 0 ? `<div class="vbar-crown">${ICON_CROWN}</div>` : ""}
-          <div class="vbar-avatar">${escapeHtml(initialsFromName(r.name))}</div>
-          <div class="vbar-value">${r.count}</div>
-          <div class="vbar-track" style="height:${MAX_BAR_PX}px;">
-            <div class="vbar-fill" style="height:${Math.max(6, Math.round((r.count / maxCount) * MAX_BAR_PX))}px;"></div>
-          </div>
-          <div class="vbar-label" title="${escapeHtml(r.label)}">${escapeHtml(r.label)}</div>
-        </div>
-      `).join("")}
-    `;
-  }
+  const topRows = Object.entries(doneByAssignee).sort((a, b) => b[1] - a[1]).slice(0, 5).map(([email, count]) => {
+    const person = DIRECTORY.find(u => u.email === email);
+    const name = (person && person.name) ? person.name : email;
+    return { name, label: name + (person && person.disabled ? " (inativo)" : ""), count };
+  });
+  const maxDone = Math.max(1, ...topRows.map(r => r.count));
+  topAssigneesEl.innerHTML = topRows.length ? topRows.map((r, i) => `
+      <div class="ov-row" style="--i:${i};">
+        <div class="ov-row-head"><span class="ov-name"><span class="ov-avatar">${escapeHtml(initialsFromName(r.name))}</span><span class="ov-ellipsis" title="${escapeHtml(r.label)}">${escapeHtml(r.label)}</span></span><span class="ov-val"><b>${r.count}</b> concluída${r.count === 1 ? "" : "s"}</span></div>
+        <div class="ov-track"><span style="width:${(r.count / maxDone) * 100}%; background:${i === 0 ? "var(--st-concluido)" : "var(--text-low)"};"></span></div>
+      </div>`).join("")
+    : '<p class="snippet">O ranking aparece quando houver demandas concluídas com responsável.</p>';
 
-  setupScrollReveal(sectorsEl);
   setupScrollReveal(resolutionEl);
-  setupScrollReveal(topAssigneesEl);
+}
+
+// Linha de prazos: cada demanda ativa com prazo vira um marcador no dia em que vence, num eixo de
+// 2 semanas pra trás a 3 pra frente. Atrasadas ficam na faixa vermelha à esquerda de "Hoje"; quem
+// passou de 14 dias encosta na borda com o atraso escrito. Clicar abre a demanda.
+const DEADLINE_PAST_DAYS = 14, DEADLINE_FUTURE_DAYS = 21;
+function renderDeadlineTimeline(el, noteEl, items){
+  const active = items.filter(d => d.status !== "concluido" && !isArchived(d));
+  const withDue = active.filter(d => itemDueDate(d));
+  const semPrazo = active.length - withDue.length;
+  const today = new Date(); today.setHours(0, 0, 0, 0);
+  const span = DEADLINE_PAST_DAYS + DEADLINE_FUTURE_DAYS;
+  const dayDiff = (iso) => Math.round((new Date(iso + "T00:00:00") - today) / 86400000);
+  const xOf = (diff) => (Math.max(-DEADLINE_PAST_DAYS, Math.min(DEADLINE_FUTURE_DAYS, diff)) + DEADLINE_PAST_DAYS) / span * 100;
+  const atrasadas = withDue.filter(d => dueInfo(d).state === "atrasado").length;
+  const semana = withDue.filter(d => { const k = dayDiff(itemDueDate(d)); return k >= 0 && k <= 7; }).length;
+  if(noteEl){
+    noteEl.textContent = !active.length ? "nenhuma demanda ativa"
+      : `${atrasadas} atrasada${atrasadas === 1 ? "" : "s"} · ${semana} vence${semana === 1 ? "" : "m"} em 7 dias · ${semPrazo} sem prazo`;
+  }
+  // Marcadores em faixas: quem cai a menos de ~92px de outro (na largura real do gráfico) sobe uma faixa.
+  const minGap = 92 / Math.max(280, el.clientWidth || 800) * 100;
+  const pins = withDue.map(d => ({ d, diff: dayDiff(itemDueDate(d)), info: dueInfo(d) }))
+    .sort((a, b) => a.diff - b.diff)
+    .map(p => ({ ...p, x: xOf(p.diff) }));
+  const laneEnds = [];
+  pins.forEach(p => {
+    let lane = laneEnds.findIndex(end => p.x - end >= minGap);
+    if(lane === -1){ lane = laneEnds.length; laneEnds.push(-100); }
+    laneEnds[lane] = p.x; p.lane = Math.min(lane, 3);
+  });
+  const ticks = [];
+  for(let k = -DEADLINE_PAST_DAYS; k <= DEADLINE_FUTURE_DAYS; k += 7){
+    const dt = new Date(today); dt.setDate(dt.getDate() + k);
+    ticks.push({ x: xOf(k), label: k === 0 ? "Hoje" : `${pad2(dt.getDate())}/${pad2(dt.getMonth() + 1)}`, today: k === 0 });
+  }
+  el.innerHTML = `
+    <div class="dl-chart${pins.length ? "" : " dl-chart-empty"}" style="--lanes:${Math.max(1, Math.min(4, laneEnds.length))};">
+      <div class="dl-late-zone" style="width:${xOf(0)}%;"><span>Atrasadas</span></div>
+      ${ticks.map((t, i) => `<div class="dl-tick${t.today ? " dl-today" : ""}${i === 0 ? " dl-first" : i === ticks.length - 1 ? " dl-last" : ""}" style="left:${t.x}%;"><span>${t.label}</span></div>`).join("")}
+      ${pins.map((p, i) => `
+        <button type="button" class="dl-pin dl-${p.info.state}${p.x < 7 ? " dl-edge-l" : p.x > 93 ? " dl-edge-r" : ""}" style="left:${p.x}%; --lane:${p.lane}; --i:${i};" data-dl-open="${escapeHtml(p.d.id)}"
+          title="${escapeHtml(p.d.title)} · ${escapeHtml(p.info.hint || `vence em ${p.diff} dias`)}">
+          <span class="dl-label">${escapeHtml(p.d.id)}${p.diff < -DEADLINE_PAST_DAYS ? ` · ${-p.diff}d` : ""}</span>
+        </button>`).join("")}
+      ${pins.length ? "" : `<p class="dl-empty">${active.length ? "Nenhuma demanda ativa tem prazo definido ainda. Defina no cartão pra ela aparecer aqui." : "Nada ativo no recorte atual."}</p>`}
+    </div>`;
+  el.querySelectorAll("[data-dl-open]").forEach(b => b.addEventListener("click", () => openDemandModal(b.dataset.dlOpen)));
 }
 
 function greetingByHour(){
@@ -6651,7 +6741,8 @@ function applyRoleLayout(){
 
   const name = firstName();
   if(h1) h1.innerHTML = name ? `${greetingByHour()}, <span class="welcome-name">${name}</span>!` : "Board de Melhorias";
-  if(sub) sub.textContent = (currentUser && ROLE_WELCOME_SUB[currentUser.role]) || "Bem-vindo(a) à plataforma de gestão de melhorias da Crediffato.";
+  // O foco do dia logo abaixo já diz o que importa; o parágrafo de boas-vindas só repetia o óbvio.
+  if(sub) sub.hidden = true;
 
   if(isOperador){
     state.tab = "board";
@@ -6860,7 +6951,7 @@ function animateCountTo(el, target){
   const to = String(target);
   const from = String(Math.max(0, startVal)).padStart(to.length, "0").slice(-to.length);
   el.innerHTML = `<span class="odo" aria-hidden="true">${[...to].map((_, i) =>
-    `<span class="odo-d"><span class="odo-s" style="transition:none; transform:translateY(-${Number(from[i]) * 1.15}em)">${"0123456789".split("").map(d => `<span>${d}</span>`).join("")}</span></span>`
+    `<span class="odo-d"><span class="odo-s" style="transition:none; transform:translateY(-${Number(from[i]) * 1.15}em)"></span></span>`
   ).join("")}</span>`;
   const strips = el.querySelectorAll(".odo-s");
   void el.offsetWidth;
@@ -7053,7 +7144,7 @@ function updateFocusAndPulse(vd){
     const pct = total ? Math.round((n.concluido / total) * 100) : 0;
     bar.innerHTML = ["aberto", "andamento", "concluido"].filter(k => n[k]).map(k => `<span class="${k}" style="flex-grow:${n[k]}"></span>`).join("");
     bar.setAttribute("aria-label", `${n.aberto} em aberto, ${n.andamento} em andamento, ${n.concluido} concluídas`);
-    cap.innerHTML = `<span>Progresso do board</span><span><b>${pct}%</b> concluído</span>`;
+    cap.innerHTML = `<span class="pc-legend">${[["aberto","em aberto"],["andamento","em andamento"],["concluido","concluídas"]].map(([k, l]) => `<span><i class="${k}"></i><b>${n[k]}</b> ${l}</span>`).join("")}</span><span class="pc-pct"><b>${pct}%</b> concluído</span>`;
   }
 }
 
@@ -8207,7 +8298,9 @@ async function handleAuthedUser(fbUser){
       }catch(e){
         console.error("Falha ao iniciar a base do Agora Eu Sei:", e);
       }
-      note.textContent = "☁ Conectado ao banco compartilhado — dados sincronizados em tempo real para todos que acessam este link.";
+      // Conectado é o estado normal: não ocupa uma faixa do board. Só os avisos (modo local, falha) aparecem.
+      note.textContent = "";
+      note.style.display = "none";
       startAlertsInterval();
     }catch(e){
       console.error("Firebase indisponível, usando armazenamento local como reserva:", e);
