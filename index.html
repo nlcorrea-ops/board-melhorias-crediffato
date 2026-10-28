@@ -1937,11 +1937,13 @@
   .pc-legend b, .pc-pct b{color:var(--text-hi); font-family:var(--font-mono); font-weight:600;}
 
   /* Rótulos em caixa normal e legíveis, no lugar das microetiquetas em maiúsculas espaçadas. */
-  .eyebrow, .summary-label, .kpi-card .l, .sumcard .l, .main-nav .nav-label{
+  .eyebrow, .summary-label, .kpi-card .l, .sumcard .l, .main-nav .nav-label, .field-label, .rp-title, .rp-activity-title,
+  .agenda-eyebrow, .detail-label, .gsearch-group-label, .settings-section-title, .trend-block .tooltip .tt-label{
     text-transform:none; letter-spacing:0; font-family:var(--font-display);
   }
   .eyebrow{font-size:13px;}
-  .summary-label, .kpi-card .l, .sumcard .l{font-size:12.5px; color:var(--text-mid);}
+  .summary-label, .kpi-card .l, .sumcard .l, .field-label, .rp-title, .rp-activity-title, .agenda-eyebrow,
+  .detail-label, .gsearch-group-label, .settings-section-title{font-size:12.5px; color:var(--text-mid);}
   .main-nav .nav-label{font-size:12.5px;}
   .theme-swatch-option span, .area-tag, .shared, .overdue-badge, .attachment-count-badge{font-size:11px;}
 
@@ -1956,6 +1958,174 @@
     .dl-label{font-size:11px;}
   }
 
+  /* ================= VIVO: cada aba tem uma cor e a tela inteira assume ela =================
+     Referência: "Visão Caixas ADM/SAC". Vermelho Crediffato na Visão Geral; as outras abas trocam o tom. */
+  @property --tc{syntax:'<color>'; inherits:true; initial-value:#d40f3a;}
+  @property --ang{syntax:'<angle>'; inherits:false; initial-value:0deg;}
+  body{--tc:var(--brand-red); transition:--tc .7s ease;}
+  body[data-aba="board"]{--tc:var(--op);}
+  body[data-aba="backlog"]{--tc:var(--sev-alta);}
+  body[data-aba="routines"]{--tc:var(--pa);}
+  body[data-aba="validations"]{--tc:var(--st-concluido);}
+  body[data-aba="archive"]{--tc:#4f9cff;}
+  body[data-aba="admin"]{--tc:var(--ql);}
+  body[data-aba="agorasei"]{--tc:#c792ea;}
+  ::selection{background:color-mix(in srgb, var(--tc) 35%, transparent);}
+  *::-webkit-scrollbar-thumb{background:color-mix(in srgb, var(--tc) 45%, var(--ink-2)); border-radius:10px;}
+
+  /* fundo: três manchas de cor dançando (a 1ª é a cor da aba) + facho de luz no topo + partículas */
+  .aurora{position:fixed; inset:0; z-index:0; overflow:hidden; pointer-events:none;}
+  .aurora::before{content:""; position:absolute; inset:0; background:radial-gradient(900px 380px at 50% -140px, color-mix(in srgb, var(--tc) 22%, transparent), transparent 70%);}
+  /* manchas já "desfocadas" no próprio degradê: sem filter:blur, que pesa em computador sem placa de vídeo */
+  .aurora i{position:absolute; border-radius:50%; opacity:.3; will-change:transform; animation:auroraDance 22s ease-in-out infinite alternate;}
+  .aurora .a1{width:760px; height:760px; left:-280px; top:-320px; background:radial-gradient(circle, var(--tc) 0%, transparent 65%);}
+  .aurora .a2{width:640px; height:640px; right:-260px; top:25%; background:radial-gradient(circle, var(--brand-red) 0%, transparent 65%); opacity:.18; animation-duration:28s; animation-delay:-8s;}
+  .aurora .a3{width:600px; height:600px; left:28%; bottom:-360px; background:radial-gradient(circle, var(--pa) 0%, transparent 65%); opacity:.16; animation-duration:34s; animation-delay:-15s;}
+  :root[data-theme="claro"] .aurora i{opacity:.16;}
+  @keyframes auroraDance{
+    0%{transform:translate3d(0,0,0) scale(1);}
+    33%{transform:translate3d(130px,70px,0) scale(1.15);}
+    66%{transform:translate3d(-70px,130px,0) scale(.9);}
+    100%{transform:translate3d(90px,-40px,0) scale(1.08);}
+  }
+  .particles i{
+    position:absolute; bottom:-12px; width:var(--s); height:var(--s); border-radius:50%; background:var(--tc);
+    box-shadow:0 0 10px 2px var(--tc); opacity:0; will-change:transform; animation:particleRise var(--d) linear var(--dl) infinite;
+  }
+  @keyframes particleRise{
+    0%{transform:translate3d(0,0,0); opacity:0;} 10%{opacity:.7;}
+    50%{transform:translate3d(var(--dx),-55vh,0);} 90%{opacity:.35;}
+    100%{transform:translate3d(0,-110vh,0); opacity:0;}
+  }
+
+  /* cabeçalho: linha de luz correndo na borda de baixo; o nome na saudação com o degradê da aba */
+  header{position:relative; border-bottom-color:transparent;}
+  header::after{
+    content:""; position:absolute; left:0; right:0; bottom:-1px; height:2px; border-radius:2px;
+    background:linear-gradient(90deg, transparent, var(--brand-red), var(--tc), var(--pa), var(--brand-red), transparent);
+    background-size:200% 100%; animation:runLine 6s linear infinite; opacity:.85;
+    box-shadow:0 0 14px color-mix(in srgb, var(--tc) 60%, transparent);
+  }
+  @keyframes runLine{from{background-position:0% 0;} to{background-position:200% 0;}}
+  .welcome-name{
+    background:linear-gradient(90deg, var(--brand-red), var(--tc), #ff7a8f, var(--brand-red)); background-size:200% 100%;
+    -webkit-background-clip:text; background-clip:text; color:transparent; animation:runLine 7s linear infinite;
+  }
+
+  /* navegação: o indicador e a aba ativa tomam a cor da aba */
+  .side-nav-indicator{
+    background:color-mix(in srgb, var(--tc) 18%, transparent); border-color:var(--tc);
+    box-shadow:0 0 0 3px color-mix(in srgb, var(--tc) 16%, transparent), 0 8px 22px -8px var(--tc);
+  }
+  .main-nav button.active{color:var(--tc);}
+  .tab-panel-head h2{display:flex; align-items:center; gap:10px;}
+  .tab-panel-head h2::before{content:""; width:9px; height:9px; border-radius:50%; background:var(--tc); box-shadow:0 0 12px 2px color-mix(in srgb, var(--tc) 70%, transparent); animation:dotBreathe 3.2s ease-in-out infinite;}
+  @keyframes dotBreathe{0%,100%{box-shadow:0 0 6px 1px color-mix(in srgb, var(--tc) 60%, transparent);} 50%{box-shadow:0 0 14px 4px color-mix(in srgb, var(--tc) 70%, transparent);}}
+  .pulse{background:var(--tc);}
+
+  /* feixe de luz percorrendo a borda do bloco principal de cada aba */
+  .beam{position:relative;}
+  .beam::after{
+    content:""; position:absolute; inset:-1px; border-radius:inherit; padding:1.5px; pointer-events:none; z-index:2;
+    background:conic-gradient(from var(--ang), transparent 0 62%, color-mix(in srgb, var(--tc) 80%, #fff) 80%, transparent 92%);
+    -webkit-mask:linear-gradient(#000 0 0) content-box, linear-gradient(#000 0 0); -webkit-mask-composite:xor;
+            mask:linear-gradient(#000 0 0) content-box exclude, linear-gradient(#000 0 0);
+    animation:beamSpin 6s linear infinite;
+  }
+  @keyframes beamSpin{to{--ang:360deg;}}
+
+  /* vidro: filete de luz na borda de cima dos painéis */
+  .column, .kpi-card, .donut-block, .admin-card, .routine-list, .routine-side-panel, .trend-block, .modal, .demand-modal{
+    box-shadow:inset 0 1px 0 rgba(255,255,255,.06);
+  }
+  :root[data-theme="claro"] :is(.column, .kpi-card, .donut-block, .admin-card, .routine-list, .routine-side-panel, .trend-block){box-shadow:0 1px 2px rgba(0,0,0,.04);}
+
+  /* números com halo da própria cor (temas escuros) */
+  :root:not([data-theme="claro"]) :is(.kpi-card .n, .sumcard .n, .resolution-headline .n, .agenda-count-pill b, .rf-ring-center){
+    text-shadow:0 0 18px color-mix(in srgb, currentColor 45%, transparent);
+  }
+
+  /* botões principais: um reflexo passa de tempos em tempos */
+  .add-btn, .btn-primary, .routine-check-action:not(.undo){
+    background-image:linear-gradient(110deg, transparent 30%, rgba(255,255,255,.32) 45%, transparent 60%);
+    background-size:250% 100%; background-repeat:no-repeat; animation:shine 3.6s ease-in-out infinite;
+    box-shadow:0 0 16px -4px var(--brand-red);
+  }
+  @keyframes shine{0%{background-position:130% 0;} 55%, 100%{background-position:-60% 0;}}
+
+  /* cartões de demanda: controles em pílulas numa linha só (o conteúdo volta a ser o destaque) */
+  .card-controls{display:flex; flex-wrap:wrap; gap:6px; margin:2px 0 8px;}
+  .card-controls .status-select, .card-controls .due-input{
+    width:auto; max-width:100%; border-radius:999px; padding:4px 24px 4px 10px; font-size:11px; background-position:right 9px center;
+  }
+  .card-controls .due-input{padding:4px 8px 4px 10px;}
+  .card-controls .assignee-select:not(.has-value), .card-controls .due-input.is-empty{color:var(--text-low); border-style:dashed;}
+  .card-controls .assignee-select.has-value{color:var(--text-hi);}
+  .due-hint{margin:-4px 0 8px;}
+  .card{transition:transform .2s cubic-bezier(.2,.9,.3,1.2), background .15s ease, border-color .15s ease, box-shadow .2s ease, opacity .15s ease;}
+  .card:hover{transform:translateY(-3px); box-shadow:0 14px 34px -14px var(--rail, #00000030), 0 0 0 1px color-mix(in srgb, var(--rail, transparent) 40%, transparent);}
+
+  /* colunas do board: faixa de cor no topo + contador com brilho */
+  .column{box-shadow:inset 0 3px 0 var(--col-c, transparent), inset 0 1px 0 rgba(255,255,255,.06);}
+  .col-head .count{color:var(--col-c, var(--text-low)); border-color:color-mix(in srgb, var(--col-c, var(--hairline)) 45%, transparent); box-shadow:0 0 12px -3px color-mix(in srgb, var(--col-c, transparent) 60%, transparent);}
+
+  /* listas (backlog, validações, arquivo) em grade, não numa coluna estreita */
+  .backlog-list{display:grid; grid-template-columns:repeat(auto-fill, minmax(320px, 1fr)); max-width:none; align-items:start;}
+  .backlog-list .empty-state{grid-column:1 / -1;}
+
+  /* linhas entram em cascata */
+  :is(.routine-check-row, .access-row, #online-list .admin-list-item, #sector-list .admin-list-item, .history-item, .comment-item, .agorasei-kb-item, .rp-activity-item){animation:rowIn .45s cubic-bezier(.16,1,.3,1) both;}
+  :is(.routine-check-row, .access-row, #online-list .admin-list-item, #sector-list .admin-list-item, .history-item, .comment-item, .agorasei-kb-item, .rp-activity-item):nth-child(1){animation-delay:45ms;}
+  :is(.routine-check-row, .access-row, #online-list .admin-list-item, #sector-list .admin-list-item, .history-item, .comment-item, .agorasei-kb-item, .rp-activity-item):nth-child(2){animation-delay:90ms;}
+  :is(.routine-check-row, .access-row, #online-list .admin-list-item, #sector-list .admin-list-item, .history-item, .comment-item, .agorasei-kb-item, .rp-activity-item):nth-child(3){animation-delay:135ms;}
+  :is(.routine-check-row, .access-row, #online-list .admin-list-item, #sector-list .admin-list-item, .history-item, .comment-item, .agorasei-kb-item, .rp-activity-item):nth-child(4){animation-delay:180ms;}
+  :is(.routine-check-row, .access-row, #online-list .admin-list-item, #sector-list .admin-list-item, .history-item, .comment-item, .agorasei-kb-item, .rp-activity-item):nth-child(5){animation-delay:225ms;}
+  :is(.routine-check-row, .access-row, #online-list .admin-list-item, #sector-list .admin-list-item, .history-item, .comment-item, .agorasei-kb-item, .rp-activity-item):nth-child(6){animation-delay:270ms;}
+  :is(.routine-check-row, .access-row, #online-list .admin-list-item, #sector-list .admin-list-item, .history-item, .comment-item, .agorasei-kb-item, .rp-activity-item):nth-child(7){animation-delay:315ms;}
+  :is(.routine-check-row, .access-row, #online-list .admin-list-item, #sector-list .admin-list-item, .history-item, .comment-item, .agorasei-kb-item, .rp-activity-item):nth-child(8){animation-delay:360ms;}
+  :is(.routine-check-row, .access-row, #online-list .admin-list-item, #sector-list .admin-list-item, .history-item, .comment-item, .agorasei-kb-item, .rp-activity-item):nth-child(9){animation-delay:405ms;}
+  :is(.routine-check-row, .access-row, #online-list .admin-list-item, #sector-list .admin-list-item, .history-item, .comment-item, .agorasei-kb-item, .rp-activity-item):nth-child(10){animation-delay:450ms;}
+  :is(.routine-check-row, .access-row, #online-list .admin-list-item, #sector-list .admin-list-item, .history-item, .comment-item, .agorasei-kb-item, .rp-activity-item):nth-child(11){animation-delay:495ms;}
+  :is(.routine-check-row, .access-row, #online-list .admin-list-item, #sector-list .admin-list-item, .history-item, .comment-item, .agorasei-kb-item, .rp-activity-item):nth-child(12){animation-delay:540ms;}
+  @keyframes rowIn{from{opacity:0; transform:translateX(-12px);} to{opacity:1; transform:none;}}
+
+  /* rotinas: hoje na cor da aba, check que estoura ao concluir, anéis com brilho */
+  .strip-day.today{background:var(--tc); border-color:var(--tc); box-shadow:0 8px 22px -8px var(--tc);}
+  .strip-day.selected{border-color:var(--tc);}
+  .strip-day{transition:transform .2s cubic-bezier(.2,.9,.3,1.3), border-color .15s ease;}
+  .strip-day:hover{transform:translateY(-3px);}
+  .routine-check-dot.just-done{animation:checkPop .6s cubic-bezier(.2,.9,.3,1.5);}
+  .routine-check-dot.just-done::after{content:""; position:absolute; inset:-4px; border-radius:50%; border:2px solid var(--st-concluido); animation:cardFlash .8s ease-out forwards;}
+  .routine-check-dot{position:relative;}
+  @keyframes checkPop{0%{transform:scale(.4);} 60%{transform:scale(1.25);} 100%{transform:scale(1);}}
+  .rf-ring-fill{stroke:var(--tc); filter:drop-shadow(0 0 4px color-mix(in srgb, var(--tc) 70%, transparent));}
+  .rc-bar-fill{background:var(--tc);}
+  .routine-check-row{transition:background .15s ease;}
+  .routine-check-row:hover{background:color-mix(in srgb, var(--tc) 6%, transparent);}
+
+  /* arquivo: as barras crescem do chão */
+  .bar-fill{transform-box:fill-box; transform-origin:bottom; animation:barGrow .8s cubic-bezier(.2,.9,.3,1.1) both;}
+  .bar-col:nth-child(2) .bar-fill{animation-delay:60ms;} .bar-col:nth-child(3) .bar-fill{animation-delay:120ms;}
+  .bar-col:nth-child(4) .bar-fill{animation-delay:180ms;} .bar-col:nth-child(5) .bar-fill{animation-delay:240ms;}
+  .bar-col:nth-child(6) .bar-fill{animation-delay:300ms;} .bar-col:nth-child(7) .bar-fill{animation-delay:360ms;}
+  @keyframes barGrow{from{transform:scaleY(0);}}
+  .archive-search:focus-visible, .gsearch-input:focus{outline:2px solid var(--tc);}
+
+  /* acessos: linhas sobem ao passar o mouse, avatar com aro na cor do papel */
+  .access-row{transition:transform .2s cubic-bezier(.2,.9,.3,1.2), border-color .15s ease;}
+  .access-row:hover{transform:translateX(4px); border-color:color-mix(in srgb, var(--tc) 45%, var(--hairline));}
+  .access-avatar{box-shadow:0 0 0 2px var(--ink-1), 0 0 0 3px color-mix(in srgb, var(--tc) 50%, transparent);}
+
+  /* modais: borda e luz na cor da aba */
+  .modal, .demand-modal{border-color:color-mix(in srgb, var(--tc) 30%, var(--hairline));}
+  .dm-head{box-shadow:inset 0 3px 0 var(--tc);}
+
+  @media (prefers-reduced-motion:reduce){
+    .aurora i, .particles i, header::after, .welcome-name, .beam::after, .add-btn, .btn-primary, .routine-check-action,
+    .tab-panel-head h2::before, .bar-fill, .routine-check-dot.just-done, :is(.routine-check-row, .access-row, #online-list .admin-list-item, #sector-list .admin-list-item, .history-item, .comment-item, .agorasei-kb-item, .rp-activity-item){animation:none !important;}
+    .particles{display:none;}
+    body{transition:none;}
+  }
   @media (prefers-reduced-motion:reduce){
     .ov-track span, .dl-pin{animation:none;}
     .pulse-bar::after, .focus-chip{animation:none;}
@@ -1966,6 +2136,7 @@
 </head>
 <body>
 
+<div class="aurora" aria-hidden="true"><i class="a1"></i><i class="a2"></i><i class="a3"></i><div class="particles"></div></div>
 <canvas id="bg-network" aria-hidden="true"></canvas>
 <canvas id="fx-canvas" aria-hidden="true"></canvas>
 
@@ -2167,7 +2338,7 @@
     </div>
     <div class="kpi-row" id="overview-kpis"></div>
     <div class="bento-grid">
-      <div class="overview-block donut-block bento-tile bento-deadlines">
+      <div class="overview-block donut-block bento-tile bento-deadlines beam">
         <div class="ov-head"><h3 class="ov-title">Linha de prazos</h3><span class="ov-note" id="overview-deadlines-note"></span></div>
         <div id="overview-deadlines"></div>
       </div>
@@ -2245,7 +2416,7 @@
       <h2>Backlog</h2>
       <button class="add-btn" id="open-add-modal-backlog">+ Nova demanda</button>
     </div>
-    <p class="sub" style="margin-bottom:18px;">Demandas ainda não priorizadas. Quem tem permissão de gestão pode movê-las para o Board quando estiverem prontas para entrar em andamento.</p>
+    <p class="sub" style="margin-bottom:18px;">Ideias ainda não priorizadas. Use "→ Board" quando estiverem prontas.</p>
     <div class="backlog-list" id="backlog-list">
       <div class="skeleton-card"><div class="skeleton-block"></div><div class="skeleton-block"></div></div>
       <div class="skeleton-card"><div class="skeleton-block"></div><div class="skeleton-block"></div></div>
@@ -2274,7 +2445,7 @@
         <div class="week-strip" id="routines-week-strip"></div>
         <div class="routine-list" id="routines-list-agenda"></div>
       </div>
-      <div class="routine-side-panel" id="routines-progress-panel"></div>
+      <div class="routine-side-panel beam" id="routines-progress-panel"></div>
     </div>
 
     <div class="routines-layout" id="routines-view-detail" style="display:none; margin-top:22px;">
@@ -2292,7 +2463,7 @@
     <div class="tab-panel-head">
       <h2>Validações pendentes</h2>
     </div>
-    <p class="sub" style="margin-bottom:18px;">Demandas já concluídas aguardando confirmação de quem gerencia. Depois de validada, a demanda sai daqui e do Board — só fica disponível na aba Arquivo.</p>
+    <p class="sub" style="margin-bottom:18px;">Concluídas esperando sua confirmação. Validadas vão para o Arquivo.</p>
     <div class="backlog-list" id="validations-list"></div>
   </div>
 
@@ -2300,9 +2471,9 @@
     <div class="tab-panel-head">
       <h2>Arquivo</h2>
     </div>
-    <p class="sub" style="margin-bottom:14px;">Demandas concluídas e já validadas — fora do Board, mas sempre disponíveis pra consulta.</p>
+    <p class="sub" style="margin-bottom:14px;">Tudo que já foi concluído e validado.</p>
 
-    <div class="trend-block">
+    <div class="trend-block beam">
       <div class="trend-head">
         <p class="summary-label">Itens concluídos por mês</p>
         <p class="trend-total">Últimos 6 meses: <b id="trend-total-value">—</b> itens</p>
@@ -3036,11 +3207,17 @@ let lastMouseX = -9999, lastMouseY = -9999;
     }));
   }
 
+  // A rede segue a cor da aba (--tc, que transiciona sozinha no CSS); lida a cada ~15 quadros, não a cada um.
+  let tcRGB = "212,15,58", tcFrame = 0;
   function networkRGB(){
-    // Preto e Vermelho pedem a rede de fundo branca em vez do vermelho de marca padrão —
-    // lido a cada frame porque o tema pode mudar a qualquer momento pelo dropdown.
+    // Preto e Vermelho pedem a rede de fundo branca em vez do vermelho de marca padrão.
     const theme = document.documentElement.getAttribute("data-theme");
-    return (theme === "preto" || theme === "vermelho") ? "255,255,255" : "212,15,58";
+    if(theme === "preto" || theme === "vermelho") return "255,255,255";
+    if(tcFrame++ % 15 === 0){
+      const m = getComputedStyle(document.body).getPropertyValue("--tc").match(/\d+(\.\d+)?/g);
+      if(m && m.length >= 3) tcRGB = m.slice(0, 3).map(Math.round).join(",");
+    }
+    return tcRGB;
   }
 
   function drawFlash(flashT){
@@ -4184,28 +4361,24 @@ function cardHTML(item, index){
         </span>
       </div>
       <h3>${escapeHtml(item.title)}${item.shared ? `<span class="shared">${escapeHtml(item.shared)}</span>` : ""}${item.custom ? `<span class="shared">Nova</span>` : ""}</h3>
-      <div class="status-row">
+      <div class="card-controls">
         <select class="status-select" data-status="${item.status}" aria-label="Status de ${escapeHtml(item.title)}" ${(validation && !canManage()) ? `disabled title="Demanda já validada — só quem tem permissão de gestão pode reabri-la."` : ""}>
           <option value="aberto" ${item.status==="aberto"?"selected":""}>Em aberto</option>
           <option value="andamento" ${item.status==="andamento"?"selected":""}>Em andamento</option>
           <option value="concluido" ${item.status==="concluido"?"selected":""}>Concluído</option>
         </select>
+        <select class="status-select assignee-select${assignee ? " has-value" : ""}" data-assignee-id="${item.id}" aria-label="Responsável por ${escapeHtml(item.title)}">
+          <option value="">Sem responsável</option>
+          ${assigneeOptions.map(u => `<option value="${escapeHtml(u.email)}" ${assignee===u.email?"selected":""}>${escapeHtml(u.name || u.email)}</option>`).join("")}
+        </select>
+        <input type="date" class="due-input${due.value ? "" : " is-empty"}" data-due-id="${item.id}" data-due-state="${due.state}" value="${due.value}" aria-label="Prazo de ${escapeHtml(item.title)}" />
       </div>
+      ${due.hint ? `<span class="due-hint ${due.state}">${due.hint}</span>` : ""}
       ${completed ? `<div class="completed-badge">${ICON_CHECK} Concluído por <b>${escapeHtml(completed.authorName || completed.authorEmail || "—")}</b> · ${formatCommentDate(completed.at)}${completed.reason ? `<div class="completed-reason">"${escapeHtml(completed.reason)}"</div>` : ""}</div>` : ""}
       ${(item.status === "concluido" && canManage()) ? (validation
         ? `<div class="validated-badge">${ICON_CHECK} Validado por <b>${escapeHtml(validation.authorName || validation.authorEmail || "—")}</b> · ${formatCommentDate(validation.at)}</div>`
         : `<button type="button" class="validate-btn" data-validate-id="${item.id}">${ICON_CHECK} Validar conclusão</button>`
       ) : ""}
-      <div class="status-row">
-        <select class="status-select assignee-select" data-assignee-id="${item.id}" aria-label="Responsável por ${escapeHtml(item.title)}">
-          <option value="">Sem responsável</option>
-          ${assigneeOptions.map(u => `<option value="${escapeHtml(u.email)}" ${assignee===u.email?"selected":""}>${escapeHtml(u.name || u.email)}</option>`).join("")}
-        </select>
-      </div>
-      <div class="status-row due-row">
-        <input type="date" class="due-input" data-due-id="${item.id}" data-due-state="${due.state}" value="${due.value}" aria-label="Prazo de ${escapeHtml(item.title)}" />
-        ${due.hint ? `<span class="due-hint ${due.state}">${due.hint}</span>` : ""}
-      </div>
       <p class="snippet"><b>Problema:</b> ${(item.hoje && item.hoje.length > 92) ? escapeHtml(item.hoje.slice(0,92)) + "…" : escapeHtml(item.hoje || "Não descrito ainda.")}</p>
       <button type="button" class="expand-btn" data-expand-id="${item.id}" aria-haspopup="dialog" aria-label="Ver detalhes de ${escapeHtml(item.title)}">
         Ver detalhes
@@ -4497,6 +4670,7 @@ function render(){
       : DATA.filter(d => itemStage(d) === "board" && d.area === group.key && !isArchived(d) && passesFilter(d));
     const col = document.createElement("div");
     col.className = state.view === "status" ? `column ${group.cls}` : "column";
+    col.style.setProperty("--col-c", state.view === "status" ? `var(--st-${group.key})` : sectorColor(group.key));
     col.setAttribute("data-group-key", group.key);
     const dotStyle = state.view === "status" ? "" : ` style="background:${sectorColor(group.key)}"`;
     col.innerHTML = `
@@ -6016,7 +6190,7 @@ function routineCardHTML(r, viewDate){
   if(showCompletedBy) metaParts.push(`concluído por ${escapeHtml(completion.byName || "—")}`);
   return `
   <div class="routine-check-row">
-    <div class="routine-check-dot${done ? " done" : ""}">${done ? ICON_CHECK : ""}</div>
+    <div class="routine-check-dot${done ? " done" : ""}${done && r.id === justToggledRoutine ? " just-done" : ""}">${done ? ICON_CHECK : ""}</div>
     <div class="routine-check-body">
       <div class="routine-check-title${done ? " done" : ""}">
         ${escapeHtml(r.title)}${r.wholeSector ? `<span class="whole-sector-icon" title="Envolve o setor inteiro">${ICON_WHOLE_SECTOR}</span>` : ""}
@@ -6372,7 +6546,10 @@ async function deleteRoutine(id){
   await saveRoutinesArray(newRoutines);
 }
 
+let justToggledRoutine = null;
 async function toggleRoutineCompletion(id, dateStr){
+  justToggledRoutine = id;
+  setTimeout(() => { if(justToggledRoutine === id) justToggledRoutine = null; }, 1200);
   const routine = ROUTINES.find(r => r.id === id);
   if(!routine || !canCompleteRoutine(routine)) return;
   // dateStr vem do dia selecionado na agenda (ver routineCardHTML) — concluir/desfazer
@@ -6782,6 +6959,7 @@ function renderTabs(){
   if(filtersPanelEl && (isOperador || state.tab === "admin" || state.tab === "routines" || state.tab === "agorasei")) filtersPanelEl.classList.remove("open");
 
   document.querySelectorAll("#main-nav button[data-tab]").forEach(b => b.classList.toggle("active", b.dataset.tab === state.tab));
+  document.body.dataset.aba = state.tab; // cada aba tem sua cor (--tc); a tela inteira assume ela
   if(overviewTab) overviewTab.style.display = state.tab === "overview" ? "" : "none";
   if(boardTab) boardTab.style.display = state.tab === "board" ? "" : "none";
   if(backlogTab) backlogTab.style.display = state.tab === "backlog" ? "" : "none";
@@ -8544,6 +8722,17 @@ async function handlePasswordResetLink(oobCode){
     await loadItemFieldMaps();
     await loadObservacoes();
     await loadStatuses();
+  }
+})();
+
+// Partículas subindo devagar no fundo, na cor da aba (só decoração, fora do leitor de tela).
+(function spawnParticles(){
+  const box = document.querySelector(".aurora .particles");
+  if(!box || prefersReducedMotion()) return;
+  for(let i = 0; i < 16; i++){
+    const p = document.createElement("i");
+    p.style.cssText = `left:${(Math.random() * 100).toFixed(1)}%; --s:${(2 + Math.random() * 3).toFixed(1)}px; --d:${(16 + Math.random() * 18).toFixed(1)}s; --dl:${(-Math.random() * 30).toFixed(1)}s; --dx:${((Math.random() - .5) * 120).toFixed(0)}px;`;
+    box.appendChild(p);
   }
 })();
 
