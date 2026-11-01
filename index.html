@@ -3033,7 +3033,7 @@
 // que a comparação ">"/"<" abaixo saiba qual versão é mais nova) — é a única forma de o mecanismo
 // perceber que existe uma versão nova. Só funciona pra quem está conectado ao Firestore (modo de
 // contingência sem Firebase não tem sincronização em tempo real de nada, essa checagem incluída).
-const APP_VERSION = "2026-10-28T20:57:27Z";
+const APP_VERSION = "2026-11-01T12:00:00Z";
 
 // Desloga e recarrega — usado tanto pela verificação de versão nova quanto pelos sinais de
 // desconexão manual (shutdown geral ou alguém sendo desconectado individualmente).
@@ -3094,8 +3094,10 @@ function checkFirestoreVersion(data){
 // permissão de gestão vê essa lista em tempo real na aba Acessos. O mesmo documento carrega os
 // sinais de desconexão: "kicks.all" (botão de shutdown, afeta todo mundo menos quem clicou) e
 // "kicks.<uid>" (desconectar uma pessoa específica pela lista de presença).
-const PRESENCE_HEARTBEAT_MS = 25000;
-const PRESENCE_STALE_MS = 75000; // ~3x o heartbeat — depois disso, considera offline mesmo sem remoção explícita
+// Cada batida é 1 gravação + 1 leitura em CADA cliente conectado (todos escutam o mesmo doc),
+// então o intervalo é longo e a batida pausa com a aba oculta — economia de cota do Firestore.
+const PRESENCE_HEARTBEAT_MS = 90000;
+const PRESENCE_STALE_MS = 240000; // ~2,7x o heartbeat — depois disso, considera offline mesmo sem remoção explícita
 
 function checkKickSignals(data){
   if(!data || !currentUser) return;
@@ -3129,26 +3131,42 @@ let presenceSessionStart = null; // marcado uma vez só, no primeiro heartbeat d
 async function writePresenceHeartbeat(){
   if(!currentUser || !PRESENCE_DOC || storageMode !== "firebase") return;
   if(!presenceSessionStart) presenceSessionStart = new Date().toISOString();
+  const write = () => fsUpdateDoc(PRESENCE_DOC, new fsFieldPath("online", currentUser.uid), {
+    name: currentUser.name || "", email: currentUser.email || "",
+    at: new Date().toISOString(), since: presenceSessionStart,
+  });
   try{
-    await ensurePresenceDoc();
-    await fsUpdateDoc(PRESENCE_DOC, new fsFieldPath("online", currentUser.uid), {
-      name: currentUser.name || "", email: currentUser.email || "",
-      at: new Date().toISOString(), since: presenceSessionStart,
-    });
+    // ensurePresenceDoc (1 leitura) só quando o doc sumiu — não a cada batida
+    try{ await write(); }
+    catch(e){ if(e && e.code === "not-found"){ await ensurePresenceDoc(); await write(); } else throw e; }
   }catch(e){
     console.error("Falha ao gravar presença:", e);
   }
 }
 
+// Batida só com a aba visível: aba oculta para de gravar (some da lista após PRESENCE_STALE_MS)
+// e volta na hora ao ficar visível. O listener do doc segue ativo, então "Desconectar" continua valendo.
+function resumePresenceBeat(){
+  if(presenceHeartbeatTimer || document.visibilityState === "hidden") return;
+  writePresenceHeartbeat();
+  presenceHeartbeatTimer = setInterval(writePresenceHeartbeat, PRESENCE_HEARTBEAT_MS);
+}
+function pausePresenceBeat(){
+  if(presenceHeartbeatTimer){ clearInterval(presenceHeartbeatTimer); presenceHeartbeatTimer = null; }
+}
+function onPresenceVisibility(){
+  document.visibilityState === "hidden" ? pausePresenceBeat() : resumePresenceBeat();
+}
 function startPresenceHeartbeat(){
   stopPresenceHeartbeat();
   presenceSessionStart = null;
-  writePresenceHeartbeat();
-  presenceHeartbeatTimer = setInterval(writePresenceHeartbeat, PRESENCE_HEARTBEAT_MS);
+  resumePresenceBeat();
+  document.addEventListener("visibilitychange", onPresenceVisibility);
   onlineListRerenderTimer = setInterval(renderOnlineList, 15000);
 }
 function stopPresenceHeartbeat(){
-  if(presenceHeartbeatTimer){ clearInterval(presenceHeartbeatTimer); presenceHeartbeatTimer = null; }
+  pausePresenceBeat();
+  document.removeEventListener("visibilitychange", onPresenceVisibility);
   if(onlineListRerenderTimer){ clearInterval(onlineListRerenderTimer); onlineListRerenderTimer = null; }
 }
 async function clearOwnPresence(){
