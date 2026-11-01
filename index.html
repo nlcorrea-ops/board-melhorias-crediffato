@@ -1578,21 +1578,81 @@
   /* O modelo roda inteiro no navegador de quem usa (WebGPU) — nada do que é perguntado ou
      respondido aqui passa por servidor nenhum, nem fica salvo no Firestore. Só a base de
      procedimentos (agorasei-kb) é compartilhada entre todo mundo. */
-  .agorasei-layout{display:flex; gap:20px; margin-top:14px; height:calc(100vh - 220px); min-height:420px;}
-  .agorasei-chat-col{flex:1; min-width:0; display:flex; flex-direction:column; gap:14px;}
-  .agorasei-mascot-mobile-bar{
-    display:none; align-items:center; gap:10px; background:var(--ink-1); border:1px solid var(--hairline);
-    border-radius:12px; padding:8px 12px; font-size:12px; color:var(--text-mid);
+  /* Interface própria do Fato: ocupa a altura da tela (sem rolar a página); só a conversa rola. */
+  body[data-aba="agorasei"] > .wrap > header, body[data-aba="agorasei"] > .wrap > footer{display:none;}
+  body[data-aba="agorasei"]{padding-top:24px; padding-bottom:24px;}
+  @media (min-width:901px){
+    body[data-aba="agorasei"]{overflow:hidden;}
+    body[data-aba="agorasei"] .app-shell{height:calc(100dvh - 48px); align-items:stretch;}
+    body[data-aba="agorasei"] .main-nav{align-self:flex-start;}
   }
+  @media (max-width:900px){
+    body[data-aba="agorasei"] .app-shell{height:calc(100dvh - 48px);}
+  }
+  body[data-aba="agorasei"] .main-col{display:flex; flex-direction:column; min-height:0; flex:1;}
+  #agorasei-tab{flex:1; min-height:0;}
+  #agorasei-tab:not([style*="none"]){display:flex; flex-direction:column;}
+  .agorasei-layout{display:grid; grid-template-columns:272px minmax(0,1fr); gap:16px; flex:1; min-height:0;}
+  .agorasei-side, .agorasei-chat-col{
+    background:var(--glass-1); border:1px solid var(--hairline); border-radius:20px; min-height:0;
+  }
+  .agorasei-side{display:flex; flex-direction:column; overflow:hidden; position:relative;}
+  .agorasei-side-hero{
+    position:relative; overflow:hidden; display:flex; flex-direction:column; align-items:center; padding:18px 16px 14px;
+    background:radial-gradient(ellipse 80% 70% at 50% 30%, #8b8dfb30, transparent 70%);
+    border-bottom:1px solid var(--hairline);
+  }
+  .agorasei-side-hero .agorasei-mascot-stage{width:128px; height:128px;}
+  .agorasei-side-hero .agorasei-mascot-charwrap{width:136px; height:136px;}
+  .agorasei-side-body{display:flex; flex-direction:column; gap:12px; padding:14px; flex:1; min-height:0;}
+  .agorasei-new{
+    display:flex; align-items:center; justify-content:center; gap:8px; width:100%; min-height:42px; cursor:pointer;
+    border-radius:12px; border:1px solid #8b8dfb55; background:#8b8dfb1a; color:var(--text-hi);
+    font:600 13px var(--font-display); transition:background .15s ease, border-color .15s ease;
+  }
+  .agorasei-new:hover{background:#8b8dfb2e; border-color:var(--pa);}
+  .agorasei-new:disabled{opacity:.5; cursor:default;}
+  .agorasei-side-title{display:flex; justify-content:space-between; align-items:baseline; font-family:var(--font-mono); font-size:11px; letter-spacing:.1em; text-transform:uppercase; color:var(--text-low); margin:2px 2px 0;}
+  .agorasei-kb-filter{
+    width:100%; box-sizing:border-box; background:var(--ink-1); border:1px solid var(--hairline); border-radius:10px;
+    color:var(--text-hi); font:13px var(--font-display); padding:9px 12px;
+  }
+  .agorasei-kb-filter:focus-visible{outline:none; border-color:var(--pa);}
+  .agorasei-kb-quick{flex:1; min-height:0; overflow-y:auto; display:flex; flex-direction:column; gap:2px; margin:0 -6px; padding:0 6px;}
+  .agorasei-kb-quick button{
+    text-align:left; background:none; border:none; border-radius:9px; padding:8px 10px; cursor:pointer;
+    color:var(--text-mid); font:13px/1.35 var(--font-display); transition:background .12s ease, color .12s ease;
+  }
+  .agorasei-kb-quick button:hover, .agorasei-kb-quick button:focus-visible{background:var(--ink-2); color:var(--text-hi); outline:none;}
+  .agorasei-kb-quick-empty{font-size:12px; color:var(--text-low); padding:8px 10px;}
+  .agorasei-side-manage{margin:0 14px 14px; justify-content:center;}
+  .agorasei-chat-col{display:flex; flex-direction:column; overflow:hidden;}
+  .agorasei-chat-head{display:flex; align-items:center; gap:12px; padding:14px 20px; border-bottom:1px solid var(--hairline);}
+  .agorasei-chat-head h2{margin:0; font-size:16px; font-weight:700; display:flex; align-items:center; gap:8px;}
+  .agorasei-chat-head p{margin:2px 0 0; font-size:12px; color:var(--text-low);}
+  .agorasei-chat-head .agorasei-head-text{flex:1; min-width:0;}
+  .agorasei-ai-tag{font:600 10px var(--font-mono); letter-spacing:.08em; text-transform:uppercase; color:var(--pa); border:1px solid #8b8dfb55; border-radius:6px; padding:2px 6px;}
   .agorasei-mascot-mobile-stage{
-    width:38px; height:38px; border-radius:50%; position:relative; overflow:hidden; flex-shrink:0;
+    display:none; width:40px; height:40px; border-radius:50%; position:relative; overflow:hidden; flex-shrink:0;
     background:radial-gradient(ellipse 70% 65% at 50% 38%, #322a5c, #131022 78%); box-shadow:0 0 0 1px var(--hairline);
   }
-  .agorasei-mascot-mobile-stage .agorasei-mascot-charwrap{width:44px; height:44px; bottom:-4px;}
+  .agorasei-mascot-mobile-stage .agorasei-mascot-charwrap{width:46px; height:46px; bottom:-4px;}
+  .agorasei-head-btn{
+    display:none; width:40px; height:40px; border-radius:12px; border:1px solid var(--hairline); background:var(--ink-1);
+    color:var(--text-mid); cursor:pointer; place-items:center;
+  }
+  .agorasei-head-btn:hover{color:var(--text-hi); border-color:var(--pa);}
+  @media (max-width:900px){
+    .agorasei-layout{grid-template-columns:minmax(0,1fr);}
+    .agorasei-side{display:none;}
+    .agorasei-mascot-mobile-stage{display:block;}
+    .agorasei-head-btn{display:grid;}
+    .agorasei-chat-head{padding:10px 12px;}
+  }
   .agorasei-messages{
     flex:1; overflow-y:auto; display:flex; flex-direction:column; gap:22px; scroll-behavior:smooth;
     contain:inline-size; /* texto longo sem quebra (fonte da resposta) não alarga a página no celular */
-    background:var(--ink-1); border:1px solid var(--hairline); border-radius:18px; padding:24px clamp(14px, 3vw, 28px);
+    padding:24px max(16px, calc((100% - 820px) / 2));
   }
   .agorasei-empty{margin:auto; text-align:center; color:var(--text-mid); font-size:13.5px; max-width:52ch; display:flex; flex-direction:column; align-items:center; gap:10px;}
   .agorasei-empty img{width:84px; height:84px;}
@@ -1643,7 +1703,7 @@
   .agorasei-typing-dots span:nth-child(2){animation-delay:.15s;}
   .agorasei-typing-dots span:nth-child(3){animation-delay:.3s;}
   @keyframes agoraseiTyping{0%,60%,100%{opacity:.3; transform:translateY(0);} 30%{opacity:1; transform:translateY(-3px);}}
-  .agorasei-composer{display:flex; flex-direction:column; gap:6px;}
+  .agorasei-composer{display:flex; flex-direction:column; gap:6px; padding:12px max(12px, calc((100% - 820px) / 2)) 14px; border-top:1px solid var(--hairline);}
   .agorasei-input-row{
     display:flex; gap:8px; align-items:flex-end; background:var(--ink-1); border:1px solid var(--hairline);
     border-radius:18px; padding:6px 6px 6px 16px; transition:border-color .15s ease, box-shadow .15s ease;
@@ -1664,12 +1724,6 @@
 
   /* Mascote "Fato" — painel ao lado do chat, reage ao andamento da conversa (parado / pensando
      enquanto gera resposta / feliz quando termina) em vez de ficar estático. */
-  .agorasei-mascot-col{
-    width:220px; flex-shrink:0; display:flex; flex-direction:column; align-items:center; justify-content:center;
-    background:radial-gradient(ellipse 75% 65% at 50% 38%, #221c48, var(--ink-1) 72%);
-    border:1px solid var(--hairline); border-radius:16px; padding:20px;
-    position:relative; overflow:hidden;
-  }
   /* névoa roxa ao redor do mascote -- mesma linguagem visual do teaser da lâmpada (.mist-blob
      em style.css), só que numa escala menor pra caber no painel do mascote. */
   .agorasei-mascot-mist{position:absolute; border-radius:50%; pointer-events:none; z-index:0; filter:blur(24px);}
@@ -1697,15 +1751,11 @@
   .agorasei-mascot-stage[data-state="happy"] .agorasei-mascot-sparkle.s1{animation:agoraseiSparkle 1.2s ease-out .15s;}
   .agorasei-mascot-stage[data-state="happy"] .agorasei-mascot-sparkle.s2{animation:agoraseiSparkle 1.2s ease-out .3s;}
   @keyframes agoraseiSparkle{0%{opacity:0; transform:scale(.4) rotate(0deg);} 40%{opacity:1; transform:scale(1.1) rotate(15deg);} 100%{opacity:0; transform:scale(.9) rotate(20deg) translateY(-10px);}}
-  .agorasei-mascot-label{margin-top:14px; text-align:center; position:relative; z-index:1; display:flex; flex-direction:column; gap:3px;}
+  .agorasei-mascot-label{margin-top:10px; text-align:center; position:relative; z-index:1; display:flex; flex-direction:column; gap:3px;}
   .agorasei-mascot-eyebrow{font-size:10px; letter-spacing:.08em; text-transform:uppercase; color:var(--text-low); font-weight:600;}
   .agorasei-mascot-name{font-size:15px; font-weight:700; color:var(--text-hi); display:inline-flex; align-items:center; gap:6px; justify-content:center;}
   .agorasei-status-dot{width:6px; height:6px; border-radius:50%; background:var(--st-concluido); box-shadow:0 0 6px var(--st-concluido); animation:agoraseiStatusPulse 2s ease-in-out infinite;}
   @keyframes agoraseiStatusPulse{0%,100%{opacity:.55;} 50%{opacity:1;}}
-  @media (max-width:900px){
-    .agorasei-mascot-col{display:none;}
-    .agorasei-mascot-mobile-bar{display:flex;}
-  }
   @media (prefers-reduced-motion:reduce){
     .agorasei-mascot-charwrap{animation:none !important;}
     .agorasei-mascot-thought{animation:none !important; opacity:1;}
@@ -2690,19 +2740,37 @@
   </div>
 
   <div class="tab-panel" id="agorasei-tab" style="display:none;">
-    <div class="tab-panel-head">
-      <h2>Agora Eu Sei</h2>
-      <button type="button" class="btn-secondary agorasei-kb-btn" id="open-agorasei-kb-btn" style="display:none;">Base de procedimentos</button>
-    </div>
-    <p class="sub" style="margin-bottom:14px;">Assistente de IA pra tirar dúvidas rápidas sobre convênio, negociações, ouvidoria e mais.</p>
-
     <div class="agorasei-layout" id="agorasei-chat-layout" style="display:none;">
-      <div class="agorasei-chat-col">
-        <div class="agorasei-mascot-mobile-bar" id="agorasei-mascot-mobile-bar">
-          <div class="agorasei-mascot-mobile-stage">
-            <div class="agorasei-mascot-charwrap"><img id="agorasei-mascot-mobile-img" src="fato-idle.svg" alt=""></div>
+      <aside class="agorasei-side" aria-label="Fato e procedimentos">
+        <div class="agorasei-side-hero">
+          <div class="agorasei-mascot-mist m1" aria-hidden="true"></div>
+          <div class="agorasei-mascot-mist m2" aria-hidden="true"></div>
+          <div class="agorasei-mascot-stage" id="agorasei-mascot-stage" data-state="idle">
+            <span class="agorasei-mascot-sparkle s1">✦</span>
+            <span class="agorasei-mascot-sparkle s2">✦</span>
+            <div class="agorasei-mascot-charwrap"><img id="agorasei-mascot-img" src="fato-idle.svg" alt=""></div>
           </div>
-          <span id="agorasei-mascot-mobile-text">Fato está pronto pra ajudar</span>
+          <div class="agorasei-mascot-label">
+            <span class="agorasei-mascot-name"><span class="agorasei-status-dot"></span>Fato</span>
+            <span class="agorasei-mascot-eyebrow">Assistente de IA</span>
+          </div>
+        </div>
+        <div class="agorasei-side-body">
+          <button type="button" class="agorasei-new" id="agorasei-new-chat"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" aria-hidden="true"><path d="M12 5v14M5 12h14"/></svg>Nova conversa</button>
+          <div class="agorasei-side-title"><span>Procedimentos</span><span id="agorasei-kb-count"></span></div>
+          <input type="search" class="agorasei-kb-filter" id="agorasei-kb-filter" placeholder="Filtrar procedimentos…" aria-label="Filtrar procedimentos">
+          <div class="agorasei-kb-quick" id="agorasei-kb-quick"></div>
+        </div>
+        <button type="button" class="btn-secondary agorasei-side-manage" id="open-agorasei-kb-btn" style="display:none;">Gerenciar base</button>
+      </aside>
+      <section class="agorasei-chat-col" aria-label="Conversa com o Fato">
+        <div class="agorasei-chat-head">
+          <div class="agorasei-mascot-mobile-stage"><div class="agorasei-mascot-charwrap"><img id="agorasei-mascot-mobile-img" src="fato-idle.svg" alt=""></div></div>
+          <div class="agorasei-head-text">
+            <h2>Agora Eu Sei <span class="agorasei-ai-tag">IA</span></h2>
+            <p id="agorasei-mascot-mobile-text" aria-live="polite">Fato está pronto pra ajudar</p>
+          </div>
+          <button type="button" class="agorasei-head-btn" id="agorasei-new-chat-mobile" aria-label="Nova conversa"><svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" aria-hidden="true"><path d="M12 5v14M5 12h14"/></svg></button>
         </div>
         <div class="agorasei-messages" id="agorasei-messages">
           <div class="agorasei-empty" id="agorasei-empty-state">
@@ -2717,25 +2785,9 @@
             <textarea id="agorasei-input" rows="1" maxlength="1000" placeholder="Descreva a situação do cliente…" required aria-label="Sua pergunta"></textarea>
             <button type="submit" id="agorasei-send-btn" aria-label="Enviar"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 19V5M5 12l7-7 7 7"/></svg></button>
           </form>
-          <p class="agorasei-hint">Enter envia · Shift+Enter quebra a linha</p>
+          <p class="agorasei-hint">Enter envia · Shift+Enter quebra a linha · O Fato é uma IA e pode errar: confira o que for crítico</p>
         </div>
-      </div>
-      <div class="agorasei-mascot-col">
-        <div class="agorasei-mascot-mist m1" aria-hidden="true"></div>
-        <div class="agorasei-mascot-mist m2" aria-hidden="true"></div>
-        <div class="agorasei-mascot-stage" id="agorasei-mascot-stage" data-state="idle">
-          <div class="agorasei-mascot-thought">?</div>
-          <span class="agorasei-mascot-sparkle s1">✦</span>
-          <span class="agorasei-mascot-sparkle s2">✦</span>
-          <div class="agorasei-mascot-charwrap">
-            <img id="agorasei-mascot-img" src="fato-idle.svg" alt="">
-          </div>
-        </div>
-        <div class="agorasei-mascot-label">
-          <span class="agorasei-mascot-eyebrow">Seu assistente</span>
-          <span class="agorasei-mascot-name"><span class="agorasei-status-dot"></span>Fato</span>
-        </div>
-      </div>
+      </section>
     </div>
 
     <div class="teaser-card" id="agorasei-teaser-card">
@@ -5223,9 +5275,38 @@ function renderAgorasei(){
 function renderAgoraseiSuggestions(){
   const wrap = document.getElementById("agorasei-suggestions");
   if(!wrap) return;
+  renderAgoraseiKbQuick();
   const titles = Object.values(AGORASEI_KB).map(kb => kb.title).slice(0, 6);
   // Cada chip entra em sequência (não todos de uma vez) -- delay crescente por índice.
   wrap.innerHTML = titles.map((t, i) => `<button type="button" class="agorasei-suggestion-chip" style="animation-delay:${i * 60}ms" data-suggestion="${escapeHtml(t)}">${escapeHtml(t)}</button>`).join("");
+}
+
+// Lista lateral com todos os procedimentos (filtrável): um clique pergunta sobre aquele item.
+function renderAgoraseiKbQuick(){
+  const list = document.getElementById("agorasei-kb-quick");
+  if(!list) return;
+  const all = Object.values(AGORASEI_KB).map(kb => kb.title).sort((a, b) => a.localeCompare(b, "pt-BR"));
+  const count = document.getElementById("agorasei-kb-count");
+  if(count) count.textContent = all.length;
+  const filterEl = document.getElementById("agorasei-kb-filter");
+  const q = agoraseiNormalize(filterEl ? filterEl.value : "").trim();
+  const shown = q ? all.filter(t => agoraseiNormalize(t).includes(q)) : all;
+  list.innerHTML = shown.length
+    ? shown.map(t => `<button type="button" data-suggestion="${escapeHtml(t)}">${escapeHtml(t)}</button>`).join("")
+    : `<div class="agorasei-kb-quick-empty">${all.length ? "Nenhum procedimento com esse nome." : "Nenhum procedimento cadastrado ainda."}</div>`;
+}
+
+let agoraseiEmptyStateHTML = null;
+function agoraseiNewChat(){
+  if(agoraseiGenerating) return;
+  const messagesEl = document.getElementById("agorasei-messages");
+  if(!messagesEl) return;
+  agoraseiMessages = [];
+  messagesEl.innerHTML = agoraseiEmptyStateHTML || "";
+  renderAgoraseiSuggestions();
+  setAgoraseiMascotState("idle");
+  const input = document.getElementById("agorasei-input");
+  if(input) input.focus();
 }
 
 function agoraseiSubmitQuestion(text){
@@ -5308,7 +5389,7 @@ function setAgoraseiMascotState(state){
 let agoraseiMascotDustSpawned = false;
 function spawnAgoraseiMascotDust(){
   if(agoraseiMascotDustSpawned) return;
-  const col = document.querySelector(".agorasei-mascot-col");
+  const col = document.querySelector(".agorasei-side-hero");
   if(!col) return;
   agoraseiMascotDustSpawned = true;
   for(let i = 0; i < 8; i++){
@@ -5724,19 +5805,20 @@ function agoraseiAppendMessage(role, content){
 function agoraseiFinishMessage(bubble, { sources = [], choices = [], error = false } = {}){
   const body = bubble && bubble.closest(".agorasei-msg-body");
   if(!body) return;
-  if(error){ bubble.classList.add("is-error"); return; }
-  const src = body.querySelector(".agorasei-msg-source");
-  if(src && sources.length) src.textContent = `com base em ${sources.join(" + ")}`;
   const actions = document.createElement("div");
   actions.className = "agorasei-msg-actions";
-  actions.innerHTML = `<button type="button" class="agorasei-act" data-agorasei-copy>Copiar</button>`;
+  const retry = `<button type="button" class="agorasei-act" data-agorasei-retry>${error ? "Tentar de novo" : "Gerar de novo"}</button>`;
+  if(error){ bubble.classList.add("is-error"); actions.innerHTML = retry; body.appendChild(actions); return; }
+  const src = body.querySelector(".agorasei-msg-source");
+  if(src && sources.length) src.textContent = `com base em ${sources.join(" + ")}`;
+  actions.innerHTML = `<button type="button" class="agorasei-act" data-agorasei-copy>Copiar</button>${retry}`;
   if(choices.length && /\?\s*$/.test(bubble.textContent)){
     actions.insertAdjacentHTML("afterbegin", choices.map(t => `<button type="button" class="agorasei-suggestion-chip agorasei-choice" data-suggestion="${escapeHtml(`Sobre "${t}"`)}">${escapeHtml(t)}</button>`).join(""));
   }
   body.appendChild(actions);
 }
 
-async function sendAgoraseiMessage(question){
+async function sendAgoraseiMessage(question, { skipCache = false } = {}){
   if(agoraseiGenerating || !question.trim()) return;
   if(agoraseiEngineStatus !== "ready") return;
   agoraseiGenerating = true;
@@ -5751,6 +5833,7 @@ async function sendAgoraseiMessage(question){
   // ficar sem nenhum feedback visual enquanto o modelo decide qual procedimento usar.
   const assistantBubble = agoraseiAppendMessage("assistant", "");
   if(assistantBubble){
+    assistantBubble.closest(".agorasei-msg").dataset.q = question;
     assistantBubble.classList.add("typing");
     assistantBubble.innerHTML = `<span class="agorasei-typing-dots"><span></span><span></span><span></span></span>`;
   }
@@ -5814,7 +5897,7 @@ async function sendAgoraseiMessage(question){
   // o mesmo procedimento ("quantas parcelas?" x "posso fazer hoje se fecha dia 31?") querem
   // respostas diferentes.
   const isFirstTurn = agoraseiMessages.length === 1;
-  const cachedAnswer = matchedKbId && isFirstTurn ? agoraseiGetCachedAnswer(matchedKbId, question) : null;
+  const cachedAnswer = matchedKbId && isFirstTurn && !skipCache ? agoraseiGetCachedAnswer(matchedKbId, question) : null;
   if(cachedAnswer){
     if(assistantBubble){ assistantBubble.classList.remove("typing"); assistantBubble.textContent = cachedAnswer; }
     agoraseiFinishMessage(assistantBubble, { sources });
@@ -6109,6 +6192,21 @@ document.getElementById("agorasei-form").addEventListener("submit", (e) => {
   agoraseiSubmitQuestion(input.value);
 });
 document.getElementById("agorasei-messages").addEventListener("click", (e) => {
+  const retryBtn = e.target.closest("[data-agorasei-retry]");
+  if(retryBtn){
+    // Só a última resposta pode ser refeita: tira ela (e a pergunta) da conversa e pergunta de novo.
+    const msg = retryBtn.closest(".agorasei-msg");
+    const all = document.querySelectorAll("#agorasei-messages .agorasei-msg-assistant");
+    if(agoraseiGenerating || msg !== all[all.length - 1]) return;
+    const q = msg.dataset.q;
+    if(agoraseiMessages.length && agoraseiMessages[agoraseiMessages.length - 1].role === "assistant") agoraseiMessages.pop();
+    if(agoraseiMessages.length && agoraseiMessages[agoraseiMessages.length - 1].role === "user") agoraseiMessages.pop();
+    const userMsg = msg.previousElementSibling;
+    if(userMsg && userMsg.classList.contains("agorasei-msg-user")) userMsg.remove();
+    msg.remove();
+    if(q) sendAgoraseiMessage(q, { skipCache: true }); // "gerar de novo" não pode devolver a mesma resposta memorizada
+    return;
+  }
   const copyBtn = e.target.closest("[data-agorasei-copy]");
   if(copyBtn){
     const text = copyBtn.closest(".agorasei-msg-body").querySelector(".agorasei-msg-bubble").textContent;
@@ -6117,6 +6215,14 @@ document.getElementById("agorasei-messages").addEventListener("click", (e) => {
   }
   const chip = e.target.closest("[data-suggestion]");
   if(chip) agoraseiSubmitQuestion(chip.getAttribute("data-suggestion"));
+});
+agoraseiEmptyStateHTML = document.getElementById("agorasei-messages").innerHTML;
+document.getElementById("agorasei-new-chat").addEventListener("click", agoraseiNewChat);
+document.getElementById("agorasei-new-chat-mobile").addEventListener("click", agoraseiNewChat);
+document.getElementById("agorasei-kb-filter").addEventListener("input", renderAgoraseiKbQuick);
+document.getElementById("agorasei-kb-quick").addEventListener("click", (e) => {
+  const b = e.target.closest("[data-suggestion]");
+  if(b) agoraseiSubmitQuestion(b.getAttribute("data-suggestion"));
 });
 document.getElementById("agorasei-input").addEventListener("keydown", (e) => {
   if(e.key === "Enter" && !e.shiftKey){
