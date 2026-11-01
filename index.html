@@ -1623,10 +1623,69 @@
     text-align:left; background:none; border:none; border-radius:9px; padding:8px 10px; cursor:pointer;
     color:var(--text-mid); font:13px/1.35 var(--font-display); transition:background .12s ease, color .12s ease;
   }
+  .agorasei-kb-quick button{animation:agoraseiChipIn .3s ease-out both;}
   .agorasei-kb-quick button:hover, .agorasei-kb-quick button:focus-visible{background:var(--ink-2); color:var(--text-hi); outline:none;}
   .agorasei-kb-quick-empty{font-size:12px; color:var(--text-low); padding:8px 10px;}
   .agorasei-side-manage{margin:0 14px 14px; justify-content:center;}
-  .agorasei-chat-col{display:flex; flex-direction:column; overflow:hidden;}
+  .agorasei-chat-col{display:flex; flex-direction:column; overflow:hidden; position:relative; isolation:isolate;}
+  /* 5. névoa roxa viva no fundo da conversa; fica mais forte enquanto o Fato trabalha */
+  .agorasei-chat-col::before{
+    content:""; position:absolute; inset:0; z-index:-1; pointer-events:none; opacity:.55; transition:opacity .6s ease;
+    background:
+      radial-gradient(40% 35% at 20% 25%, #8b8dfb1f, transparent 70%),
+      radial-gradient(35% 30% at 80% 70%, #c792ea1a, transparent 70%);
+    background-size:140% 140%; animation:agoraseiMist 18s ease-in-out infinite alternate;
+  }
+  .agorasei-chat-col.is-thinking::before{opacity:1;}
+  @keyframes agoraseiMist{0%{background-position:0% 0%, 100% 100%;} 100%{background-position:60% 40%, 30% 60%;}}
+  /* 1. brilho que percorre a borda enquanto pensa (mesma linguagem do .beam do login) */
+  .agorasei-chat-col::after{
+    content:""; position:absolute; inset:-1px; border-radius:inherit; padding:1.5px; pointer-events:none; z-index:3;
+    background:conic-gradient(from var(--ang), transparent 0 55%, #8b8dfb 75%, #c792ea 85%, transparent 95%);
+    -webkit-mask:linear-gradient(#000 0 0) content-box, linear-gradient(#000 0 0); -webkit-mask-composite:xor;
+            mask:linear-gradient(#000 0 0) content-box exclude, linear-gradient(#000 0 0);
+    opacity:0; transition:opacity .4s ease; animation:beamSpin 2.4s linear infinite;
+  }
+  .agorasei-chat-col.is-thinking::after{opacity:1;}
+  /* 2. trecho novo da resposta entra esmaecendo; cursor vira um brilho */
+  .agorasei-fresh{animation:agoraseiFresh .45s ease-out both;}
+  @keyframes agoraseiFresh{from{opacity:0; filter:blur(3px);} to{opacity:1; filter:blur(0);}}
+  /* 4. etapas do raciocínio no lugar dos pontinhos */
+  .agorasei-step{display:inline-flex; align-items:center; gap:10px;}
+  .agorasei-step-text{
+    font-size:13px; background:linear-gradient(90deg, var(--text-low) 0%, var(--text-hi) 50%, var(--text-low) 100%);
+    background-size:200% 100%; -webkit-background-clip:text; background-clip:text; color:transparent;
+    animation:agoraseiShimmer 1.6s linear infinite;
+  }
+  @keyframes agoraseiShimmer{to{background-position:-200% 0;}}
+  /* 3. Fato presta atenção: acompanha o mouse e se inclina quando você digita */
+  .agorasei-side-hero .agorasei-mascot-stage{translate:var(--look-x, 0) var(--look-y, 0); transition:translate .35s ease-out, scale .3s ease;}
+  .agorasei-side-hero .agorasei-mascot-stage.is-listening{scale:1.06; --look-y:4px;}
+  .fato-rig{width:100%; height:100%; display:block; overflow:visible;}
+  .fr-eyes, .fr-brows, .fr-mouth{display:none;}
+  .fr-pupils{transform:translate(var(--px, 0), var(--py, 0)); transition:transform .18s ease-out;}
+  /* parado (e escrevendo): olhar calmo, sorriso; pisca de vez em quando */
+  .agorasei-mascot-stage:is([data-state="idle"], [data-state="talking"], [data-state="curious"]) :is(.fr-eyes-calm, .fr-eyes-shut, .fr-brows-calm, .fr-mouth-smile){display:inline;}
+  .agorasei-mascot-stage .fr-eyes-shut{opacity:0; animation:fatoBlinkShut 5.2s infinite;}
+  .agorasei-mascot-stage .fr-eyes-calm{animation:fatoBlinkOpen 5.2s infinite;}
+  @keyframes fatoBlinkOpen{0%,93%,97%,100%{opacity:1;} 94%,96%{opacity:0;}}
+  @keyframes fatoBlinkShut{0%,93%,97%,100%{opacity:0;} 94%,96%{opacity:1;}}
+  /* escrevendo: a boca abre e fecha como se falasse */
+  .agorasei-mascot-stage[data-state="talking"] .fr-mouth-grin{display:inline; animation:fatoTalkOpen .36s steps(1) infinite;}
+  .agorasei-mascot-stage[data-state="talking"] .fr-mouth-smile{animation:fatoTalkClosed .36s steps(1) infinite;}
+  @keyframes fatoTalkOpen{0%{opacity:0;} 50%{opacity:1;}}
+  @keyframes fatoTalkClosed{0%{opacity:1;} 50%{opacity:0;}}
+  /* curioso: terminou perguntando algo, sobrancelha erguida */
+  .agorasei-mascot-stage[data-state="curious"] .fr-brows-calm{display:none;}
+  .agorasei-mascot-stage[data-state="curious"] .fr-brows-up{display:inline;}
+  /* pensando: olhar de lado, sobrancelha erguida, boquinha */
+  .agorasei-mascot-stage[data-state="thinking"] :is(.fr-eyes-side, .fr-brows-up, .fr-mouth-think){display:inline;}
+  /* feliz / cumprimentando: sorrisão */
+  .agorasei-mascot-stage:is([data-state="happy"], [data-state="greeting"]) :is(.fr-eyes-happy, .fr-brows-happy, .fr-mouth-grin){display:inline;}
+  .agorasei-mascot-stage[data-state="greeting"] .agorasei-mascot-charwrap{animation:agoraseiBounceIn .7s cubic-bezier(.34,1.56,.64,1);}
+  .agorasei-mascot-stage[data-state="greeting"] .agorasei-mascot-sparkle.s1{animation:agoraseiSparkle 1.2s ease-out .2s;}
+  .agorasei-mascot-stage[data-state="greeting"] .agorasei-mascot-sparkle.s2{animation:agoraseiSparkle 1.2s ease-out .35s;}
+  .agorasei-mascot-stage[data-state="talking"] .agorasei-mascot-charwrap, .agorasei-mascot-stage[data-state="curious"] .agorasei-mascot-charwrap{animation:agoraseiBreathe 3.6s ease-in-out infinite;}
   .agorasei-chat-head{display:flex; align-items:center; gap:12px; padding:14px 20px; border-bottom:1px solid var(--hairline);}
   .agorasei-chat-head h2{margin:0; font-size:16px; font-weight:700; display:flex; align-items:center; gap:8px;}
   .agorasei-chat-head p{margin:2px 0 0; font-size:12px; color:var(--text-low);}
@@ -1686,7 +1745,7 @@
   .agorasei-msg-bubble.typing{color:var(--text-low); width:fit-content;}
   .agorasei-msg-bubble.is-error{background:#d8a94a14; border-color:#d8a94a40; color:var(--text-mid); font-size:13px;}
   .agorasei-msg-actions{display:flex; flex-wrap:wrap; gap:6px; align-items:center;}
-  .agorasei-choice{animation:none; opacity:1;}
+
   .agorasei-act{
     background:none; border:1px solid transparent; border-radius:8px; padding:3px 8px; cursor:pointer;
     font:500 11.5px var(--font-display); color:var(--text-low); transition:color .15s ease, border-color .15s ease;
@@ -1696,8 +1755,8 @@
     .agorasei-msg .agorasei-act{opacity:0; transition:opacity .15s ease, color .15s ease;}
     .agorasei-msg:hover .agorasei-act, .agorasei-act:focus-visible{opacity:1;}
   }
-  .agorasei-cursor{display:inline-block; width:2px; height:13px; background:var(--pa); margin-left:2px; vertical-align:-2px; animation:agoraseiCursorBlink .8s step-start infinite;}
-  @keyframes agoraseiCursorBlink{50%{opacity:0;}}
+  .agorasei-cursor{display:inline-block; width:8px; height:8px; border-radius:50%; margin-left:4px; vertical-align:1px; background:var(--pa); box-shadow:0 0 10px 2px #8b8dfb99; animation:agoraseiCursorPulse 1s ease-in-out infinite;}
+  @keyframes agoraseiCursorPulse{50%{opacity:.35; transform:scale(.7);}}
   .agorasei-typing-dots{display:inline-flex; gap:4px; vertical-align:middle; padding:3px 0;}
   .agorasei-typing-dots span{width:6px; height:6px; border-radius:50%; background:var(--pa); animation:agoraseiTyping 1s ease-in-out infinite;}
   .agorasei-typing-dots span:nth-child(2){animation-delay:.15s;}
@@ -1719,7 +1778,18 @@
   }
   #agorasei-send-btn:hover{filter:brightness(1.1);}
   #agorasei-send-btn:active{transform:scale(.92);}
-  #agorasei-send-btn:disabled{opacity:.45; cursor:default;}
+  #agorasei-send-btn{position:relative; overflow:hidden;}
+  #agorasei-send-btn svg{transition:transform .25s ease, opacity .2s ease;}
+  #agorasei-send-btn::after{
+    content:""; position:absolute; width:12px; height:12px; border-radius:3px; background:#fff;
+    opacity:0; transform:scale(.4); transition:opacity .2s ease .1s, transform .25s ease .1s;
+  }
+  #agorasei-send-btn.is-launch svg{animation:agoraseiLaunch .45s ease-in forwards;}
+  @keyframes agoraseiLaunch{40%{transform:translateY(3px);} 100%{transform:translateY(-34px); opacity:0;}}
+  #agorasei-send-btn.is-stop{background:var(--text-hi); box-shadow:0 0 0 1px #8b8dfb66, 0 0 18px -4px #8b8dfb;}
+  #agorasei-send-btn.is-stop::after{background:var(--ink-0);}
+  #agorasei-send-btn.is-stop svg{opacity:0;}
+  #agorasei-send-btn.is-stop::after{opacity:1; transform:scale(1);}
   .agorasei-hint{margin:0; padding-left:16px; font-size:11px; color:var(--text-low);}
 
   /* Mascote "Fato" — painel ao lado do chat, reage ao andamento da conversa (parado / pensando
@@ -1762,7 +1832,14 @@
     .agorasei-mascot-sparkle{animation:none !important;}
     .agorasei-msg{animation:none !important;}
     .agorasei-cursor{animation:none !important;}
-    .agorasei-suggestion-chip{animation:none !important; opacity:1;}
+    .agorasei-suggestion-chip, .agorasei-kb-quick button{animation:none !important; opacity:1;}
+    .agorasei-chat-col::before, .agorasei-chat-col::after, .agorasei-fresh, .agorasei-step-text, #agorasei-send-btn svg{animation:none !important;}
+    .agorasei-step-text{color:var(--text-mid); background:none;}
+    .agorasei-side-hero .agorasei-mascot-stage{translate:none; scale:none;}
+    .agorasei-mascot-stage .fr-eyes-calm, .agorasei-mascot-stage .fr-mouth-smile{animation:none !important; opacity:1;}
+    .agorasei-mascot-stage .fr-eyes-shut, .agorasei-mascot-stage .fr-mouth-grin{animation:none !important;}
+    .agorasei-mascot-stage[data-state="talking"] .fr-mouth-grin{display:none;}
+    .fr-pupils{transform:none;}
   }
   .agorasei-unsupported{
     display:flex; flex-direction:column; align-items:center; justify-content:center; gap:10px; text-align:center;
@@ -1849,6 +1926,9 @@
   @keyframes vtInUp{from{opacity:0; transform:translateY(56px) scale(.97); filter:blur(10px);}}
   @keyframes vtOutDown{to{opacity:0; transform:translateY(36px) scale(.97); filter:blur(8px);}}
   @keyframes vtInDown{from{opacity:0; transform:translateY(-56px) scale(.97); filter:blur(10px);}}
+
+  ::view-transition-group(fato-hero){animation-duration:.6s; animation-timing-function:cubic-bezier(.2,.9,.3,1.15);}
+  ::view-transition-old(fato-hero), ::view-transition-new(fato-hero){animation-duration:.6s;}
 
   /* Cartão que vira o modal de detalhes (e volta pro lugar ao fechar). */
   ::view-transition-group(demand){animation-duration:.52s; animation-timing-function:cubic-bezier(.2,.9,.25,1.04); overflow:clip; border-radius:14px;}
@@ -2748,7 +2828,7 @@
           <div class="agorasei-mascot-stage" id="agorasei-mascot-stage" data-state="idle">
             <span class="agorasei-mascot-sparkle s1">✦</span>
             <span class="agorasei-mascot-sparkle s2">✦</span>
-            <div class="agorasei-mascot-charwrap"><img id="agorasei-mascot-img" src="fato-idle.svg" alt=""></div>
+            <div class="agorasei-mascot-charwrap"><!-- Fato articulado: olhos, pupilas, sobrancelhas e boca trocados por CSS (Adventurer, Lisa Wischofsky, CC BY 4.0) --><svg class="fato-rig" viewBox="84 48 600 600" aria-hidden="true"><path d="M396 164.8a224.8 224.8 0 0 1 104.8 42.4c6.2 4.9 12.5 9.4 18 15a225.4 225.4 0 0 1 71.8 149 58.5 58.5 0 0 1 50.9 42.2 71 71 0 0 1-27.6 76.5c-11 7.7-24.5 12-38 11.7-5 0-10-1.6-15-1.8-1.9 2.2-3.3 4.9-4.8 7.3A223.3 223.3 0 0 1 389 609.8c-11 .7-21.9 2-33 .7a223.7 223.7 0 0 1-178.8-342.3A223.4 223.4 0 0 1 352 163.5c14.6-1.4 29.4-.3 44 1.3Z" fill="#000"/><path fill-rule="evenodd" clip-rule="evenodd" d="M498.8 213.2A216 216 0 0 0 363 169c-13-.2-26.2 1.6-39 4a218 218 0 0 0-113.6 365.5 218.5 218.5 0 0 0 260.4 40.2c35-18.8 64.2-47.3 84.4-81.5l-3-1.6c-2.8-1.4-5.7-3-8-5-2.2-2-.3-5.8 2.7-4.7 1.5.7 3 1.6 4.4 2.4a55 55 0 0 0 59.6-3.6 64.5 64.5 0 0 0 25-69.8 53.1 53.1 0 0 0-24-31 52.6 52.6 0 0 0-47-2.8c-1.6.8-3.4 1.5-5 1.3-2.5-.2-2.8-4.2-.6-5.2 8-4 16.5-5.6 25.4-6.4a217 217 0 0 0-72-146.4c-4.4-4-8.7-8.1-13.9-11.3Zm107.6 196.2c2-1.2 1.3-5.1-1.4-5-2 0-4.2.8-6.2 1.6l-1.4.4a95.1 95.1 0 0 0-25.5 12.4c-2.2 2-2.2 4.4.1 6.2a92 92 0 0 0 5.2 2.8 36 36 0 0 1 13 9.2c-.2 1.9-2 3.4-3.4 4.5l-.2.2c-3.9 3-8.8 5-13.6 7-2.5 1-4.9 2-7.1 3.1-1.7.8-2.6 2.2-1.6 3.9 1 2 3.2 1.1 5 .5l.6-.2 5.4-2.3c5.4-2.3 11-4.5 15.4-8 2.7-2.1 5.1-5.1 5.4-8.7-.5-3.4-2.7-5.7-5.3-7.8a83 83 0 0 0-11.6-7.2l-1.1-.6c5.4-3 10.8-5.6 16.6-7.7l5-1.7a52 52 0 0 0 6.7-2.6Z" fill="#f2d3b1"/><g class="fr-eyes fr-eyes-calm"><g transform="translate(-161 -83)"><path d="M550.3 424.4a65.4 65.4 0 1 1 13 130 65.4 65.4 0 0 1-13-130Z" fill="#000"/><path d="M549.3 430.3a59.7 59.7 0 1 1 15.1 118.3 59.7 59.7 0 0 1-15.1-118.3Z" fill="#fff"/><path d="M381.2 447.1a55.3 55.3 0 0 1 60 45.9A54.9 54.9 0 0 1 341 532a57 57 0 0 1-9.1-28 55.1 55.1 0 0 1 49.4-57Z" fill="#000"/><path d="M376.5 453.7a49.3 49.3 0 1 1 20.8 96.4 49.3 49.3 0 0 1-20.8-96.4Z" fill="#fff"/><g class="fr-pupils"><path d="M576.4 464.4a24.7 24.7 0 0 1 17.7 1.5c10 4.7 16.7 17.4 12.9 28.1a24.3 24.3 0 0 1-36.6 14.6 24.5 24.5 0 0 1 6-44.2ZM408.5 478.5c12.7-1.6 25 8.5 25.3 21.5 1 12.4-9.3 24.2-21.8 24.3a23 23 0 0 1-23.9-22.3 22.8 22.8 0 0 1 20.4-23.5Z" fill="#000"/></g></g></g><g class="fr-eyes fr-eyes-happy"><g transform="translate(-161 -83)"><path d="M590 433c11.8 7 21 17.6 26.7 30 5.9-3.1 11.6-6.7 17.6-9.6 1.8-1 4.4.5 4 2.6.2 1.5-2 2.5-3 3.2l-16.4 9a65.7 65.7 0 0 1-39.4 82.3A65.9 65.9 0 0 1 501 523c-6-9.9-9.3-21.4-9.3-33a64.8 64.8 0 0 1 53.3-64.8c15.2-3 31.6 0 45 7.9Z" fill="#000"/><path d="M549.2 430.3a59.7 59.7 0 0 1 67.2 59.7 59.5 59.5 0 1 1-67.2-59.7Z" fill="#fff"/><path d="M390 447a55 55 0 1 1-55.7 38.6l-11.3-4.5c-2-.8-4-1.4-5.4-3-.4-2.5.8-4 3.2-3.7 5.2 1.3 10 4.2 15.2 5.6 1.4-1.7 2.2-3.8 3.3-5.7A55 55 0 0 1 390 447Z" fill="#000"/><path d="M376.5 453.7a49.3 49.3 0 1 1 20.8 96.4 49.3 49.3 0 0 1-20.8-96.4Z" fill="#fff"/><g class="fr-pupils"><path d="M578.3 465.4a24.9 24.9 0 0 1 27.9 24.6c-.4 4.8-1.8 9.7-4.6 13.6a24.6 24.6 0 0 1-18.6 10.6c-8.2.5-16.4-3.3-21.2-10-6-8-6.3-19.8-.6-28a24.7 24.7 0 0 1 17-10.8ZM408.4 478.5a23 23 0 0 1 19.7 7.5c4 4.4 6 10 5.7 16 0 12-10.7 22.8-22.8 22.3a23 23 0 0 1-22.9-22.3 22.8 22.8 0 0 1 20.3-23.5Z" fill="#000"/></g></g></g><g class="fr-eyes fr-eyes-side"><g transform="translate(-161 -83)"><path d="M556 424a65.2 65.2 0 0 1 65.3 75.6c-1 7.5-4 14.2-6.8 21.2-1.4.6-2.9 1.5-4.4 1.8-2.4 0-4.8-1-7-1.6a178.7 178.7 0 0 0-49.1-7.6 96 96 0 0 0-43 9.6c-3.1 1.3-6 4-9 1.3A65 65 0 0 1 556 424Z" fill="#000"/><path d="M557 429.9a58.9 58.9 0 0 1 57.1 43.1 59.3 59.3 0 0 1-4.3 43.5c-5.3-.6-10.1-2.6-15.4-3.8-16-3.7-33-5.8-49.4-4.4a92 92 0 0 0-39.3 11.6 59.5 59.5 0 0 1 51.3-90Z" fill="#fff"/><path d="M381.3 447a55.4 55.4 0 0 1 59.8 45.6 54.9 54.9 0 0 1-101 38.2c-5-8-7.6-17.3-8.2-26.7a55 55 0 0 1 49.4-57Z" fill="#000"/><path d="M376.5 453.7a49.3 49.3 0 1 1 20.9 96.3 49.3 49.3 0 0 1-21-96.3Z" fill="#fff"/><g class="fr-pupils"><path d="M519.4 474.8a15.9 15.9 0 1 1 7.2 30.8c-9.1 2.3-19-5-19-14.6a15.7 15.7 0 0 1 11.8-16.2ZM403.4 485.6A16 16 0 1 1 399 514a15.9 15.9 0 0 1 4.4-28.4Z" fill="#000"/></g></g></g><g class="fr-eyes fr-eyes-shut"><g transform="translate(-161 -83)"><path d="m619.9 481.8 2.6 1.1-.5 3c-2.2 3.9-6 7-9 10.1a85.5 85.5 0 0 1-65 21.3 111.3 111.3 0 0 1-54.2-21.1c-1.4-1.1-2.9-2-2.4-4 .5-2.5 4-3.4 6-2.5 21.3 6.3 42.7 6.7 64.6 5.4 16.3-1.5 32-4.2 47.5-9.6 3.6-1.2 6.8-2.8 10.4-3.7ZM440.6 492.4c2.8 1.4 2.2 4.5 0 6.2a79.3 79.3 0 0 1-39.6 18.8c-7.8 1-15.1 2.3-23 1.1a84.8 84.8 0 0 1-39-12.5c-2.1-1.4-4.7-2.9-6.2-5-.6-2.5.7-3.9 3.2-4.2 2.7.3 5.4 1.4 8 2 7.6 2.2 15.3 3 23 3.8a169 169 0 0 0 64.2-7.5c3-.8 6.3-3 9.4-2.7Z" fill="#000"/></g></g><g class="fr-brows fr-brows-calm"><g transform="translate(-161 -83)"><path d="M545 378.5c24.7 1 48 9 69.5 21 2.2 1.3 4.9 2.5 6.8 4.3 1.3 2.4-.4 5.1-3.2 4.2a234.2 234.2 0 0 0-51-12c-20.4-2.4-40-3.7-60.3-.1-3.2.4-6.9 2.1-10 1.6-2.7-1.7-1.3-6.1 1.2-7.4a78.6 78.6 0 0 1 47-11.6ZM408 397c3.5.6 6.6 1.8 9.6 3.7a54 54 0 0 0-.3 3.6c-2.7.8-5.5 1.1-8.2 1.4a152 152 0 0 0-38.9 9.7 140.6 140.6 0 0 0-35.1 18.7c-2.9 2-4.2 4.8-8.1 4.4l-1.5-2.6c.9-1.6 1.6-3.2 2.7-4.7a90 90 0 0 1 38.6-29.3c12.7-5.2 27.6-8 41.2-5Z" fill="#000"/></g></g><g class="fr-brows fr-brows-happy"><g transform="translate(-161 -83)"><path d="M502 385c9.9 0 19.9 3.2 28.8 7.3 3.4 1.8 7 4 7.3 8.3-5.1-.9-10.1-2.1-15.4-2.3a58.7 58.7 0 0 0-33.2 7.2c-2.5 1.4-5 3.3-7.6 4.4-1.8.2-4-2-4-3.8-.2-5.8 2-11.9 6.6-15.7A27 27 0 0 1 502 385ZM414 402.6c5.8.2 11 5.3 12.5 10.6.8 2.7-.4 5.8-3.5 5.7-8.8.2-18.2 0-26.8 2.2-7.5 2-14.7 6.7-21.4 10.8-1.2.8-2.5 1-4 1.2.4-2 .7-3.7 2-5.2 3.3-4.4 6.8-8.6 10.7-12.3 6-5.2 13-9 20.4-11.7 3.2-1.1 6.7-1.6 10.1-1.3Z" fill="#000"/></g></g><g class="fr-brows fr-brows-up"><g transform="translate(-161 -83)"><path d="M614 407a133.9 133.9 0 0 0-92-35 175 175 0 0 0-26.4 3c-1.5 3.3-2.5 6.6-3.5 10l-1.2 3.7v-1.4a170 170 0 0 0-1.4-11.4l-3.2-1.5-.8 1.1c-.6.8-1.3 1.6-1.3 2.4 0 3.8.3 7.5.7 11.3.3 2.8.6 5.5.7 8.3l.2 2.2c.1 2.4.3 5 1.6 6.9 2.9.7 6-.4 9-1.4l3.1-1c19-5.5 39.2-6.8 58.7-4.4 20 2.3 40 8.3 57.4 18.6 2 1 4 1.8 6.2 2.5l1.7-3.4c-2.7-4-6-7.3-9.5-10.5ZM422.3 399.6c0-4.2.2-8.5 0-12.7-.3-2.5-1.9-2.5-3.7-2.6h-1c-1 3.6-1 7.5-1.2 11.3l-.3 5-4.5-11.4-.4-.8c-.4-1.1-.9-2.3-2.2-2.3-2.5 0-5 .4-7.5.9l-3.5.6a128 128 0 0 0-52 20.3 53 53 0 0 0-16.7 18.5c-1.5 3.2-2.9 6.5-1.6 10h.4c1 .4 2.6.9 3.4.1a92 92 0 0 0 2.7-2.1c2-1.7 4.1-3.4 6.5-4.6a152.8 152.8 0 0 1 68.3-15.3c1.9 0 3.7.2 5.5.5 1.9.3 3.7.5 5.6.5 1.8-1.2 1.9-3.6 2-5.7V408c0-2.8 0-5.6.2-8.4Z" fill="#000"/></g></g><g class="fr-mouth fr-mouth-smile"><g transform="translate(-161 -83)"><path d="M481 561.7c4.7-.6 10.2 0 13.7 3.6 3.8 4 4.1 9.5 3.2 14.6A30.8 30.8 0 0 1 473 603a32.8 32.8 0 0 1-22.2-4 26 26 0 0 1-11-13 15.4 15.4 0 0 1-.5-10.6c1.3-3.2 4.1-5 7.3-5.7 5.7-1.9 11.7.2 16.7 3 4.6-5 10.5-10.2 17.6-11.1Z" fill="#000"/><path d="M480.5 567.7c3.3-1 7.4-.6 10 1.8 2 2 2.1 5.9 1.7 8.5a24.8 24.8 0 0 1-20 19.4 26.8 26.8 0 0 1-18.9-3.7c-4.3-2.5-7.4-7-8.8-11.7-.7-2.5-.4-5.1 2-6.4 2.6-1.1 5.8-1 8.5-.5 3.5.7 5.8 2.9 9 4.3 2 0 2.6-1.4 3.8-2.6 3.3-4 7.7-7.6 12.7-9.1Z" fill="#8F2E45"/></g></g><g class="fr-mouth fr-mouth-grin"><g transform="translate(-161 -83)"><path d="M522.8 563c11 1.4 21.9 7 27.2 17a31.4 31.4 0 0 1 3.3 21.2 53.6 53.6 0 0 1-14.5 27.6 77 77 0 0 1-44.8 23 92.7 92.7 0 0 1-42.9-3 77.4 77.4 0 0 1-23.8-13 62.2 62.2 0 0 1-19.5-25.6A33 33 0 0 1 406 593a21 21 0 0 1 12.8-15.3 37 37 0 0 1 21.2-1.8c9 1.2 16.7 5 24.7 9.1a71.6 71.6 0 0 1 58.1-22Z" fill="#000"/><path d="M518 568.5c8.8.4 17.4 3.3 23.7 9.7-3 3.7-6.9 6.3-11 8.5-1.7.9-3.7 1.7-5 3-2.5 3-3.7 8.2-6.7 10.5-3.6-1.2-6.8-3.9-10-5.8a175.4 175.4 0 0 1-44 4.5c-11 .3-22-.6-33-2.4-1.8-.3-4-1-5.8-.4-2.2 1.5-4 3.6-5.8 5.4l-5.5-8.5-2.7-1.2c2.7-6 8.4-9.6 14.8-10.4a54 54 0 0 1 34 8.6c2 1 3.6 2.3 5.8.9 2.8-2.2 5.1-5 8-7.1 12-9.6 27.7-16 43.2-15.2Z" fill="#fff"/><path d="M545.3 583.3a29.2 29.2 0 0 1 2.2 17.7c-2 9.5-7 17.8-13.9 24.6a75.2 75.2 0 0 1-41.6 20.7 88.8 88.8 0 0 1-34-1.7 70.6 70.6 0 0 1-37.6-24 38.8 38.8 0 0 1-9.3-23c2.6 2.7 3.8 6.3 6.3 9 4.2 3.3 7.7-2.1 10.5-4.7a218.6 218.6 0 0 0 80.2-1.2c3.7 1.5 8.4 6 12.7 5 6-2.3 6-11.9 12.3-13.6a42.7 42.7 0 0 0 12.2-8.8Z" fill="#8F2E45"/></g></g><g class="fr-mouth fr-mouth-think"><g transform="translate(-161 -83)"><path d="M505 609.6c4.7 1.3 9 4.7 12.2 8.2 1.4 1.7 3.6 3.9 3 6.2-.4 2.5-3.7 3-5 .8a27.5 27.5 0 0 0-9.4-8.5c-2.3-1.5-6.8-.6-6.7-4.2.5-3 3.6-2.9 6-2.5ZM498 623c5 1.5 8.4 5.8 8.8 11 1.3 13.2-9.4 25.8-21.8 29.2-12.4 3.7-28.8-1-35-13.2-2.5-4.2-3.8-9.2-2-14 1.8-4 5.8-5.6 10-6 5-.6 9.5 1 13.9 3.5 3.8-4 7.7-7.6 12.9-9.8 4-1.8 9-2 13.2-.7Z" fill="#000"/><path d="M499 630c3.2 3.5 2.2 9.6.4 13.5a25.5 25.5 0 0 1-26 15c-7.2-1.2-14.2-4.1-18.1-10.8-1.4-2.6-3.4-6.6-2-9.4 2.2-3.8 8.7-3.2 12.2-1.8 2.8.7 5.6 4 8.4 3.5 3.7-3.5 6.5-7.4 11.2-9.8 4.3-2.4 9.6-3.3 13.8-.1Z" fill="#8F2E45"/></g></g><g transform="translate(-161 -83)"><path fill-rule="evenodd" clip-rule="evenodd" d="M577 416.1a79.9 79.9 0 0 1 39 141 79.6 79.6 0 0 1-92.5 6.4 80 80 0 0 1-38.2-69.3c-5-5.3-10.7-9.6-18.3-9.7-7.8.1-14.3 5.7-17.2 12.6.7 6.7 1.5 13.3.6 20a69.8 69.8 0 0 1-135.8 15.3 69.7 69.7 0 0 1 21-75.7 71 71 0 0 1 46.4-16.8 69.8 69.8 0 0 1 65 47.4c4.9-5.7 11.3-10 19-10 7.4-.3 14.2 2.6 19.7 7.3 1.7-8.7 3.8-17 8-25a80 80 0 0 1 83.3-43.5Zm-25.5 7.8a72.4 72.4 0 0 1 85.9 80 72.7 72.7 0 1 1-85.9-80Zm-147.4 28a62.6 62.6 0 1 0-37.9 118.9c15.5 3.4 32.1 1.3 45.9-6.7a63.3 63.3 0 0 0 30-41.9 62.7 62.7 0 0 0-38-70.4Z" fill="#000"/></g><g transform="translate(-161 -83)"><g fill="#000"><path d="M570.1 171.1c2.7-1 4.9.6 5.8 3 2.5 7.7 1 16.5-1.7 24a54 54 0 0 1 20.8-7c16.4-2 32.5 2.3 46.9 10a133.4 133.4 0 0 1 30.8 24.2 93.4 93.4 0 0 0 34.3 23.6 37.7 37.7 0 0 0 23.5.6c2-.4 5.2-1.7 6.9.1 1.7 1.5.7 4.3.4 6.2a52.7 52.7 0 0 1-18.7 29.3 61.2 61.2 0 0 1 30.7 28.1 89.6 89.6 0 0 1 9.9 43.8c.1 10.6-2 21-5.2 31a53 53 0 0 1 13.5 31 74 74 0 0 1-7.7 40.5c-.9 1.8-2.6 1.1-4.3 1.2a50.5 50.5 0 0 0-29.9 3.6c-2 .7-3.8 1.6-6.1 1.1-7.4-1.3-13.6-5.5-20.8-7.9a122 122 0 0 1 8.9 13.6c.7 1.4 1.7 3.2 1.7 4.9-.2 2.4-3.5 3.2-4.7 1-4-7.3-8.2-14.2-13.6-20.5-2.6-2.6.4-6.2 3.5-5.7 4.2.7 8.3 2.7 12.4 4-3.6-5-7.2-10.3-11.5-14.7-2-2.2-4.8-3.9-6.8-6.2-.2-1.4.2-2.8.6-4.1a81.3 81.3 0 0 0 .8-44.6c-3-12-8-23.4-16.2-32.9-5.2-2.2-10.3-4.5-15-7.5-11.4-6.8-20.8-16.1-31.9-23.1A51.7 51.7 0 0 0 578 319c-1.5.6-3.1.4-3.6-1.4-1.4-2.7.5-4.4 1.8-6.6 4.8-6.7 9.8-13.2 15-19.7-7.3 4-13.8 9.2-19.8 15a37.3 37.3 0 0 0-6.4 8.8l-5 .5c-2.4-2.8-3-6.1-6.4-8.2-6.3-4.1-15.4-3.7-22.5-2.4-18.9 3.8-37.4 10.1-57 10.7a53.4 53.4 0 0 1-31.7-8.7c-7.4 5-15.2 9-24.1 10.6a99.2 99.2 0 0 1-43.3-2.7c-7.6 6.1-12.8 13.6-18.9 21-6.1 8-12.2 16.3-16.8 25.1-1 1.6-1.8 3.7-3.3 4.8a30 30 0 0 1-13.9 4.3 37 37 0 0 1-24.5-5.7 28.3 28.3 0 0 1-11-18.5 56.8 56.8 0 0 1 3-29.5c.7-2.3 3.6-3.2 4.9-1 2.2 4.5 3.2 8.8 8.4 10.8 4.6 1.4 10.4-1.1 14.7-2.8a40.6 40.6 0 0 1-12.4-35 96 96 0 0 1 27.4-54 84.2 84.2 0 0 1 42-24.2c6.3-1.5 13-3.2 19.5-2.8 2.4 0 3.1 3.4 1.3 4.8a33.3 33.3 0 0 0-9 32.1c3.4-5.7 6.5-11.3 10.8-16.3a96.2 96.2 0 0 1 62.9-32.2c9.3-1.4 18.6-1.2 28-2 23.3-.5 46.7-3.6 67.9-14 5-2.4 9.2-6.4 14.2-8.8Z"/><path d="M699.8 472.2c2.2 3.5 3.8 7.5 5.6 11.3.9 2.2 2.3 4.4.8 6.8-1.2.4-2.2.6-3.4 0-1.9-2.6-2.8-6-4.3-8.9-1.4-3.5-3.7-6-3.2-10 1.5 0 3.5-.8 4.5.8Z"/></g><path d="M570.8 177.2c1.5 7-.1 14.8-3.2 21.3-.9 2.2-3.4 4.8-2.2 7.2.6 1 2.5 2.2 3.6 1.4 4-2 7.6-4.6 11.7-6.4a52.8 52.8 0 0 1 28.3-4.1 89 89 0 0 1 46.6 20.8c8.2 6.5 14.9 14.4 22.9 21.1 8.5 7 18 13.3 28.6 16.5a42.8 42.8 0 0 0 24.9.2 53.8 53.8 0 0 1-12.5 22.2c-2.7 2.6-6 4.1-9 6.2-1.6 1.3-1.9 2.7-.8 4.6 3.4 1 6.8 1.5 10 3 8.1 4 15.3 10 20.6 17.5a80.6 80.6 0 0 1 13.3 37.3c1 12.2.2 24.4-3.4 36.2-.6 2.2-1.8 4.4-2.2 6.7 2.4 3.3 5.8 5.8 7.7 9.5 9.7 16.7 8.5 36.3 1.6 53.8-.5.9-.8 3.2-2.3 2.7-9.5-1.4-18.9-.2-27.8 3.2-2 .7-4 1.9-6.2 2-1.5-.2-3-.7-4.5-1.2a107 107 0 0 0-21.4-26.7 91.4 91.4 0 0 0-12.4-77.9 53 53 0 0 0 31.9-5.7c3.2-1.6 6.9-3 9.8-5.2 2-2.2.1-4.9-2.5-5-10.4-.2-19.6-7.6-26.1-15.2-5-6.3-10.1-13.2-9.3-21.7l-2.5-.8-2.6 1c-1.6 5.4.4 10.1 2.9 14.9a58.4 58.4 0 0 0 28.7 26.3 51.3 51.3 0 0 1-25 6.2 54.5 54.5 0 0 1-23.4-7.8c-11.7-6.7-20.9-15.6-31.9-23a52.7 52.7 0 0 0-21.7-9c-9.2-1.2-18.9-1-27.8 2 5-7 10.2-13.8 15.8-20.3 1.4-1.6 2.8-3.3 4-5.1 1-1.4.4-3.7.4-5.3-2.1 0-4-.2-6 .9a96.3 96.3 0 0 0-35.1 27.5 22 22 0 0 0-10.9-8.5 53 53 0 0 0-28.4.5c-18.2 3.9-37.2 10.2-56 8.7-12-.7-23.8-7-31.1-16.6a44 44 0 0 1-3.4-44.6 57.7 57.7 0 0 1 26.3-26.1c-.6 4.8-.8 9.2 1 13.8a25.2 25.2 0 0 0 16.2 15c9.2 2.9 19.2 3.4 28.5 6.5 1.7.5 3.7 1.4 5.5 1.2 1.4-.1 2-2 2.7-3-1.6-1.4-3-2.7-5.2-3.4-8-2.8-17-3.8-25.5-5.6-3.4-.9-7-2-10-4-5.8-4-9.1-11.7-7.5-18.7 1.2-4.4 5.2-5.3 8-9l-1.2-3c-4.7-.5-9.3 2.6-13.6 4.4A62.4 62.4 0 0 0 425 252a48.6 48.6 0 0 0 13 51.8 75.3 75.3 0 0 1-11.4 5.8c-9.6 3.9-20.3 4-30.5 3.3a81 81 0 0 1-48.7-19.2c-2-1.9-3.2-4.4-5.2-6.4-2.1-.2-3.3.5-3.4 2.7 0 3.7 3.4 7 6 9.2a90 90 0 0 0 24 14c-3.4 3.4-6.8 6.8-9.9 10.6-8.5 10.4-17.5 21.3-23.9 33.1-1.6 3-3 5.6-6.4 6.7-7.2 2.1-16 1.8-23-1.1a21 21 0 0 1-11.6-11.6 45 45 0 0 1-1.3-25.2c2.9 2.6 5.4 5.6 9.4 6.3 6.6 1.2 12.6-1 18.5-3.6 2-1 3.8-2.2 4.3-4.5 0-2-2.1-3-3.4-4.3-5.7-4.7-9-11.4-10.3-18.6-1.4-9.4.3-18.6 3.4-27.5a99.8 99.8 0 0 1 27.6-40.3 82 82 0 0 1 43.7-19.3c-4.2 7.9-7 16-6 25.1.4 4 1 8.6 3.2 12 1.6 1.5 3.8 3.9 6.1 2.2 3-10 9-18.5 16.2-26a94.2 94.2 0 0 1 51.8-25c11.3-1.7 22.5-2.2 34-2.5 23.3-1 45.8-4.1 67-14.5 4.6-2.2 8.5-5.3 12.7-8Z" fill="#e5d7a3"/></g></svg></div>
           </div>
           <div class="agorasei-mascot-label">
             <span class="agorasei-mascot-name"><span class="agorasei-status-dot"></span>Fato</span>
@@ -5266,6 +5346,10 @@ function renderAgorasei(){
   renderAgoraseiKBList();
   renderAgoraseiSuggestions();
   spawnAgoraseiMascotDust();
+  if(!agoraseiGreeted && !agoraseiGenerating && !agoraseiMessages.length){
+    agoraseiGreeted = true;
+    setTimeout(() => setAgoraseiMascotState("greeting", 1800), 350); // depois da transição da aba
+  }
   if(agoraseiEngineStatus === "idle") initAgoraseiEngine();
 }
 
@@ -5292,15 +5376,23 @@ function renderAgoraseiKbQuick(){
   const q = agoraseiNormalize(filterEl ? filterEl.value : "").trim();
   const shown = q ? all.filter(t => agoraseiNormalize(t).includes(q)) : all;
   list.innerHTML = shown.length
-    ? shown.map(t => `<button type="button" data-suggestion="${escapeHtml(t)}">${escapeHtml(t)}</button>`).join("")
+    ? shown.map((t, i) => `<button type="button" style="animation-delay:${Math.min(i, 14) * 35}ms" data-suggestion="${escapeHtml(t)}">${escapeHtml(t)}</button>`).join("")
     : `<div class="agorasei-kb-quick-empty">${all.length ? "Nenhum procedimento com esse nome." : "Nenhum procedimento cadastrado ainda."}</div>`;
 }
 
 let agoraseiEmptyStateHTML = null;
-function agoraseiNewChat(){
+let agoraseiGreeted = false;
+async function agoraseiNewChat(){
   if(agoraseiGenerating) return;
   const messagesEl = document.getElementById("agorasei-messages");
   if(!messagesEl) return;
+  const old = [...messagesEl.querySelectorAll(".agorasei-msg")];
+  if(old.length && motionReady && !prefersReducedMotion()){
+    agoraseiGenerating = true; // trava envio enquanto a conversa sai
+    const anims = old.reverse().slice(0, 12).map((el, i) => motionAnimate(el, { opacity: 0, y: -16, scale: .97 }, { duration: .22, delay: i * .035, easing: "ease-in" }));
+    await Promise.all(anims.map(a => a.finished)).catch(() => {});
+    agoraseiGenerating = false;
+  }
   agoraseiMessages = [];
   messagesEl.innerHTML = agoraseiEmptyStateHTML || "";
   renderAgoraseiSuggestions();
@@ -5369,18 +5461,23 @@ function renderAgoraseiStatus(){
 const AGORASEI_MASCOT_MOBILE_TEXT = {
   idle: "Fato está pronto pra ajudar",
   thinking: "Fato está pensando...",
+  talking: "Escrevendo…",
   happy: "Fato respondeu!",
+  curious: "Fato quer confirmar uma coisa",
+  greeting: "Oi! Fato por aqui",
 };
-function setAgoraseiMascotState(state){
-  const src = state === "thinking" ? "fato-thinking.svg" : state === "happy" ? "fato-happy.svg" : "fato-idle.svg";
+let agoraseiMascotTimer = 0;
+// revertMs: depois desse tempo volta sozinho pro "parado" (feliz, curioso, cumprimentando).
+function setAgoraseiMascotState(state, revertMs){
+  clearTimeout(agoraseiMascotTimer);
+  const src = state === "thinking" ? "fato-thinking.svg" : (state === "happy" || state === "greeting") ? "fato-happy.svg" : "fato-idle.svg";
   const stage = document.getElementById("agorasei-mascot-stage");
-  const img = document.getElementById("agorasei-mascot-img");
   const mobileImg = document.getElementById("agorasei-mascot-mobile-img");
   const mobileText = document.getElementById("agorasei-mascot-mobile-text");
   if(stage) stage.setAttribute("data-state", state);
-  if(img) img.src = src;
   if(mobileImg) mobileImg.src = src;
   if(mobileText) mobileText.textContent = AGORASEI_MASCOT_MOBILE_TEXT[state] || AGORASEI_MASCOT_MOBILE_TEXT.idle;
+  if(revertMs) agoraseiMascotTimer = setTimeout(() => setAgoraseiMascotState("idle"), revertMs);
 }
 
 // Poeira de partículas ao redor do mascote — mesma ideia do teaser da lâmpada (poucos pontinhos
@@ -5665,7 +5762,7 @@ function agoraseiAmbiguousNote(titles){
 // em comum, e ainda cabe num modelo pequeno porque "escolher de uma lista" é uma tarefa simples.
 // Se a resposta não vier num formato reconhecível, devolve routed:false e quem chamou cai pro
 // método por palavra-chave, pra nunca ficar sem contexto nenhum por causa disso.
-async function routeAgoraseiQuestion(question, history, hintTitles){
+async function routeAgoraseiQuestion(question, history, hintTitles, signal){
   const entries = Object.entries(AGORASEI_KB).map(([id, kb]) => ({ id, ...kb }));
   if(!entries.length) return { matched: [], routed: true };
   // Sinônimos entram como dica entre colchetes — ajuda a achar procedimento cuja palavra só
@@ -5689,6 +5786,7 @@ async function routeAgoraseiQuestion(question, history, hintTitles){
         { role: "user", content: `Lista de procedimentos:\n${titleList}${historyText ? `\n\nHistórico recente da conversa:\n${historyText}` : ""}${hintLine}\n\nPergunta mais recente do usuário: "${question}"\n\nQuais títulos da lista combinam com essa pergunta?` },
       ],
       model: AGORASEI_ROUTING_MODEL_ID,
+      signal,
       stream: false,
       temperature: 0,
       max_tokens: 300,
@@ -5704,6 +5802,7 @@ async function routeAgoraseiQuestion(question, history, hintTitles){
     if(!matched.length) return { matched: [], routed: false, standalone }; // não seguiu o formato esperado — não dá pra confiar
     return { matched, routed: true, standalone };
   }catch(err){
+    if(signal && signal.aborted) throw err; // pessoa clicou em parar: não segue pra resposta
     console.error("Falha na triagem do Agora Eu Sei:", err);
     return { matched: [], routed: false };
   }
@@ -5797,7 +5896,16 @@ function agoraseiAppendMessage(role, content){
   }
   messagesEl.appendChild(wrap);
   messagesEl.scrollTop = messagesEl.scrollHeight;
+  agoraseiSpringIn(wrap, role === "user" ? 18 : -18);
   return bubble;
+}
+
+// Entrada com mola (Motion, já carregada pelo board). Sem Motion ou com movimento reduzido,
+// fica a animação CSS simples que a mensagem já tem.
+function agoraseiSpringIn(el, fromX){
+  if(!motionReady || prefersReducedMotion()) return;
+  el.style.animation = "none";
+  motionAnimate(el, { opacity: [0, 1], x: [fromX, 0], y: [12, 0], scale: [.96, 1] }, { type: "spring", stiffness: 420, damping: 28 });
 }
 
 // Depois que a resposta termina: mostra de qual procedimento ela veio, botão de copiar e — se o
@@ -5813,17 +5921,53 @@ function agoraseiFinishMessage(bubble, { sources = [], choices = [], error = fal
   if(src && sources.length) src.textContent = `com base em ${sources.join(" + ")}`;
   actions.innerHTML = `<button type="button" class="agorasei-act" data-agorasei-copy>Copiar</button>${retry}`;
   if(choices.length && /\?\s*$/.test(bubble.textContent)){
-    actions.insertAdjacentHTML("afterbegin", choices.map(t => `<button type="button" class="agorasei-suggestion-chip agorasei-choice" data-suggestion="${escapeHtml(`Sobre "${t}"`)}">${escapeHtml(t)}</button>`).join(""));
+    actions.insertAdjacentHTML("afterbegin", choices.map((t, i) => `<button type="button" class="agorasei-suggestion-chip agorasei-choice" style="animation-delay:${120 + i * 90}ms" data-suggestion="${escapeHtml(`Sobre "${t}"`)}">${escapeHtml(t)}</button>`).join(""));
   }
   body.appendChild(actions);
+}
+
+// Etapa atual mostrada na bolha enquanto a resposta não começa (no lugar dos três pontinhos)
+// e repetida no status do cabeçalho.
+function agoraseiShowStep(bubble, text){
+  if(bubble && bubble.classList.contains("typing")){
+    bubble.innerHTML = `<span class="agorasei-step"><span class="agorasei-typing-dots"><span></span><span></span><span></span></span><span class="agorasei-step-text"></span></span>`;
+    bubble.querySelector(".agorasei-step-text").textContent = text;
+  }
+  const status = document.getElementById("agorasei-mascot-mobile-text");
+  if(status) status.textContent = text;
+}
+// Liga/desliga o visual de "trabalhando": brilho na borda, névoa mais forte e botão de parar.
+function agoraseiSetBusy(busy){
+  const col = document.querySelector(".agorasei-chat-col");
+  if(col) col.classList.toggle("is-thinking", busy);
+  const btn = document.getElementById("agorasei-send-btn");
+  if(btn){
+    btn.classList.toggle("is-stop", busy);
+    btn.setAttribute("aria-label", busy ? "Parar resposta" : "Enviar");
+    btn.classList.remove("is-launch");
+    if(busy){ void btn.offsetWidth; btn.classList.add("is-launch"); } // reinicia a animação da seta a cada envio
+  }
+}
+let agoraseiAbortController = null;
+let agoraseiUserStopped = false;
+function agoraseiStop(){
+  if(!agoraseiGenerating || !agoraseiAbortController) return;
+  agoraseiUserStopped = true;
+  agoraseiAbortController.abort();
 }
 
 async function sendAgoraseiMessage(question, { skipCache = false } = {}){
   if(agoraseiGenerating || !question.trim()) return;
   if(agoraseiEngineStatus !== "ready") return;
   agoraseiGenerating = true;
-  const sendBtn = document.getElementById("agorasei-send-btn");
-  if(sendBtn) sendBtn.disabled = true;
+  agoraseiUserStopped = false;
+  agoraseiSetBusy(true);
+  // Trava de segurança: se tudo não terminar em até 60s (rede lenta, provedor fora do ar),
+  // cancela sozinho; o mesmo controle atende o botão de parar.
+  const AGORASEI_STALL_TIMEOUT_MS = 60000;
+  const stallController = new AbortController();
+  agoraseiAbortController = stallController;
+  const stallTimer = setTimeout(() => stallController.abort(), AGORASEI_STALL_TIMEOUT_MS);
 
   agoraseiAppendMessage("user", question);
   agoraseiMessages.push({ role: "user", content: question });
@@ -5835,9 +5979,10 @@ async function sendAgoraseiMessage(question, { skipCache = false } = {}){
   if(assistantBubble){
     assistantBubble.closest(".agorasei-msg").dataset.q = question;
     assistantBubble.classList.add("typing");
-    assistantBubble.innerHTML = `<span class="agorasei-typing-dots"><span></span><span></span><span></span></span>`;
   }
+  agoraseiShowStep(assistantBubble, "Entendendo a pergunta…");
 
+  try{
   let contextText;
   let sources = [];   // títulos usados como contexto (aparecem como "com base em ...")
   let choices = [];   // procedimentos possíveis quando a pergunta serve pra mais de um
@@ -5863,7 +6008,7 @@ async function sendAgoraseiMessage(question, { skipCache = false } = {}){
   }else if(!priorHistory.length && agoraseiLooksLikeGreeting(question) && !fast.blocks.length){
     contextText = AGORASEI_NO_MATCH_CONTEXT;
   }else{
-    const routing = await routeAgoraseiQuestion(question, priorHistory, fast.candidates);
+    const routing = await routeAgoraseiQuestion(question, priorHistory, fast.candidates, stallController.signal);
     standalone = routing.standalone || "";
     if(routing.routed && routing.matched.length){
       // Até 2 procedimentos com texto completo — o modelo escolhe pelo objetivo da pergunta em
@@ -5896,16 +6041,17 @@ async function sendAgoraseiMessage(question, { skipCache = false } = {}){
   // único procedimento sem ambiguidade, e só pra MESMA pergunta — duas perguntas diferentes sobre
   // o mesmo procedimento ("quantas parcelas?" x "posso fazer hoje se fecha dia 31?") querem
   // respostas diferentes.
+  agoraseiShowStep(assistantBubble, sources.length ? `Consultando ${sources[0]}…` : "Pensando numa resposta…");
   const isFirstTurn = agoraseiMessages.length === 1;
   const cachedAnswer = matchedKbId && isFirstTurn && !skipCache ? agoraseiGetCachedAnswer(matchedKbId, question) : null;
   if(cachedAnswer){
     if(assistantBubble){ assistantBubble.classList.remove("typing"); assistantBubble.textContent = cachedAnswer; }
     agoraseiFinishMessage(assistantBubble, { sources });
     agoraseiMessages.push({ role: "assistant", content: cachedAnswer });
-    setAgoraseiMascotState("happy");
-    setTimeout(() => setAgoraseiMascotState("idle"), 2000);
+    clearTimeout(stallTimer);
+    setAgoraseiMascotState("happy", 2000);
     agoraseiGenerating = false;
-    if(sendBtn) sendBtn.disabled = false;
+    agoraseiSetBusy(false);
     return;
   }
 
@@ -5935,6 +6081,7 @@ async function sendAgoraseiMessage(question, { skipCache = false } = {}){
       signal,
     });
     let full = "";
+    let shown = ""; // texto já na tela -- o que chega depois entra num <span> que esmaece
     let firstChunk = true;
     let finishReason = null;
     const messagesEl = document.getElementById("agorasei-messages");
@@ -5966,6 +6113,7 @@ async function sendAgoraseiMessage(question, { skipCache = false } = {}){
         if(delta){
           if(firstChunk){
             if(assistantBubble){ assistantBubble.classList.remove("typing"); assistantBubble.textContent = ""; }
+            setAgoraseiMascotState("talking");
             firstChunk = false;
           }
           full += delta;
@@ -5976,7 +6124,20 @@ async function sendAgoraseiMessage(question, { skipCache = false } = {}){
             throw new Error("LOOP: a resposta entrou num loop de repetição.");
           }
           if(assistantBubble){
-            assistantBubble.textContent = agoraseiExtractFinal(full);
+            const next = agoraseiExtractFinal(full);
+            const cursor = assistantBubble.querySelector(".agorasei-cursor");
+            if(cursor) cursor.remove();
+            if(next.startsWith(shown)){
+              if(next.length > shown.length){
+                const piece = document.createElement("span");
+                piece.className = "agorasei-fresh";
+                piece.textContent = next.slice(shown.length);
+                assistantBubble.appendChild(piece);
+              }
+            }else{
+              assistantBubble.textContent = next; // o filtro de raciocínio/markdown reescreveu o começo
+            }
+            shown = next;
             assistantBubble.appendChild(document.createElement("span")).className = "agorasei-cursor";
           }
           scheduleScroll();
@@ -5988,13 +6149,6 @@ async function sendAgoraseiMessage(question, { skipCache = false } = {}){
     return display || "Não consegui gerar uma resposta agora. Tente reformular a pergunta.";
   }
 
-  // Trava de segurança: se a resposta não terminar em até 60s (rede lenta, provedor fora do
-  // ar), cancela sozinho em vez de deixar a tela presa sem dar pra mandar outra pergunta.
-  const AGORASEI_STALL_TIMEOUT_MS = 60000;
-  const stallController = new AbortController();
-  const stallTimer = setTimeout(() => stallController.abort(), AGORASEI_STALL_TIMEOUT_MS);
-
-  try{
     const messages = [systemMsg, ...priorTurns, finalUserMsg];
     let full;
     try{
@@ -6003,7 +6157,7 @@ async function sendAgoraseiMessage(question, { skipCache = false } = {}){
       // Loop de repetição costuma não se repetir numa segunda tentativa mais "fria" — tenta de
       // novo sozinho uma vez antes de mostrar erro pra pessoa.
       if(!/^LOOP:/.test((err && err.message) || "")) throw err;
-      if(assistantBubble){ assistantBubble.classList.add("typing"); assistantBubble.innerHTML = `<span class="agorasei-typing-dots"><span></span><span></span><span></span></span>`; }
+      if(assistantBubble){ assistantBubble.classList.add("typing"); agoraseiShowStep(assistantBubble, "Escrevendo de novo…"); }
       full = await attemptGeneration(messages, stallController.signal, 0.2);
     }
     clearTimeout(stallTimer);
@@ -6013,10 +6167,19 @@ async function sendAgoraseiMessage(question, { skipCache = false } = {}){
     if(matchedKbId && isFirstTurn && full !== "Não consegui gerar uma resposta agora. Tente reformular a pergunta."){
       saveAgoraseiAnswerCache(matchedKbId, full, question).catch(err => console.error("Falha ao memorizar resposta do Agora Eu Sei:", err));
     }
-    setAgoraseiMascotState("happy");
-    setTimeout(() => setAgoraseiMascotState("idle"), 2000);
+    // Terminou perguntando algo (ex: qual procedimento) -> sobrancelha erguida em vez de comemorar.
+    if(/\?\s*$/.test(full)) setAgoraseiMascotState("curious", 3000);
+    else setAgoraseiMascotState("happy", 2000);
   }catch(err){
     clearTimeout(stallTimer);
+    if(agoraseiUserStopped){
+      // Parou pelo botão: mantém o que já foi escrito e marca como interrompida.
+      const partial = assistantBubble ? agoraseiExtractFinal(assistantBubble.classList.contains("typing") ? "" : assistantBubble.textContent) : "";
+      if(assistantBubble){ assistantBubble.classList.remove("typing"); assistantBubble.textContent = partial ? `${partial}\n\n(Resposta interrompida.)` : "Resposta interrompida."; }
+      agoraseiFinishMessage(assistantBubble, { error: !partial });
+      setAgoraseiMascotState("idle");
+      return;
+    }
     console.error("Falha ao gerar resposta do Agora Eu Sei:", err);
     const isStall = err && err.name === "AbortError";
     const errDetail = (err && (err.message || String(err))) || "erro desconhecido";
@@ -6037,7 +6200,8 @@ async function sendAgoraseiMessage(question, { skipCache = false } = {}){
     setAgoraseiMascotState("idle");
   }finally{
     agoraseiGenerating = false;
-    if(sendBtn) sendBtn.disabled = false;
+    agoraseiAbortController = null;
+    agoraseiSetBusy(false);
   }
 }
 
@@ -6186,8 +6350,16 @@ document.getElementById("agorasei-kb-import-file").addEventListener("change", as
   }
 });
 
+// Enquanto responde, o botão de enviar vira "parar". Tratado no clique (e não no submit) porque
+// a caixa vazia e obrigatória faria o navegador barrar o envio antes de chegar aqui.
+document.getElementById("agorasei-send-btn").addEventListener("click", (e) => {
+  if(!agoraseiGenerating) return;
+  e.preventDefault();
+  agoraseiStop();
+});
 document.getElementById("agorasei-form").addEventListener("submit", (e) => {
   e.preventDefault();
+  if(agoraseiGenerating) return;
   const input = document.getElementById("agorasei-input");
   agoraseiSubmitQuestion(input.value);
 });
@@ -6220,6 +6392,33 @@ agoraseiEmptyStateHTML = document.getElementById("agorasei-messages").innerHTML;
 document.getElementById("agorasei-new-chat").addEventListener("click", agoraseiNewChat);
 document.getElementById("agorasei-new-chat-mobile").addEventListener("click", agoraseiNewChat);
 document.getElementById("agorasei-kb-filter").addEventListener("input", renderAgoraseiKbQuick);
+// O Fato acompanha o mouse (desloca um pouco a cabeça pro lado do cursor, sem girar) e se
+// inclina pra frente enquanto a pessoa digita. Desligado com movimento reduzido.
+(() => {
+  const stage = document.getElementById("agorasei-mascot-stage");
+  const input = document.getElementById("agorasei-input");
+  if(!stage || !input || matchMedia("(prefers-reduced-motion: reduce)").matches) return;
+  let raf = 0;
+  document.addEventListener("pointermove", (e) => {
+    if(document.body.dataset.aba !== "agorasei" || raf) return;
+    raf = requestAnimationFrame(() => {
+      raf = 0;
+      const r = stage.getBoundingClientRect();
+      const dx = Math.max(-1, Math.min(1, (e.clientX - (r.left + r.width / 2)) / 500));
+      const dy = Math.max(-1, Math.min(1, (e.clientY - (r.top + r.height / 2)) / 500));
+      stage.style.setProperty("--look-x", (dx * 4).toFixed(1) + "px");
+      stage.style.setProperty("--look-y", (dy * 3).toFixed(1) + "px");
+      stage.style.setProperty("--px", (dx * 11).toFixed(1) + "px"); // pupilas (unidades do desenho)
+      stage.style.setProperty("--py", (dy * 7).toFixed(1) + "px");
+    });
+  });
+  let typingTimer = 0;
+  input.addEventListener("input", () => {
+    stage.classList.add("is-listening");
+    clearTimeout(typingTimer);
+    typingTimer = setTimeout(() => stage.classList.remove("is-listening"), 1200);
+  });
+})();
 document.getElementById("agorasei-kb-quick").addEventListener("click", (e) => {
   const b = e.target.closest("[data-suggestion]");
   if(b) agoraseiSubmitQuestion(b.getAttribute("data-suggestion"));
@@ -6227,6 +6426,7 @@ document.getElementById("agorasei-kb-quick").addEventListener("click", (e) => {
 document.getElementById("agorasei-input").addEventListener("keydown", (e) => {
   if(e.key === "Enter" && !e.shiftKey){
     e.preventDefault();
+    if(agoraseiGenerating) return; // Enter não interrompe a resposta, só o botão
     document.getElementById("agorasei-form").requestSubmit();
   }
 });
@@ -7392,10 +7592,11 @@ function canViewTransition(){
   return !!document.startViewTransition && !prefersReducedMotion();
 }
 function withViewTransition(update, dir){
-  if(!canViewTransition()){ update(); return; }
+  if(!canViewTransition()){ update(); return null; }
   document.documentElement.dataset.vtDir = dir || "up";
   const t = document.startViewTransition(update);
   t.finished.finally(() => { delete document.documentElement.dataset.vtDir; });
+  return t;
 }
 // Por setor <-> Kanban: nomeia cada cartão antes e depois, e o navegador interpola a posição.
 function morphBoard(update){
@@ -8387,7 +8588,16 @@ document.getElementById("main-nav").addEventListener("click", (e) => {
   const goingDown = order.indexOf(btn.dataset.tab) >= order.indexOf(state.tab);
   if(btn.dataset.tab === state.tab) return;
   state.tab = btn.dataset.tab;
-  withViewTransition(renderTabs, goingDown ? "up" : "down");
+  // Indo pro Agora Eu Sei: o ícone do menu e o Fato da barra lateral recebem o mesmo nome de
+  // transição, e o navegador "voa" um até o outro.
+  const icon = btn.dataset.tab === "agorasei" && canViewTransition() ? btn.querySelector("svg") : null;
+  const stage = document.getElementById("agorasei-mascot-stage");
+  if(icon) icon.style.viewTransitionName = "fato-hero";
+  const t = withViewTransition(() => {
+    renderTabs();
+    if(icon){ icon.style.viewTransitionName = ""; if(stage) stage.style.viewTransitionName = "fato-hero"; }
+  }, goingDown ? "up" : "down");
+  if(t && icon) t.finished.finally(() => { if(stage) stage.style.viewTransitionName = ""; });
 });
 
 document.getElementById("archive-search").addEventListener("input", (e) => {
