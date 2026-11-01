@@ -1627,6 +1627,32 @@
   .agorasei-kb-quick button:hover, .agorasei-kb-quick button:focus-visible{background:var(--ink-2); color:var(--text-hi); outline:none;}
   .agorasei-kb-quick-empty{font-size:12px; color:var(--text-low); padding:8px 10px;}
   .agorasei-side-manage{margin:0 14px 14px; justify-content:center;}
+  .agorasei-drawer-head{display:none; align-items:center; justify-content:space-between; gap:8px; font-size:13px;}
+  .agorasei-side-tabs{display:grid; grid-template-columns:1fr 1fr; gap:4px; padding:4px; background:var(--ink-1); border:1px solid var(--hairline); border-radius:12px;}
+  .agorasei-side-tabs button{
+    border:none; background:none; border-radius:9px; padding:7px 6px; cursor:pointer; min-height:34px;
+    font:600 12px var(--font-display); color:var(--text-low); transition:background .15s ease, color .15s ease;
+  }
+  .agorasei-side-tabs button[aria-selected="true"]{background:var(--ink-2); color:var(--text-hi); box-shadow:0 0 0 1px var(--hairline);}
+  .agorasei-side-tabs #agorasei-kb-count{font-family:var(--font-mono); font-weight:500; color:var(--text-low); margin-left:2px;}
+  .agorasei-side-pane{display:flex; flex-direction:column; gap:10px; flex:1; min-height:0;}
+  .agorasei-side-pane[hidden]{display:none;}
+  .agorasei-history{flex:1; min-height:0; overflow-y:auto; display:flex; flex-direction:column; gap:2px; margin:0 -6px; padding:0 6px;}
+  .agorasei-history-item{display:flex; align-items:center; gap:4px; border-radius:9px; transition:background .12s ease; animation:agoraseiChipIn .3s ease-out both;}
+  .agorasei-history-item:hover, .agorasei-history-item.is-current{background:var(--ink-2);}
+  .agorasei-history-item.is-current{box-shadow:inset 2px 0 0 var(--pa);}
+  .agorasei-history-open{flex:1; min-width:0; text-align:left; background:none; border:none; cursor:pointer; padding:8px 4px 8px 10px; display:flex; flex-direction:column; gap:2px;}
+  .agorasei-history-title{font:13px/1.35 var(--font-display); color:var(--text-hi); overflow:hidden; text-overflow:ellipsis; white-space:nowrap;}
+  .agorasei-history-when{font:11px var(--font-mono); color:var(--text-low);}
+  .agorasei-history-del{
+    flex-shrink:0; width:30px; height:30px; border-radius:8px; border:none; background:none; cursor:pointer;
+    color:var(--text-low); display:grid; place-items:center; opacity:0; transition:opacity .12s ease, color .12s ease, background .12s ease;
+  }
+  .agorasei-history-item:hover .agorasei-history-del, .agorasei-history-del:focus-visible{opacity:1;}
+  @media (hover:none){ .agorasei-history-del{opacity:1;} }
+  .agorasei-history-del:hover{color:var(--brand-red); background:var(--brand-red-dim);}
+  .agorasei-history-empty{font-size:12.5px; color:var(--text-low); padding:10px; line-height:1.5;}
+  .agorasei-history-note{margin:0; font-size:11px; line-height:1.45; color:var(--text-low); padding:0 2px;}
   .agorasei-chat-col{display:flex; flex-direction:column; overflow:hidden; position:relative; isolation:isolate;}
   /* 5. névoa roxa viva no fundo da conversa; fica mais forte enquanto o Fato trabalha */
   .agorasei-chat-col::before{
@@ -1637,6 +1663,7 @@
     background-size:140% 140%; animation:agoraseiMist 18s ease-in-out infinite alternate;
   }
   .agorasei-chat-col.is-thinking::before{opacity:1;}
+  @keyframes agoraseiDrawerIn{from{transform:translateX(-24px); opacity:0;}}
   @keyframes agoraseiMist{0%{background-position:0% 0%, 100% 100%;} 100%{background-position:60% 40%, 30% 60%;}}
   /* 1. brilho que percorre a borda enquanto pensa (mesma linguagem do .beam do login) */
   .agorasei-chat-col::after{
@@ -1702,8 +1729,16 @@
   }
   .agorasei-head-btn:hover{color:var(--text-hi); border-color:var(--pa);}
   @media (max-width:900px){
-    .agorasei-layout{grid-template-columns:minmax(0,1fr);}
+    .agorasei-layout{grid-template-columns:minmax(0,1fr); position:relative;}
     .agorasei-side{display:none;}
+    /* no celular a barra lateral vira uma gaveta por cima do chat */
+    .agorasei-side.is-open{
+      display:flex; position:absolute; inset:0 auto 0 0; width:min(320px, 88%); z-index:20;
+      background:var(--ink-0); box-shadow:0 20px 60px #00000080; animation:agoraseiDrawerIn .25s cubic-bezier(.2,.9,.3,1);
+    }
+    .agorasei-side.is-open .agorasei-side-hero{display:none;}
+    .agorasei-side.is-open .agorasei-drawer-head{display:flex;}
+    .agorasei-layout:has(.agorasei-side.is-open)::after{content:""; position:absolute; inset:0; z-index:19; background:#00000059; border-radius:20px;}
     .agorasei-mascot-mobile-stage{display:block;}
     .agorasei-head-btn{display:grid;}
     .agorasei-chat-head{padding:10px 12px;}
@@ -2836,10 +2871,20 @@
           </div>
         </div>
         <div class="agorasei-side-body">
+          <div class="agorasei-drawer-head"><b>Conversas e procedimentos</b><button type="button" class="agorasei-head-btn" id="agorasei-side-close" aria-label="Fechar"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" aria-hidden="true"><path d="M6 6l12 12M18 6L6 18"/></svg></button></div>
           <button type="button" class="agorasei-new" id="agorasei-new-chat"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" aria-hidden="true"><path d="M12 5v14M5 12h14"/></svg>Nova conversa</button>
-          <div class="agorasei-side-title"><span>Procedimentos</span><span id="agorasei-kb-count"></span></div>
-          <input type="search" class="agorasei-kb-filter" id="agorasei-kb-filter" placeholder="Filtrar procedimentos…" aria-label="Filtrar procedimentos">
-          <div class="agorasei-kb-quick" id="agorasei-kb-quick"></div>
+          <div class="agorasei-side-tabs" role="tablist">
+            <button type="button" role="tab" id="agorasei-tab-history" aria-selected="true" data-side-tab="history">Conversas</button>
+            <button type="button" role="tab" id="agorasei-tab-kb" aria-selected="false" data-side-tab="kb">Procedimentos <span id="agorasei-kb-count"></span></button>
+          </div>
+          <div class="agorasei-side-pane" id="agorasei-pane-history" role="tabpanel" aria-labelledby="agorasei-tab-history">
+            <div class="agorasei-history" id="agorasei-history"></div>
+            <p class="agorasei-history-note">Salvas só pra você, por até 90 dias (últimas 30). CPF, telefone, e-mail e cartão são mascarados.</p>
+          </div>
+          <div class="agorasei-side-pane" id="agorasei-pane-kb" role="tabpanel" aria-labelledby="agorasei-tab-kb" hidden>
+            <input type="search" class="agorasei-kb-filter" id="agorasei-kb-filter" placeholder="Filtrar procedimentos…" aria-label="Filtrar procedimentos">
+            <div class="agorasei-kb-quick" id="agorasei-kb-quick"></div>
+          </div>
         </div>
         <button type="button" class="btn-secondary agorasei-side-manage" id="open-agorasei-kb-btn" style="display:none;">Gerenciar base</button>
       </aside>
@@ -2850,6 +2895,7 @@
             <h2>Agora Eu Sei <span class="agorasei-ai-tag">IA</span></h2>
             <p id="agorasei-mascot-mobile-text" aria-live="polite">Fato está pronto pra ajudar</p>
           </div>
+          <button type="button" class="agorasei-head-btn" id="agorasei-side-toggle" aria-label="Conversas e procedimentos" aria-expanded="false"><svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.1" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 12a9 9 0 1 0 3-6.7L3 8"/><path d="M3 3v5h5M12 7v5l3 2"/></svg></button>
           <button type="button" class="agorasei-head-btn" id="agorasei-new-chat-mobile" aria-label="Nova conversa"><svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" aria-hidden="true"><path d="M12 5v14M5 12h14"/></svg></button>
         </div>
         <div class="agorasei-messages" id="agorasei-messages">
@@ -3676,6 +3722,7 @@ let agoraseiSnapUnsub = null;
 let presenceHeartbeatTimer = null;
 let onlineListRerenderTimer = null;
 let fsDoc, fsGetDoc, fsSetDoc, fsUpdateDoc, fsDeleteDoc, fsOnSnapshot, fsFieldPath, fsDeleteField, fsArrayUnion, fsArrayRemove, fsRunTransaction;
+let fsCollection, fsQuery, fsOrderBy, fsLimit, fsGetDocs;
 let authSignIn, authOnState, authSignOut, authSendReset, authVerifyResetCode, authConfirmReset;
 let authVerifyBeforeUpdateEmail;
 let stRef, stUploadBytes, stGetDownloadURL, stDeleteObject;
@@ -3713,6 +3760,7 @@ async function initFirebase(){
     fsFieldPath = fsMod.FieldPath; fsDeleteField = fsMod.deleteField;
     fsArrayUnion = fsMod.arrayUnion; fsArrayRemove = fsMod.arrayRemove;
     fsRunTransaction = fsMod.runTransaction;
+    fsCollection = fsMod.collection; fsQuery = fsMod.query; fsOrderBy = fsMod.orderBy; fsLimit = fsMod.limit; fsGetDocs = fsMod.getDocs;
     authSignIn = authMod.signInWithEmailAndPassword;
     authOnState = authMod.onAuthStateChanged;
     authSignOut = authMod.signOut;
@@ -3951,7 +3999,7 @@ const DEFAULT_SECTORS = [
 let SECTORS = DEFAULT_SECTORS.slice();
 let DIRECTORY = []; // [{uid, email, role, assignedAreas}]
 let ROUTINES = []; // [{id, title, description, sector, frequency, assigneeUid, wholeSector, scheduledDays, createdBy, createdByName, createdAt, completions:[{period, at, byUid, byName}]}]
-let AGORASEI_KB = {}; // { [id]: {title, content, updatedAt, updatedByName} } — base de procedimentos compartilhada (só isso vai pro Firestore; as conversas do chat nunca saem do navegador)
+let AGORASEI_KB = {}; // { [id]: {title, content, updatedAt, updatedByName} } — base de procedimentos compartilhada (o histórico de conversas fica à parte, no perfil de cada pessoa: users/{uid}/agoraseiConversas)
 // "Cérebro" de respostas memorizadas: { [kbId]: {answer, hash, updatedAt} } — quando a mesma
 // pergunta (primeira da conversa) bate de novo no mesmo procedimento, reaproveita a resposta já
 // gerada em vez de gastar IA de novo. hash amarra a resposta memorizada à versão do procedimento
@@ -5296,7 +5344,8 @@ document.getElementById("routines-detail-area-filter").addEventListener("click",
 // As perguntas e respostas passam por um proxy (Cloudflare Worker) até a Groq ou o Cloudflare
 // Workers AI — nenhum dos dois treina modelo com esse conteúdo nem guarda o histórico. Só a base
 // de procedimentos abaixo (documento à parte, AGORASEI_DOC) é compartilhada via Firestore, igual
-// ao resto da plataforma; as conversas em si nunca são salvas em lugar nenhum, nem localmente.
+// ao resto da plataforma. As conversas ficam no perfil de cada pessoa (ver "Histórico de
+// conversas" abaixo), mascaradas e com prazo de validade.
 const AGORASEI_MODEL_ID = "openai/gpt-oss-120b";
 // A triagem (escolher qual procedimento cadastrado combina com a pergunta, numa lista de
 // títulos) é uma tarefa bem mais simples que responder de verdade — um modelo menor dá conta
@@ -5346,6 +5395,19 @@ function renderAgorasei(){
   renderAgoraseiKBList();
   renderAgoraseiSuggestions();
   spawnAgoraseiMascotDust();
+  // Sair da conta não recarrega a página: se outra pessoa entrou neste navegador, nada da
+  // conversa ou do histórico da anterior pode continuar na tela.
+  const uid = currentUser ? currentUser.uid : null;
+  if(uid !== agoraseiHistoryUid && !agoraseiGenerating){
+    agoraseiHistoryUid = uid;
+    agoraseiHistory = null;
+    agoraseiConvId = null;
+    agoraseiMessages = [];
+    const messagesEl = document.getElementById("agorasei-messages");
+    if(messagesEl && agoraseiEmptyStateHTML !== null) messagesEl.innerHTML = agoraseiEmptyStateHTML;
+    renderAgoraseiSuggestions();
+  }
+  if(agoraseiHistory === null) loadAgoraseiHistory(); else renderAgoraseiHistory();
   if(!agoraseiGreeted && !agoraseiGenerating && !agoraseiMessages.length){
     agoraseiGreeted = true;
     setTimeout(() => setAgoraseiMascotState("greeting", 1800), 350); // depois da transição da aba
@@ -5380,6 +5442,163 @@ function renderAgoraseiKbQuick(){
     : `<div class="agorasei-kb-quick-empty">${all.length ? "Nenhum procedimento com esse nome." : "Nenhum procedimento cadastrado ainda."}</div>`;
 }
 
+// ---------- Histórico de conversas (no perfil da pessoa, não no Fato) ----------
+// users/{uid}/agoraseiConversas/{id}: 1 documento por conversa, gravado 1 vez por resposta
+// (nada a cada tecla) e lido só quando a lista é aberta — o banco já gasta bastante com a
+// presença online, então o histórico fica barato de propósito. Limites: 30 conversas, 90 dias,
+// 40 mensagens por conversa (o que passar disso é apagado na próxima vez que a lista carrega).
+const AGORASEI_HISTORY_MAX = 30;
+const AGORASEI_HISTORY_DAYS = 90;
+const AGORASEI_HISTORY_MAX_MSGS = 40;
+let agoraseiConvId = null;
+let agoraseiHistory = null; // null = ainda não carregou; [{id, title, updatedAt}]
+let agoraseiHistoryError = "";
+let agoraseiHistoryUid = null; // de quem é o histórico carregado
+
+// LGPD: troca dados pessoais de cliente por *** antes de gravar (a tela continua com o texto
+// original). Nome de pessoa não dá pra reconhecer com segurança e fica como está.
+function agoraseiMask(text){
+  return String(text || "")
+    .replace(/[\w.+-]+@[\w-]+(\.[\w-]+)+/g, "***@***")
+    .replace(/\b\d{2}\.?\d{3}\.?\d{3}\/?\d{4}-?\d{2}\b/g, "**.***.***/****-**") // CNPJ
+    .replace(/\b\d{3}\.?\d{3}\.?\d{3}-?\d{2}\b/g, "***.***.***-**") // CPF
+    .replace(/\b(?:\d[ -]?){12,18}\d\b/g, "**** **** **** ****") // cartão / conta longa
+    .replace(/(?:\(?\b\d{2}\)?[\s-]?)?\b9?\d{4}[\s-]?\d{4}\b/g, "(**) *****-****"); // telefone
+}
+
+function agoraseiHistoryEnabled(){
+  return storageMode === "firebase" && firebaseReady && !!db && !!currentUser && !!fsCollection;
+}
+function agoraseiConvDoc(id){ return fsDoc(db, "users", currentUser.uid, "agoraseiConversas", id); }
+
+async function loadAgoraseiHistory(){
+  if(!agoraseiHistoryEnabled()){ agoraseiHistory = []; renderAgoraseiHistory(); return; }
+  try{
+    const col = fsCollection(db, "users", currentUser.uid, "agoraseiConversas");
+    const snap = await fsGetDocs(fsQuery(col, fsOrderBy("updatedAt", "desc"), fsLimit(AGORASEI_HISTORY_MAX + 10)));
+    const cutoff = new Date(Date.now() - AGORASEI_HISTORY_DAYS * 864e5).toISOString();
+    const keep = [], drop = [];
+    snap.docs.forEach((d, i) => {
+      const data = d.data();
+      (i < AGORASEI_HISTORY_MAX && (data.updatedAt || "") >= cutoff ? keep : drop).push({ id: d.id, title: data.title || "Conversa", updatedAt: data.updatedAt || "" });
+    });
+    agoraseiHistory = keep;
+    agoraseiHistoryError = "";
+    drop.forEach(c => fsDeleteDoc(agoraseiConvDoc(c.id)).catch(err => console.error("Falha ao limpar conversa antiga:", err)));
+  }catch(err){
+    console.error("Falha ao carregar histórico do Agora Eu Sei:", err);
+    agoraseiHistory = [];
+    agoraseiHistoryError = "Não deu pra carregar suas conversas agora.";
+  }
+  renderAgoraseiHistory();
+}
+
+// Chamado quando uma resposta termina: grava a conversa inteira (mascarada) num documento só.
+async function saveAgoraseiConversation(){
+  if(!agoraseiHistoryEnabled() || !agoraseiMessages.length) return;
+  const isNew = !agoraseiConvId;
+  if(isNew) agoraseiConvId = fsDoc(fsCollection(db, "users", currentUser.uid, "agoraseiConversas")).id;
+  const id = agoraseiConvId;
+  const firstQuestion = (agoraseiMessages.find(m => m.role === "user") || {}).content || "Conversa";
+  const title = agoraseiMask(firstQuestion).replace(/\s+/g, " ").trim().slice(0, 80);
+  const now = new Date().toISOString();
+  const data = {
+    title, updatedAt: now,
+    messages: agoraseiMessages.slice(-AGORASEI_HISTORY_MAX_MSGS).map(m => ({ role: m.role, content: agoraseiMask(m.content) })),
+  };
+  if(isNew) data.createdAt = now;
+  try{
+    await fsSetDoc(agoraseiConvDoc(id), data, { merge: true });
+    if(agoraseiHistory){
+      agoraseiHistory = [{ id, title, updatedAt: now }, ...agoraseiHistory.filter(c => c.id !== id)].slice(0, AGORASEI_HISTORY_MAX);
+      renderAgoraseiHistory();
+    }
+  }catch(err){
+    console.error("Falha ao salvar conversa do Agora Eu Sei:", err);
+  }
+}
+
+function agoraseiWhen(iso){
+  if(!iso) return "";
+  const d = new Date(iso), now = new Date();
+  const days = Math.floor((new Date(now.toDateString()) - new Date(d.toDateString())) / 864e5);
+  const hm = d.toLocaleTimeString("pt-BR", { hour: "2-digit", minute: "2-digit" });
+  if(days <= 0) return `hoje, ${hm}`;
+  if(days === 1) return `ontem, ${hm}`;
+  if(days < 7) return `há ${days} dias`;
+  return d.toLocaleDateString("pt-BR", { day: "2-digit", month: "2-digit" });
+}
+
+function renderAgoraseiHistory(){
+  const list = document.getElementById("agorasei-history");
+  if(!list) return;
+  if(!agoraseiHistoryEnabled()){
+    list.innerHTML = `<div class="agorasei-history-empty">O histórico fica disponível quando você está conectado com sua conta.</div>`;
+    return;
+  }
+  if(agoraseiHistory === null){ list.innerHTML = `<div class="agorasei-history-empty">Carregando suas conversas…</div>`; return; }
+  if(agoraseiHistoryError){ list.innerHTML = `<div class="agorasei-history-empty">${escapeHtml(agoraseiHistoryError)}</div>`; return; }
+  if(!agoraseiHistory.length){ list.innerHTML = `<div class="agorasei-history-empty">Suas conversas com o Fato aparecem aqui pra você retomar depois.</div>`; return; }
+  list.innerHTML = agoraseiHistory.map((c, i) => `
+    <div class="agorasei-history-item${c.id === agoraseiConvId ? " is-current" : ""}" style="animation-delay:${Math.min(i, 12) * 30}ms">
+      <button type="button" class="agorasei-history-open" data-conv-open="${escapeHtml(c.id)}">
+        <span class="agorasei-history-title">${escapeHtml(c.title)}</span>
+        <span class="agorasei-history-when">${escapeHtml(agoraseiWhen(c.updatedAt))}</span>
+      </button>
+      <button type="button" class="agorasei-history-del" data-conv-del="${escapeHtml(c.id)}" aria-label="Apagar conversa: ${escapeHtml(c.title)}"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><path d="M4 7h16M9 7V4h6v3M6 7l1 13h10l1-13"/></svg></button>
+    </div>`).join("");
+}
+
+// Reabre uma conversa salva: redesenha as mensagens e continua dela (a IA recebe esse histórico).
+async function openAgoraseiConversation(id){
+  if(agoraseiGenerating || !agoraseiHistoryEnabled()) return;
+  try{
+    const snap = await fsGetDoc(agoraseiConvDoc(id));
+    if(!snap.exists()){ agoraseiHistory = (agoraseiHistory || []).filter(c => c.id !== id); renderAgoraseiHistory(); return; }
+    const msgs = Array.isArray(snap.data().messages) ? snap.data().messages : [];
+    const messagesEl = document.getElementById("agorasei-messages");
+    messagesEl.innerHTML = "";
+    agoraseiMessages = msgs.map(m => ({ role: m.role === "assistant" ? "assistant" : "user", content: String(m.content || "") }));
+    agoraseiConvId = id;
+    agoraseiMessages.forEach(m => {
+      const bubble = agoraseiAppendMessage(m.role, m.content);
+      if(m.role === "assistant"){
+        bubble.closest(".agorasei-msg").dataset.q = "";
+        const body = bubble.closest(".agorasei-msg-body");
+        body.insertAdjacentHTML("beforeend", `<div class="agorasei-msg-actions"><button type="button" class="agorasei-act" data-agorasei-copy>Copiar</button></div>`);
+      }
+    });
+    messagesEl.scrollTop = messagesEl.scrollHeight;
+    renderAgoraseiHistory();
+    agoraseiCloseSideDrawer();
+    setAgoraseiMascotState("happy", 1400);
+  }catch(err){
+    console.error("Falha ao abrir conversa do Agora Eu Sei:", err);
+  }
+}
+
+async function deleteAgoraseiConversation(id){
+  if(!agoraseiHistoryEnabled()) return;
+  const item = document.querySelector(`[data-conv-del="${CSS.escape(id)}"]`)?.closest(".agorasei-history-item");
+  if(item && motionReady && !prefersReducedMotion()) await motionAnimate(item, { opacity: 0, x: -14 }, { duration: .18 }).finished.catch(() => {});
+  try{
+    await fsDeleteDoc(agoraseiConvDoc(id));
+  }catch(err){
+    console.error("Falha ao apagar conversa do Agora Eu Sei:", err);
+    return;
+  }
+  agoraseiHistory = (agoraseiHistory || []).filter(c => c.id !== id);
+  if(id === agoraseiConvId){ agoraseiConvId = null; agoraseiNewChat(); }
+  renderAgoraseiHistory();
+}
+
+function agoraseiCloseSideDrawer(){
+  const side = document.querySelector(".agorasei-side");
+  if(side) side.classList.remove("is-open");
+  const t = document.getElementById("agorasei-side-toggle");
+  if(t) t.setAttribute("aria-expanded", "false");
+}
+
 let agoraseiEmptyStateHTML = null;
 let agoraseiGreeted = false;
 async function agoraseiNewChat(){
@@ -5394,6 +5613,8 @@ async function agoraseiNewChat(){
     agoraseiGenerating = false;
   }
   agoraseiMessages = [];
+  agoraseiConvId = null;
+  renderAgoraseiHistory();
   messagesEl.innerHTML = agoraseiEmptyStateHTML || "";
   renderAgoraseiSuggestions();
   setAgoraseiMascotState("idle");
@@ -6048,6 +6269,7 @@ async function sendAgoraseiMessage(question, { skipCache = false } = {}){
     if(assistantBubble){ assistantBubble.classList.remove("typing"); assistantBubble.textContent = cachedAnswer; }
     agoraseiFinishMessage(assistantBubble, { sources });
     agoraseiMessages.push({ role: "assistant", content: cachedAnswer });
+    saveAgoraseiConversation();
     clearTimeout(stallTimer);
     setAgoraseiMascotState("happy", 2000);
     agoraseiGenerating = false;
@@ -6164,6 +6386,7 @@ async function sendAgoraseiMessage(question, { skipCache = false } = {}){
     if(assistantBubble){ assistantBubble.classList.remove("typing"); assistantBubble.textContent = full; }
     agoraseiFinishMessage(assistantBubble, { sources, choices });
     agoraseiMessages.push({ role: "assistant", content: full });
+    saveAgoraseiConversation();
     if(matchedKbId && isFirstTurn && full !== "Não consegui gerar uma resposta agora. Tente reformular a pergunta."){
       saveAgoraseiAnswerCache(matchedKbId, full, question).catch(err => console.error("Falha ao memorizar resposta do Agora Eu Sei:", err));
     }
@@ -6392,6 +6615,37 @@ agoraseiEmptyStateHTML = document.getElementById("agorasei-messages").innerHTML;
 document.getElementById("agorasei-new-chat").addEventListener("click", agoraseiNewChat);
 document.getElementById("agorasei-new-chat-mobile").addEventListener("click", agoraseiNewChat);
 document.getElementById("agorasei-kb-filter").addEventListener("input", renderAgoraseiKbQuick);
+document.querySelector(".agorasei-side-tabs").addEventListener("click", (e) => {
+  const tab = e.target.closest("[data-side-tab]");
+  if(!tab) return;
+  const which = tab.dataset.sideTab;
+  document.querySelectorAll(".agorasei-side-tabs [data-side-tab]").forEach(b => b.setAttribute("aria-selected", String(b === tab)));
+  document.getElementById("agorasei-pane-history").hidden = which !== "history";
+  document.getElementById("agorasei-pane-kb").hidden = which !== "kb";
+});
+document.getElementById("agorasei-history").addEventListener("click", (e) => {
+  const del = e.target.closest("[data-conv-del]");
+  if(del){ deleteAgoraseiConversation(del.dataset.convDel); return; }
+  const open = e.target.closest("[data-conv-open]");
+  if(open) openAgoraseiConversation(open.dataset.convOpen);
+});
+document.getElementById("agorasei-side-close").addEventListener("click", agoraseiCloseSideDrawer);
+document.getElementById("agorasei-new-chat").addEventListener("click", agoraseiCloseSideDrawer);
+// Gaveta do celular: fecha tocando fora dela ou com Esc.
+document.addEventListener("click", (e) => {
+  const side = document.querySelector(".agorasei-side.is-open");
+  // composedPath: o item clicado pode já ter saído da tela (lista redesenhada ao apagar)
+  if(side && !e.composedPath().includes(side) && !e.target.closest("#agorasei-side-toggle")) agoraseiCloseSideDrawer();
+});
+document.addEventListener("keydown", (e) => {
+  if(e.key === "Escape" && document.querySelector(".agorasei-side.is-open")) agoraseiCloseSideDrawer();
+});
+document.getElementById("agorasei-side-toggle").addEventListener("click", (e) => {
+  const side = document.querySelector(".agorasei-side");
+  const open = !side.classList.contains("is-open");
+  side.classList.toggle("is-open", open);
+  e.currentTarget.setAttribute("aria-expanded", String(open));
+});
 // O Fato acompanha o mouse (desloca um pouco a cabeça pro lado do cursor, sem girar) e se
 // inclina pra frente enquanto a pessoa digita. Desligado com movimento reduzido.
 (() => {
@@ -6421,7 +6675,7 @@ document.getElementById("agorasei-kb-filter").addEventListener("input", renderAg
 })();
 document.getElementById("agorasei-kb-quick").addEventListener("click", (e) => {
   const b = e.target.closest("[data-suggestion]");
-  if(b) agoraseiSubmitQuestion(b.getAttribute("data-suggestion"));
+  if(b){ agoraseiCloseSideDrawer(); agoraseiSubmitQuestion(b.getAttribute("data-suggestion")); }
 });
 document.getElementById("agorasei-input").addEventListener("keydown", (e) => {
   if(e.key === "Enter" && !e.shiftKey){
