@@ -12,9 +12,9 @@
   ficar no repositório público sem expor nada.
 -->
 <style>
-  html, body{margin:0; height:100%; background:#09090b; color:#f5f5f7; font-family:system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;}
-  #frame{position:fixed; inset:0; width:100%; height:100%; border:0; display:none; background:#fff;}
-  .aviso{position:fixed; inset:0; display:flex; align-items:center; justify-content:center; padding:24px;}
+  html, body{margin:0; height:100%; background:#000; color:#f5f5f7; font-family:system-ui, -apple-system, "Segoe UI", Roboto, sans-serif; overflow:hidden;}
+  #frame{position:fixed; inset:0; width:100%; height:100%; border:0; display:none; background:#fff; z-index:0;}
+  .aviso{position:fixed; inset:0; z-index:5; display:flex; align-items:center; justify-content:center; padding:24px; background:#09090b;}
   .aviso-card{max-width:420px; text-align:center; padding:32px 28px; border:1px solid #ffffff1f; border-radius:16px; background:#131315;}
   .aviso-icon{font-size:28px;}
   .aviso h1{margin:12px 0 8px; font-size:18px; font-weight:600;}
@@ -23,10 +23,38 @@
   .banner{position:fixed; left:50%; bottom:18px; transform:translateX(-50%); z-index:10; display:none; align-items:center; gap:10px; padding:8px 8px 8px 16px; border-radius:999px; background:#131315; color:#f5f5f7; border:1px solid #2dd4bf; box-shadow:0 10px 30px #0006; font-size:13.5px;}
   .banner button{border:0; border-radius:999px; padding:6px 14px; background:#2dd4bf; color:#05201b; font-weight:600; font-size:13px; cursor:pointer;}
   .banner .fechar{background:transparent; color:#a5a5ad; padding:6px 8px;}
+
+  /* ---------- abertura (Vórtice) ---------- */
+  #loader{position:fixed; inset:0; z-index:20; background:#000; overflow:hidden; cursor:crosshair; transition:opacity .35s ease;}
+  #loader.saindo{opacity:0; pointer-events:none;}
+  #loader-gl{position:absolute; inset:0; width:100%; height:100%; display:block;}
+  .ld-vignette{position:absolute; inset:0; pointer-events:none; background:radial-gradient(ellipse at 50% 50%, transparent 55%, #000000b0 100%);}
+  .ld-crisp{position:absolute; pointer-events:none; opacity:0; filter:drop-shadow(0 0 14px #ff4d6d88) drop-shadow(0 0 40px #d40f3a55); transform-origin:50% 50%;}
+  .ld-ring{position:absolute; left:50%; top:50%; width:10px; height:10px; margin:-5px 0 0 -5px; border-radius:50%; border:2px solid #ff4d6d; box-shadow:0 0 30px 6px #d40f3a88, inset 0 0 20px 2px #d40f3a66; opacity:0; pointer-events:none;}
+  .ld-ring.go{animation:ldRing 1.1s cubic-bezier(.15,.75,.3,1) forwards;}
+  @keyframes ldRing{0%{opacity:.95; transform:scale(1);} 100%{opacity:0; transform:scale(160);}}
+  .ld-flash{position:absolute; inset:0; background:#fff; opacity:0; pointer-events:none; mix-blend-mode:overlay;}
+  .ld-hud{position:absolute; left:5%; right:5%; bottom:6%; display:flex; justify-content:space-between; align-items:flex-end; gap:12px; pointer-events:none;
+    font-family:"JetBrains Mono", ui-monospace, "Cascadia Mono", Consolas, monospace; font-size:12px; color:#ffffffb8; letter-spacing:.1em; text-transform:uppercase; font-variant-numeric:tabular-nums;}
+  .ld-line{position:absolute; left:5%; right:5%; bottom:calc(6% - 10px); height:1px; background:#ffffff1a; overflow:hidden; pointer-events:none;}
+  .ld-line i{position:absolute; inset:0; transform-origin:0 50%; transform:scaleX(0); background:linear-gradient(90deg, #d40f3a, #ff4d6d); box-shadow:0 0 10px #d40f3a; transition:transform .25s linear;}
+  /* sem 3D (navegador sem WebGL, biblioteca não carregou, ou "reduzir movimento"): logo parada com a barra */
+  #loader.simples .ld-crisp{left:50%; top:46%; width:min(170px, 32vw); height:auto; transform:translate(-50%, -50%); opacity:1;}
+  #loader.simples .ld-crisp.pulsa{animation:ldPulse 2.2s ease-in-out infinite;}
+  @keyframes ldPulse{50%{opacity:.6;}}
 </style>
 </head>
 <body>
-<div class="aviso" id="aviso">
+<div id="loader" role="status" aria-live="polite" aria-label="Abrindo o Painel Central">
+  <canvas id="loader-gl" aria-hidden="true"></canvas>
+  <div class="ld-vignette"></div>
+  <img id="ld-logo" class="ld-crisp" src="logo.png" alt="Crediffato">
+  <div id="ld-ring" class="ld-ring"></div>
+  <div id="ld-flash" class="ld-flash"></div>
+  <div class="ld-hud"><span id="ld-step">Validando sessão</span><span id="ld-pct">0%</span></div>
+  <div class="ld-line"><i id="ld-bar"></i></div>
+</div>
+<div class="aviso" id="aviso" style="display:none;">
   <div class="aviso-card">
     <div class="aviso-icon" id="aviso-icon" aria-hidden="true">⏳</div>
     <h1 id="aviso-title">Abrindo o Painel Central...</h1>
@@ -40,6 +68,333 @@
   <button type="button" id="banner-reload">Atualizar</button>
   <button type="button" class="fechar" id="banner-close" aria-label="Fechar aviso">✕</button>
 </div>
+
+<script>
+// ---------- Abertura "Vórtice" ----------
+// Galáxia de partículas em 3D (three.js) que é sugada até formar a logo, com varredura de luz,
+// onda de choque e um salto final atravessando a logo. Amarrada ao carregamento de verdade:
+// - dura no mínimo 5s;
+// - o salto final só acontece quando o painel já está montado por baixo (se a rede estiver lenta,
+//   a logo fica formada esperando, em vez de mostrar o painel pela metade);
+// - etapa e porcentagem nunca passam na frente do que já aconteceu de fato.
+// Ao terminar, o 3D é descartado por inteiro pra não pesar no painel. Sem WebGL, se a biblioteca
+// não carregar ou com "reduzir movimento" ligado, cai numa versão simples (logo parada + barra).
+window.painelLoader = (function(){
+  const LIBS = [
+    "https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js",
+    "https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/shaders/CopyShader.js",
+    "https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/shaders/LuminosityHighPassShader.js",
+    "https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/postprocessing/EffectComposer.js",
+    "https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/postprocessing/ShaderPass.js",
+    "https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/postprocessing/RenderPass.js",
+    "https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/postprocessing/UnrealBloomPass.js",
+  ];
+  const HOLD = 4.25, END = 5.0;
+  const LABELS = ["Validando sessão", "Conferindo acesso", "Baixando o painel", "Descompactando", "Montando o painel", "Pronto"];
+  const PCT = [0, 20, 35, 85, 96, 100];
+  const TIME_STAGE = [0, 1.0, 2.0, 3.6, 4.1];
+
+  const loaderEl = document.getElementById("loader");
+  const canvas = document.getElementById("loader-gl");
+  const crisp = document.getElementById("ld-logo");
+  const ring = document.getElementById("ld-ring");
+  const flash = document.getElementById("ld-flash");
+  const stepEl = document.getElementById("ld-step"), pctEl = document.getElementById("ld-pct"), bar = document.getElementById("ld-bar");
+  const reduce = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+  const weak = (navigator.hardwareConcurrency || 8) <= 4 || (navigator.deviceMemory || 8) <= 4;
+  const ease = t => t < .5 ? 4*t*t*t : 1 - Math.pow(-2*t + 2, 3) / 2;
+  const clamp = (v, a, b) => Math.min(b, Math.max(a, v));
+  const smooth = (a, b, v) => { const t = clamp((v - a) / (b - a), 0, 1); return t * t * (3 - 2 * t); };
+
+  const start = performance.now();
+  let real = { i:0, sub:0 };
+  let warpStart = null, finished = false, gone = false, raf = 0, simple = false;
+  let resolveReady = null;
+  let gl = null; // {renderer, scene, camera, material, composer, bloom, stars, points, mouse}
+
+  function setHud(t, warping){
+    const timeIdx = TIME_STAGE.filter(s => t >= s).length - 1;
+    const idx = warping ? 5 : Math.min(timeIdx, real.i);
+    const realPct = real.i >= 5 ? 100 : PCT[real.i] + real.sub * (PCT[real.i + 1] - PCT[real.i]);
+    const pct = warping ? 100 : Math.round(Math.min(ease(clamp(t / END, 0, 1)) * 100, realPct));
+    if(stepEl.textContent !== LABELS[idx]) stepEl.textContent = LABELS[idx];
+    pctEl.textContent = pct + "%";
+    bar.style.transform = `scaleX(${pct / 100})`;
+  }
+
+  function animTime(now){
+    const t = (now - start) / 1000;
+    if(warpStart === null && real.i >= 5 && t >= HOLD) warpStart = now;
+    return warpStart === null ? Math.min(t, HOLD) : HOLD + (now - warpStart) / 1000;
+  }
+
+  function dispose(){
+    cancelAnimationFrame(raf);
+    if(gl){
+      try{
+        gl.points.geometry.dispose(); gl.material.dispose(); gl.stars.geometry.dispose(); gl.stars.material.dispose();
+        if(gl.composer){ gl.composer.renderTarget1.dispose(); gl.composer.renderTarget2.dispose(); }
+        gl.renderer.dispose(); gl.renderer.forceContextLoss();
+      }catch(e){}
+      gl = null;
+    }
+    loaderEl.remove();
+  }
+
+  function leave(){
+    if(gone) return;
+    gone = true;
+    loaderEl.classList.add("saindo");
+    setTimeout(dispose, 380);
+  }
+
+  function complete(){
+    if(finished) return;
+    finished = true;
+    leave();
+    if(resolveReady) resolveReady();
+  }
+
+  // ---------- versão simples ----------
+  function runSimple(){
+    simple = true;
+    loaderEl.classList.add("simples");
+    if(!reduce) crisp.classList.add("pulsa");
+    canvas.style.display = "none";
+    const tick = (now) => {
+      if(gone) return;
+      const t = animTime(now);
+      setHud(Math.min(t, HOLD), warpStart !== null);
+      if(warpStart !== null && t >= HOLD + .35){ complete(); return; }
+      raf = requestAnimationFrame(tick);
+    };
+    raf = requestAnimationFrame(tick);
+  }
+
+  function loadScript(src){
+    return new Promise((res, rej) => { const s = document.createElement("script"); s.src = src; s.onload = res; s.onerror = rej; document.head.appendChild(s); });
+  }
+  function loadImage(img){
+    return img.complete && img.naturalWidth ? Promise.resolve() : new Promise((res, rej) => { img.onload = res; img.onerror = rej; });
+  }
+  function hasWebGL(){
+    try{ const c = document.createElement("canvas"); return !!(c.getContext("webgl") || c.getContext("experimental-webgl")); }catch(e){ return false; }
+  }
+
+  function sample(cv, count, world){
+    const d = cv.getContext("2d").getImageData(0, 0, cv.width, cv.height).data, pts = [];
+    let guard = 0;
+    while(pts.length < count && guard++ < count * 60){
+      const x = Math.random() * cv.width, y = Math.random() * cv.height;
+      if(d[((y | 0) * cv.width + (x | 0)) * 4 + 3] > 120) pts.push([world.x + (x / cv.width - .5) * world.w, world.y - (y / cv.height - .5) * world.h]);
+    }
+    return pts;
+  }
+
+  const NOISE = `
+    vec3 mod289(vec3 x){return x-floor(x*(1.0/289.0))*289.0;}
+    vec4 mod289(vec4 x){return x-floor(x*(1.0/289.0))*289.0;}
+    vec4 permute(vec4 x){return mod289(((x*34.0)+1.0)*x);}
+    vec4 taylorInvSqrt(vec4 r){return 1.79284291400159-0.85373472095314*r;}
+    float snoise(vec3 v){
+      const vec2 C=vec2(1.0/6.0,1.0/3.0); const vec4 D=vec4(0.0,0.5,1.0,2.0);
+      vec3 i=floor(v+dot(v,C.yyy)); vec3 x0=v-i+dot(i,C.xxx);
+      vec3 g=step(x0.yzx,x0.xyz); vec3 l=1.0-g; vec3 i1=min(g.xyz,l.zxy); vec3 i2=max(g.xyz,l.zxy);
+      vec3 x1=x0-i1+C.xxx; vec3 x2=x0-i2+C.yyy; vec3 x3=x0-D.yyy; i=mod289(i);
+      vec4 p=permute(permute(permute(i.z+vec4(0.0,i1.z,i2.z,1.0))+i.y+vec4(0.0,i1.y,i2.y,1.0))+i.x+vec4(0.0,i1.x,i2.x,1.0));
+      float n_=0.142857142857; vec3 ns=n_*D.wyz-D.xzx; vec4 j=p-49.0*floor(p*ns.z*ns.z);
+      vec4 x_=floor(j*ns.z); vec4 y_=floor(j-7.0*x_); vec4 x=x_*ns.x+ns.yyyy; vec4 y=y_*ns.x+ns.yyyy; vec4 h=1.0-abs(x)-abs(y);
+      vec4 b0=vec4(x.xy,y.xy); vec4 b1=vec4(x.zw,y.zw); vec4 s0=floor(b0)*2.0+1.0; vec4 s1=floor(b1)*2.0+1.0; vec4 sh=-step(h,vec4(0.0));
+      vec4 a0=b0.xzyw+s0.xzyw*sh.xxyy; vec4 a1=b1.xzyw+s1.xzyw*sh.zzww;
+      vec3 p0=vec3(a0.xy,h.x); vec3 p1=vec3(a0.zw,h.y); vec3 p2=vec3(a1.xy,h.z); vec3 p3=vec3(a1.zw,h.w);
+      vec4 norm=taylorInvSqrt(vec4(dot(p0,p0),dot(p1,p1),dot(p2,p2),dot(p3,p3))); p0*=norm.x; p1*=norm.y; p2*=norm.z; p3*=norm.w;
+      vec4 m=max(0.6-vec4(dot(x0,x0),dot(x1,x1),dot(x2,x2),dot(x3,x3)),0.0); m=m*m;
+      return 42.0*dot(m*m,vec4(dot(p0,x0),dot(p1,x1),dot(p2,x2),dot(p3,x3)));
+    }`;
+
+  // ---------- versão 3D ----------
+  async function run3D(){
+    for(const src of LIBS) await loadScript(src);
+    await loadImage(crisp);
+    if(gone) return;
+    const THREE = window.THREE;
+    const LOGO_H = 3.3, LOGO_Y = .45;
+    const N_LOGO = weak ? 9000 : 18000, N_TEXT = weak ? 1600 : 3200;
+
+    const lc = document.createElement("canvas"); lc.width = 560; lc.height = Math.round(560 * crisp.naturalHeight / crisp.naturalWidth);
+    const lctx = lc.getContext("2d"); lctx.imageSmoothingQuality = "high"; lctx.drawImage(crisp, 0, 0, lc.width, lc.height);
+    const lw = LOGO_H * lc.width / lc.height;
+    const logoPts = sample(lc, N_LOGO, { x:0, y:LOGO_Y, w:lw, h:LOGO_H });
+    const tc = document.createElement("canvas"); tc.width = 900; tc.height = 90;
+    const tctx = tc.getContext("2d"); tctx.fillStyle = "#fff"; tctx.textAlign = "center"; tctx.textBaseline = "middle";
+    tctx.font = "600 64px 'Space Grotesk', 'Segoe UI', Arial, sans-serif";
+    tctx.fillText("P A I N E L   C E N T R A L", tc.width / 2, tc.height / 2);
+    const textPts = sample(tc, N_TEXT, { x:0, y:LOGO_Y - LOGO_H / 2 - .62, w:4.3, h:.43 });
+
+    const all = logoPts.concat(textPts), n = all.length;
+    const pos = new Float32Array(n * 3), rnd = new Float32Array(n * 4), kind = new Float32Array(n);
+    all.forEach(([x, y], i) => {
+      pos[i*3] = x; pos[i*3+1] = y; pos[i*3+2] = (Math.random() - .5) * .06;
+      for(let k = 0; k < 4; k++) rnd[i*4+k] = Math.random();
+      kind[i] = i < logoPts.length ? 0 : 1;
+    });
+    const geo = new THREE.BufferGeometry();
+    geo.setAttribute("position", new THREE.BufferAttribute(pos, 3));
+    geo.setAttribute("aRand", new THREE.BufferAttribute(rnd, 4));
+    geo.setAttribute("aKind", new THREE.BufferAttribute(kind, 1));
+
+    const mouse = new THREE.Vector3(99, 99, 0);
+    const material = new THREE.ShaderMaterial({
+      transparent:true, depthWrite:false, blending:THREE.AdditiveBlending,
+      uniforms:{ uTime:{value:0}, uMouse:{value:mouse}, uMouseK:{value:0}, uPR:{value:1}, uSize:{value:weak ? 34 : 26} },
+      vertexShader: NOISE + `
+        uniform float uTime, uMouseK, uPR, uSize; uniform vec3 uMouse;
+        attribute vec4 aRand; attribute float aKind;
+        varying vec3 vColor; varying float vAlpha;
+        float eio(float t){ return t < 0.5 ? 4.0*t*t*t : 1.0 - pow(-2.0*t + 2.0, 3.0) / 2.0; }
+        vec3 rotY(vec3 p, float a){ float c = cos(a), s = sin(a); return vec3(c*p.x + s*p.z, p.y, -s*p.x + c*p.z); }
+        vec3 rotX(vec3 p, float a){ float c = cos(a), s = sin(a); return vec3(p.x, c*p.y - s*p.z, s*p.y + c*p.z); }
+        void main(){
+          vec3 target = position;
+          float r = 1.4 + pow(aRand.x, 0.7) * 8.0;
+          float arm = floor(aRand.z * 3.0) * 2.0944;
+          float a = aRand.y * 0.9 + arm + r * 0.55 + uTime * (1.4 / (0.4 + r * 0.22));
+          vec3 st = rotX(vec3(cos(a) * r, (aRand.w - 0.5) * (0.35 + r * 0.12), sin(a) * r), 1.1) + vec3(0.0, 0.3, -2.0);
+          float delay = fract(atan(target.y - 0.45, target.x) / 6.2832 + 0.5) * 0.85 + aRand.w * 0.15;
+          if(aKind > 0.5) delay += 0.35;
+          float e = eio(clamp((uTime - 0.35 - delay) / 1.7, 0.0, 1.0));
+          vec3 p = rotY(mix(st, target, e), (1.0 - e) * 1.6);
+          vec3 q = p * 0.32 + vec3(0.0, uTime * 0.18, 0.0);
+          p += vec3(snoise(q), snoise(q + 31.4), snoise(q + 71.7)) * ((1.0 - e) * 1.25 + 0.025);
+          float scanX = mix(-5.5, 5.5, smoothstep(2.85, 3.45, uTime));
+          float scan = exp(-pow((target.x - scanX) * 2.0, 2.0)) * step(2.8, uTime) * (1.0 - smoothstep(3.4, 3.6, uTime));
+          vec2 d = p.xy - uMouse.xy;
+          p.xy += normalize(d + 1e-4) * uMouseK * smoothstep(1.7, 0.0, length(d)) * 0.9;
+          float w = smoothstep(4.25, 5.0, uTime);
+          p.z += w * w * (24.0 + aRand.x * 30.0);
+          p.xy *= 1.0 + w * 0.8;
+          vec4 mv = modelViewMatrix * vec4(p, 1.0);
+          gl_Position = projectionMatrix * mv;
+          gl_PointSize = uSize * (0.55 + aRand.w * 0.9) * (1.0 + scan * 1.8 + w * 1.5) * (aKind > 0.5 ? 0.75 : 1.0) * uPR / -mv.z;
+          float isRed = step(0.72, aRand.z);
+          vec3 c = mix(vec3(1.0, 0.96, 0.97), vec3(1.0, 0.1, 0.25), isRed);
+          c = mix(c, vec3(1.0, 0.55, 0.65), (1.0 - e) * 0.35 * isRed) + scan * 0.9;
+          vColor = c;
+          float dim = mix(1.0 - 0.45 * smoothstep(3.35, 3.9, uTime), 1.0, w);
+          vAlpha = (0.48 + 0.52 * e) * dim * (1.0 - smoothstep(4.78, 5.0, uTime)) * (aKind > 0.5 ? 0.85 : 1.0);
+        }`,
+      fragmentShader: `
+        varying vec3 vColor; varying float vAlpha;
+        void main(){
+          float d = length(gl_PointCoord - 0.5);
+          float a = smoothstep(0.5, 0.0, d); a = a * a;
+          gl_FragColor = vec4(vColor * a * vAlpha, 1.0);
+        }`
+    });
+
+    const renderer = new THREE.WebGLRenderer({ canvas, antialias:false, alpha:false, powerPreference:"high-performance" });
+    renderer.setClearColor(0x000000, 1);
+    const scene = new THREE.Scene();
+    const camera = new THREE.PerspectiveCamera(42, innerWidth / innerHeight, .1, 200);
+    const points = new THREE.Points(geo, material);
+    scene.add(points);
+    const sn = 900, sp = new Float32Array(sn * 3);
+    for(let i = 0; i < sn; i++){ sp[i*3] = (Math.random() - .5) * 60; sp[i*3+1] = (Math.random() - .5) * 34; sp[i*3+2] = -10 - Math.random() * 30; }
+    const sg = new THREE.BufferGeometry(); sg.setAttribute("position", new THREE.BufferAttribute(sp, 3));
+    const stars = new THREE.Points(sg, new THREE.PointsMaterial({ color:0xffffff, size:.06, transparent:true, opacity:.5, depthWrite:false }));
+    scene.add(stars);
+    let composer = null, bloom = null;
+    if(!weak && THREE.EffectComposer && THREE.UnrealBloomPass){
+      composer = new THREE.EffectComposer(renderer);
+      composer.addPass(new THREE.RenderPass(scene, camera));
+      bloom = new THREE.UnrealBloomPass(new THREE.Vector2(1024, 576), 1.15, .55, 0.0);
+      composer.addPass(bloom);
+    }
+    gl = { renderer, scene, camera, material, composer, bloom, stars, points };
+
+    function resize(){
+      if(!gl) return;
+      const pr = Math.min(2, window.devicePixelRatio || 1);
+      renderer.setPixelRatio(pr); renderer.setSize(innerWidth, innerHeight, false);
+      camera.aspect = innerWidth / innerHeight; camera.updateProjectionMatrix();
+      if(gl.composer){ gl.composer.setPixelRatio(pr); gl.composer.setSize(innerWidth, innerHeight); }
+      material.uniforms.uPR.value = pr * (innerHeight / 600);
+    }
+    window.addEventListener("resize", resize);
+    resize();
+
+    let mouseK = 0, mouseTarget = 0;
+    loaderEl.addEventListener("pointermove", (e) => {
+      const v = new THREE.Vector3((e.clientX / innerWidth) * 2 - 1, -(e.clientY / innerHeight) * 2 + 1, .5).unproject(camera);
+      const dir = v.sub(camera.position).normalize();
+      mouse.copy(camera.position).add(dir.multiplyScalar(-camera.position.z / dir.z));
+      mouseTarget = 1;
+    });
+    loaderEl.addEventListener("pointerleave", () => { mouseTarget = 0; });
+
+    const corner = new THREE.Vector3();
+    function placeCrisp(){
+      corner.set(-lw / 2, LOGO_Y + LOGO_H / 2, 0).project(camera);
+      const x0 = (corner.x + 1) / 2 * innerWidth, y0 = (1 - corner.y) / 2 * innerHeight;
+      corner.set(lw / 2, LOGO_Y - LOGO_H / 2, 0).project(camera);
+      const x1 = (corner.x + 1) / 2 * innerWidth, y1 = (1 - corner.y) / 2 * innerHeight;
+      crisp.style.left = x0 + "px"; crisp.style.top = y0 + "px"; crisp.style.width = (x1 - x0) + "px"; crisp.style.height = (y1 - y0) + "px";
+      corner.set(0, LOGO_Y, 0).project(camera);
+      ring.style.left = ((corner.x + 1) / 2 * innerWidth) + "px"; ring.style.top = ((1 - corner.y) / 2 * innerHeight) + "px";
+    }
+
+    let ringFired = false, frames = 0, slow = 0, last = 0;
+    function loop(now){
+      if(gone || !gl) return;
+      const t = animTime(now);
+      material.uniforms.uTime.value = t;
+      mouseK += (mouseTarget - mouseK) * .08;
+      material.uniforms.uMouseK.value = mouseK * (t < 4.2 ? 1 : 0);
+      const k = ease(clamp(t / 3.2, 0, 1));
+      camera.position.set(Math.sin(t * .45) * .9 * (1 - k), .25 * (1 - k), 12.5 - 5.0 * k);
+      camera.lookAt(0, .25, 0);
+      stars.position.z = smooth(4.25, 5, t) * 25;
+      placeCrisp();
+      const zoom = smooth(4.25, 5, t);
+      crisp.style.opacity = smooth(3.3, 3.9, t) * (1 - smooth(4.4, 4.92, t)) * .95;
+      crisp.style.transform = `scale(${1 + zoom * zoom * 3.2})`;
+      flash.style.opacity = Math.max(0, 1 - Math.abs(t - 3.35) / .18) * .5;
+      if(!ringFired && t >= 3.3){ ringFired = true; ring.classList.add("go"); }
+      if(gl.bloom) gl.bloom.strength = 1.0 + Math.max(0, 1 - Math.abs(t - 3.35) / .5) * 1.2;
+      // a abertura some junto do salto, revelando o painel que já está montado por baixo
+      loaderEl.style.opacity = 1 - smooth(4.6, 5.0, t);
+      setHud(t, warpStart !== null);
+      if(gl.composer) gl.composer.render(); else renderer.render(scene, camera);
+      // PC lento: mede os primeiros quadros e desliga o brilho se estiver engasgando
+      if(last){ frames++; if(now - last > 34) slow++;
+        if(gl.composer && frames > 40 && frames < 90 && slow > 20){ gl.composer = null; gl.bloom = null; } }
+      last = now;
+      if(t >= END){ complete(); return; }
+      raf = requestAnimationFrame(loop);
+    }
+    raf = requestAnimationFrame(loop);
+  }
+
+  if(reduce || !hasWebGL()) runSimple();
+  else run3D().catch(err => { console.warn("Abertura 3D indisponível, usando a versão simples:", err); if(!gone) runSimple(); });
+
+  return {
+    // etapa real do carregamento (0 sessão, 1 acesso, 2 download, 3 descompactação, 4 montando);
+    // sub = fração concluída dentro da etapa
+    stage(i, sub){ sub = sub || 0; if(i > real.i || (i === real.i && sub > real.sub)) real = { i, sub }; },
+    // painel pronto por baixo: dispara o salto final (respeitando os 5s mínimos) e resolve quando a abertura sumiu
+    ready(){
+      if(gone) return Promise.resolve();
+      real = { i:5, sub:0 };
+      return new Promise(res => { resolveReady = res; });
+    },
+    // tira a abertura na hora (aviso de acesso restrito, login, erro)
+    hide(){ leave(); if(resolveReady) resolveReady(); },
+    get active(){ return !gone; },
+  };
+})();
+</script>
+
 <script type="module">
 import { initializeApp } from "https://www.gstatic.com/firebasejs/10.14.1/firebase-app.js";
 import { getFirestore, doc, getDoc, onSnapshot } from "https://www.gstatic.com/firebasejs/10.14.1/firebase-firestore.js";
@@ -58,6 +413,7 @@ const firebaseConfig = {
 const app = initializeApp(firebaseConfig);
 const db = getFirestore(app);
 const auth = getAuth(app);
+const loader = window.painelLoader;
 
 // Formato publicado pelo board (ver "Painel Central" no index.html): um documento principal
 // apontando pra versão atual, e as partes do HTML compactado (gzip + base64) em documentos à parte.
@@ -76,6 +432,7 @@ let loading = false;
 let unsubBoard = null, unsubMeta = null;
 
 function aviso(icon, title, text, showLink){
+  loader.hide();
   document.getElementById("aviso-icon").textContent = icon;
   document.getElementById("aviso-title").textContent = title;
   document.getElementById("aviso-text").textContent = text;
@@ -117,17 +474,25 @@ async function loadVersion(meta){
   if(loading) return;
   loading = true;
   try{
-    const snaps = await Promise.all(Array.from({ length: meta.parts }, (_, i) => getDoc(partDoc(meta.version, i))));
+    loader.stage(2, 0);
+    let done = 0;
+    const snaps = await Promise.all(Array.from({ length: meta.parts }, (_, i) => getDoc(partDoc(meta.version, i)).then(s => { loader.stage(2, ++done / meta.parts); return s; })));
     if(snaps.some(s => !s.exists())) throw new Error("A versão no banco está incompleta — peça pra publicar de novo.");
+    loader.stage(3, 0);
     const html = await gunzipBase64(snaps.map(s => s.data().data).join(""));
     if(!allowed) return; // acesso retirado enquanto baixava
+    loader.stage(4, 0);
     const t = html.match(/<title[^>]*>([^<]*)<\/title>/i);
     if(t && t[1].trim()) document.title = t[1].trim();
+    // monta o painel por baixo da abertura e só libera o salto final quando ele terminou de carregar
+    const loaded = new Promise(res => frame.addEventListener("load", res, { once:true }));
     frame.srcdoc = preparePanel(html);
     frame.style.display = "block";
     avisoEl.style.display = "none";
     banner.style.display = "none";
     shownVersion = meta.version;
+    await loaded;
+    await loader.ready();
   }catch(err){
     console.error("Falha ao carregar o Painel Central:", err);
     aviso("⚠️", "Não foi possível abrir o painel", err.message || "erro desconhecido");
@@ -151,7 +516,6 @@ function onMeta(){
 
 function startMeta(){
   if(unsubMeta) return;
-  aviso("⏳", "Abrindo o Painel Central...", "Carregando a versão mais recente.");
   unsubMeta = onSnapshot(metaDoc, (snap) => {
     latestMeta = snap.exists() ? snap.data() : null;
     onMeta();
@@ -167,7 +531,7 @@ function stopMeta(){
 
 function setAllowed(ok){
   if(ok){
-    if(!allowed){ allowed = true; startMeta(); }
+    if(!allowed){ allowed = true; loader.stage(2, 0); startMeta(); }
     return;
   }
   allowed = false;
@@ -190,6 +554,7 @@ onAuthStateChanged(auth, (user) => {
     return;
   }
   uid = user.uid;
+  loader.stage(1, 0);
   // Acompanha o diretório em tempo real: liberar ou tirar a flag em Acessos vale aqui na hora.
   unsubBoard = onSnapshot(doc(db, "boards", "crediffato"), async (snap) => {
     const directory = (snap.exists() && snap.data().directory) || [];
