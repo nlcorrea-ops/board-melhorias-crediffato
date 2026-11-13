@@ -25,7 +25,7 @@
   .banner .fechar{background:transparent; color:#a5a5ad; padding:6px 8px;}
 
   /* ---------- abertura (Vórtice) ---------- */
-  #loader{position:fixed; inset:0; z-index:20; background:#000; overflow:hidden; cursor:crosshair; transition:opacity .35s ease;}
+  #loader{position:fixed; inset:0; z-index:20; background:#000; overflow:hidden; transition:opacity .35s ease;}
   #loader.saindo{opacity:0; pointer-events:none;}
   #loader-gl{position:absolute; inset:0; width:100%; height:100%; display:block;}
   .ld-vignette{position:absolute; inset:0; pointer-events:none; background:radial-gradient(ellipse at 50% 50%, transparent 55%, #000000b0 100%);}
@@ -110,7 +110,7 @@ window.painelLoader = (function(){
   let real = { i:0, sub:0 };
   let warpStart = null, finished = false, gone = false, raf = 0, simple = false;
   let resolveReady = null;
-  let gl = null; // {renderer, scene, camera, material, composer, bloom, stars, points, mouse}
+  let gl = null; // {renderer, scene, camera, material, composer, bloom, stars, points}
 
   function setHud(t, warping){
     const timeIdx = TIME_STAGE.filter(s => t >= s).length - 1;
@@ -213,8 +213,18 @@ window.painelLoader = (function(){
     }`;
 
   // ---------- versão 3D ----------
+  // PC fraco nem usa o brilho (só o three.js principal), então nem baixa os outros arquivos.
+  const NEEDED = weak ? LIBS.slice(0, 1) : LIBS;
+  // Já começa a baixar tudo em paralelo assim que a página abre; a execução depois segue a ordem
+  // de dependência (three -> shaders e EffectComposer -> passes que estendem o Pass dele).
+  NEEDED.forEach(src => { const l = document.createElement("link"); l.rel = "preload"; l.as = "script"; l.href = src; document.head.appendChild(l); });
+
   async function run3D(){
-    for(const src of LIBS) await loadScript(src);
+    await loadScript(NEEDED[0]);
+    if(NEEDED.length > 1){
+      await Promise.all(NEEDED.slice(1, 4).map(loadScript));
+      await Promise.all(NEEDED.slice(4).map(loadScript));
+    }
     await loadImage(crisp);
     if(gone) return;
     const THREE = window.THREE;
@@ -243,12 +253,11 @@ window.painelLoader = (function(){
     geo.setAttribute("aRand", new THREE.BufferAttribute(rnd, 4));
     geo.setAttribute("aKind", new THREE.BufferAttribute(kind, 1));
 
-    const mouse = new THREE.Vector3(99, 99, 0);
     const material = new THREE.ShaderMaterial({
       transparent:true, depthWrite:false, blending:THREE.AdditiveBlending,
-      uniforms:{ uTime:{value:0}, uMouse:{value:mouse}, uMouseK:{value:0}, uPR:{value:1}, uSize:{value:weak ? 34 : 26} },
+      uniforms:{ uTime:{value:0}, uPR:{value:1}, uSize:{value:weak ? 34 : 26} },
       vertexShader: NOISE + `
-        uniform float uTime, uMouseK, uPR, uSize; uniform vec3 uMouse;
+        uniform float uTime, uPR, uSize;
         attribute vec4 aRand; attribute float aKind;
         varying vec3 vColor; varying float vAlpha;
         float eio(float t){ return t < 0.5 ? 4.0*t*t*t : 1.0 - pow(-2.0*t + 2.0, 3.0) / 2.0; }
@@ -265,17 +274,20 @@ window.painelLoader = (function(){
           float e = eio(clamp((uTime - 0.35 - delay) / 1.7, 0.0, 1.0));
           vec3 p = rotY(mix(st, target, e), (1.0 - e) * 1.6);
           vec3 q = p * 0.32 + vec3(0.0, uTime * 0.18, 0.0);
-          p += vec3(snoise(q), snoise(q + 31.4), snoise(q + 71.7)) * ((1.0 - e) * 1.25 + 0.025);
+          // o movimento de fluido (3 ruídos por partícula) só é calculado enquanto ela ainda está
+          // voando; já encaixada na logo, um tremor barato com seno dá o mesmo efeito de "viva"
+          if(e < 0.999) p += vec3(snoise(q), snoise(q + 31.4), snoise(q + 71.7)) * ((1.0 - e) * 1.25 + 0.025);
+          else p.xy += vec2(sin(uTime * 2.1 + aRand.x * 40.0), cos(uTime * 1.7 + aRand.y * 40.0)) * 0.012;
           float scanX = mix(-5.5, 5.5, smoothstep(2.85, 3.45, uTime));
           float scan = exp(-pow((target.x - scanX) * 2.0, 2.0)) * step(2.8, uTime) * (1.0 - smoothstep(3.4, 3.6, uTime));
-          vec2 d = p.xy - uMouse.xy;
-          p.xy += normalize(d + 1e-4) * uMouseK * smoothstep(1.7, 0.0, length(d)) * 0.9;
           float w = smoothstep(4.25, 5.0, uTime);
           p.z += w * w * (24.0 + aRand.x * 30.0);
           p.xy *= 1.0 + w * 0.8;
           vec4 mv = modelViewMatrix * vec4(p, 1.0);
           gl_Position = projectionMatrix * mv;
-          gl_PointSize = uSize * (0.55 + aRand.w * 0.9) * (1.0 + scan * 1.8 + w * 1.5) * (aKind > 0.5 ? 0.75 : 1.0) * uPR / -mv.z;
+          // teto no tamanho: no salto final as partículas passam rente à câmera e ficariam enormes,
+          // e milhares de pontos gigantes somando luz uns sobre os outros é o pico de peso da abertura
+          gl_PointSize = min(uSize * (0.55 + aRand.w * 0.9) * (1.0 + scan * 1.8 + w * 1.5) * (aKind > 0.5 ? 0.75 : 1.0) * uPR / -mv.z, 28.0 * uPR);
           float isRed = step(0.72, aRand.z);
           vec3 c = mix(vec3(1.0, 0.96, 0.97), vec3(1.0, 0.1, 0.25), isRed);
           c = mix(c, vec3(1.0, 0.55, 0.65), (1.0 - e) * 0.35 * isRed) + scan * 0.9;
@@ -312,9 +324,12 @@ window.painelLoader = (function(){
     }
     gl = { renderer, scene, camera, material, composer, bloom, stars, points };
 
+    // Pontos de luz desfocados não ganham nitidez com resolução alta: em tela de alta densidade,
+    // renderizar a 2x custaria 4x os pixels sem diferença visível -- teto de 1,25x.
+    let maxPR = 1.25;
     function resize(){
       if(!gl) return;
-      const pr = Math.min(2, window.devicePixelRatio || 1);
+      const pr = Math.min(maxPR, window.devicePixelRatio || 1);
       renderer.setPixelRatio(pr); renderer.setSize(innerWidth, innerHeight, false);
       camera.aspect = innerWidth / innerHeight; camera.updateProjectionMatrix();
       if(gl.composer){ gl.composer.setPixelRatio(pr); gl.composer.setSize(innerWidth, innerHeight); }
@@ -322,15 +337,6 @@ window.painelLoader = (function(){
     }
     window.addEventListener("resize", resize);
     resize();
-
-    let mouseK = 0, mouseTarget = 0;
-    loaderEl.addEventListener("pointermove", (e) => {
-      const v = new THREE.Vector3((e.clientX / innerWidth) * 2 - 1, -(e.clientY / innerHeight) * 2 + 1, .5).unproject(camera);
-      const dir = v.sub(camera.position).normalize();
-      mouse.copy(camera.position).add(dir.multiplyScalar(-camera.position.z / dir.z));
-      mouseTarget = 1;
-    });
-    loaderEl.addEventListener("pointerleave", () => { mouseTarget = 0; });
 
     const corner = new THREE.Vector3();
     function placeCrisp(){
@@ -348,8 +354,6 @@ window.painelLoader = (function(){
       if(gone || !gl) return;
       const t = animTime(now);
       material.uniforms.uTime.value = t;
-      mouseK += (mouseTarget - mouseK) * .08;
-      material.uniforms.uMouseK.value = mouseK * (t < 4.2 ? 1 : 0);
       const k = ease(clamp(t / 3.2, 0, 1));
       camera.position.set(Math.sin(t * .45) * .9 * (1 - k), .25 * (1 - k), 12.5 - 5.0 * k);
       camera.lookAt(0, .25, 0);
@@ -367,7 +371,7 @@ window.painelLoader = (function(){
       if(gl.composer) gl.composer.render(); else renderer.render(scene, camera);
       // PC lento: mede os primeiros quadros e desliga o brilho se estiver engasgando
       if(last){ frames++; if(now - last > 34) slow++;
-        if(gl.composer && frames > 40 && frames < 90 && slow > 20){ gl.composer = null; gl.bloom = null; } }
+        if(gl.composer && frames > 40 && frames < 90 && slow > 20){ gl.composer = null; gl.bloom = null; maxPR = 1; resize(); } }
       last = now;
       if(t >= END){ complete(); return; }
       raf = requestAnimationFrame(loop);
@@ -390,6 +394,15 @@ window.painelLoader = (function(){
     },
     // tira a abertura na hora (aviso de acesso restrito, login, erro)
     hide(){ leave(); if(resolveReady) resolveReady(); },
+    // Resolve quando a logo já está formada e parada (depois da onda de choque). Montar o painel
+    // (1 MB+ de HTML e scripts) trava o navegador por um instante -- feito nesse momento, a
+    // engasgada cai numa logo parada em vez de no meio da galáxia girando.
+    calm(){
+      return new Promise(res => {
+        const check = () => { if(gone || simple || (performance.now() - start) / 1000 >= 3.95) res(); else setTimeout(check, 50); };
+        check();
+      });
+    },
     get active(){ return !gone; },
   };
 })();
@@ -481,6 +494,8 @@ async function loadVersion(meta){
     loader.stage(3, 0);
     const html = await gunzipBase64(snaps.map(s => s.data().data).join(""));
     if(!allowed) return; // acesso retirado enquanto baixava
+    await loader.calm();
+    if(!allowed) return;
     loader.stage(4, 0);
     const t = html.match(/<title[^>]*>([^<]*)<\/title>/i);
     if(t && t[1].trim()) document.title = t[1].trim();
