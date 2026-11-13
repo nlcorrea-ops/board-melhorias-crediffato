@@ -3240,7 +3240,7 @@
 // que a comparação ">"/"<" abaixo saiba qual versão é mais nova) — é a única forma de o mecanismo
 // perceber que existe uma versão nova. Só funciona pra quem está conectado ao Firestore (modo de
 // contingência sem Firebase não tem sincronização em tempo real de nada, essa checagem incluída).
-const APP_VERSION = "2026-11-13T19:37:16Z";
+const APP_VERSION = "2026-11-13T19:40:54Z";
 
 // Desloga e recarrega — usado tanto pela verificação de versão nova quanto pelos sinais de
 // desconexão manual (shutdown geral ou alguém sendo desconectado individualmente).
@@ -9710,9 +9710,11 @@ function painelMetaDoc(){ return fsDoc(db, "boards", "crediffato-painel"); }
 function painelPartDoc(version, i){ return fsDoc(db, "boards", `crediffato-painel-v${version}-p${i}`); }
 
 // Aba com nome fixo: clicar de novo no menu reaproveita a aba do painel já aberta em vez de
-// empilhar uma nova a cada clique.
+// empilhar uma nova a cada clique. A versão vai no endereço porque o GitHub Pages deixa o
+// navegador guardar o arquivo por até 10 min -- sem isso, depois de uma publicação o navegador
+// seguia abrindo a cópia antiga do painel.html guardada em cache.
 function openPainelCentral(){
-  window.open("painel.html", "painel-central-crediffato");
+  window.open("painel.html?v=" + encodeURIComponent(APP_VERSION), "painel-central-crediffato");
 }
 
 async function painelGzipBase64(text){
