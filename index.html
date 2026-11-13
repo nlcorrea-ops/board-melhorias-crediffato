@@ -1589,28 +1589,8 @@
   :root[data-theme="claro"] .teaser-eyebrow .dot{background:#5b4fd1; animation-name:eyebrowPulseLight;}
   @keyframes eyebrowPulseLight{0%,100%{box-shadow:0 0 0 0 #5b4fd155;} 70%{box-shadow:0 0 0 7px #5b4fd100;}}
 
-  /* ---------- Painel Central: HTML publicado pelo admin, dentro de um iframe ---------- */
-  /* Ocupa a altura da tela como o Agora Eu Sei -- o painel tem menu e rolagem próprios. */
-  body[data-aba="painel"] > .wrap > header, body[data-aba="painel"] > .wrap > footer{display:none;}
-  body[data-aba="painel"]{padding-top:24px; padding-bottom:24px;}
-  @media (min-width:901px){
-    body[data-aba="painel"]{overflow:hidden;}
-    body[data-aba="painel"] .app-shell{height:calc(100dvh - 48px); align-items:stretch;}
-    body[data-aba="painel"] .main-nav{align-self:flex-start;}
-  }
-  body[data-aba="painel"] .main-col{display:flex; flex-direction:column; min-height:0; flex:1;}
-  #painel-tab{flex:1; min-height:0;}
-  #painel-tab:not([style*="none"]){display:flex; flex-direction:column; gap:10px;}
-  .painel-toolbar{display:flex; align-items:center; gap:10px; flex-wrap:wrap; font-size:12px; color:var(--text-low);}
-  .painel-title{font-weight:600; font-size:14px; color:var(--text-hi); margin-right:auto;}
-  .painel-banner{display:flex; align-items:center; gap:8px; padding:3px 4px 3px 12px; border-radius:999px; border:1px solid var(--tc); color:var(--text-hi); background:color-mix(in srgb, var(--tc) 12%, transparent);}
-  .painel-upload-label{cursor:pointer;}
-  #painel-msg:empty{display:none;}
-  .painel-frame{flex:1; width:100%; min-height:560px; border:1px solid var(--hairline); border-radius:14px; background:var(--ink-1);}
-  .painel-aviso{margin:auto; max-width:420px; text-align:center; padding:32px 28px; border:1px solid var(--hairline); border-radius:16px; background:var(--glass-1);}
-  .painel-aviso-icon{font-size:26px;}
-  .painel-aviso h3{margin:10px 0 6px; font-size:16px; color:var(--text-hi);}
-  .painel-aviso p{margin:0; color:var(--text-mid); font-size:13.5px; line-height:1.5;}
+  /* ---------- Painel Central (abre em painel.html, numa aba própria do navegador) ---------- */
+  .settings-dropdown .painel-publish-btn{display:block; cursor:pointer;}
   .painel-flag-row{display:flex; align-items:center; gap:8px; font-size:13.5px; color:var(--text-hi); cursor:pointer;}
   .painel-flag-hint{display:block; margin-top:4px; font-size:12px; color:var(--text-low);}
   .access-painel-chip{font-family:var(--font-mono); font-size:9px; text-transform:uppercase; letter-spacing:.03em; margin-left:6px; padding:1px 6px; border-radius:999px; border:1px solid #2dd4bf80; color:#2dd4bf; font-weight:500;}
@@ -2190,7 +2170,6 @@
   body[data-aba="validations"]{--tc:var(--st-concluido);}
   body[data-aba="archive"]{--tc:#4f9cff;}
   body[data-aba="admin"]{--tc:var(--ql);}
-  body[data-aba="painel"]{--tc:#2dd4bf;}
   body[data-aba="agorasei"]{--tc:#c792ea;}
   ::selection{background:color-mix(in srgb, var(--tc) 35%, transparent);}
   *::-webkit-scrollbar-thumb{background:color-mix(in srgb, var(--tc) 45%, var(--ink-2)); border-radius:10px;}
@@ -2557,6 +2536,8 @@
           <button type="button" class="presentation-toggle-btn" id="sync-btn" title="Sincronizar com a última versão do sistema"><svg width="13" height="13" viewBox="0 0 16 16" fill="none" style="vertical-align:-2px;" aria-hidden="true"><path d="M2.5 8a5.5 5.5 0 0 1 9.4-3.9M13.5 8a5.5 5.5 0 0 1-9.4 3.9" stroke="currentColor" stroke-width="1.4" stroke-linecap="round"/><path d="M12 1.8v2.5h-2.5M4 14.2v-2.5h2.5" stroke="currentColor" stroke-width="1.4" stroke-linecap="round" stroke-linejoin="round"/></svg> Atualizar</button>
           <button type="button" class="presentation-toggle-btn" id="presentation-toggle" style="display:none;"><svg width="13" height="13" viewBox="0 0 16 16" fill="none" style="vertical-align:-2px;" aria-hidden="true"><rect x="1.5" y="2.5" width="13" height="9" rx="1" stroke="currentColor" stroke-width="1.4"/><path d="M5.5 14.5H10.5M8 11.5V14.5" stroke="currentColor" stroke-width="1.4" stroke-linecap="round"/></svg> Modo apresentação</button>
           <button type="button" class="shutdown-btn" id="shutdown-btn" style="display:none;" title="Desconecta todo mundo que estiver logado agora, exceto você">Encerrar todos os acessos</button>
+          <label class="presentation-toggle-btn painel-publish-btn" id="painel-publish-btn" for="painel-upload-file" style="display:none;" title="Sobe uma versão nova do Painel Central — vale na hora pra todo mundo com acesso">Publicar Painel Central (.html)</label>
+          <input type="file" id="painel-upload-file" accept=".html,.htm,text/html" style="display:none;" />
           <div class="settings-dropdown-divider"></div>
           <p class="settings-section-title">Tema</p>
           <div class="theme-switcher theme-swatch-row" id="theme-switcher" role="group" aria-label="Escolher tema">
@@ -2895,23 +2876,6 @@
         <div class="admin-list" id="sector-list"></div>
       </div>
     </div>
-  </div>
-
-  <div class="tab-panel" id="painel-tab" style="display:none;">
-    <div class="painel-toolbar" id="painel-toolbar" style="display:none;">
-      <span class="painel-title">Painel Central</span>
-      <span id="painel-version"></span>
-      <span class="painel-banner" id="painel-update-banner" style="display:none;">Nova versão publicada <button type="button" class="btn-secondary" id="painel-reload-btn">Carregar agora</button></span>
-      <label class="btn-secondary painel-upload-label" id="painel-upload-label" for="painel-upload-file" style="display:none;">Publicar nova versão (.html)</label>
-      <input type="file" id="painel-upload-file" accept=".html,.htm,text/html" style="display:none;" />
-    </div>
-    <p class="form-msg" id="painel-msg"></p>
-    <div class="painel-aviso" id="painel-aviso" style="display:none;">
-      <div class="painel-aviso-icon" aria-hidden="true">🔒</div>
-      <h3 id="painel-aviso-title"></h3>
-      <p id="painel-aviso-text"></p>
-    </div>
-    <iframe class="painel-frame" id="painel-frame" title="Painel Central Crediffato" style="display:none;"></iframe>
   </div>
 
   <div class="tab-panel" id="agorasei-tab" style="display:none;">
@@ -7710,6 +7674,8 @@ function applyRoleLayout(){
   const isAdmin = currentUser && currentUser.role === "admin";
   const shutdownBtn = document.getElementById("shutdown-btn");
   if(shutdownBtn) shutdownBtn.style.display = isAdmin ? "" : "none";
+  const painelPublishBtn = document.getElementById("painel-publish-btn");
+  if(painelPublishBtn) painelPublishBtn.style.display = isAdmin ? "" : "none";
   // Só uma conta admin pode criar ou promover outra conta pra admin — some a opção do select
   // pra quem não é admin (reforçado também na validação do formulário).
   const roleSelect = document.getElementById("user-role-input");
@@ -7741,7 +7707,6 @@ function renderTabs(){
   const archiveTab = document.getElementById("archive-tab");
   const adminTab = document.getElementById("admin-tab");
   const agoraseiTab = document.getElementById("agorasei-tab");
-  const painelTab = document.getElementById("painel-tab");
 
   const navOverviewBtn = document.getElementById("nav-overview-btn");
   if(navOverviewBtn) navOverviewBtn.style.display = canManage() ? "" : "none";
@@ -7759,7 +7724,7 @@ function renderTabs(){
   const isOperador = currentUser && currentUser.role === "operador";
   const globalFiltersRow = document.getElementById("global-filters-row");
   const filtersPanelEl = document.getElementById("filters-panel");
-  const noGlobalFilters = isOperador || state.tab === "admin" || state.tab === "routines" || state.tab === "agorasei" || state.tab === "painel";
+  const noGlobalFilters = isOperador || state.tab === "admin" || state.tab === "routines" || state.tab === "agorasei";
   if(globalFiltersRow) globalFiltersRow.style.display = noGlobalFilters ? "none" : "";
   if(filtersPanelEl && noGlobalFilters) filtersPanelEl.classList.remove("open");
 
@@ -7773,8 +7738,6 @@ function renderTabs(){
   if(archiveTab) archiveTab.style.display = state.tab === "archive" ? "" : "none";
   if(adminTab) adminTab.style.display = state.tab === "admin" ? "" : "none";
   if(agoraseiTab) agoraseiTab.style.display = state.tab === "agorasei" ? "" : "none";
-  if(painelTab) painelTab.style.display = state.tab === "painel" ? "" : "none";
-  enforcePainelPermission();
 
   if(state.tab === "overview") renderOverview();
   else if(state.tab === "board") render();
@@ -7784,7 +7747,6 @@ function renderTabs(){
   else if(state.tab === "archive") renderArchive();
   else if(state.tab === "admin") renderAdminLists();
   else if(state.tab === "agorasei") renderAgorasei();
-  else if(state.tab === "painel") renderPainelCentral();
 
   updateSummary();
   updateSideNavIndicator();
@@ -8942,6 +8904,8 @@ document.getElementById("admin-view-toggle").addEventListener("click", (e) => {
 document.getElementById("main-nav").addEventListener("click", (e) => {
   const btn = e.target.closest("button[data-tab]");
   if(!btn) return;
+  // O Painel Central não é uma aba do board: abre numa aba própria do navegador, em tela cheia.
+  if(btn.dataset.tab === "painel"){ openPainelCentral(); return; }
   if(btn.dataset.tab === "overview" && !canManage()) return;
   if(btn.dataset.tab === "validations" && !canManage()) return;
   const order = [...document.querySelectorAll("#main-nav button[data-tab]")].map(b => b.dataset.tab);
@@ -9733,27 +9697,22 @@ async function handlePasswordResetLink(oobCode){
 })();
 
 // ---------- Painel Central ----------
-// Painel HTML feito à parte (ex: "Painel Central Crediffato"), publicado por um admin e mostrado
-// numa aba própria só pra quem tem a flag em Acessos. Fica no Firestore, NÃO no repositório (que
-// é público -- qualquer um com o link leria os dados internos do painel). Vai compactado (gzip) e
-// dividido em partes: o Storage do Firebase exige plano pago e um documento do Firestore não
-// passa de 1 MB. Quem não tem a flag nunca chega a baixar o conteúdo, só vê o aviso.
+// Painel HTML feito à parte (ex: "Painel Central Crediffato"), publicado por um admin e aberto
+// numa aba própria do navegador (painel.html), em tela cheia. O conteúdo fica no Firestore, NÃO no
+// repositório (que é público -- qualquer um com o link leria os dados internos do painel):
+// painel.html é só o carregador, que confere o login e a flag em Acessos antes de baixar.
+// Vai compactado (gzip) e dividido em partes: o Storage do Firebase exige plano pago e um
+// documento do Firestore não passa de 1 MB. O formato das partes tem que bater com o
+// carregador em painel.html.
 const PAINEL_PART_CHARS = 700000;
-let painelMetaUnsub = null;
-let painelMeta = null;          // versão publicada mais recente: {version, parts, updatedAt, ...}
-let painelShownVersion = null;  // versão carregada no iframe agora
-let painelLoading = false;
 
 function painelMetaDoc(){ return fsDoc(db, "boards", "crediffato-painel"); }
 function painelPartDoc(version, i){ return fsDoc(db, "boards", `crediffato-painel-v${version}-p${i}`); }
 
-function canSeePainelCentral(){
-  if(!currentUser) return false;
-  if(currentUser.role === "admin") return true;
-  // Lido do diretório (que chega em tempo real), não do perfil carregado no login -- liberar ou
-  // tirar o acesso vale na hora.
-  const me = DIRECTORY.find(u => u.uid === currentUser.uid);
-  return !!(me && me.painelCentral);
+// Aba com nome fixo: clicar de novo no menu reaproveita a aba do painel já aberta em vez de
+// empilhar uma nova a cada clique.
+function openPainelCentral(){
+  window.open("painel.html", "painel-central-crediffato");
 }
 
 async function painelGzipBase64(text){
@@ -9763,163 +9722,38 @@ async function painelGzipBase64(text){
   for(let i = 0; i < bytes.length; i += 0x8000) bin += String.fromCharCode.apply(null, bytes.subarray(i, i + 0x8000));
   return btoa(bin);
 }
-async function painelGunzipBase64(b64){
-  const bin = atob(b64);
-  const bytes = new Uint8Array(bin.length);
-  for(let i = 0; i < bin.length; i++) bytes[i] = bin.charCodeAt(i);
-  const stream = new Blob([bytes]).stream().pipeThrough(new DecompressionStream("gzip"));
-  return await new Response(stream).text();
-}
-
-// O painel roda com a mesma origem do board (precisa do localStorage pra guardar tema, tokens e
-// preferências), então o localStorage dele é trocado por uma versão com prefixo próprio + o id
-// de quem está logado: não colide com as chaves do board (os dois usam "theme") e a
-// personalização de cada pessoa fica só dela, mesmo dividindo o mesmo computador.
-function painelPrepareHtml(html){
-  const prefix = JSON.stringify(`painelCentral:${currentUser.uid}:`);
-  const shim = `<script>(function(){try{var ls=window.localStorage,P=${prefix};function own(){var r=[];for(var j=0;j<ls.length;j++){var k=ls.key(j);if(k&&k.indexOf(P)===0)r.push(k.slice(P.length));}return r;}var s={getItem:function(k){return ls.getItem(P+k);},setItem:function(k,v){ls.setItem(P+k,String(v));},removeItem:function(k){ls.removeItem(P+k);},clear:function(){own().forEach(function(k){ls.removeItem(P+k);});},key:function(i){var r=own();return i<r.length?r[i]:null;}};Object.defineProperty(s,"length",{get:function(){return own().length;}});Object.defineProperty(window,"localStorage",{configurable:true,get:function(){return s;}});}catch(e){}})();<\/script>`;
-  const m = html.match(/<head[^>]*>/i);
-  return m ? html.slice(0, m.index + m[0].length) + shim + html.slice(m.index + m[0].length) : shim + html;
-}
-
-function painelShowAviso(title, text){
-  document.getElementById("painel-aviso-title").textContent = title;
-  document.getElementById("painel-aviso-text").textContent = text;
-  document.getElementById("painel-aviso").style.display = "";
-  document.getElementById("painel-frame").style.display = "none";
-}
-
-function painelRenderVersion(){
-  const el = document.getElementById("painel-version");
-  if(!painelMeta){ el.textContent = ""; return; }
-  const when = new Date(painelMeta.updatedAt).toLocaleString("pt-BR", { dateStyle:"short", timeStyle:"short" });
-  el.textContent = `Versão de ${when}${painelMeta.updatedByName ? " · " + painelMeta.updatedByName : ""}`;
-}
-
-// Chamado a cada renderTabs (inclusive com a pessoa em outra aba): se o acesso foi retirado com o
-// painel já carregado, descarrega o conteúdo na hora em vez de esperar ela voltar pra aba.
-function enforcePainelPermission(){
-  if(canSeePainelCentral() || painelShownVersion === null) return;
-  const frame = document.getElementById("painel-frame");
-  frame.removeAttribute("srcdoc");
-  frame.style.display = "none";
-  painelShownVersion = null;
-  if(painelMetaUnsub){ try{ painelMetaUnsub(); }catch(e){} painelMetaUnsub = null; }
-}
-
-function renderPainelCentral(){
-  const toolbar = document.getElementById("painel-toolbar");
-  if(!canSeePainelCentral()){
-    toolbar.style.display = "none";
-    document.getElementById("painel-msg").textContent = "";
-    painelShowAviso("Área restrita", "Este painel é só para quem tem permissão. Se você precisa de acesso, fale com um administrador.");
-    return;
-  }
-  toolbar.style.display = "";
-  document.getElementById("painel-upload-label").style.display = currentUser.role === "admin" ? "" : "none";
-  if(!firebaseReady || storageMode !== "firebase"){
-    painelShowAviso("Indisponível agora", "O Painel Central só abre conectado ao banco compartilhado.");
-    return;
-  }
-  if(!painelMetaUnsub){
-    painelMetaUnsub = fsOnSnapshot(painelMetaDoc(), (snap) => {
-      painelMeta = snap.exists() ? snap.data() : null;
-      painelRenderVersion();
-      onPainelMeta();
-    }, (err) => {
-      console.error("Erro ao acompanhar o Painel Central:", err);
-      painelShowAviso("Não foi possível abrir o painel", err.message || "erro desconhecido");
-    });
-  }else{
-    onPainelMeta();
-  }
-}
-
-function onPainelMeta(){
-  if(state.tab !== "painel" || !canSeePainelCentral()) return;
-  if(!painelMeta){
-    painelShowAviso("Nenhuma versão publicada ainda", currentUser.role === "admin"
-      ? "Use \"Publicar nova versão (.html)\" aqui em cima pra subir o painel."
-      : "Assim que um administrador publicar o painel, ele aparece aqui.");
-    return;
-  }
-  document.getElementById("painel-aviso").style.display = "none";
-  if(painelShownVersion === null){ painelLoadVersion(painelMeta); return; }
-  document.getElementById("painel-frame").style.display = "";
-  // Não troca o painel sozinho no meio do uso (a pessoa perderia o que estava fazendo nele) --
-  // só avisa que tem versão nova e deixa ela carregar quando quiser.
-  document.getElementById("painel-update-banner").style.display = painelMeta.version !== painelShownVersion ? "" : "none";
-}
-
-async function painelLoadVersion(meta){
-  if(painelLoading) return;
-  painelLoading = true;
-  const msgEl = document.getElementById("painel-msg");
-  msgEl.style.color = ""; msgEl.textContent = "Carregando o painel...";
-  try{
-    const snaps = await Promise.all(Array.from({ length: meta.parts }, (_, i) => fsGetDoc(painelPartDoc(meta.version, i))));
-    if(snaps.some(s => !s.exists())) throw new Error("versão incompleta no banco — publique de novo.");
-    const html = await painelGunzipBase64(snaps.map(s => s.data().data).join(""));
-    if(!canSeePainelCentral()) return; // acesso retirado enquanto baixava
-    const frame = document.getElementById("painel-frame");
-    frame.srcdoc = painelPrepareHtml(html);
-    frame.style.display = "";
-    painelShownVersion = meta.version;
-    document.getElementById("painel-update-banner").style.display = "none";
-    msgEl.textContent = "";
-  }catch(err){
-    console.error("Falha ao carregar o Painel Central:", err);
-    msgEl.textContent = "Não foi possível carregar o painel: " + (err.message || "erro desconhecido");
-  }finally{
-    painelLoading = false;
-  }
-}
-
-document.getElementById("painel-reload-btn").addEventListener("click", () => {
-  if(painelMeta) painelLoadVersion(painelMeta);
-});
 
 document.getElementById("painel-upload-file").addEventListener("change", async (e) => {
   const file = e.target.files && e.target.files[0];
   e.target.value = ""; // permite escolher o mesmo arquivo de novo depois
   if(!file) return;
-  const msgEl = document.getElementById("painel-msg");
-  msgEl.style.color = "";
-  if(!currentUser || currentUser.role !== "admin"){ msgEl.textContent = "Só admin pode publicar uma nova versão."; return; }
-  if(!firebaseReady || storageMode !== "firebase"){ msgEl.textContent = "Indisponível no momento (sem conexão com o banco compartilhado)."; return; }
-  if(typeof CompressionStream === "undefined"){ msgEl.textContent = "Este navegador não consegue compactar o arquivo — use o Chrome ou o Edge atualizados."; return; }
+  closeSettingsDropdown();
+  if(!currentUser || currentUser.role !== "admin"){ showActionToast("Só admin pode publicar o Painel Central.", "error"); return; }
+  if(!firebaseReady || storageMode !== "firebase"){ showActionToast("Indisponível no momento (sem conexão com o banco compartilhado).", "error"); return; }
+  if(typeof CompressionStream === "undefined"){ showActionToast("Este navegador não consegue compactar o arquivo — use o Chrome ou o Edge atualizados.", "error"); return; }
   try{
     const html = await file.text();
-    if(!/<html[\s>]/i.test(html)) throw new Error("o arquivo não parece ser uma página HTML.");
-    msgEl.textContent = "Compactando...";
+    if(!/<html[\s>]/i.test(html)) throw new Error("o arquivo não parece ser uma página HTML");
+    showActionToast("Publicando o Painel Central...", "soon");
     const b64 = await painelGzipBase64(html);
     const parts = [];
     for(let i = 0; i < b64.length; i += PAINEL_PART_CHARS) parts.push(b64.slice(i, i + PAINEL_PART_CHARS));
     const version = Date.now();
-    msgEl.textContent = `Enviando (${parts.length} parte${parts.length === 1 ? "" : "s"})...`;
+    const previousSnap = await fsGetDoc(painelMetaDoc());
+    const previous = previousSnap.exists() ? previousSnap.data() : null;
     // Grava as partes da versão nova antes e só depois aponta o documento principal pra ela --
     // quem abrir o painel nesse meio-tempo continua recebendo a versão anterior inteira.
     for(let i = 0; i < parts.length; i++) await fsSetDoc(painelPartDoc(version, i), { data: parts[i] });
-    const previous = painelMeta;
-    const meta = { version, parts: parts.length, size: html.length, fileName: file.name, updatedAt: new Date().toISOString(), updatedByName: currentUser.name || currentUser.email || "" };
-    await fsSetDoc(painelMetaDoc(), meta);
+    await fsSetDoc(painelMetaDoc(), { version, parts: parts.length, size: html.length, fileName: file.name, updatedAt: new Date().toISOString(), updatedByName: currentUser.name || currentUser.email || "" });
     if(previous && previous.version !== version){
       for(let i = 0; i < (previous.parts || 0); i++){
         fsDeleteDoc(painelPartDoc(previous.version, i)).catch(err => console.error("Falha ao apagar parte antiga do painel:", err));
       }
     }
-    painelMeta = meta;
-    painelRenderVersion();
-    msgEl.style.color = "var(--st-concluido)";
-    msgEl.textContent = "Nova versão publicada — já vale pra todo mundo com acesso.";
-    await painelLoadVersion(meta);
-    if(!document.getElementById("painel-msg").textContent){
-      msgEl.style.color = "var(--st-concluido)";
-      msgEl.textContent = "Nova versão publicada — já vale pra todo mundo com acesso.";
-    }
+    showActionToast("Painel Central publicado — já vale pra todo mundo com acesso.", "success");
   }catch(err){
     console.error("Falha ao publicar o Painel Central:", err);
-    msgEl.textContent = "Não foi possível publicar: " + (err.message || "erro desconhecido");
+    showActionToast("Não foi possível publicar o painel: " + (err.message || "erro desconhecido"), "error");
   }
 });
 

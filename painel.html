@@ -1,0 +1,212 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="robots" content="noindex">
+<title>Painel Central Crediffato</title>
+<!--
+  Carregador do Painel Central. Este arquivo NÃO tem o painel nem dado nenhum dentro: o painel em si
+  fica no Firestore (publicado por um admin pelo menu de engrenagem do board) e só é baixado
+  depois de conferir o login e a flag "Painel Central" em Acessos. Por isso este arquivo pode
+  ficar no repositório público sem expor nada.
+-->
+<style>
+  html, body{margin:0; height:100%; background:#09090b; color:#f5f5f7; font-family:system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;}
+  #frame{position:fixed; inset:0; width:100%; height:100%; border:0; display:none; background:#fff;}
+  .aviso{position:fixed; inset:0; display:flex; align-items:center; justify-content:center; padding:24px;}
+  .aviso-card{max-width:420px; text-align:center; padding:32px 28px; border:1px solid #ffffff1f; border-radius:16px; background:#131315;}
+  .aviso-icon{font-size:28px;}
+  .aviso h1{margin:12px 0 8px; font-size:18px; font-weight:600;}
+  .aviso p{margin:0; color:#a5a5ad; font-size:14px; line-height:1.5;}
+  .aviso a{display:inline-block; margin-top:18px; padding:9px 16px; border-radius:10px; background:#d40f3a; color:#fff; text-decoration:none; font-size:14px; font-weight:500;}
+  .banner{position:fixed; left:50%; bottom:18px; transform:translateX(-50%); z-index:10; display:none; align-items:center; gap:10px; padding:8px 8px 8px 16px; border-radius:999px; background:#131315; color:#f5f5f7; border:1px solid #2dd4bf; box-shadow:0 10px 30px #0006; font-size:13.5px;}
+  .banner button{border:0; border-radius:999px; padding:6px 14px; background:#2dd4bf; color:#05201b; font-weight:600; font-size:13px; cursor:pointer;}
+  .banner .fechar{background:transparent; color:#a5a5ad; padding:6px 8px;}
+</style>
+</head>
+<body>
+<div class="aviso" id="aviso">
+  <div class="aviso-card">
+    <div class="aviso-icon" id="aviso-icon" aria-hidden="true">⏳</div>
+    <h1 id="aviso-title">Abrindo o Painel Central...</h1>
+    <p id="aviso-text">Conferindo seu acesso.</p>
+    <a id="aviso-link" href="./" style="display:none;">Entrar no board</a>
+  </div>
+</div>
+<iframe id="frame" title="Painel Central Crediffato"></iframe>
+<div class="banner" id="banner" role="status">
+  <span>Nova versão do painel publicada</span>
+  <button type="button" id="banner-reload">Atualizar</button>
+  <button type="button" class="fechar" id="banner-close" aria-label="Fechar aviso">✕</button>
+</div>
+<script type="module">
+import { initializeApp } from "https://www.gstatic.com/firebasejs/10.14.1/firebase-app.js";
+import { getFirestore, doc, getDoc, onSnapshot } from "https://www.gstatic.com/firebasejs/10.14.1/firebase-firestore.js";
+import { getAuth, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.14.1/firebase-auth.js";
+
+// Mesma configuração do index.html: mesmo projeto e mesmo endereço, então a sessão de login do
+// board vale aqui também -- quem está logado no board já entra direto.
+const firebaseConfig = {
+  apiKey: "AIzaSyBt7bmMF1R8LPCudnU0Qfh5mR4TXAH79lg",
+  authDomain: "board-crediffato.firebaseapp.com",
+  projectId: "board-crediffato",
+  storageBucket: "board-crediffato.firebasestorage.app",
+  messagingSenderId: "1010277250901",
+  appId: "1:1010277250901:web:99e214f915db73f4e161dc"
+};
+const app = initializeApp(firebaseConfig);
+const db = getFirestore(app);
+const auth = getAuth(app);
+
+// Formato publicado pelo board (ver "Painel Central" no index.html): um documento principal
+// apontando pra versão atual, e as partes do HTML compactado (gzip + base64) em documentos à parte.
+const metaDoc = doc(db, "boards", "crediffato-painel");
+const partDoc = (version, i) => doc(db, "boards", `crediffato-painel-v${version}-p${i}`);
+
+const frame = document.getElementById("frame");
+const avisoEl = document.getElementById("aviso");
+const banner = document.getElementById("banner");
+
+let uid = null;
+let allowed = false;
+let latestMeta = null;
+let shownVersion = null;
+let loading = false;
+let unsubBoard = null, unsubMeta = null;
+
+function aviso(icon, title, text, showLink){
+  document.getElementById("aviso-icon").textContent = icon;
+  document.getElementById("aviso-title").textContent = title;
+  document.getElementById("aviso-text").textContent = text;
+  document.getElementById("aviso-link").style.display = showLink ? "" : "none";
+  avisoEl.style.display = "";
+  banner.style.display = "none";
+}
+
+function unloadPanel(){
+  frame.removeAttribute("srcdoc");
+  frame.style.display = "none";
+  shownVersion = null;
+}
+
+function hasAccess(entry){
+  return !!entry && !entry.disabled && (entry.role === "admin" || entry.painelCentral === true);
+}
+
+async function gunzipBase64(b64){
+  const bin = atob(b64);
+  const bytes = new Uint8Array(bin.length);
+  for(let i = 0; i < bin.length; i++) bytes[i] = bin.charCodeAt(i);
+  const stream = new Blob([bytes]).stream().pipeThrough(new DecompressionStream("gzip"));
+  return await new Response(stream).text();
+}
+
+// O painel roda com a mesma origem do board (precisa do localStorage pra guardar tema, tokens e
+// preferências), então o localStorage dele é trocado por uma versão com prefixo próprio + o id de
+// quem está logado: não colide com as chaves do board (os dois usam "theme") e a personalização
+// de cada pessoa fica só dela, mesmo dividindo o mesmo computador.
+function preparePanel(html){
+  const prefix = JSON.stringify(`painelCentral:${uid}:`);
+  const shim = `<script>(function(){try{var ls=window.localStorage,P=${prefix};function own(){var r=[];for(var j=0;j<ls.length;j++){var k=ls.key(j);if(k&&k.indexOf(P)===0)r.push(k.slice(P.length));}return r;}var s={getItem:function(k){return ls.getItem(P+k);},setItem:function(k,v){ls.setItem(P+k,String(v));},removeItem:function(k){ls.removeItem(P+k);},clear:function(){own().forEach(function(k){ls.removeItem(P+k);});},key:function(i){var r=own();return i<r.length?r[i]:null;}};Object.defineProperty(s,"length",{get:function(){return own().length;}});Object.defineProperty(window,"localStorage",{configurable:true,get:function(){return s;}});}catch(e){}})();<\/script>`;
+  const m = html.match(/<head[^>]*>/i);
+  return m ? html.slice(0, m.index + m[0].length) + shim + html.slice(m.index + m[0].length) : shim + html;
+}
+
+async function loadVersion(meta){
+  if(loading) return;
+  loading = true;
+  try{
+    const snaps = await Promise.all(Array.from({ length: meta.parts }, (_, i) => getDoc(partDoc(meta.version, i))));
+    if(snaps.some(s => !s.exists())) throw new Error("A versão no banco está incompleta — peça pra publicar de novo.");
+    const html = await gunzipBase64(snaps.map(s => s.data().data).join(""));
+    if(!allowed) return; // acesso retirado enquanto baixava
+    const t = html.match(/<title[^>]*>([^<]*)<\/title>/i);
+    if(t && t[1].trim()) document.title = t[1].trim();
+    frame.srcdoc = preparePanel(html);
+    frame.style.display = "block";
+    avisoEl.style.display = "none";
+    banner.style.display = "none";
+    shownVersion = meta.version;
+  }catch(err){
+    console.error("Falha ao carregar o Painel Central:", err);
+    aviso("⚠️", "Não foi possível abrir o painel", err.message || "erro desconhecido");
+  }finally{
+    loading = false;
+  }
+}
+
+function onMeta(){
+  if(!allowed) return;
+  if(!latestMeta){
+    unloadPanel();
+    aviso("🗂️", "Nenhuma versão publicada ainda", "Assim que um administrador publicar o painel pelo board, ele aparece aqui.");
+    return;
+  }
+  if(shownVersion === null){ loadVersion(latestMeta); return; }
+  // Não troca o painel sozinho no meio do uso (a pessoa perderia o que estava fazendo nele) --
+  // só avisa que tem versão nova e deixa ela atualizar quando quiser.
+  banner.style.display = latestMeta.version !== shownVersion ? "flex" : "none";
+}
+
+function startMeta(){
+  if(unsubMeta) return;
+  aviso("⏳", "Abrindo o Painel Central...", "Carregando a versão mais recente.");
+  unsubMeta = onSnapshot(metaDoc, (snap) => {
+    latestMeta = snap.exists() ? snap.data() : null;
+    onMeta();
+  }, (err) => {
+    console.error("Erro ao acompanhar o Painel Central:", err);
+    aviso("⚠️", "Não foi possível abrir o painel", err.message || "erro desconhecido");
+  });
+}
+
+function stopMeta(){
+  if(unsubMeta){ try{ unsubMeta(); }catch(e){} unsubMeta = null; }
+}
+
+function setAllowed(ok){
+  if(ok){
+    if(!allowed){ allowed = true; startMeta(); }
+    return;
+  }
+  allowed = false;
+  stopMeta();
+  unloadPanel();
+  aviso("🔒", "Área restrita", "Este painel é só para quem tem permissão. Se você precisa de acesso, fale com um administrador.");
+}
+
+document.getElementById("banner-reload").addEventListener("click", () => { if(latestMeta) loadVersion(latestMeta); });
+document.getElementById("banner-close").addEventListener("click", () => { banner.style.display = "none"; });
+
+onAuthStateChanged(auth, (user) => {
+  if(unsubBoard){ try{ unsubBoard(); }catch(e){} unsubBoard = null; }
+  if(!user){
+    uid = null;
+    allowed = false;
+    stopMeta();
+    unloadPanel();
+    aviso("🔑", "Entre no board primeiro", "O Painel Central usa o mesmo login do board. Depois de entrar, clique em \"Painel Central\" no menu.", true);
+    return;
+  }
+  uid = user.uid;
+  // Acompanha o diretório em tempo real: liberar ou tirar a flag em Acessos vale aqui na hora.
+  unsubBoard = onSnapshot(doc(db, "boards", "crediffato"), async (snap) => {
+    const directory = (snap.exists() && snap.data().directory) || [];
+    let entry = directory.find(u => u.uid === user.uid);
+    if(!entry){
+      // Conta fora do diretório (ex: admin inicial): confere o papel direto no perfil.
+      try{
+        const profile = await getDoc(doc(db, "users", user.uid));
+        entry = profile.exists() ? profile.data() : null;
+      }catch(e){ entry = null; }
+    }
+    setAllowed(hasAccess(entry));
+  }, (err) => {
+    console.error("Falha ao conferir o acesso ao Painel Central:", err);
+    aviso("⚠️", "Não foi possível conferir seu acesso", err.message || "erro desconhecido");
+  });
+});
+</script>
+</body>
+</html>
