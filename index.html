@@ -17,6 +17,10 @@
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500;600&family=IBM+Plex+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
 <style>
+  /* Aba em segundo plano (minimizada ou noutra aba) -- ninguém está vendo as animações, mas elas
+     continuam rodando e gastando processador sem necessidade. Ver o listener de
+     "visibilitychange" no fim do script que alterna essa classe. */
+  html.app-bg-paused *{ animation-play-state:paused !important; }
   :root{
     --ink-0:#09090b;
     --ink-1:#131315;
@@ -2650,6 +2654,20 @@ async function clearOwnPresence(){
   try{ await fsUpdateDoc(PRESENCE_DOC, new fsFieldPath("online", currentUser.uid), fsDeleteField()); }catch(e){}
 }
 
+// Com várias pessoas conectadas, cada uma manda um "ainda estou aqui" a cada
+// PRESENCE_HEARTBEAT_MS — numa empresa com 30-50 pessoas isso chega como uma rajada praticamente
+// contínua de atualizações no documento de presença. A lista de quem está online não precisa
+// ser atualizada no segundo exato (ninguém nota 1-2s de atraso aqui); agrupa as atualizações
+// num intervalo curto em vez de reconstruir a lista a cada heartbeat de cada pessoa.
+let onlineListRenderTimer = null;
+function scheduleRenderOnlineList(){
+  if(onlineListRenderTimer) return;
+  onlineListRenderTimer = setTimeout(() => {
+    onlineListRenderTimer = null;
+    renderOnlineList();
+  }, 1500);
+}
+
 function renderOnlineList(){
   const el = document.getElementById("online-list");
   if(!el) return;
@@ -3727,6 +3745,25 @@ async function updateFieldPathMap(field, mapRef, id, value){
   }catch(err){
     console.error(`Falha ao salvar ${field}:`, err);
   }
+}
+
+// Reconstrói a tela inteira da aba atual (colunas, cartões, listeners) do zero -- custa caro
+// num quadro com bastante item. Com várias pessoas mexendo ao mesmo tempo, o Firestore pode
+// entregar uma rajada de atualizações em sequência rápida (cada ação de cada pessoa dispara uma
+// pra todo mundo conectado); sem agrupar isso, cada uma vira uma reconstrução inteira separada,
+// travando o navegador de quem só estava olhando. scheduleApplyRemoteState agrupa qualquer
+// rajada num único quadro de animação, sempre usando o estado mais recente -- o resultado final
+// na tela é idêntico, só que com uma reconstrução em vez de várias.
+let pendingRemoteStateData = null;
+let remoteStateRenderScheduled = false;
+function scheduleApplyRemoteState(data){
+  pendingRemoteStateData = data;
+  if(remoteStateRenderScheduled) return;
+  remoteStateRenderScheduled = true;
+  requestAnimationFrame(() => {
+    remoteStateRenderScheduled = false;
+    applyRemoteState(pendingRemoteStateData);
+  });
 }
 
 function applyRemoteState(data){
@@ -7792,7 +7829,7 @@ async function handleAuthedUser(fbUser){
       boardSnapUnsub = fsOnSnapshot(BOARD_DOC, (snap) => {
         if(snap.exists()){
           boardDocCache = snap.data();
-          applyRemoteState(boardDocCache);
+          scheduleApplyRemoteState(boardDocCache);
           checkFirestoreVersion(boardDocCache);
           const me = currentUser && DIRECTORY.find(u => u.uid === currentUser.uid);
           if(me && me.disabled){
@@ -7811,7 +7848,7 @@ async function handleAuthedUser(fbUser){
           if(snap.exists()){
             const data = snap.data();
             onlineMap = data.online || {};
-            renderOnlineList();
+            scheduleRenderOnlineList();
             checkKickSignals(data);
           }
         }, (err) => {
@@ -8258,6 +8295,14 @@ async function handlePasswordResetLink(oobCode){
     }
   }
 })();
+
+// Enquanto a aba não está em foco (minimizada, ou a pessoa navegou pra outra aba), ninguém está
+// vendo as animações -- mas o navegador continua gastando processador com elas mesmo assim.
+// Pausa todas as animações CSS nesse período (volta exatamente de onde parou ao focar de novo,
+// sem nenhum efeito visual diferente pra quem está de fato olhando a tela).
+document.addEventListener("visibilitychange", () => {
+  document.documentElement.classList.toggle("app-bg-paused", document.hidden);
+});
 </script>
 </body>
 </html>
