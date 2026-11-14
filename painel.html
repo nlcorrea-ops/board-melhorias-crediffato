@@ -13,7 +13,7 @@
 -->
 <style>
   html, body{margin:0; height:100%; background:#000; color:#f5f5f7; font-family:system-ui, -apple-system, "Segoe UI", Roboto, sans-serif; overflow:hidden;}
-  #frame{position:fixed; inset:0; width:100%; height:100%; border:0; display:none; background:#fff; z-index:0;}
+  #frame{position:fixed; inset:0; width:100%; height:100%; border:0; display:none; background:#060608; z-index:0; transform-origin:50% 45%;}
   .aviso{position:fixed; inset:0; z-index:5; display:flex; align-items:center; justify-content:center; padding:24px; background:#09090b;}
   .aviso-card{max-width:420px; text-align:center; padding:32px 28px; border:1px solid #ffffff1f; border-radius:16px; background:#131315;}
   .aviso-icon{font-size:28px;}
@@ -30,9 +30,6 @@
   #loader-gl{position:absolute; inset:0; width:100%; height:100%; display:block;}
   .ld-vignette{position:absolute; inset:0; pointer-events:none; background:radial-gradient(ellipse at 50% 50%, transparent 55%, #000000b0 100%);}
   .ld-crisp{position:absolute; pointer-events:none; opacity:0; filter:drop-shadow(0 0 14px #ff4d6d88) drop-shadow(0 0 40px #d40f3a55); transform-origin:50% 50%;}
-  .ld-ring{position:absolute; left:50%; top:50%; width:10px; height:10px; margin:-5px 0 0 -5px; border-radius:50%; border:2px solid #ff4d6d; box-shadow:0 0 30px 6px #d40f3a88, inset 0 0 20px 2px #d40f3a66; opacity:0; pointer-events:none;}
-  .ld-ring.go{animation:ldRing 1.1s cubic-bezier(.15,.75,.3,1) forwards;}
-  @keyframes ldRing{0%{opacity:.95; transform:scale(1);} 100%{opacity:0; transform:scale(160);}}
   .ld-flash{position:absolute; inset:0; background:#fff; opacity:0; pointer-events:none; mix-blend-mode:overlay;}
   .ld-hud{position:absolute; left:5%; right:5%; bottom:6%; display:flex; justify-content:space-between; align-items:flex-end; gap:12px; pointer-events:none;
     font-family:"JetBrains Mono", ui-monospace, "Cascadia Mono", Consolas, monospace; font-size:12px; color:#ffffffb8; letter-spacing:.1em; text-transform:uppercase; font-variant-numeric:tabular-nums;}
@@ -49,7 +46,6 @@
   <canvas id="loader-gl" aria-hidden="true"></canvas>
   <div class="ld-vignette"></div>
   <img id="ld-logo" class="ld-crisp" src="logo.png" alt="Crediffato">
-  <div id="ld-ring" class="ld-ring"></div>
   <div id="ld-flash" class="ld-flash"></div>
   <div class="ld-hud"><span id="ld-step">Validando sessão</span><span id="ld-pct">0%</span></div>
   <div class="ld-line"><i id="ld-bar"></i></div>
@@ -71,9 +67,10 @@
 
 <script>
 // ---------- Abertura "Vórtice" ----------
-// Galáxia de partículas em 3D (three.js) que é sugada até formar a logo, com varredura de luz,
-// onda de choque e um salto final atravessando a logo. Amarrada ao carregamento de verdade:
-// - dura no mínimo 5s;
+// Galáxia de partículas em 3D (three.js) que é sugada até formar a logo, com varredura de luz e
+// um mergulho suave atravessando a logo enquanto o painel chega do desfoque. Amarrada ao
+// carregamento de verdade:
+// - dura no mínimo ~6s (4,25s de abertura + 1,6s de mergulho);
 // - o salto final só acontece quando o painel já está montado por baixo (se a rede estiver lenta,
 //   a logo fica formada esperando, em vez de mostrar o painel pela metade);
 // - etapa e porcentagem nunca passam na frente do que já aconteceu de fato.
@@ -89,7 +86,7 @@ window.painelLoader = (function(){
     "https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/postprocessing/RenderPass.js",
     "https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/postprocessing/UnrealBloomPass.js",
   ];
-  const HOLD = 4.25, END = 5.0;
+  const HOLD = 4.25, END = 5.85; // END - HOLD = duração do mergulho final
   const LABELS = ["Validando sessão", "Conferindo acesso", "Baixando o painel", "Descompactando", "Montando o painel", "Pronto"];
   const PCT = [0, 20, 35, 85, 96, 100];
   const TIME_STAGE = [0, 1.0, 2.0, 3.6, 4.1];
@@ -97,7 +94,7 @@ window.painelLoader = (function(){
   const loaderEl = document.getElementById("loader");
   const canvas = document.getElementById("loader-gl");
   const crisp = document.getElementById("ld-logo");
-  const ring = document.getElementById("ld-ring");
+  const frameEl = document.getElementById("frame");
   const flash = document.getElementById("ld-flash");
   const stepEl = document.getElementById("ld-step"), pctEl = document.getElementById("ld-pct"), bar = document.getElementById("ld-bar");
   const reduce = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
@@ -151,6 +148,7 @@ window.painelLoader = (function(){
   function complete(){
     if(finished) return;
     finished = true;
+    frameEl.style.filter = ""; frameEl.style.transform = "";
     leave();
     if(resolveReady) resolveReady();
   }
@@ -280,20 +278,21 @@ window.painelLoader = (function(){
           else p.xy += vec2(sin(uTime * 2.1 + aRand.x * 40.0), cos(uTime * 1.7 + aRand.y * 40.0)) * 0.012;
           float scanX = mix(-5.5, 5.5, smoothstep(2.85, 3.45, uTime));
           float scan = exp(-pow((target.x - scanX) * 2.0, 2.0)) * step(2.8, uTime) * (1.0 - smoothstep(3.4, 3.6, uTime));
-          float w = smoothstep(4.25, 5.0, uTime);
-          p.z += w * w * (24.0 + aRand.x * 30.0);
-          p.xy *= 1.0 + w * 0.8;
+          // mergulho suave: atravessa a logo devagar enquanto o painel chega do desfoque
+          float w = smoothstep(4.25, 5.85, uTime);
+          p.z += w * w * (16.0 + aRand.x * 22.0);
+          p.xy *= 1.0 + w * 0.6;
           vec4 mv = modelViewMatrix * vec4(p, 1.0);
           gl_Position = projectionMatrix * mv;
           // teto no tamanho: no salto final as partículas passam rente à câmera e ficariam enormes,
           // e milhares de pontos gigantes somando luz uns sobre os outros é o pico de peso da abertura
-          gl_PointSize = min(uSize * (0.55 + aRand.w * 0.9) * (1.0 + scan * 1.8 + w * 1.5) * (aKind > 0.5 ? 0.75 : 1.0) * uPR / -mv.z, 28.0 * uPR);
+          gl_PointSize = min(uSize * (0.55 + aRand.w * 0.9) * (1.0 + scan * 1.8 + w * 1.2) * (aKind > 0.5 ? 0.75 : 1.0) * uPR / -mv.z, 28.0 * uPR);
           float isRed = step(0.72, aRand.z);
           vec3 c = mix(vec3(1.0, 0.96, 0.97), vec3(1.0, 0.1, 0.25), isRed);
           c = mix(c, vec3(1.0, 0.55, 0.65), (1.0 - e) * 0.35 * isRed) + scan * 0.9;
           vColor = c;
           float dim = mix(1.0 - 0.45 * smoothstep(3.35, 3.9, uTime), 1.0, w);
-          vAlpha = (0.48 + 0.52 * e) * dim * (1.0 - smoothstep(4.78, 5.0, uTime)) * (aKind > 0.5 ? 0.85 : 1.0);
+          vAlpha = (0.48 + 0.52 * e) * dim * (1.0 - smoothstep(5.6, 5.85, uTime)) * (aKind > 0.5 ? 0.85 : 1.0);
         }`,
       fragmentShader: `
         varying vec3 vColor; varying float vAlpha;
@@ -345,11 +344,9 @@ window.painelLoader = (function(){
       corner.set(lw / 2, LOGO_Y - LOGO_H / 2, 0).project(camera);
       const x1 = (corner.x + 1) / 2 * innerWidth, y1 = (1 - corner.y) / 2 * innerHeight;
       crisp.style.left = x0 + "px"; crisp.style.top = y0 + "px"; crisp.style.width = (x1 - x0) + "px"; crisp.style.height = (y1 - y0) + "px";
-      corner.set(0, LOGO_Y, 0).project(camera);
-      ring.style.left = ((corner.x + 1) / 2 * innerWidth) + "px"; ring.style.top = ((1 - corner.y) / 2 * innerHeight) + "px";
     }
 
-    let ringFired = false, frames = 0, slow = 0, last = 0;
+    let frames = 0, slow = 0, last = 0;
     function loop(now){
       if(gone || !gl) return;
       const t = animTime(now);
@@ -357,16 +354,21 @@ window.painelLoader = (function(){
       const k = ease(clamp(t / 3.2, 0, 1));
       camera.position.set(Math.sin(t * .45) * .9 * (1 - k), .25 * (1 - k), 12.5 - 5.0 * k);
       camera.lookAt(0, .25, 0);
-      stars.position.z = smooth(4.25, 5, t) * 25;
+      const dive = smooth(HOLD, END, t);              // 0..1 do mergulho final
+      stars.position.z = dive * 20;
       placeCrisp();
-      const zoom = smooth(4.25, 5, t);
-      crisp.style.opacity = smooth(3.3, 3.9, t) * (1 - smooth(4.4, 4.92, t)) * .95;
-      crisp.style.transform = `scale(${1 + zoom * zoom * 3.2})`;
+      crisp.style.opacity = smooth(3.3, 3.9, t) * (1 - smooth(HOLD + .56, HOLD + 1.28, t)) * .95;
+      crisp.style.transform = `scale(${1 + dive * dive * 2.4})`;
       flash.style.opacity = Math.max(0, 1 - Math.abs(t - 3.35) / .18) * .5;
-      if(!ringFired && t >= 3.3){ ringFired = true; ring.classList.add("go"); }
       if(gl.bloom) gl.bloom.strength = 1.0 + Math.max(0, 1 - Math.abs(t - 3.35) / .5) * 1.2;
       // a abertura some junto do salto, revelando o painel que já está montado por baixo
-      loaderEl.style.opacity = 1 - smooth(4.6, 5.0, t);
+      loaderEl.style.opacity = 1 - smooth(HOLD + .72, END, t);
+      // o painel chega junto: sai do desfoque e assenta no tamanho certo no mesmo ritmo do mergulho
+      if(t > HOLD){
+        const arrive = smooth(HOLD + .56, END, t), blur = (1 - arrive) * 10;
+        frameEl.style.filter = blur > .3 ? `blur(${blur.toFixed(1)}px)` : "";
+        frameEl.style.transform = arrive < 1 ? `scale(${(1.06 - .06 * ease(arrive)).toFixed(4)})` : "";
+      }
       setHud(t, warpStart !== null);
       if(gl.composer) gl.composer.render(); else renderer.render(scene, camera);
       // PC lento: mede os primeiros quadros e desliga o brilho se estiver engasgando
@@ -394,7 +396,7 @@ window.painelLoader = (function(){
     },
     // tira a abertura na hora (aviso de acesso restrito, login, erro)
     hide(){ leave(); if(resolveReady) resolveReady(); },
-    // Resolve quando a logo já está formada e parada (depois da onda de choque). Montar o painel
+    // Resolve quando a logo já está formada e parada (depois da varredura de luz). Montar o painel
     // (1 MB+ de HTML e scripts) trava o navegador por um instante -- feito nesse momento, a
     // engasgada cai numa logo parada em vez de no meio da galáxia girando.
     calm(){
@@ -480,8 +482,16 @@ function preparePanel(html){
   const prefix = JSON.stringify(`painelCentral:${uid}:`);
   const shim = `<script>(function(){try{var ls=window.localStorage,P=${prefix};function own(){var r=[];for(var j=0;j<ls.length;j++){var k=ls.key(j);if(k&&k.indexOf(P)===0)r.push(k.slice(P.length));}return r;}var s={getItem:function(k){return ls.getItem(P+k);},setItem:function(k,v){ls.setItem(P+k,String(v));},removeItem:function(k){ls.removeItem(P+k);},clear:function(){own().forEach(function(k){ls.removeItem(P+k);});},key:function(i){var r=own();return i<r.length?r[i]:null;}};Object.defineProperty(s,"length",{get:function(){return own().length;}});Object.defineProperty(window,"localStorage",{configurable:true,get:function(){return s;}});}catch(e){}})();<\/script>`;
   const m = html.match(/<head[^>]*>/i);
-  return m ? html.slice(0, m.index + m[0].length) + shim + html.slice(m.index + m[0].length) : shim + html;
+  html = m ? html.slice(0, m.index + m[0].length) + shim + html.slice(m.index + m[0].length) : shim + html;
+  // Visual Crediffato (base do Gestão + fundo Galáxia). Versões publicadas que já trazem o traje
+  // dentro do arquivo não recebem uma segunda cópia.
+  if(!html.includes('id="traje-crediffato"')){
+    const end = html.search(/<\/head>/i);
+    html = end >= 0 ? html.slice(0, end) + TRAJE + html.slice(end) : TRAJE + html;
+  }
+  return html;
 }
+const TRAJE = "<!-- ===== Traje Crediffato (visual Gestão + fundo Galáxia) ===== -->\n<link rel=\"stylesheet\" href=\"https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500;600;700&family=IBM+Plex+Sans:wght@400;500;600;700&display=swap\">\n<style id=\"traje-crediffato\">\n/* Base do Crediffato Gestão: preto grafite, vidro, vermelho da marca e IBM Plex. Verde, âmbar,\n   vermelho e roxo seguem como cores de status. Vale por cima de qualquer tema salvo. */\nhtml:root:root:root{\n  --bg:#060608; --surface:#111114; --surface-2:#1a1a1e; --border:#2c2c31; --hair:rgba(255,255,255,.08);\n  --text:#f5f5f7; --text-muted:#a5a5ad; --text-faint:#85858e;\n  --accent:#4ee2a0; --accent-ink:#0b2219; --warn:#e0b25a; --warn-ink:#2a2213; --danger:#f0707a; --danger-ink:#2c1214;\n  --flow:#a5a7ff; --flow-ink:#1b1c3a; --sky:#6cc8e8; --rose:#ff6f8f; --vio:#b9a2ff;\n  --glass:rgba(17,17,20,.72); --glass-shadow:0 24px 60px -30px rgba(0,0,0,.9), inset 0 1px 0 rgba(255,255,255,.06);\n  --hero-bg:rgba(8,8,10,.78); --hero-surface:#16161a; --hero-border:rgba(255,255,255,.08); --hero-text:#f5f5f7; --hero-muted:#a5a5ad;\n  --blob-op:0; --glow-a:0%; --tab-ink:#0b0b0d; --ind-dark:0%; --pill-dark:0%; --sheen:rgba(255,255,255,.06);\n  --f-ui:'IBM Plex Sans', 'Segoe UI', system-ui, sans-serif; --f-head:'IBM Plex Sans', 'Segoe UI', system-ui, sans-serif;\n  --f-num:'IBM Plex Mono', ui-monospace, Consolas, monospace;\n  --vidro:color-mix(in srgb, var(--surface) 64%, transparent); --vidro-2:color-mix(in srgb, var(--surface-2) 60%, transparent);\n  --cf-red:#d40f3a; --cf-red-hi:#ff4d6d;\n  color-scheme:dark;\n}\nhtml:root:root:root body{ background:var(--bg); }\n.aurora{ display:none !important; }\n/* luz de fundo: nebulosa vermelha no alto, brilho da galáxia embaixo à direita, grade fina no topo */\nbody::before{ background:radial-gradient(900px 480px at 8% -140px, rgba(212,15,58,.20), transparent 70%),\n                          radial-gradient(700px 420px at 92% 108%, rgba(212,15,58,.10), transparent 70%) !important; }\nbody::after{ opacity:.35 !important; }\n/* a galáxia passa por cima do conteúdo em modo \"tela\" (só soma luz, nunca escurece nem bloqueia clique);\n   menu, cabeçalho e janelas ficam acima dela */\n#cf-galaxia{ position:fixed; inset:0; width:100vw; height:100vh; z-index:3; pointer-events:none; mix-blend-mode:screen; opacity:.75; }\n/* cabeçalho com a linha vermelha da marca */\n.hero{ background:linear-gradient(90deg, rgba(212,15,58,.16), transparent 42%), var(--hero-bg) !important; border-bottom:1px solid var(--hero-border) !important; }\n.hero::after{ content:\"\"; position:absolute; left:0; right:0; bottom:-1px; height:1px; pointer-events:none;\n  background:linear-gradient(90deg, var(--cf-red), var(--cf-red-hi) 25%, transparent 70%); opacity:.9; }\n.hero-id .eyebrow{ color:var(--cf-red-hi) !important; }\n/* menu lateral: item ativo marcado em vermelho, como no Gestão */\n.side{ background:rgba(8,8,10,.62) !important; border-right:1px solid rgba(255,255,255,.07) !important; }\n.tab-btn.active{ color:var(--text) !important; background:var(--surface-2) !important;\n  box-shadow:inset 3px 0 0 var(--cf-red), 0 0 0 1px rgba(255,255,255,.07), 0 10px 26px -14px var(--cf-red) !important; }\n/* o painel tem visual próprio agora: a escolha de tema sai de cena */\n.theme-toggle, #themeToggle, .tema-menu{ display:none !important; }\n@media print{ #cf-galaxia{ display:none !important; } }\n<\/style>\n<script id=\"traje-crediffato-js\">\n(function(){\n  // mantém o tema escuro do próprio painel por baixo do traje (regras feitas só pro claro não entram)\n  try{ localStorage.setItem('theme', 'dark'); }catch(e){}\n  var root = document.documentElement;\n  root.setAttribute('data-theme', 'dark');\n  try{ new MutationObserver(function(){ if(root.getAttribute('data-theme') !== 'dark') root.setAttribute('data-theme', 'dark'); })\n    .observe(root, { attributes:true, attributeFilter:['data-theme'] }); }catch(e){}\n\n  // Fundo \"Galáxia\": o vórtice da abertura girando bem devagar no canto, com poeira subindo.\n  // 2D leve: ~30 quadros/s, pausa com a aba em segundo plano, quadro parado com \"reduzir movimento\".\n  function start(){\n    if(document.getElementById('cf-galaxia')) return;\n    var cv = document.createElement('canvas'); cv.id = 'cf-galaxia'; cv.setAttribute('aria-hidden', 'true');\n    document.body.insertBefore(cv, document.body.firstChild);\n    var ctx = cv.getContext('2d'), R = Math.random;\n    var reduce = window.matchMedia && matchMedia('(prefers-reduced-motion: reduce)').matches;\n    var weak = (navigator.hardwareConcurrency || 8) <= 4 || (navigator.deviceMemory || 8) <= 4;\n    var W = 0, H = 0, arms = [], dust = [], raf = 0, last = 0;\n    function build(){\n      var pr = Math.min(weak ? 1 : 1.5, window.devicePixelRatio || 1);\n      W = innerWidth; H = innerHeight; cv.width = W * pr; cv.height = H * pr; ctx.setTransform(pr, 0, 0, pr, 0, 0);\n      var n = Math.min(weak ? 700 : 1400, Math.round(W * H / (weak ? 2800 : 1500))), d = Math.round(W * H / 10000);\n      arms = []; dust = [];\n      for(var i = 0; i < n; i++){ var r = Math.pow(R(), .7), arm = Math.floor(R() * 3) * 2.0944;\n        arms.push({ r:r, a:arm + r * 4.2 + (R() - .5) * (.5 + r * .6), sp:(R() - .5) * .04, red:R() < .3, ph:R() * 6.28, s:.5 + R() * 1.1 + (1 - r) * .6 }); }\n      for(var j = 0; j < d; j++) dust.push({ x:R() * W, y:R() * H, ph:R() * 6.28, red:R() < .25 });\n    }\n    function draw(now){\n      var T = now / 1000, cx = W * .86, cy = H * .9, S = Math.max(W, H) * .7, rot = T * .035;\n      ctx.clearRect(0, 0, W, H);\n      var g = ctx.createRadialGradient(cx, cy, 0, cx, cy, S * .35);\n      g.addColorStop(0, 'rgba(255,60,95,.22)'); g.addColorStop(1, 'rgba(0,0,0,0)'); ctx.fillStyle = g; ctx.fillRect(0, 0, W, H);\n      for(var i = 0; i < arms.length; i++){ var p = arms[i];\n        var a = p.a + rot * (1.6 - p.r) + p.sp * T, rr = (.05 + p.r) * S, x = cx + Math.cos(a) * rr, y = cy + Math.sin(a) * rr * .5;\n        if(x < -4 || x > W + 4 || y < -4 || y > H + 4) continue;\n        var al = (.32 + (1 - p.r) * .55) * (.55 + .45 * Math.sin(T * 1.1 + p.ph)), s = p.s * 1.4;\n        ctx.fillStyle = p.red ? 'rgba(255,45,85,' + al + ')' : 'rgba(255,240,245,' + (al * .9) + ')';\n        ctx.fillRect(x - s / 2, y - s / 2, s, s);\n      }\n      for(var k = 0; k < dust.length; k++){ var q = dust[k];\n        if(!reduce){ q.y -= .06; if(q.y < -4) q.y = H + 4; }\n        var tw = .4 + .6 * Math.sin(T * .8 + q.ph);\n        ctx.fillStyle = q.red ? 'rgba(255,60,95,' + (.35 * tw) + ')' : 'rgba(255,244,247,' + (.3 * tw) + ')';\n        ctx.fillRect(q.x - .8, q.y - .8, 1.6, 1.6);\n      }\n    }\n    function loop(now){\n      raf = 0;\n      if(now - last >= 32){ last = now; draw(now); }\n      if(!document.hidden) raf = requestAnimationFrame(loop);\n    }\n    function go(){ if(!raf && !reduce && !document.hidden) raf = requestAnimationFrame(loop); }\n    build(); draw(performance.now());\n    var rt; addEventListener('resize', function(){ clearTimeout(rt); rt = setTimeout(function(){ build(); draw(performance.now()); }, 150); });\n    document.addEventListener('visibilitychange', go);\n    go();\n  }\n  if(document.body) start(); else document.addEventListener('DOMContentLoaded', start);\n})();\n<\/script>\n<!-- ===== /Traje Crediffato ===== -->";
 
 async function loadVersion(meta){
   if(loading) return;
