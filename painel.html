@@ -508,6 +508,12 @@ async function roboPublicado(nome){
   if(!metaSnap.exists()) return null;
   const meta = metaSnap.data();
   if(((meta.fileName || "").match(/\.(\w+)$/) || [, ""])[1].toLowerCase() !== ext) return null; // publicado é de outro tipo
+  // o arquivo do site é mais novo que o publicado pela engrenagem (ex.: instalador novo subido no repositório): vale o do site
+  try{
+    const hd = await fetch(new URL(nome, location.href).href, { method:"HEAD", cache:"no-store" });
+    const lm = hd.ok ? Date.parse(hd.headers.get("last-modified") || "") : NaN, pub = Date.parse(meta.updatedAt || "");
+    if(lm && pub && lm > pub) return null;
+  }catch(e){}
   if(roboCache && roboCache.version === meta.version) return roboCache.bytes;
   const snaps = await Promise.all(Array.from({ length: meta.parts }, (_, i) => getDoc(roboPartRef(meta.version, i))));
   if(snaps.some(x => !x.exists())) throw new Error("a versão publicada do robô está incompleta — peça pra publicar de novo");
