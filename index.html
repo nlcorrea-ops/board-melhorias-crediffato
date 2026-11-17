@@ -2538,8 +2538,8 @@
           <button type="button" class="shutdown-btn" id="shutdown-btn" style="display:none;" title="Desconecta todo mundo que estiver logado agora, exceto você">Encerrar todos os acessos</button>
           <label class="presentation-toggle-btn painel-publish-btn" id="painel-publish-btn" for="painel-upload-file" style="display:none;" title="Sobe uma versão nova do Painel Central — vale na hora pra todo mundo com acesso">Publicar Painel Central (.html)</label>
           <input type="file" id="painel-upload-file" accept=".html,.htm,text/html" style="display:none;" />
-          <label class="presentation-toggle-btn painel-publish-btn" id="robo-publish-btn" for="robo-upload-file" style="display:none;" title="Sobe uma versão nova do instalador do Robô local — o botão de baixar do Painel Central passa a entregar essa versão na hora">Publicar Robô local (.zip)</label>
-          <input type="file" id="robo-upload-file" accept=".zip,application/zip,application/x-zip-compressed" style="display:none;" />
+          <label class="presentation-toggle-btn painel-publish-btn" id="robo-publish-btn" for="robo-upload-file" style="display:none;" title="Sobe uma versão nova do instalador do Robô local (Instalar-Robo-Local.cmd) — o painel passa a entregar essa versão na hora, no botão de instalar e na atualização automática">Publicar Robô local (.cmd)</label>
+          <input type="file" id="robo-upload-file" accept=".cmd,.zip" style="display:none;" />
           <div class="settings-dropdown-divider"></div>
           <p class="settings-section-title">Tema</p>
           <div class="theme-switcher theme-swatch-row" id="theme-switcher" role="group" aria-label="Escolher tema">
@@ -3242,7 +3242,7 @@
 // que a comparação ">"/"<" abaixo saiba qual versão é mais nova) — é a única forma de o mecanismo
 // perceber que existe uma versão nova. Só funciona pra quem está conectado ao Firestore (modo de
 // contingência sem Firebase não tem sincronização em tempo real de nada, essa checagem incluída).
-const APP_VERSION = "2026-11-16T20:28:53Z";
+const APP_VERSION = "2026-11-17T19:34:41Z";
 
 // Desloga e recarrega — usado tanto pela verificação de versão nova quanto pelos sinais de
 // desconexão manual (shutdown geral ou alguém sendo desconectado individualmente).
@@ -9763,10 +9763,10 @@ document.getElementById("painel-upload-file").addEventListener("change", async (
   }
 });
 
-// Instalador do Robô local (.zip), publicado por um admin. Mesmo esquema do Painel Central: fica
-// no Firestore em partes (o zip já vem compactado, então vai só em base64) e o painel.html entrega
-// essa versão quando alguém clica em "baixar o robô" dentro do painel. O formato tem que bater
-// com o carregador em painel.html.
+// Instalador do Robô local (Instalar-Robo-Local.cmd, com o programa colado no fim; o .zip antigo
+// também é aceito), publicado por um admin. Mesmo esquema do Painel Central: fica no Firestore em
+// partes base64 e o painel.html entrega essa versão quando o painel pede o instalador (botão de
+// instalar e atualização automática do robô). O formato tem que bater com o carregador em painel.html.
 function roboMetaDoc(){ return fsDoc(db, "boards", "crediffato-robo"); }
 function roboPartDoc(version, i){ return fsDoc(db, "boards", `crediffato-robo-v${version}-p${i}`); }
 
@@ -9779,7 +9779,9 @@ document.getElementById("robo-upload-file").addEventListener("change", async (e)
   if(!firebaseReady || storageMode !== "firebase"){ showActionToast("Indisponível no momento (sem conexão com o banco compartilhado).", "error"); return; }
   try{
     const bytes = new Uint8Array(await file.arrayBuffer());
-    if(bytes.length < 4 || bytes[0] !== 0x50 || bytes[1] !== 0x4b) throw new Error("o arquivo não parece ser um .zip");
+    const ehZip = bytes.length > 4 && bytes[0] === 0x50 && bytes[1] === 0x4b;
+    const ehCmd = /\.cmd$/i.test(file.name) && /^@echo off/i.test(new TextDecoder().decode(bytes.subarray(0, 32)).replace(/^\uFEFF/, ""));
+    if(!ehZip && !ehCmd) throw new Error("o arquivo não parece ser o instalador do robô (Instalar-Robo-Local.cmd)");
     if(bytes.length > 15 * 1024 * 1024) throw new Error("o .zip passa de 15 MB");
     showActionToast("Publicando o Robô local...", "soon");
     let bin = "";
@@ -9798,7 +9800,7 @@ document.getElementById("robo-upload-file").addEventListener("change", async (e)
         fsDeleteDoc(roboPartDoc(previous.version, i)).catch(err => console.error("Falha ao apagar parte antiga do robô:", err));
       }
     }
-    showActionToast("Robô local publicado — o botão de baixar do painel já entrega essa versão.", "success");
+    showActionToast("Robô local publicado — o painel já entrega essa versão (instalar e atualização automática).", "success");
   }catch(err){
     console.error("Falha ao publicar o Robô local:", err);
     showActionToast("Não foi possível publicar o robô: " + (err.message || "erro desconhecido"), "error");

@@ -480,7 +480,7 @@ async function gunzipBase64(b64){
 // de cada pessoa fica só dela, mesmo dividindo o mesmo computador.
 function preparePanel(html){
   const prefix = JSON.stringify(`painelCentral:${uid}:`);
-  const shim = `<script>(function(){try{var ls=window.localStorage,P=${prefix};function own(){var r=[];for(var j=0;j<ls.length;j++){var k=ls.key(j);if(k&&k.indexOf(P)===0)r.push(k.slice(P.length));}return r;}var s={getItem:function(k){return ls.getItem(P+k);},setItem:function(k,v){ls.setItem(P+k,String(v));},removeItem:function(k){ls.removeItem(P+k);},clear:function(){own().forEach(function(k){ls.removeItem(P+k);});},key:function(i){var r=own();return i<r.length?r[i]:null;}};Object.defineProperty(s,"length",{get:function(){return own().length;}});Object.defineProperty(window,"localStorage",{configurable:true,get:function(){return s;}});}catch(e){}})();<\/script>`;
+  const shim = `<script>(function(){try{var ls=window.localStorage,P=${prefix};function own(){var r=[];for(var j=0;j<ls.length;j++){var k=ls.key(j);if(k&&k.indexOf(P)===0)r.push(k.slice(P.length));}return r;}var s={getItem:function(k){return ls.getItem(P+k);},setItem:function(k,v){ls.setItem(P+k,String(v));},removeItem:function(k){ls.removeItem(P+k);},clear:function(){own().forEach(function(k){ls.removeItem(P+k);});},key:function(i){var r=own();return i<r.length?r[i]:null;}};Object.defineProperty(s,"length",{get:function(){return own().length;}});Object.defineProperty(window,"localStorage",{configurable:true,get:function(){return s;}});}catch(e){}try{var of=window.fetch;window.fetch=function(u,o){var t=this,a=arguments,s=String(u&&u.url||u);if(/(Instalar-Robo-Local\\.cmd|robo-local-instalador\\.zip)(?:[?#]|$)/i.test(s)&&window.parent&&window.parent.painelRoboFetch){return window.parent.painelRoboFetch(s).then(function(r){return r||of.apply(t,a);},function(){return of.apply(t,a);});}return of.apply(t,a);};}catch(e){}})();<\/script>`;
   const m = html.match(/<head[^>]*>/i);
   html = m ? html.slice(0, m.index + m[0].length) + shim + html.slice(m.index + m[0].length) : shim + html;
   // Visual Crediffato (base do Gestão + fundo Galáxia). Versões publicadas que já trazem o traje
@@ -493,12 +493,36 @@ function preparePanel(html){
 }
 const TRAJE = "<!-- ===== Traje Crediffato (visual Gestão + fundo Galáxia) ===== -->\n<link rel=\"stylesheet\" href=\"https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500;600;700&family=IBM+Plex+Sans:wght@400;500;600;700&display=swap\">\n<style id=\"traje-crediffato\">\n/* Base do Crediffato Gestão: preto grafite, vidro, vermelho da marca e IBM Plex. Verde, âmbar,\n   vermelho e roxo seguem como cores de status. Dois temas no menu Tema: Escuro (padrão, com a\n   Galáxia) e Claro. */\nhtml:root:root:root:not([data-theme=\"light\"]){\n  --bg:#060608; --surface:#111114; --surface-2:#1a1a1e; --border:#2c2c31; --hair:rgba(255,255,255,.08);\n  --text:#f5f5f7; --text-muted:#a5a5ad; --text-faint:#85858e;\n  --accent:#4ee2a0; --accent-ink:#0b2219; --warn:#e0b25a; --warn-ink:#2a2213; --danger:#f0707a; --danger-ink:#2c1214;\n  --flow:#a5a7ff; --flow-ink:#1b1c3a; --sky:#6cc8e8; --rose:#ff6f8f; --vio:#b9a2ff;\n  --glass:rgba(17,17,20,.72); --glass-shadow:0 24px 60px -30px rgba(0,0,0,.9), inset 0 1px 0 rgba(255,255,255,.06);\n  --hero-bg:rgba(8,8,10,.78); --hero-surface:#16161a; --hero-border:rgba(255,255,255,.08); --hero-text:#f5f5f7; --hero-muted:#a5a5ad;\n  --blob-op:0; --glow-a:0%; --tab-ink:#0b0b0d; --ind-dark:0%; --pill-dark:0%; --sheen:rgba(255,255,255,.06);\n  --f-ui:'IBM Plex Sans', 'Segoe UI', system-ui, sans-serif; --f-head:'IBM Plex Sans', 'Segoe UI', system-ui, sans-serif;\n  --f-num:'IBM Plex Mono', ui-monospace, Consolas, monospace;\n  --vidro:color-mix(in srgb, var(--surface) 64%, transparent); --vidro-2:color-mix(in srgb, var(--surface-2) 60%, transparent);\n  --cf-red:#d40f3a; --cf-red-hi:#ff4d6d;\n  color-scheme:dark;\n}\nhtml:root:root:root[data-theme=\"light\"]{\n  --bg:#f7f7f8; --surface:#ffffff; --surface-2:#eeeeef; --border:#dcdcdf; --hair:rgba(24,24,27,.08);\n  --text:#18181b; --text-muted:#55555c; --text-faint:#71717a;\n  --accent:#0f9d63; --accent-ink:#e3f5ec; --warn:#a56a12; --warn-ink:#f8eedb; --danger:#c22e3e; --danger-ink:#fbe7ea;\n  --glass:rgba(255,255,255,.86); --glass-shadow:0 1px 2px rgba(24,24,27,.05), 0 18px 40px -26px rgba(24,24,27,.22);\n  --vidro:color-mix(in srgb, #fff 88%, transparent); --vidro-2:color-mix(in srgb, #eeeeef 84%, transparent);\n  --hero-bg:rgba(255,255,255,.9); --hero-surface:#eeeeef; --hero-border:#dcdcdf; --hero-text:#18181b; --hero-muted:#55555c;\n  --blob-op:0; --glow-a:0%; --tab-ink:#ffffff; --sheen:rgba(255,255,255,.9);\n  --f-ui:'IBM Plex Sans', 'Segoe UI', system-ui, sans-serif; --f-head:'IBM Plex Sans', 'Segoe UI', system-ui, sans-serif;\n  --f-num:'IBM Plex Mono', ui-monospace, Consolas, monospace;\n  --cf-red:#d40f3a; --cf-red-hi:#d40f3a;\n  color-scheme:light;\n}\nhtml:root:root:root body{ background:var(--bg); }\n.aurora{ display:none !important; }\n/* luz de fundo: nebulosa vermelha no alto, brilho da galáxia embaixo à direita, grade fina no topo */\nbody::before{ background:radial-gradient(900px 480px at 8% -140px, rgba(212,15,58,.20), transparent 70%),\n                          radial-gradient(700px 420px at 92% 108%, rgba(212,15,58,.10), transparent 70%) !important; }\n:root[data-theme=\"light\"] body::before{ background:radial-gradient(900px 480px at 8% -140px, rgba(212,15,58,.08), transparent 70%) !important; }\nbody::after{ opacity:.35 !important; }\n/* a galáxia passa por cima do conteúdo como poeira (não bloqueia clique); menu, cabeçalho e janelas\n   ficam acima dela. Sem mix-blend-mode: misturar uma tela inteira por cima da página a cada quadro\n   pesava a ponto do painel ligar o modo leve sozinho e parar as outras animações. */\n#cf-galaxia{ position:fixed; inset:0; width:100vw; height:100vh; z-index:3; pointer-events:none; opacity:.7; }\n/* cabeçalho com a linha vermelha da marca */\n:root[data-theme=\"light\"] .hero{ background:linear-gradient(90deg, rgba(212,15,58,.07), transparent 42%), var(--hero-bg) !important; }\n:root:not([data-theme=\"light\"]) .hero{ background:linear-gradient(90deg, rgba(212,15,58,.16), transparent 42%), var(--hero-bg) !important; border-bottom:1px solid var(--hero-border) !important; }\n.hero::after{ content:\"\"; position:absolute; left:0; right:0; bottom:-1px; height:1px; pointer-events:none;\n  background:linear-gradient(90deg, var(--cf-red), var(--cf-red-hi) 25%, transparent 70%); opacity:.9; }\n.hero-id .eyebrow{ color:var(--cf-red-hi) !important; }\n/* menu lateral: item ativo marcado em vermelho, como no Gestão */\n:root:not([data-theme=\"light\"]) .side{ background:rgba(8,8,10,.62) !important; border-right:1px solid rgba(255,255,255,.07) !important; }\n.tab-btn.active{ color:var(--text) !important; background:var(--surface-2) !important;\n  box-shadow:inset 3px 0 0 var(--cf-red), 0 0 0 1px var(--hair), 0 10px 26px -14px var(--cf-red) !important; }\n/* menu Tema: só Escuro e Claro (Areia e Azul-noite viram esses dois); Modo leve continua lá */\n.tema-menu [data-tema=\"areia\"], .tema-menu [data-tema=\"noite\"]{ display:none !important; }\n@media print{ #cf-galaxia{ display:none !important; } }\n<\/style>\n<script id=\"traje-crediffato-js\">\n(function(){\n  var root = document.documentElement, ls = null;\n  try{ ls = window.localStorage; }catch(e){}\n  function ler(k){ try{ return ls ? ls.getItem(k) : null; }catch(e){ return null; } }\n  function gravar(k, v){ try{ if(ls) ls.setItem(k, v); }catch(e){} }\n  // Primeira vez com o visual novo: começa no Escuro (Galáxia) e esquece a medição antiga do modo\n  // leve -- ela foi feita com uma versão pesada da galáxia e deixou as animações paradas.\n  if(ler('cfTraje') !== '2'){\n    gravar('cfTraje', '2'); gravar('theme', 'dark'); root.setAttribute('data-theme', 'dark');\n    try{ if(ls) ls.removeItem('modoLeveMedido'); }catch(e){}\n    var fraco = (navigator.hardwareConcurrency || 8) < 4 || (navigator.deviceMemory || 8) <= 4;\n    if((ler('modoLeve') || 'auto') === 'auto' && !fraco) root.classList.remove('leve');\n  }\n  // Areia vira Claro e Azul-noite vira Escuro\n  function mapa(){ var t = root.getAttribute('data-theme'); if(t === 'areia') root.setAttribute('data-theme', 'light'); else if(t === 'noite') root.setAttribute('data-theme', 'dark'); }\n  mapa();\n  try{ new MutationObserver(mapa).observe(root, { attributes:true, attributeFilter:['data-theme'] }); }catch(e){}\n\n  // Fundo \"Galáxia\": o vórtice da abertura girando bem devagar no canto, com poeira subindo.\n  // 2D leve: ~30 quadros/s, pausa com a aba em segundo plano, quadro parado com \"reduzir movimento\".\n  function start(){\n    if(document.getElementById('cf-galaxia')) return;\n    var cv = document.createElement('canvas'); cv.id = 'cf-galaxia'; cv.setAttribute('aria-hidden', 'true');\n    document.body.insertBefore(cv, document.body.firstChild);\n    var ctx = cv.getContext('2d'), R = Math.random;\n    var reduce = window.matchMedia && matchMedia('(prefers-reduced-motion: reduce)').matches;\n    var weak = (navigator.hardwareConcurrency || 8) <= 4 || (navigator.deviceMemory || 8) <= 4;\n    var W = 0, H = 0, arms = [], dust = [], raf = 0, last = 0;\n    function build(){\n      var pr = 1; // pontos de luz não ganham nada com resolução alta; 1x poupa a placa de vídeo\n      W = innerWidth; H = innerHeight; cv.width = W * pr; cv.height = H * pr; ctx.setTransform(pr, 0, 0, pr, 0, 0);\n      var n = Math.min(weak ? 500 : 900, Math.round(W * H / (weak ? 2800 : 1500))), d = Math.round(W * H / 10000);\n      arms = []; dust = [];\n      for(var i = 0; i < n; i++){ var r = Math.pow(R(), .7), arm = Math.floor(R() * 3) * 2.0944;\n        arms.push({ r:r, a:arm + r * 4.2 + (R() - .5) * (.5 + r * .6), sp:(R() - .5) * .04, red:R() < .3, ph:R() * 6.28, s:.5 + R() * 1.1 + (1 - r) * .6 }); }\n      for(var j = 0; j < d; j++) dust.push({ x:R() * W, y:R() * H, ph:R() * 6.28, red:R() < .25 });\n    }\n    function draw(now){\n      var claro = root.getAttribute('data-theme') === 'light';\n      var cW = claro ? 'rgba(24,24,27,' : 'rgba(255,240,245,', cR = claro ? 'rgba(212,15,58,' : 'rgba(255,45,85,', k = claro ? .55 : 1;\n      var T = now / 1000, cx = W * .86, cy = H * .9, S = Math.max(W, H) * .7, rot = T * .035;\n      ctx.clearRect(0, 0, W, H);\n      var g = ctx.createRadialGradient(cx, cy, 0, cx, cy, S * .35);\n      g.addColorStop(0, claro ? 'rgba(212,15,58,.07)' : 'rgba(255,60,95,.22)'); g.addColorStop(1, 'rgba(0,0,0,0)'); ctx.fillStyle = g; ctx.fillRect(0, 0, W, H);\n      for(var i = 0; i < arms.length; i++){ var p = arms[i];\n        var a = p.a + rot * (1.6 - p.r) + p.sp * T, rr = (.05 + p.r) * S, x = cx + Math.cos(a) * rr, y = cy + Math.sin(a) * rr * .5;\n        if(x < -4 || x > W + 4 || y < -4 || y > H + 4) continue;\n        var al = (.32 + (1 - p.r) * .55) * (.55 + .45 * Math.sin(T * 1.1 + p.ph)) * k, s = p.s * 1.4;\n        ctx.fillStyle = p.red ? cR + al + ')' : cW + (al * .9) + ')';\n        ctx.fillRect(x - s / 2, y - s / 2, s, s);\n      }\n      for(var k = 0; k < dust.length; k++){ var q = dust[k];\n        if(!reduce){ q.y -= .06; if(q.y < -4) q.y = H + 4; }\n        var tw = (.4 + .6 * Math.sin(T * .8 + q.ph)) * k;\n        ctx.fillStyle = q.red ? cR + (.35 * tw) + ')' : cW + (.3 * tw) + ')';\n        ctx.fillRect(q.x - .8, q.y - .8, 1.6, 1.6);\n      }\n    }\n    // modo leve (do próprio painel) deixa a galáxia parada, como as outras animações\n    function parado(){ return reduce || root.classList.contains('leve'); }\n    function loop(now){\n      raf = 0;\n      if(parado()){ draw(now); return; }\n      if(now - last >= 40){ last = now; draw(now); }\n      if(!document.hidden) raf = requestAnimationFrame(loop);\n    }\n    function go(){ if(!raf && !document.hidden) raf = requestAnimationFrame(loop); }\n    try{ new MutationObserver(function(){ go(); }).observe(root, { attributes:true, attributeFilter:['class', 'data-theme'] }); }catch(e){}\n    build(); draw(performance.now());\n    var rt; addEventListener('resize', function(){ clearTimeout(rt); rt = setTimeout(function(){ build(); draw(performance.now()); }, 150); });\n    document.addEventListener('visibilitychange', go);\n    go();\n  }\n  if(document.body) start(); else document.addEventListener('DOMContentLoaded', start);\n})();\n<\/script>\n<!-- ===== /Traje Crediffato ===== -->";
 
-// ---------- Download do Robô local ----------
-// O botão "baixar o robô" do painel aponta para robo-local-instalador.zip. Aqui o clique é
-// interceptado e entrega a última versão publicada pela engrenagem do board (Firestore, em partes
-// base64). Sem versão publicada lá, segue para o arquivo do site como antes.
+// ---------- Instalador do Robô local ----------
+// O painel pede o instalador ao lado dele (Instalar-Robo-Local.cmd; antes, robo-local-instalador.zip)
+// em dois momentos: no botão "Instalar robô" e na atualização automática (fetch). Os dois passam
+// por aqui e recebem a última versão publicada pela engrenagem do board (Firestore, em partes
+// base64). Sem versão publicada desse tipo, seguem para o arquivo do site.
+const ROBO_NOMES = /(Instalar-Robo-Local\.cmd|robo-local-instalador\.zip)(?:[?#]|$)/i;
 const roboMetaRef = () => doc(db, "boards", "crediffato-robo");
 const roboPartRef = (version, i) => doc(db, "boards", `crediffato-robo-v${version}-p${i}`);
+let roboCache = null; // {version, ext, bytes}
+async function roboPublicado(nome){
+  const ext = (nome.match(/\.(\w+)$/) || [, ""])[1].toLowerCase();
+  const metaSnap = await getDoc(roboMetaRef());
+  if(!metaSnap.exists()) return null;
+  const meta = metaSnap.data();
+  if(((meta.fileName || "").match(/\.(\w+)$/) || [, ""])[1].toLowerCase() !== ext) return null; // publicado é de outro tipo
+  if(roboCache && roboCache.version === meta.version) return roboCache.bytes;
+  const snaps = await Promise.all(Array.from({ length: meta.parts }, (_, i) => getDoc(roboPartRef(meta.version, i))));
+  if(snaps.some(x => !x.exists())) throw new Error("a versão publicada do robô está incompleta — peça pra publicar de novo");
+  const bin = atob(snaps.map(x => x.data().data).join(""));
+  const bytes = new Uint8Array(bin.length);
+  for(let i = 0; i < bin.length; i++) bytes[i] = bin.charCodeAt(i);
+  roboCache = { version: meta.version, bytes };
+  return bytes;
+}
+// usado pelo fetch do painel (ver o shim em preparePanel): Response com a versão publicada, ou null
+window.painelRoboFetch = async (url) => {
+  const m = String(url).match(ROBO_NOMES); if(!m) return null;
+  const bytes = await roboPublicado(m[1]);
+  return bytes ? new Response(bytes, { status:200, headers:{ "Content-Type":"application/octet-stream" } }) : null;
+};
 let roboBaixando = false;
 function roboAviso(text, ms){
   let el = document.getElementById("robo-aviso");
@@ -510,25 +534,20 @@ function roboAviso(text, ms){
   el.textContent = text; el.style.display = "";
   clearTimeout(el._t); if(ms) el._t = setTimeout(() => { el.style.display = "none"; }, ms);
 }
-async function baixarRobo(fallbackHref){
+async function baixarRobo(nome){
   if(roboBaixando) return;
   roboBaixando = true;
   try{
-    const metaSnap = await getDoc(roboMetaRef());
-    if(!metaSnap.exists()){ window.location.assign(fallbackHref); return; }
-    const meta = metaSnap.data();
     roboAviso("Baixando o robô…");
-    const snaps = await Promise.all(Array.from({ length: meta.parts }, (_, i) => getDoc(roboPartRef(meta.version, i))));
-    if(snaps.some(x => !x.exists())) throw new Error("a versão publicada está incompleta — peça pra publicar de novo");
-    const bin = atob(snaps.map(x => x.data().data).join(""));
-    const bytes = new Uint8Array(bin.length);
-    for(let i = 0; i < bin.length; i++) bytes[i] = bin.charCodeAt(i);
-    const url = URL.createObjectURL(new Blob([bytes], { type:"application/zip" }));
+    const bytes = await roboPublicado(nome);
     const a = document.createElement("a");
-    a.href = url; a.download = "robo-local-instalador.zip";
+    let url = null;
+    if(bytes){ url = URL.createObjectURL(new Blob([bytes], { type:"application/octet-stream" })); a.href = url; }
+    else a.href = new URL(nome, location.href).href;
+    a.download = nome;
     document.body.appendChild(a); a.click(); a.remove();
-    setTimeout(() => URL.revokeObjectURL(url), 60000);
-    roboAviso("Robô baixado — extraia e rode \"Instalar robo\".", 6000);
+    if(url) setTimeout(() => URL.revokeObjectURL(url), 60000);
+    roboAviso("Robô baixado — clique no arquivo para instalar.", 6000);
   }catch(err){
     console.error("Falha ao baixar o robô:", err);
     roboAviso("Não foi possível baixar o robô: " + (err.message || "erro desconhecido"), 8000);
@@ -543,9 +562,10 @@ function wireRoboDownload(){
   d._roboWired = true;
   d.addEventListener("click", e => {
     const a = e.target && e.target.closest && e.target.closest("a[href]");
-    if(!a || !/robo-local-instalador\.zip(?:[?#]|$)/i.test(a.getAttribute("href") || "")) return;
+    const m = a && (a.getAttribute("href") || "").match(ROBO_NOMES);
+    if(!m) return;
     e.preventDefault(); e.stopPropagation();
-    baixarRobo(new URL("robo-local-instalador.zip", location.href).href);
+    baixarRobo(m[1]);
   }, true);
 }
 
