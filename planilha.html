@@ -94,8 +94,47 @@ table.g{border-collapse:separate;border-spacing:0;font-size:13px;table-layout:fi
 .vis.quieto .entra,.vis.quieto .kc,.vis.quieto .rc,.vis.quieto .barr span,.vis.quieto.entra{animation:none}
 .kc.pousa{animation:pousa .45s cubic-bezier(.3,1.5,.5,1)!important}
 .editor{animation:edIn .14s ease-out}
-.g td,.g th{transition:background-color .2s}
-.gu,.vt,.btn,.pill,.chk{transition:all .18s cubic-bezier(.2,.8,.2,1)}
+.g thead th,.g td.rn{transition:background-color .15s,color .15s}
+.gu,.vt,.btn{transition:background-color .18s,color .18s,border-color .18s,box-shadow .18s,transform .1s}
+.g thead th .l{display:none;font-family:var(--f-num);color:var(--red-hi);margin-right:6px}
+body.fxmodo .g thead th .l{display:inline}
+.g thead th.selc{background:color-mix(in srgb,var(--red) 16%,var(--s2));color:var(--t1);box-shadow:inset 0 -2px 0 var(--red)}
+.g thead th.selc.cheia,.g td.rn.sell.cheia{background:var(--red);color:#fff}
+.g td.rn.sell{background:color-mix(in srgb,var(--red) 16%,var(--s2));color:var(--t1);box-shadow:inset -2px 0 0 var(--red)}
+.g.tab thead th.selc:not(.rn){box-shadow:inset 0 -3px 0 #fff}
+.g thead th.rn#selTudo{cursor:pointer;background-image:linear-gradient(135deg,transparent 60%,var(--t3) 60%,var(--t3) 66%,transparent 66%)}
+.g thead th[data-col]{cursor:s-resize}.g td.rn[data-rn]{cursor:e-resize}
+.ddbtn{all:unset;pointer-events:auto;position:absolute;right:-1px;top:50%;transform:translateY(-50%);width:20px;height:22px;display:grid;place-items:center;font-size:11px;color:#fff;background:var(--sel);border-radius:4px 0 0 4px;cursor:pointer;animation:aparece .2s ease}
+.refbox{position:absolute;left:0;top:0;pointer-events:none;z-index:3;border:2px dashed var(--rc);background:color-mix(in srgb,var(--rc) 10%,transparent);border-radius:2px;animation:aparece .15s ease}
+.assist{position:fixed;z-index:45;min-width:260px;max-width:520px;background:var(--s1);border:1px solid var(--hair);border-radius:10px;box-shadow:0 18px 40px -16px #000;overflow:hidden;animation:sobe .14s ease both;font-size:12.5px}
+.assist .sug{display:grid;padding:4px}
+.assist .sug button{all:unset;cursor:pointer;display:flex;gap:10px;align-items:baseline;padding:6px 9px;border-radius:7px}
+.assist .sug button b{font-family:var(--f-num);font-weight:600;min-width:110px}.assist .sug button span{color:var(--t3);font-size:11.5px}
+.assist .sug button.on,.assist .sug button:hover{background:var(--red-dim)}.assist .sug button.on b{color:var(--red-hi)}
+.assist small{padding:4px 9px 6px;color:var(--t3);font-size:10.5px}
+.assist .sig{padding:8px 11px;font-family:var(--f-num);font-size:12px;line-height:1.5}
+.assist .sig u{text-decoration:none;font-weight:700;color:var(--red-hi);background:var(--red-dim);border-radius:3px;padding:0 2px}
+.assist .sig span{display:block;font-family:var(--f-ui);color:var(--t3);font-size:11.5px}
+.assist .res{display:flex;gap:10px;align-items:baseline;padding:7px 11px;border-top:1px solid var(--hair2);background:var(--s2)}
+.assist .res span{color:var(--t3);font-size:11px}.assist .res b{font-family:var(--f-num)}.assist .res b.err{color:var(--crit)}
+.btn .seta{width:0;height:0;border-left:3px solid transparent;border-right:3px solid transparent;border-top:4px solid currentColor;opacity:.6}
+#impressao{display:none}
+@media print{
+  body{display:block!important;overflow:visible!important;background:#fff!important;color:#000!important}
+  body > *:not(#impressao){display:none!important}
+  #impressao{display:block;font-family:var(--f-ui);color:#111}
+  #impressao section{page-break-after:always}#impressao section:last-child{page-break-after:auto}
+  #impressao h1{font-size:15px;margin:0 0 8px}#impressao h1 small{color:#666;font-weight:400}
+  #impressao table{border-collapse:collapse;width:100%;font-size:10.5px}
+  #impressao th{background:#eee;text-align:left;padding:4px 6px;border:1px solid #bbb}
+  #impressao table.tab th{background:var(--tb);color:#fff}
+  #impressao td{padding:3px 6px;border:1px solid #ccc;color:#111}
+  #impressao td.num{text-align:right;font-family:var(--f-num)}
+  #impressao .pill{padding:0;background:none!important}#impressao .pill::before{display:none}
+  #impressao .pes b{display:none}#impressao .rod{font-size:9px;color:#777;margin-top:6px}
+  @page{size:landscape;margin:10mm}
+}
+
 html{scroll-behavior:auto}
 body{transition:background-color .3s,color .3s}
 .g td.outro{box-shadow:inset 0 0 0 2px var(--cor)}
@@ -269,10 +308,8 @@ kbd{font-family:var(--f-num);font-size:11px;padding:1px 6px;border-radius:5px;bo
   <div class="vts" role="tablist"><button class="vt on" data-v="grade">Grade</button><button class="vt" data-v="quadro">Quadro</button><button class="vt" data-v="cal">Calendário</button><button class="vt" data-v="resumo">Resumo</button></div>
   <div class="ferr">
     <input class="busca" id="busca" type="search" placeholder="Buscar nesta guia…" aria-label="Buscar nesta guia">
-    <button class="btn so-edita" id="bImporta" title="Trazer guias de um arquivo do Excel">Importar Excel</button>
-    <button class="btn" id="bExporta" title="Baixar como arquivo do Excel">Exportar Excel</button>
-    <button class="btn" id="bAtalhos" title="Atalhos do teclado (como no Excel)">⌨ Atalhos</button>
-    <button class="btn" id="bAjuda" title="Fórmulas">?</button>
+    <button class="btn" id="bArquivo" title="Importar, exportar (Excel, CSV, ODS, PDF), imprimir e atalhos"><svg viewBox="0 0 16 16" width="15" height="15" fill="none" stroke="currentColor" stroke-width="1.4" stroke-linecap="round" stroke-linejoin="round"><path d="M8 2.5v7.5M5 7l3 3 3-3M3 11.5v2h10v-2"/></svg> Arquivo <i class="seta"></i></button>
+    <button class="hidden" id="bAtalhos"></button><button class="hidden" id="bAjuda"></button><button class="hidden" id="bImporta"></button><button class="hidden" id="bExporta"></button>
     <button class="btn" id="bExibir" title="Esconder ou mostrar barras (Ctrl+F1 / Ctrl+Shift+F1)"><svg viewBox="0 0 16 16" width="15" height="15" fill="none" stroke="currentColor" stroke-width="1.4" stroke-linecap="round" stroke-linejoin="round"><path d="M2.5 6V2.5H6M10 2.5h3.5V6M13.5 10v3.5H10M6 13.5H2.5V10"/></svg> Exibir</button>
     <button class="btn" id="bTema" title="Tema claro / escuro" aria-label="Tema claro ou escuro"></button>
   </div>
@@ -295,7 +332,7 @@ kbd{font-family:var(--f-num);font-size:11px;padding:1px 6px;border-radius:5px;bo
   <div class="grp so-edita"><div class="fcol"><button class="fb wide" data-cmd="inserir"><svg viewBox="0 0 16 16"><rect x="2" y="3" width="12" height="10" rx="1"/><path d="M8 5.5v5M5.5 8h5"/></svg><span>Inserir</span><i class="seta"></i></button><button class="fb wide" data-cmd="excluir"><svg viewBox="0 0 16 16"><rect x="2" y="3" width="12" height="10" rx="1"/><path d="M6 6l4 4M10 6l-4 4"/></svg><span>Excluir</span><i class="seta"></i></button><button class="fb wide" data-cmd="formatar"><svg viewBox="0 0 16 16"><rect x="2" y="3" width="12" height="10" rx="1"/><path d="M6 3v10M2 8h12"/></svg><span>Formatar</span><i class="seta"></i></button></div><span class="gl">Células</span></div>
   <div class="grp"><div class="fcol"><button class="fb wide so-edita" data-cmd="soma" title="AutoSoma"><b class="tx" style="font-size:15px">Σ</b><span>AutoSoma</span><i class="seta"></i></button><button class="fb wide" data-cmd="classifica"><svg viewBox="0 0 16 16"><path d="M4 2.5v11M2 11.5l2 2 2-2M8.5 3.5h5l-3.5 4.5v4l-1.5 1v-5z"/></svg><span>Classificar e Filtrar</span><i class="seta"></i></button><button class="fb wide" data-cmd="localiza"><svg viewBox="0 0 16 16"><circle cx="7" cy="7" r="4.2"/><path d="M10.2 10.2l3.3 3.3"/></svg><span>Localizar</span><i class="seta"></i></button></div><span class="gl">Edição</span></div>
 </div>
-<div class="fx" id="fxBar"><span class="end" id="fxEnd">—</span><b>fx</b><input id="fxIn" spellcheck="false" placeholder="Escolha uma célula. Fórmulas começam com =, ex.: =PROCV(A2;Estoque!A:C;2;0)"><span class="dica" id="fxDica"></span></div>
+<div class="fx" id="fxBar"><span class="end" id="fxEnd">—</span><b>fx</b><input id="fxIn" spellcheck="false" placeholder="Digite um valor, ou = para fórmula (ex.: =PROCV)" autocomplete="off"></div>
 <main class="area" id="area"><div class="vis" id="vis"></div><div class="cursores" id="cursores"></div></main>
 <nav class="guias" id="guias" aria-label="Guias"></nav>
 <input type="file" id="arq" accept=".xlsx,.xls,.csv" class="hidden">
@@ -323,6 +360,8 @@ kbd{font-family:var(--f-num);font-size:11px;padding:1px 6px;border-radius:5px;bo
 
   // ---------- leitura ----------
   function tokens(src){
+    // $A$1 (referência fixa) vale o mesmo que A1 aqui: o $ só importa ao copiar/preencher
+    src = String(src).split(/("(?:[^"]|"")*")/).map((p, k) => k % 2 ? p : p.replace(/\$(?=[A-Za-z0-9])/g, '')).join('');
     const t = []; let i = 0;
     const ehDig = c => c >= '0' && c <= '9';
     // vírgula: decimal quando a fórmula usa ";" (padrão brasileiro) ou não tem função; separador no estilo inglês SOMA(1,2)
@@ -692,7 +731,7 @@ function pintaGrade(antes){
   const sx = box.scrollLeft, sy = box.scrollTop, selVelha = box.querySelector('.selbox');
   const stats = statsCond(), tab = G().tabela, comFiltro = temFiltro(), filt = filtros[g] || {};
   box.innerHTML = `<table class="g${tab ? ' tab' : ''}" id="gT" style="width:${46 + largs.reduce((a, b) => a + b, 0)}px${tab ? ';--tb:' + tab.cor : ''}"><colgroup><col style="width:46px">${largs.map(w => `<col style="width:${w}px">`).join('')}</colgroup>
-    <thead><tr><th class="rn"></th>${cs.map((c, ci) => `<th class="${ci === 0 ? 'c0' : ''}" data-col="${ci}" title="${esc(TIPOS.find(t => t[0] === tipoDe(c))[1])} · clique: seleciona a coluna · botão direito: opções">${comFiltro ? `<button class="fbt${filt[c.id] && filt[c.id].size ? ' ativo' : ''}" data-filtro="${ci}" title="Filtrar e classificar">▼</button>` : ''}<span class="l">${F.colLetra(ci)}</span>${esc(c.nome)}<span class="ti"${comFiltro ? ' hidden' : ''}>${c.formula ? 'fx' : esc(TIPOS.find(t => t[0] === tipoDe(c))[2])}</span></th>`).join('')}</tr></thead>
+    <thead><tr><th class="rn" id="selTudo" title="Selecionar tudo (Ctrl+A)"></th>${cs.map((c, ci) => `<th class="${ci === 0 ? 'c0' : ''}" data-col="${ci}" title="${esc(c.nome)} · ${esc(TIPOS.find(t => t[0] === tipoDe(c))[1])}${c.formula ? ' com fórmula' : ''} · clique ou arraste para selecionar · botão direito: opções">${comFiltro ? `<button class="fbt${filt[c.id] && filt[c.id].size ? ' ativo' : ''}" data-filtro="${ci}" title="Filtrar e classificar">▼</button>` : ''}<span class="l">${F.colLetra(ci)}</span>${esc(c.nome)}</th>`).join('')}</tr></thead>
     <tbody>${lst.map(({rid, i}) => `<tr data-r="${i}"${novas.has(rid) ? ' class="nova"' : ''}><td class="rn" data-rn="${i}">${i + 1}</td>${cs.map((c, ci) => { const raw = bruto(g, rid, c), ehF = typeof raw === 'string' && raw[0] === '='; const fm = fmtDe(rid, c.id), cd = condDe(c.id, i, ci, stats), m = mostraFormulas && ehF ? {h:esc(raw), cls:''} : mostra(c, valor(g, i, ci), ehF, fm), est = estiloCel(fm, cd);
       const venc = ehPrazo(c) && raw && String(ehF ? '' : raw) < hojeISO() && linhaAberta(rid);
       return `<td data-r="${i}" data-c="${ci}" class="${ci === 0 ? 'c0 ' : ''}${m.cls}${ehF && raw === cel(g, rid, c.id) ? ' fm' : ''}${venc ? ' late' : ''}${mudou(rid, c.id) ? ' brilha' : ''}"${est ? ` style="${est}"` : ''}>${m.h}</td>`; }).join('')}</tr>`).join('')}
@@ -719,7 +758,14 @@ function marcaSel(){
     const v = box.getBoundingClientRect(), a1 = ta.getBoundingClientRect(), b1 = tb.getBoundingClientRect();
     sb.style.transform = `translate(${a1.left - v.left + box.scrollLeft - 1}px,${a1.top - v.top + box.scrollTop - 1}px)`;
     sb.style.width = (b1.right - a1.left + 2) + 'px'; sb.style.height = (b1.bottom - a1.top + 2) + 'px';
+    // seta de lista na célula ativa (status, pessoa, data): um clique abre
+    const co = cols()[sel.c], lista = nivel === 'editar' && r0 === r1 && c0 === c1 && co && ['status', 'pessoa', 'data'].includes(tipoDe(co));
+    let dd = sb.querySelector('.ddbtn'); if(lista && !dd){ dd = document.createElement('button'); dd.className = 'ddbtn'; dd.title = 'Escolher (Alt+↓)'; dd.innerHTML = '▾'; dd.addEventListener('mousedown', e => { e.preventDefault(); e.stopPropagation(); abreEditor(); }); sb.appendChild(dd); } else if(!lista && dd) dd.remove();
   } else if(sb) sb.remove();
+  document.querySelectorAll('#gT thead th.selc, #gT td.rn.sell').forEach(x => x.classList.remove('selc', 'sell', 'cheia'));
+  const colInt = r0 === 0 && r1 === ordem().length - 1, linInt = c0 === 0 && c1 === cols().length - 1;
+  for(let c = c0; c <= c1; c++){ const th = document.querySelector(`#gT thead th[data-col="${c}"]`); if(th){ th.classList.add('selc'); if(colInt) th.classList.add('cheia'); } }
+  document.querySelectorAll('#gT td.rn[data-rn]').forEach(x => { const r = +x.dataset.rn; if(r >= r0 && r <= r1){ x.classList.add('sell'); if(linInt) x.classList.add('cheia'); } });
   pintaFx(); pintaFita();
 }
 const celTd = (r, c) => document.querySelector(`#gT td[data-r="${r}"][data-c="${c}"]`);
@@ -731,13 +777,13 @@ function pintaFx(){
   $('#fxIn').readOnly = nivel !== 'editar';
   const a = ancora || sel; const n = (Math.abs(a.r - sel.r) + 1) * (Math.abs(a.c - sel.c) + 1);
   if(n > 1){ const vals = []; for(let r = Math.min(a.r, sel.r); r <= Math.max(a.r, sel.r); r++) for(let c2 = Math.min(a.c, sel.c); c2 <= Math.max(a.c, sel.c); c2++){ const v = F.num(valor(g, r, c2)); if(!F.ehErro(v) && valor(g, r, c2) !== '') vals.push(v); }
-    $('#fxDica').textContent = vals.length ? `Soma ${nfmt.format(vals.reduce((x, y) => x + y, 0))} · Média ${nfmt.format(vals.reduce((x, y) => x + y, 0) / vals.length)} · ${n} células` : n + ' células'; }
-  else $('#fxDica').textContent = '';
+    const st = $('#stSel'); if(st) st.textContent = vals.length ? `Soma ${nfmt.format(vals.reduce((x, y) => x + y, 0))} · Média ${nfmt.format(vals.reduce((x, y) => x + y, 0) / vals.length)} · Contagem ${n}` : 'Contagem ' + n; }
+  else { const st = $('#stSel'); if(st) st.textContent = ''; }
 }
 function pintaGuias(){
   const box = $('#guias'), lst = guiasOrd();
   box.innerHTML = lst.map(x => `<button class="gu${x.id === g ? ' on' : ''}" data-g="${x.id}" title="Clique duas vezes para renomear">${esc(x.nome)}</button>`).join('') +
-    (nivel === 'editar' ? '<button class="gu" id="novaGuia" title="Nova guia">+</button>' : '') + `<span class="soma">${ordem().length} linhas · ${cols().length} colunas</span>`;
+    (nivel === 'editar' ? '<button class="gu" id="novaGuia" title="Nova guia">+</button>' : '') + '<span class="soma" id="stSel"></span>';
 }
 
 // ---------- quadro ----------
@@ -851,6 +897,7 @@ function abreEditor(inicial){
   editando = {ed, rid, c, r:sel.r, ci:sel.c};
   if(ed.tagName === 'SELECT' || ed.type === 'date') ed.addEventListener('change', () => confirma(0));
   ed.addEventListener('keydown', e => {
+    if(teclaAssist(e, ed)) return;
     if(e.key === 'Enter' && (e.ctrlKey || e.metaKey)){ e.preventDefault(); const txt = ed.value, base = {...sel}; fechaEditor();   // Ctrl+Enter: mesmo valor em toda a seleção
       const p = []; celulasSel().forEach(({r, c, rid, cid}) => { const co = cols()[c]; p.push([['dados', g, rid, cid], txt[0] === '=' ? desloca(txt, r - base.r, c - base.c) : converte(co, txt)]); }); grava(p); pinta(); $('#vis').focus(); }
     else if(e.key === 'F4'){ e.preventDefault(); if(ed.tagName === 'INPUT') alternaAbs(ed); }
@@ -858,10 +905,13 @@ function abreEditor(inicial){
     else if(e.key === 'Tab'){ e.preventDefault(); confirma(0, e.shiftKey ? -1 : 1); }
     else if(e.key === 'Escape'){ e.preventDefault(); fechaEditor(); $('#vis').focus(); }
   });
-  ed.addEventListener('input', () => { $('#fxIn').value = ed.value; });
+  const larg0 = Math.max(r.width + 2, 180);
+  ed.addEventListener('input', () => { $('#fxIn').value = ed.value; pegaRef = null; if(ed.tagName === 'INPUT'){ ed.style.width = Math.min(640, Math.max(larg0, ed.value.length * 7.6 + 30)) + 'px'; atualizaAssist(ed); } });
+  ed.addEventListener('keyup', e => { if(ed.tagName === 'INPUT' && /^Arrow|Home|End/.test(e.key) && ed.value[0] === '=') atualizaAssist(ed); });
+  if(ed.tagName === 'INPUT' && ed.value[0] === '=') setTimeout(() => { if(editando && editando.ed === ed) atualizaAssist(ed); }, 0);
   ed.addEventListener('blur', () => setTimeout(() => { if(editando && editando.ed === ed) confirma(null); }, 80));
 }
-function fechaEditor(){ if(editando){ const e = editando.ed; editando = null; e.remove(); } }
+function fechaEditor(){ if(editando){ const e = editando.ed; editando = null; e.remove(); } pegaRef = null; fechaAssist(); }
 function confirma(dr, dc = 0){
   if(!editando) return; const {ed, rid, c} = editando; let v = ed.value;
   fechaEditor();
@@ -926,36 +976,58 @@ document.addEventListener('paste', e => {
 
 // ---------- eventos da grade ----------
 const vEl = $('#vis'); vEl.tabIndex = 0;
-let arrastando = false;
+let arrastando = false, arrastoCab = null, apontando = null;
+const inputFormula = () => editando && editando.ed.tagName === 'INPUT' && editando.ed.type !== 'date' ? editando.ed : document.activeElement === $('#fxIn') ? $('#fxIn') : null;
 vEl.addEventListener('mousedown', e => {
-  const td = e.target.closest('td[data-c]'); if(!td || e.target.closest('a') || e.button !== 0) return;
+  if(e.button !== 0) return;
+  const th = e.target.closest('th[data-col]'), rn = e.target.closest('td[data-rn]'), td = e.target.closest('td[data-c]');
+  if(e.target.closest('[data-filtro]')) return;
+  // escrevendo fórmula: clicar pega a referência em vez de sair da célula
+  const fi = inputFormula();
+  if(fi && podeApontar(fi) && (td || th)){ e.preventDefault(); if(td){ const r = +td.dataset.r, c = +td.dataset.c; apontando = {el:fi, r, c}; aponta(fi, r, c); }
+    else { const c = +th.dataset.col, L = F.colLetra(c), v = fi.value, p = fi.selectionStart; fi.value = v.slice(0, p) + L + ':' + L + v.slice(p); fi.setSelectionRange(p + L.length * 2 + 1, p + L.length * 2 + 1); if(fi !== $('#fxIn')) $('#fxIn').value = fi.value; atualizaAssist(fi); } return; }
+  if(e.target.id === 'selTudo'){ ancora = {r:0, c:0}; sel = {r:Math.max(0, ultLin()), c:Math.max(0, ultCol())}; marcaSel(); return; }
+  if(th || rn){ if(editando) confirma(null); e.preventDefault();
+    if(th){ const ci = +th.dataset.col; arrastoCab = 'c'; ancora = {r:0, c:e.shiftKey && ancora ? ancora.c : ci}; sel = {r:Math.max(0, ultLin()), c:ci}; }
+    else { const ri = +rn.dataset.rn; arrastoCab = 'r'; ancora = {r:e.shiftKey && ancora ? ancora.r : ri, c:0}; sel = {r:ri, c:Math.max(0, ultCol())}; }
+    marcaSel(); presenca(); return; }
+  if(!td || e.target.closest('a')) return;
   if(editando) confirma(null);
   const r = +td.dataset.r, c = +td.dataset.c;
   if(e.shiftKey){ ancora = ancora || {...sel}; } else ancora = {r, c};
   sel = {r, c}; arrastando = true; marcaSel(); presenca();
   if(tipoDe(cols()[c]) === 'caixa' && e.target.closest('.chk')) abreEditor();
 });
-// arrastar com o botão apertado seleciona várias células (como no Excel)
-vEl.addEventListener('mousemove', e => { if(!arrastando) return; const td = e.target.closest('td[data-c]'); if(!td) return; const r = +td.dataset.r, c = +td.dataset.c; if(r !== sel.r || c !== sel.c){ sel = {r, c}; marcaSel(); } });
-addEventListener('mouseup', () => { if(!arrastando) return; arrastando = false; if(ancora && ancora.r === sel.r && ancora.c === sel.c) ancora = null;
+// arrastar com o botão apertado seleciona várias células, linhas ou colunas (como no Excel)
+vEl.addEventListener('mousemove', e => {
+  if(apontando){ const td = e.target.closest('td[data-c]'); if(td){ const r = +td.dataset.r, c = +td.dataset.c; aponta(apontando.el, apontando.r, apontando.c, r, c); } return; }
+  if(arrastoCab === 'c'){ const th = e.target.closest('th[data-col]') || e.target.closest('td[data-c]'); if(th){ const c = +(th.dataset.col ?? th.dataset.c); if(c !== sel.c){ sel = {r:sel.r, c}; marcaSel(); } } return; }
+  if(arrastoCab === 'r'){ const x = e.target.closest('td[data-rn]') || e.target.closest('td[data-r]'); if(x){ const r = +(x.dataset.rn ?? x.dataset.r); if(r !== sel.r){ sel = {r, c:sel.c}; marcaSel(); } } return; }
+  if(!arrastando) return; const td = e.target.closest('td[data-c]'); if(!td) return; const r = +td.dataset.r, c = +td.dataset.c; if(r !== sel.r || c !== sel.c){ sel = {r, c}; marcaSel(); } });
+addEventListener('mouseup', () => { if(apontando){ apontando = null; return; } if(arrastoCab){ arrastoCab = null; presenca(); return; }
+  if(!arrastando) return; arrastando = false; if(ancora && ancora.r === sel.r && ancora.c === sel.c) ancora = null;
   if(pincel){ const f = pincel; pincel = null; document.body.classList.remove('pinc'); aplicaFmt(f, true); } presenca(); });
 vEl.addEventListener('dblclick', e => { if(e.target.closest('td[data-c]')) abreEditor(); });
 vEl.addEventListener('mouseover', e => { const td = e.target.closest('td[data-c]'); if(!td) return; const rid = ordem()[+td.dataset.r], c = cols()[+td.dataset.c]; const k = rid && c ? rid + ':' + c.id : ''; if(k !== hoverCel){ hoverCel = k; presenca(); } });
-vEl.addEventListener('scroll', () => pintaPres(), {passive:true});
+// editor e ajudante acompanham a célula quando a grade rola
+function reposEditor(){ if(!editando) return; const td = celTd(editando.r, editando.ci), box = $('#area').getBoundingClientRect(); if(!td) return; const r = td.getBoundingClientRect();
+  editando.ed.style.left = (r.left - box.left - 1) + 'px'; editando.ed.style.top = (r.top - box.top - 1) + 'px'; if(assist && assist.el === editando.ed && !document.getElementById('fxAssist').classList.contains('hidden')) atualizaAssist(editando.ed); }
+vEl.addEventListener('scroll', () => { pintaPres(); reposEditor(); }, {passive:true});
 addEventListener('resize', () => pintaPres());
 vEl.addEventListener('click', e => {
   if(e.target.id === 'addLinha'){ novaLinha(); return; }
   const fbt = e.target.closest('[data-filtro]'); if(fbt){ e.stopPropagation(); janelaFiltro(+fbt.dataset.filtro, fbt); return; }
-  // clique no cabeçalho seleciona a coluna; no número, a linha (Shift aumenta). Botão direito abre as opções.
-  const th = e.target.closest('th[data-col]'); if(th){ const ci = +th.dataset.col, c0 = e.shiftKey && ancora ? ancora.c : ci; ancora = {r:0, c:c0}; sel = {r:Math.max(0, ultLin()), c:ci}; marcaSel(); presenca(); return; }
-  const rn = e.target.closest('td[data-rn]'); if(rn){ const ri = +rn.dataset.rn, r0 = e.shiftKey && ancora ? ancora.r : ri; ancora = {r:r0, c:0}; sel = {r:ri, c:Math.max(0, ultCol())}; marcaSel(); presenca(); }
+  // (seleção de linha/coluna é feita no mousedown, para dar para arrastar)
 });
 let refazer = [];
 function volta(){ const u = desfazer.pop(); if(!u) return; refazer.push(u.map(([p]) => [p, pega(p)])); grava(u.map(([p, v]) => [p, v === undefined ? '' : v]), {semDesfazer:true}); $('#bDesfaz').disabled = !desfazer.length; pinta(); toast('Desfeito'); }
 function refaz(){ const u = refazer.pop(); if(!u) return; desfazer.push(u.map(([p]) => [p, pega(p)])); $('#bDesfaz').disabled = false; grava(u.map(([p, v]) => [p, v === undefined ? '' : v]), {semDesfazer:true}); pinta(); toast('Refeito'); }
 
 // barra de fórmula
+$('#fxIn').addEventListener('input', () => { pegaRef = null; atualizaAssist($('#fxIn')); });
+$('#fxIn').addEventListener('blur', () => setTimeout(() => { if(document.activeElement !== $('#fxIn') && !editando) fechaAssist(); }, 120));
 $('#fxIn').addEventListener('keydown', e => {
+  if(teclaAssist(e, $('#fxIn'))) return;
   if(e.key === 'Enter'){ e.preventDefault(); const c = cols()[sel.c], rid = ordem()[sel.r]; if(c && rid && nivel === 'editar'){ grava([[['dados', g, rid, c.id], converte(c, $('#fxIn').value)]]); } $('#fxIn').blur(); move(1, 0); pinta(); }
   if(e.key === 'Escape'){ $('#fxIn').blur(); pintaFx(); }
 });
@@ -1053,18 +1125,6 @@ let tBusca = 0; $('#busca').addEventListener('input', e => { clearTimeout(tBusca
 // ---------- Excel ----------
 let xlsxP = null;
 const xlsx = () => xlsxP || (xlsxP = new Promise((ok, erro) => { const s = document.createElement('script'); s.src = 'https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js'; s.onload = () => ok(window.XLSX); s.onerror = () => { xlsxP = null; erro(new Error('não consegui carregar o leitor de Excel (sem internet?)')); }; document.head.appendChild(s); }));
-$('#bExporta').onclick = async () => {
-  try{ const X = await xlsx(), wb = X.utils.book_new();
-    guiasOrd().forEach(gu => { const cs = gu.cols || [], aoa = [cs.map(c => c.nome)];
-      (gu.ordem || []).forEach((rid, li) => { aoa.push(cs.map((c, ci) => { const v = valor(gu.id, li, ci); if(F.ehErro(v)) return String(v); const t = tipoDe(c);
-        if(t === 'data' && v){ const s = typeof v === 'number' ? F.serieData(v) : String(v); return /^\d{4}-\d{2}-\d{2}$/.test(s) ? new Date(s + 'T00:00') : s; }
-        if(t === 'pessoa') return v ? nomeP(v) : ''; if(t === 'caixa') return v === true ? 'Sim' : ''; return v; })); });
-      while(aoa.length > 1 && aoa[aoa.length - 1].every(x => x === '' || x == null)) aoa.pop();
-      const ws = X.utils.aoa_to_sheet(aoa, {cellDates:true}); ws['!cols'] = cs.map(c => ({wch:Math.round((c.larg || 160) / 7)}));
-      X.utils.book_append_sheet(wb, ws, String(gu.nome).replace(/[\\/?*[\]:]/g, ' ').slice(0, 31)); });
-    X.writeFile(wb, (meta.nome || 'planilha').replace(/[\\/:*?"<>|]/g, '_') + '.xlsx'); toast('Excel baixado (fórmulas saem com o valor calculado)');
-  }catch(e){ toast('Não exportou: ' + (e.message || e)); }
-};
 $('#bImporta').onclick = () => $('#arq').click();
 $('#arq').onchange = async () => {
   const fl = $('#arq').files[0]; $('#arq').value = ''; if(!fl) return;
@@ -1524,6 +1584,152 @@ function janelaAtalhos(){
   const fa = janela(`<h3>Atalhos do teclado</h3><div class="atl">${L.map(([t, l]) => `<div><h4>${t}</h4>${l.map(([a, b]) => `<p><kbd>${esc(a)}</kbd><span>${esc(b)}</span></p>`).join('')}</div>`).join('')}</div>
     <p class="ajuda">Ctrl+T, Ctrl+N e Ctrl+W são do navegador (nova guia, nova janela, fechar) e não dá para trocar.</p><div class="acoes"><button class="btn pri" data-x>Fechar</button></div>`), jn = fa.querySelector('.janela'); jn.classList.add('larga'); setTimeout(() => { jn.scrollTop = 0; jn.focus({preventScroll:true}); }, 60);
 }
+
+// ---------- ajudante de fórmulas: sugestões, argumentos, resultado ao vivo e clicar para pegar a célula ----------
+const SIG = {
+  'SOMA':['Soma os números', 'núm1; [núm2]; …'], 'MÉDIA':['Média dos números', 'núm1; [núm2]; …'], 'MÍNIMO':['Menor número', 'núm1; [núm2]; …'], 'MÁXIMO':['Maior número', 'núm1; [núm2]; …'],
+  'CONT.VALORES':['Conta células preenchidas', 'valor1; [valor2]; …'], 'CONT.NÚM':['Conta células com número', 'valor1; [valor2]; …'], 'CONT.SE':['Conta células que atendem a uma condição', 'intervalo; critério'],
+  'SOMASE':['Soma o que atende a uma condição', 'intervalo; critério; [intervalo_soma]'], 'MÉDIASE':['Média do que atende a uma condição', 'intervalo; critério; [intervalo_média]'],
+  'SE':['Um valor se for verdade, outro se não for', 'teste_lógico; [valor_se_verdadeiro]; [valor_se_falso]'], 'E':['Verdadeiro se todas forem verdade', 'lógico1; [lógico2]; …'], 'OU':['Verdadeiro se alguma for verdade', 'lógico1; [lógico2]; …'], 'NÃO':['Inverte verdadeiro/falso', 'lógico'],
+  'SEERRO':['Mostra outro valor se der erro', 'valor; valor_se_erro'], 'PROCV':['Procura na 1ª coluna e traz outra coluna da mesma linha', 'valor_procurado; matriz_tabela; núm_índice_coluna; [procurar_intervalo]'],
+  'PROCX':['Procura em uma coluna e traz da outra', 'pesquisa_valor; pesquisa_matriz; matriz_retorno; [se_não_encontrada]'], 'ÍNDICE':['Valor na linha/coluna indicada', 'matriz; núm_linha; [núm_coluna]'], 'CORRESP':['Posição de um valor na lista', 'valor_procurado; matriz_procurada'],
+  'ARRED':['Arredonda', 'núm; núm_dígitos'], 'ABS':['Valor sem sinal', 'núm'], 'HOJE':['Data de hoje', ''], 'DIAS':['Dias entre duas datas', 'data_final; data_inicial'], 'DATA':['Monta uma data', 'ano; mês; dia'],
+  'ANO':['Ano da data', 'data'], 'MÊS':['Mês da data', 'data'], 'DIA':['Dia da data', 'data'], 'CONCATENAR':['Junta textos', 'texto1; [texto2]; …'], 'MAIÚSCULA':['Texto em maiúsculas', 'texto'], 'MINÚSCULA':['Texto em minúsculas', 'texto'],
+  'ARRUMAR':['Tira espaços sobrando', 'texto'], 'ÉCÉL.VAZIA':['Verdadeiro se a célula estiver vazia', 'valor']
+};
+const semAcento = s => String(s).normalize('NFD').replace(/[̀-ͯ]/g, '').toUpperCase();
+let assist = null;   // {el (input), lista, idx, caixa}
+function caixaAssist(){ let b = document.getElementById('fxAssist'); if(!b){ b = document.createElement('div'); b.id = 'fxAssist'; b.className = 'assist'; document.body.appendChild(b); } return b; }
+function fechaAssist(){ const b = document.getElementById('fxAssist'); if(b) b.classList.add('hidden'); assist = assist && {...assist, lista:[], aberto:false}; limpaRefs(); document.body.classList.remove('fxmodo'); }
+// em que função / argumento o cursor está
+function contexto(txt){
+  const pilha = []; let q = false, arg = 0, nome = '';
+  for(let i = 0; i < txt.length; i++){ const ch = txt[i];
+    if(ch === '"'){ q = !q; continue; } if(q) continue;
+    if(ch === '('){ const m = /([A-Za-zÀ-ÿ][A-Za-zÀ-ÿ0-9.]*)\s*$/.exec(txt.slice(0, i)); pilha.push({nome:m ? m[1] : '', arg:0}); }
+    else if(ch === ')') pilha.pop(); else if((ch === ';' || ch === ',') && pilha.length) pilha[pilha.length - 1].arg++; }
+  return pilha[pilha.length - 1] || null;
+}
+function atualizaAssist(el){
+  if(!el.isConnected || el !== $('#fxIn') && !(editando && editando.ed === el)){ fechaAssist(); return; }
+  const v = el.value, pos = el.selectionStart ?? v.length;
+  document.body.classList.toggle('fxmodo', v[0] === '=');
+  if(v[0] !== '='){ fechaAssist(); return; }
+  const antes = v.slice(0, pos), m = /(^|[=;,(+\-*/^&<>:\s])([A-Za-zÀ-ÿ][A-Za-zÀ-ÿ0-9.]*)$/.exec(antes);
+  const pal = m ? m[2] : '';
+  const lista = pal && !/^[A-Z]{1,3}\d+$/i.test(pal) ? F.LISTA.filter(n => semAcento(n).startsWith(semAcento(pal))).slice(0, 8) : [];
+  const ctxt = contexto(antes);
+  // resultado enquanto digita
+  let res = ''; try{ memo = new Map(); const r = F.avalia(v, ctxF, g); if(!(F.ehErro(r) && /NOME|VALOR/.test(String(r)) && !fechou(v))) res = F.ehErro(r) ? String(r) : typeof r === 'number' ? nfmt.format(r) : typeof r === 'boolean' ? (r ? 'VERDADEIRO' : 'FALSO') : String(r); }catch(e){}
+  const b = caixaAssist(); const idx = assist && assist.el === el && assist.lista.join() === lista.join() ? assist.idx : 0;
+  assist = {el, lista, idx, aberto:lista.length > 0, ini:pos - pal.length, fim:pos};
+  let h = '';
+  if(lista.length) h += `<div class="sug">${lista.map((n, i) => `<button type="button" data-fn="${n}" class="${i === idx ? 'on' : ''}"><b>${n}</b><span>${esc(SIG[n] ? SIG[n][0] : '')}</span></button>`).join('')}<small>Tab ou Enter escolhe · ↑↓ navega</small></div>`;
+  else if(ctxt && SIG[F.LISTA.find(n => semAcento(n) === semAcento(ctxt.nome))]){
+    const n = F.LISTA.find(x => semAcento(x) === semAcento(ctxt.nome)), args = SIG[n][1].split('; ');
+    h += `<div class="sig"><b>${n}</b>(${args.map((a, i) => i === Math.min(ctxt.arg, args.length - 1) || a === '…' && ctxt.arg >= i ? `<u>${esc(a)}</u>` : esc(a)).join('; ')})<span>${esc(SIG[n][0])}</span></div>`;
+  }
+  if(res !== '') h += `<div class="res"><span>Resultado</span><b class="${/^#/.test(res) ? 'err' : ''}">${esc(res)}</b></div>`;
+  if(!h){ b.classList.add('hidden'); } else {
+    b.innerHTML = h; b.classList.remove('hidden'); const r = el.getBoundingClientRect();
+    b.style.left = Math.max(8, Math.min(innerWidth - b.offsetWidth - 8, r.left)) + 'px';
+    const abaixo = r.bottom + 4 + b.offsetHeight < innerHeight; b.style.top = (abaixo ? r.bottom + 4 : r.top - b.offsetHeight - 4) + 'px';
+    b.querySelectorAll('[data-fn]').forEach(x => x.onmousedown = ev => { ev.preventDefault(); escolheFn(x.dataset.fn); });
+  }
+  mostraRefs(v);
+}
+const fechou = v => { let n = 0, q = false; for(const ch of v){ if(ch === '"') q = !q; else if(!q){ if(ch === '(') n++; else if(ch === ')') n--; } } return n <= 0 && !/[;(,+\-*/&<>=]\s*$/.test(v); };
+function escolheFn(nome){
+  const a = assist; if(!a) return; const el = a.el, v = el.value, fim = el.selectionStart;
+  const novo = v.slice(0, a.ini) + nome + '(' + v.slice(fim).replace(/^\(/, ''); el.value = novo; const p = a.ini + nome.length + 1; el.setSelectionRange(p, p); el.focus();
+  if(el !== $('#fxIn')) $('#fxIn').value = el.value; atualizaAssist(el);
+}
+// teclas do ajudante (antes das teclas normais do editor)
+function teclaAssist(e, el){
+  if(!assist || assist.el !== el || !assist.aberto || !assist.lista.length) return false;
+  if(e.key === 'ArrowDown' || e.key === 'ArrowUp'){ e.preventDefault(); assist.idx = (assist.idx + (e.key === 'ArrowDown' ? 1 : -1) + assist.lista.length) % assist.lista.length; document.querySelectorAll('#fxAssist [data-fn]').forEach((x, i) => x.classList.toggle('on', i === assist.idx)); return true; }
+  if(e.key === 'Tab' || e.key === 'Enter' && !e.ctrlKey){ e.preventDefault(); e.stopPropagation(); escolheFn(assist.lista[assist.idx]); return true; }
+  if(e.key === 'Escape'){ e.preventDefault(); e.stopPropagation(); assist.aberto = false; document.querySelector('#fxAssist .sug') && document.querySelector('#fxAssist .sug').remove(); return true; }
+  return false;
+}
+// células citadas na fórmula ficam contornadas, cada uma com uma cor (como no Excel)
+const COR_REF = ['#4f8cff', '#e2564f', '#9b59ff', '#2e9e6a', '#d8a94a', '#ff7ac6'];
+function limpaRefs(){ document.querySelectorAll('#vis .refbox').forEach(x => x.remove()); }
+function mostraRefs(v){
+  limpaRefs(); if(vis !== 'grade' || !v || v[0] !== '=') return;
+  const box = $('#vis'), vr = box.getBoundingClientRect(); let k = 0;
+  const partes = String(v).split(/("[^"]*")/).filter((_, i) => i % 2 === 0).join(' ');
+  const re = /(?:('[^']+'|[A-Za-zÀ-ÿ_][\w.À-ÿ]*)!)?\$?([A-Z]{1,3})\$?(\d+)(?::\$?([A-Z]{1,3})\$?(\d+))?/g; let m;
+  while((m = re.exec(partes))){
+    if(m[1] && String(m[1]).replace(/'/g, '').toLowerCase() !== String(G().nome).toLowerCase()) continue;
+    const pre = partes[m.index - 1]; if(pre && /[A-Za-z0-9_]/.test(pre)) continue;
+    const c0 = F.colNum(m[2]), r0 = +m[3] - 1, c1 = m[4] ? F.colNum(m[4]) : c0, r1 = m[5] ? +m[5] - 1 : r0;
+    const a = celTd(Math.min(r0, r1), Math.min(c0, c1)), b = celTd(Math.max(r0, r1), Math.max(c0, c1)); if(!a || !b) { k++; continue; }
+    const ra = a.getBoundingClientRect(), rb = b.getBoundingClientRect(), cor = COR_REF[k++ % COR_REF.length];
+    const d = document.createElement('div'); d.className = 'refbox'; d.style.cssText = `transform:translate(${ra.left - vr.left + box.scrollLeft}px,${ra.top - vr.top + box.scrollTop}px);width:${rb.right - ra.left}px;height:${rb.bottom - ra.top}px;--rc:${cor}`;
+    box.appendChild(d);
+  }
+}
+// clicar numa célula enquanto escreve a fórmula insere a referência (arrastando vira intervalo)
+let pegaRef = null;
+function podeApontar(el){ const v = el.value, p = el.selectionStart ?? v.length; return v[0] === '=' && (/[=;,(+\-*/^&<>:]\s*$/.test(v.slice(0, p)) || pegaRef && pegaRef.el === el && pegaRef.fim === p); }
+function aponta(el, r, c, r2, c2){
+  const v = el.value; const ref = F.colLetra(c) + (r + 1) + (r2 != null && (r2 !== r || c2 !== c) ? ':' + F.colLetra(c2) + (r2 + 1) : '');
+  const ini = pegaRef && pegaRef.el === el ? pegaRef.ini : el.selectionStart ?? v.length, fim = pegaRef && pegaRef.el === el ? pegaRef.fim : ini;
+  el.value = v.slice(0, ini) + ref + v.slice(fim); pegaRef = {el, ini, fim:ini + ref.length, r, c}; el.setSelectionRange(ini + ref.length, ini + ref.length);
+  if(el !== $('#fxIn')) $('#fxIn').value = el.value; atualizaAssist(el);
+}
+
+// ---------- Arquivo: importar, exportar (Excel, CSV, ODS, PDF) e imprimir ----------
+// valores como aparecem (fórmulas saem com o resultado); datas viram data de verdade no Excel/ODS
+function matrizGuia(gu, comoTexto){
+  const cs = gu.cols || [], aoa = [cs.map(c => c.nome)];
+  (gu.ordem || []).forEach((rid, li) => { aoa.push(cs.map((c, ci) => {
+    if(comoTexto) return textoCel(li, ci, gu.id);
+    const v = valor(gu.id, li, ci); if(F.ehErro(v)) return String(v); const t = tipoDe(c);
+    if(t === 'data' && v){ const s = typeof v === 'number' ? F.serieData(v) : String(v); return /^\d{4}-\d{2}-\d{2}$/.test(s) ? new Date(s + 'T00:00') : s; }
+    if(t === 'pessoa') return v ? nomeP(v) : ''; if(t === 'caixa') return v === true ? 'Sim' : ''; return v; })); });
+  while(aoa.length > 1 && aoa[aoa.length - 1].every(x => x === '' || x == null)) aoa.pop();
+  return aoa;
+}
+const nomeArq = (extra = '') => ((meta && meta.nome) || 'planilha').replace(/[\\/:*?"<>|]/g, '_') + extra;
+const baixa = (blob, nome) => { const a = document.createElement('a'); a.href = URL.createObjectURL(blob); a.download = nome; document.body.appendChild(a); a.click(); setTimeout(() => { URL.revokeObjectURL(a.href); a.remove(); }, 1000); };
+async function exportaPlanilha(tipo, soEsta){
+  try{
+    const lista = soEsta ? [guiasOrd().find(x => x.id === g)] : guiasOrd();
+    if(tipo === 'csv'){   // ; e vírgula decimal: abre certinho no Excel em português
+      const aoa = matrizGuia(lista[0], true), q = v => { const s = String(v ?? ''); return /[;"\n\r]/.test(s) ? '"' + s.replace(/"/g, '""') + '"' : s; };
+      baixa(new Blob(['﻿' + aoa.map(l => l.map(q).join(';')).join('\r\n')], {type:'text/csv;charset=utf-8'}), nomeArq(' - ' + lista[0].nome + '.csv')); toast('CSV baixado (guia ' + lista[0].nome + ')'); return; }
+    if(tipo === 'pdf' || tipo === 'imprimir'){ imprime(lista); return; }
+    const X = await xlsx(), wb = X.utils.book_new();
+    lista.forEach(gu => { const ws = X.utils.aoa_to_sheet(matrizGuia(gu), {cellDates:true}); ws['!cols'] = (gu.cols || []).map(c => ({wch:Math.round((c.larg || 160) / 7)})); X.utils.book_append_sheet(wb, ws, String(gu.nome).replace(/[\\/?*[\]:]/g, ' ').slice(0, 31)); });
+    X.writeFile(wb, nomeArq((soEsta ? ' - ' + lista[0].nome : '') + (tipo === 'ods' ? '.ods' : '.xlsx')), {bookType:tipo === 'ods' ? 'ods' : 'xlsx'});
+    toast((tipo === 'ods' ? 'ODS' : 'Excel') + ' baixado (fórmulas saem com o resultado)');
+  }catch(e){ toast('Não exportou: ' + (e.message || e)); }
+}
+// PDF = imprimir em "Salvar como PDF": monta uma versão limpa só com as tabelas, com cores e formatação
+function imprime(lista){
+  let p = document.getElementById('impressao'); if(!p){ p = document.createElement('div'); p.id = 'impressao'; document.body.appendChild(p); }
+  const guiaAntes = g;
+  p.innerHTML = lista.map(gu => { g = gu.id; const cs = gu.cols || [], stats = statsCond(), tab = gu.tabela;
+    const linhas = (gu.ordem || []).map((rid, li) => ({rid, li})).filter(({rid}) => cs.some(c => { const v = bruto(gu.id, rid, c); return v !== undefined && v !== ''; }));
+    return `<section><h1>${esc(meta.nome)} <small>· ${esc(gu.nome)}</small></h1><table${tab ? ` style="--tb:${tab.cor}" class="tab"` : ''}><thead><tr>${cs.map(c => `<th>${esc(c.nome)}</th>`).join('')}</tr></thead><tbody>${linhas.map(({rid, li}) => `<tr>${cs.map((c, ci) => { const fm = fmtDe(rid, c.id, gu.id), cd = condDe(c.id, li, ci, stats), m = mostra(c, valor(gu.id, li, ci), false, fm);
+      return `<td class="${m.cls}" style="${estiloCel(fm, cd)}">${m.h}</td>`; }).join('')}</tr>`).join('')}</tbody></table>
+      <p class="rod">${linhas.length} linha(s) · impresso em ${new Date().toLocaleString('pt-BR')} por ${esc(eu.nome)}</p></section>`; }).join('');
+  g = guiaAntes;
+  toast('Na janela de impressão, escolha "Salvar como PDF" para gerar o arquivo');
+  setTimeout(() => window.print(), 300);
+}
+function menuArquivo(el){
+  const ed = nivel === 'editar';
+  menu([...(ed ? [['Importar Excel ou CSV…', () => $('#arq').click()], '-'] : []),
+    ['Baixar Excel (.xlsx) · todas as guias', () => exportaPlanilha('xlsx')], ['Baixar Excel (.xlsx) · só esta guia', () => exportaPlanilha('xlsx', true)],
+    ['Baixar CSV · esta guia', () => exportaPlanilha('csv', true)], ['Baixar ODS (LibreOffice / Google)', () => exportaPlanilha('ods')], '-',
+    ['PDF · esta guia', () => exportaPlanilha('pdf', true)], ['PDF · todas as guias', () => exportaPlanilha('pdf')], ['Imprimir  Ctrl+P', () => exportaPlanilha('imprimir', true)], '-',
+    ['Atalhos do teclado', janelaAtalhos], ['Ajuda das fórmulas', () => $('#bAjuda').click()]], el);
+}
+$('#bArquivo').onclick = e => menuArquivo(e.currentTarget);
+addEventListener('keydown', e => { if((e.ctrlKey || e.metaKey) && (e.key === 'p' || e.key === 'P') && S){ e.preventDefault(); exportaPlanilha('imprimir', true); } });
 
 // ---------- ajuda ----------
 $('#bAtalhos').onclick = janelaAtalhos;
