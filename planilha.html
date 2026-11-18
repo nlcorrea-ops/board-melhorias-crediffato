@@ -86,8 +86,17 @@ table.g{border-collapse:separate;border-spacing:0;font-size:13px;table-layout:fi
 .g td.num{font-family:var(--f-num);text-align:right;font-variant-numeric:tabular-nums}
 .g td.err{color:var(--crit);font-family:var(--f-num)}
 .g td.fm{background-image:linear-gradient(135deg,transparent 88%,var(--teal) 88%);background-size:8px 8px;background-repeat:no-repeat;background-position:top right}
-.g td.ins{background:var(--red-dim)!important}
-.g td.cur{box-shadow:inset 0 0 0 2px var(--sel);background:rgba(212,15,58,.06)}
+.g td.ins{background:rgba(212,15,58,.07)}
+.g td.cur{background:rgba(212,15,58,.05)}
+/* caixa de seleção que desliza de uma célula para outra (em vez de "pular") */
+.selbox{position:absolute;left:0;top:0;pointer-events:none;z-index:2;border:2px solid var(--sel);border-radius:3px;box-shadow:0 0 0 3px rgba(255,77,109,.12);transition:transform .16s cubic-bezier(.2,.8,.2,1),width .16s cubic-bezier(.2,.8,.2,1),height .16s cubic-bezier(.2,.8,.2,1),opacity .2s}
+.vis.quieto .entra,.vis.quieto .kc,.vis.quieto .rc,.vis.quieto .barr span,.vis.quieto.entra{animation:none}
+.kc.pousa{animation:pousa .45s cubic-bezier(.3,1.5,.5,1)!important}
+.editor{animation:edIn .14s ease-out}
+.g td,.g th{transition:background-color .2s}
+.gu,.vt,.btn,.pill,.chk{transition:all .18s cubic-bezier(.2,.8,.2,1)}
+html{scroll-behavior:auto}
+body{transition:background-color .3s,color .3s}
 .g td.outro{box-shadow:inset 0 0 0 2px var(--cor)}
 .g td.brilha{animation:brilho 1.6s ease-out}
 .g tr:hover td:not(.rn):not(.ins){background-color:rgba(255,255,255,.025)}
@@ -179,6 +188,8 @@ select.editor{padding:0 4px}
 @keyframes linha{from{opacity:0;transform:translateY(-5px)}to{opacity:1;transform:none}}
 @keyframes cresce{from{transform:scaleX(0)}to{transform:scaleX(1)}}
 @keyframes gira{to{transform:rotate(360deg)}}
+@keyframes pousa{0%{transform:scale(.92);opacity:.5}60%{transform:scale(1.04)}100%{transform:none;opacity:1}}
+@keyframes edIn{from{opacity:0;transform:scale(.97)}to{opacity:1;transform:none}}
 @media (prefers-reduced-motion:reduce){*{animation:none!important;transition:none!important}}
 @media (max-width:700px){.barra,.fx{margin-left:8px;margin-right:8px}.area,.guias{margin-left:8px;margin-right:8px}.busca{width:120px}.pres span.t{display:none}}
 </style>
@@ -427,7 +438,7 @@ const iniciais = n => String(n || '?').trim().split(/\s+/).map(w => w[0]).slice(
 const reduz = matchMedia('(prefers-reduced-motion: reduce)').matches;
 
 let eu = null, nivel = 'ver', meta = null, S = null, DIR = [], SETORES = [], g = null, vis = 'grade', busca = '';
-let sel = {r:0, c:0}, ancora = null, editando = null, desfazer = [], mesAtual = null, primeira = true;
+let entrada = true, sel = {r:0, c:0}, ancora = null, editando = null, desfazer = [], mesAtual = null, primeira = true;
 
 // ---------- avisos ----------
 function aviso(t, p, link){ $('#aviso').classList.remove('hidden'); $('#avisoT').textContent = t; $('#avisoP').textContent = p || ''; $('#avisoL').classList.toggle('hidden', !link); $('#avisoGira').classList.toggle('hidden', !!link); }
@@ -575,6 +586,7 @@ function converte(c, s){
 // ---------- pintura ----------
 function pinta(antes){
   memo = new Map();
+  $('#vis').classList.toggle('quieto', !entrada); entrada = false;   // só anima a entrada ao abrir/trocar de visão ou guia; edição ao vivo não "pisca"
   pintaGuias();
   if(vis === 'grade') pintaGrade(antes); else if(vis === 'quadro') pintaQuadro(); else if(vis === 'cal') pintaCal(); else pintaResumo();
   pintaFx(); pintaPres();
@@ -589,7 +601,7 @@ function pintaGrade(antes){
   const largs = cs.map(c => c.larg || (tipoDe(c) === 'texto' ? 220 : tipoDe(c) === 'caixa' ? 90 : 150));
   const novas = antes && antes.guias && antes.guias[g] ? new Set(ordem().filter(r => !(antes.guias[g].ordem || []).includes(r))) : new Set();
   const mudou = (rid, cid) => antes && antes.dados && antes.dados[g] && JSON.stringify(((antes.dados[g] || {})[rid] || {})[cid]) !== JSON.stringify(cel(g, rid, cid)) && !novas.has(rid);
-  const sx = box.scrollLeft, sy = box.scrollTop;
+  const sx = box.scrollLeft, sy = box.scrollTop, selVelha = box.querySelector('.selbox');
   box.innerHTML = `<table class="g" id="gT" style="width:${46 + largs.reduce((a, b) => a + b, 0)}px"><colgroup><col style="width:46px">${largs.map(w => `<col style="width:${w}px">`).join('')}</colgroup>
     <thead><tr><th class="rn"></th>${cs.map((c, ci) => `<th class="${ci === 0 ? 'c0' : ''}" data-col="${ci}" title="${esc(TIPOS.find(t => t[0] === tipoDe(c))[1])} · clique para opções"><span class="l">${F.colLetra(ci)}</span>${esc(c.nome)}<span class="ti">${c.formula ? 'fx' : esc(TIPOS.find(t => t[0] === tipoDe(c))[2])}</span></th>`).join('')}</tr></thead>
     <tbody>${lst.map(({rid, i}) => `<tr data-r="${i}"${novas.has(rid) ? ' class="nova"' : ''}><td class="rn" data-rn="${i}">${i + 1}</td>${cs.map((c, ci) => { const raw = bruto(g, rid, c), ehF = typeof raw === 'string' && raw[0] === '='; const m = mostra(c, valor(g, i, ci), ehF);
@@ -597,6 +609,7 @@ function pintaGrade(antes){
       return `<td data-r="${i}" data-c="${ci}" class="${ci === 0 ? 'c0 ' : ''}${m.cls}${ehF && raw === cel(g, rid, c.id) ? ' fm' : ''}${venc ? ' late' : ''}${mudou(rid, c.id) ? ' brilha' : ''}">${m.h}</td>`; }).join('')}</tr>`).join('')}
     ${nivel === 'editar' && !busca ? `<tr class="addl"><td class="rn">+</td><td colspan="${cs.length}" id="addLinha">Nova linha</td></tr>` : ''}</tbody></table>
     ${!cs.length ? '<div class="vazio">Esta guia não tem colunas. Clique em <b>+ Coluna</b>.</div>' : ''}`;
+  if(selVelha) box.appendChild(selVelha);
   box.scrollLeft = sx; box.scrollTop = sy;
   marcaSel();
 }
@@ -607,6 +620,14 @@ function marcaSel(){
   const a = ancora || sel, r0 = Math.min(a.r, sel.r), r1 = Math.max(a.r, sel.r), c0 = Math.min(a.c, sel.c), c1 = Math.max(a.c, sel.c);
   if(r0 !== r1 || c0 !== c1) document.querySelectorAll('#gT td[data-c]').forEach(td => { const r = +td.dataset.r, c = +td.dataset.c; if(r >= r0 && r <= r1 && c >= c0 && c <= c1) td.classList.add('ins'); });
   const td = celTd(sel.r, sel.c); if(td){ td.classList.add('cur'); }
+  const box = $('#vis'); let sb = box.querySelector('.selbox');
+  const ta = celTd(r0, c0), tb = celTd(r1, c1);
+  if(ta && tb && vis === 'grade'){
+    if(!sb){ sb = document.createElement('div'); sb.className = 'selbox'; sb.style.opacity = 0; box.appendChild(sb); const r = ta.getBoundingClientRect(), v = box.getBoundingClientRect(); sb.style.transform = `translate(${r.left - v.left + box.scrollLeft}px,${r.top - v.top + box.scrollTop}px)`; requestAnimationFrame(() => { sb.style.opacity = 1; }); }
+    const v = box.getBoundingClientRect(), a1 = ta.getBoundingClientRect(), b1 = tb.getBoundingClientRect();
+    sb.style.transform = `translate(${a1.left - v.left + box.scrollLeft - 1}px,${a1.top - v.top + box.scrollTop - 1}px)`;
+    sb.style.width = (b1.right - a1.left + 2) + 'px'; sb.style.height = (b1.bottom - a1.top + 2) + 'px';
+  } else if(sb) sb.remove();
   pintaFx();
 }
 const celTd = (r, c) => document.querySelector(`#gT td[data-r="${r}"][data-c="${c}"]`);
@@ -646,7 +667,7 @@ function pintaQuadro(){
   box.querySelectorAll('.col').forEach(col => {
     col.addEventListener('dragover', e => { e.preventDefault(); col.classList.add('sobre'); });
     col.addEventListener('dragleave', () => col.classList.remove('sobre'));
-    col.addEventListener('drop', e => { e.preventDefault(); col.classList.remove('sobre'); if(!arr) return; grava([[['dados', g, arr, cSt.id], col.dataset.st || '']]); pinta(); });
+    col.addEventListener('drop', e => { e.preventDefault(); col.classList.remove('sobre'); if(!arr) return; grava([[['dados', g, arr, cSt.id], col.dataset.st || '']]); pinta(); const k = document.querySelector(`.kc[data-rid="${arr}"]`); if(k && !reduz) k.classList.add('pousa'); });
   });
 }
 // ---------- calendário ----------
@@ -758,7 +779,7 @@ function move(dr, dc, estende){
   const nr = Math.max(0, Math.min(ordem().length - 1, sel.r + dr)), nc = Math.max(0, Math.min(cols().length - 1, sel.c + dc));
   if(estende){ ancora = ancora || {...sel}; } else ancora = null;
   sel = {r:nr, c:nc}; marcaSel(); presenca();
-  const td = celTd(sel.r, sel.c); if(td) td.scrollIntoView({block:'nearest', inline:'nearest'});
+  const td = celTd(sel.r, sel.c); if(td) td.scrollIntoView({block:'nearest', inline:'nearest', behavior:reduz ? 'auto' : 'smooth'});
 }
 
 // ---------- copiar / colar (Excel) ----------
@@ -910,7 +931,7 @@ $('#nome').addEventListener('change', () => { const v = $('#nome').value.trim();
 $('#nome').addEventListener('keydown', e => { if(e.key === 'Enter') $('#nome').blur(); });
 
 // ---------- visões ----------
-function trocaVis(v){ vis = v; document.querySelectorAll('.vt').forEach(b => b.classList.toggle('on', b.dataset.v === v)); $('#fxBar').classList.toggle('hidden', v !== 'grade');
+function trocaVis(v){ vis = v; entrada = true; document.querySelectorAll('.vt').forEach(b => b.classList.toggle('on', b.dataset.v === v)); $('#fxBar').classList.toggle('hidden', v !== 'grade');
   const el = $('#vis'); el.classList.remove('entra'); void el.offsetWidth; if(!reduz) el.classList.add('entra'); pinta(); presenca(); }
 document.querySelectorAll('.vt').forEach(b => b.onclick = () => trocaVis(b.dataset.v));
 let tBusca = 0; $('#busca').addEventListener('input', e => { clearTimeout(tBusca); tBusca = setTimeout(() => { busca = e.target.value.trim(); pinta(); }, 150); });
