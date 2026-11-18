@@ -27,7 +27,7 @@ html,body{margin:0;height:100%}
 body{background:var(--bg);color:var(--t1);font-family:var(--f-ui);font-size:13.5px;display:flex;flex-direction:column;overflow:hidden}
 button{font:inherit;color:inherit}
 :focus-visible{outline:2px solid var(--red-hi);outline-offset:2px}
-.hidden{display:none!important}
+.hidden,.semperm{display:none!important}
 
 /* topo */
 .topo{display:flex;align-items:center;gap:12px;padding:10px 16px;background:var(--s1);border-bottom:1px solid var(--hair);flex-wrap:wrap;position:relative}
@@ -81,14 +81,26 @@ table.g{border-collapse:separate;border-spacing:0;font-size:13px;table-layout:fi
 .g thead th .ti{float:right;font-family:var(--f-num);font-weight:400;color:var(--t3);font-size:10.5px}
 .g .rn{width:46px;text-align:center;color:var(--t3);font-family:var(--f-num);font-size:11px;background:var(--s2);position:sticky;left:0;z-index:2;cursor:pointer;padding:0}
 .g thead .rn{z-index:4;cursor:default}
-.g td.c0{position:sticky;left:46px;background:var(--s1);z-index:1}
-.g thead th.c0{left:46px;z-index:4}
+.g td.fz{position:sticky;background-color:var(--s1);z-index:1}
+.g thead th.fz{position:sticky;z-index:4}
+.g td.fzr{position:sticky;z-index:2;background-color:var(--s1)}.g td.fzr.rn{z-index:3;background:var(--s2)}.g td.fzr.fz{z-index:3}
+.g td.fzc,.g th.fzc{box-shadow:inset -2px 0 0 color-mix(in srgb,var(--t3) 60%,transparent)}
+.g tr.fzfim td{border-bottom:2px solid color-mix(in srgb,var(--t3) 60%,transparent)}
+.g tfoot td.fz{z-index:3}
+#gT{zoom:var(--zoom,1)}
+body.sem-grade .g td:not(.rn){border-color:transparent}
+.g th.ocl,.g td.ocl{padding:0;background:repeating-linear-gradient(90deg,var(--hair) 0 1px,transparent 1px 3px)!important;cursor:pointer}
+.g td.rn.pos-oc{box-shadow:inset 0 3px 0 -1px var(--t3)}
+.g td.tem-com{background-image:linear-gradient(225deg,#9b59ff 7px,transparent 7px)}
+.g td.inval{background-image:linear-gradient(135deg,#e2564f 6px,transparent 6px);outline:1px dashed rgba(226,86,79,.6);outline-offset:-2px}
+.editor.erro{animation:treme .35s;box-shadow:0 0 0 3px rgba(226,86,79,.45)}
+@keyframes treme{20%,60%{transform:translateX(-4px)}40%,80%{transform:translateX(4px)}}
 .g td{cursor:cell}
 .g td.num{font-family:var(--f-num);text-align:right;font-variant-numeric:tabular-nums}
 .g td.err{color:var(--crit);font-family:var(--f-num)}
 .g td.fm{background-image:linear-gradient(135deg,transparent 88%,var(--teal) 88%);background-size:8px 8px;background-repeat:no-repeat;background-position:top right}
-.g td.ins{background:rgba(212,15,58,.07)}
-.g td.cur{background:rgba(212,15,58,.05)}
+.g td.ins{box-shadow:inset 0 0 0 999px rgba(212,15,58,.07)}
+.g td.cur{box-shadow:inset 0 0 0 999px rgba(212,15,58,.04)}
 /* caixa de seleção que desliza de uma célula para outra (em vez de "pular") */
 .selbox{position:absolute;left:0;top:0;pointer-events:none;z-index:2;border:2px solid var(--sel);border-radius:3px;box-shadow:0 0 0 3px rgba(255,77,109,.12);transition:transform .16s cubic-bezier(.2,.8,.2,1),width .16s cubic-bezier(.2,.8,.2,1),height .16s cubic-bezier(.2,.8,.2,1),opacity .2s}
 .vis.quieto .entra,.vis.quieto .kc,.vis.quieto .rc,.vis.quieto .barr span,.vis.quieto.entra{animation:none}
@@ -120,6 +132,56 @@ body.fxmodo .g thead th .l{display:inline}
 .assist .res span{color:var(--t3);font-size:11px}.assist .res b{font-family:var(--f-num)}.assist .res b.err{color:var(--crit)}
 .btn .seta{width:0;height:0;border-left:3px solid transparent;border-right:3px solid transparent;border-top:4px solid currentColor;opacity:.6}
 #impressao{display:none}
+.corpo{flex:1;min-height:0;display:flex;gap:0;margin:8px 16px 0}
+.corpo .area{margin:0;flex:1;min-width:0}
+.gaveta{width:0;overflow:hidden;transition:width .28s cubic-bezier(.2,.8,.2,1);display:flex;flex-direction:column;background:var(--s1);border:1px solid transparent;border-radius:12px 12px 0 0;margin-left:0}
+body.com-gaveta .gaveta{width:340px;border-color:var(--hair);margin-left:8px}
+.gaveta header{display:flex;align-items:center;justify-content:space-between;padding:10px 12px;border-bottom:1px solid var(--hair2);gap:8px;width:338px;box-sizing:border-box}
+.gaveta .gfil{display:flex;gap:4px;padding:8px 12px 0;width:338px;box-sizing:border-box}.gaveta .gfil button{all:unset;cursor:pointer;font-size:12px;padding:4px 9px;border-radius:99px;color:var(--t2);border:1px solid var(--hair)}.gaveta .gfil button.on{background:var(--red-dim);color:var(--red-hi);border-color:transparent}
+.gaveta .novo{display:grid;gap:6px;padding:10px 12px;border-bottom:1px solid var(--hair2);width:338px;box-sizing:border-box}.gaveta .novo small{color:var(--t3)}
+.gaveta textarea{resize:vertical;padding:7px 9px;border-radius:9px;border:1px solid var(--hair);background:var(--s2);color:var(--t1);font:inherit;font-size:12.5px}
+.gaveta .novo .btn{justify-self:end}
+.glista{flex:1;overflow:auto;padding:8px 10px;display:grid;grid-template-columns:minmax(0,1fr);gap:8px;align-content:start;width:338px;box-sizing:border-box}
+.cth,.hit{min-width:0}.cacoes textarea{min-width:0}.cacoes .btn{padding:6px 8px}
+.cth{border:1px solid var(--hair2);border-radius:10px;padding:9px 10px;display:grid;gap:7px;animation:sobe .25s ease both}.cth.ok{opacity:.65}
+.ctop{display:flex;justify-content:space-between;font-size:11.5px;color:var(--t3)}.ctop a,.hit a{color:var(--red-hi);cursor:pointer;font-family:var(--f-num)}
+.cmsg{display:flex;gap:8px;font-size:12.5px}.cmsg p{margin:2px 0 0;color:var(--t2);word-break:break-word}.cmsg.resp{margin-left:14px}
+.av{width:24px;height:24px;border-radius:50%;display:grid;place-items:center;font-size:9.5px;color:#0b0b0d;flex:none;font-weight:700}
+b.men{color:var(--red-hi);background:var(--red-dim);border-radius:4px;padding:0 3px;font-weight:600}
+.cacoes{display:flex;gap:6px;align-items:flex-start}.cacoes textarea{flex:1;min-height:30px}
+.hit{display:flex;gap:9px;font-size:12.5px;padding:7px 4px;border-bottom:1px solid var(--hair2)}.hit p{margin:0}.hit .dif{color:var(--t2);margin:3px 0;word-break:break-word}.hit .dif s{color:var(--t3)}.hit .dif span{color:var(--t1);font-weight:600}.hit small{color:var(--t3)}
+.men-l{min-width:200px}.men-l button{gap:8px}
+#balao{position:fixed;z-index:35;max-width:280px;background:var(--s1);border:1px solid #9b59ff;border-radius:10px;padding:8px 10px;font-size:12px;box-shadow:0 14px 30px -14px #000;animation:sobe .15s ease both;pointer-events:none}#balao p{margin:0 0 5px}#balao small{color:var(--t3)}
+.grafico{position:absolute;z-index:5;background:var(--s1);border:1px solid var(--hair);border-radius:12px;box-shadow:0 18px 40px -22px #000;display:flex;flex-direction:column;overflow:hidden;animation:sobe .3s cubic-bezier(.2,.8,.2,1) both;
+  --ser1:#3987e5;--ser2:#d95926;--ser3:#199e70;--ser4:#c98500;--ser5:#d55181;--ser6:#0ca30c;--ser7:#9085e9;--ser8:#e66767}
+:root[data-theme="claro"] .grafico{--ser1:#2a78d6;--ser2:#eb6834;--ser3:#1baf7a;--ser4:#eda100;--ser5:#e87ba4;--ser6:#008300;--ser7:#6250d6;--ser8:#e34948}
+.grafico.mexendo{box-shadow:0 26px 60px -20px #000;opacity:.92;transition:none}
+.grafico header{display:flex;align-items:flex-start;justify-content:space-between;padding:9px 12px 4px;cursor:move;user-select:none;gap:8px}.grafico header b{display:block;font-size:13px}.grafico header small{color:var(--t3);font-size:11.5px}
+.gbtn{all:unset;cursor:pointer;width:24px;height:24px;border-radius:6px;display:grid;place-items:center;color:var(--t2)}.gbtn:hover{background:var(--s2)}
+.gcorpo{flex:1;min-height:0;padding:0 10px 10px}.gcorpo svg{display:block}
+.gres{position:absolute;right:2px;bottom:2px;width:14px;height:14px;cursor:nwse-resize;background:linear-gradient(135deg,transparent 50%,var(--t3) 50%,var(--t3) 60%,transparent 60%,transparent 72%,var(--t3) 72%,var(--t3) 82%,transparent 82%)}
+.grafico .ggrid{stroke:var(--hair2);stroke-width:1}.grafico .gax{fill:var(--t3);font-size:10.5px;font-family:var(--f-ui)}.grafico .gleg{fill:var(--t2);font-size:11.5px;font-family:var(--f-ui)}
+.grafico .gtot{fill:var(--t1);font-size:18px;font-weight:600;font-family:var(--f-num)}.grafico .gsub{fill:var(--t3);font-size:10.5px;font-family:var(--f-ui)}
+.grafico [data-tt]{cursor:default;transition:opacity .15s}.grafico svg:hover [data-tt]:not(:hover){opacity:.75}.grafico circle[data-tt]{opacity:1!important}
+.gvazio{display:grid;place-items:center;height:100%;color:var(--t3);font-size:12.5px}
+#gtip{position:fixed;z-index:50;pointer-events:none;background:var(--t1);color:var(--bg);font-size:12px;padding:5px 9px;border-radius:7px;white-space:nowrap;font-weight:500}
+.gtipos{display:grid;grid-template-columns:repeat(5,1fr);gap:6px}
+.gtipo{all:unset;cursor:pointer;display:grid;justify-items:center;gap:5px;padding:9px 4px;border-radius:10px;border:1px solid var(--hair);font-size:11.5px;color:var(--t2);transition:border-color .15s,background .15s}
+.gtipo.on{border-color:var(--red-hi);background:var(--red-dim);color:var(--t1)}
+.gi{width:34px;height:24px;display:block;background:var(--t3);-webkit-mask:var(--m) center/contain no-repeat;mask:var(--m) center/contain no-repeat}.gtipo.on .gi{background:var(--red-hi)}
+.gi-colunas{--m:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 34 24'%3E%3Crect x='3' y='10' width='6' height='14' rx='1'/%3E%3Crect x='14' y='3' width='6' height='21' rx='1'/%3E%3Crect x='25' y='7' width='6' height='17' rx='1'/%3E%3C/svg%3E")}
+.gi-barras{--m:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 34 24'%3E%3Crect x='0' y='2' width='26' height='5' rx='1'/%3E%3Crect x='0' y='10' width='34' height='5' rx='1'/%3E%3Crect x='0' y='18' width='18' height='5' rx='1'/%3E%3C/svg%3E")}
+.gi-linhas{--m:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 34 24'%3E%3Cpolyline points='1,20 10,11 18,15 33,3' fill='none' stroke='black' stroke-width='3'/%3E%3C/svg%3E")}
+.gi-area{--m:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 34 24'%3E%3Cpath d='M0 24V18L10 9L18 14L34 2V24Z'/%3E%3C/svg%3E")}
+.gi-pizza{--m:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 34 24'%3E%3Cpath d='M17 0a12 12 0 1 1-12 12h5a7 7 0 1 0 7-7z'/%3E%3Cpath d='M15 0v10H5A10 10 0 0 1 15 0z'/%3E%3C/svg%3E")}
+.fnw{display:grid;grid-template-columns:160px 1fr;gap:10px;height:300px}
+.fnw > div{overflow:auto;border:1px solid var(--hair2);border-radius:10px;padding:4px;display:grid;align-content:start;gap:1px}
+.fnw button{all:unset;cursor:pointer;padding:6px 9px;border-radius:7px;font-size:12.5px;display:flex;gap:10px;align-items:baseline}
+.fnw button b{font-family:var(--f-num);min-width:150px}.fnw button span{color:var(--t3);font-size:11.5px}
+.fnw button.on,.fnw button:hover{background:var(--red-dim)}
+.fnd{min-height:44px;font-size:12.5px}.fnd b{font-family:var(--f-num);color:var(--red-hi)}.fnd p{margin:4px 0 0;color:var(--t2)}
+.campo textarea{padding:8px 10px;border-radius:9px;border:1px solid var(--hair);background:var(--s2);color:var(--t1);font:inherit;font-size:13px;resize:vertical}
+@media (max-width:700px){.corpo{margin-left:8px;margin-right:8px}body.com-gaveta .gaveta{position:fixed;inset:auto 0 0 0;width:auto;height:60vh;z-index:30;margin:0;border-radius:14px 14px 0 0}}
 @media print{
   body{display:block!important;overflow:visible!important;background:#fff!important;color:#000!important}
   body > *:not(#impressao){display:none!important}
@@ -221,7 +283,12 @@ select.editor{padding:0 4px}
 .ajuda code{font-family:var(--f-num);color:var(--t2)}
 
 /* fita (Página Inicial) */
-.fita{display:flex;align-items:stretch;gap:0;margin:8px 16px 0;padding:6px 6px 2px;border:1px solid var(--hair);border-radius:12px;background:var(--s1);overflow-x:auto;scrollbar-width:thin}
+.fita{display:flex;flex-direction:column;margin:8px 16px 0;border:1px solid var(--hair);border-radius:12px;background:var(--s1);overflow:hidden}
+.grupos{display:flex;align-items:stretch;padding:6px 6px 2px;overflow-x:auto;scrollbar-width:thin;min-height:84px;animation:entra .2s ease}
+.abasf{display:flex;gap:2px;padding:4px 8px 0;border-bottom:1px solid var(--hair2);overflow-x:auto;scrollbar-width:none}
+.abasf button{all:unset;cursor:pointer;padding:6px 12px 7px;font-size:12.5px;color:var(--t2);border-bottom:2px solid transparent;white-space:nowrap;position:relative;transition:color .15s,border-color .15s}
+.abasf button:hover{color:var(--t1)}.abasf button.on{color:var(--t1);border-bottom-color:var(--red);font-weight:600}
+.abasf button[data-n]:not([data-n=""])::after{content:attr(data-n);position:absolute;top:1px;right:0;min-width:15px;height:15px;border-radius:99px;background:var(--red);color:#fff;font-size:9.5px;display:grid;place-items:center;font-weight:700}
 .grp{display:flex;flex-direction:column;justify-content:space-between;gap:3px;padding:0 10px;border-right:1px solid var(--hair2);flex:none;position:relative}
 .grp:last-child{border-right:0}
 .grp > .grow,.grp > .fcol{display:flex;align-items:center;gap:2px}
@@ -295,7 +362,7 @@ kbd{font-family:var(--f-num);font-size:11px;padding:1px 6px;border-radius:5px;bo
 @keyframes pousa{0%{transform:scale(.92);opacity:.5}60%{transform:scale(1.04)}100%{transform:none;opacity:1}}
 @keyframes edIn{from{opacity:0;transform:scale(.97)}to{opacity:1;transform:none}}
 @media (prefers-reduced-motion:reduce){*{animation:none!important;transition:none!important}}
-@media (max-width:700px){.fita{margin-left:8px;margin-right:8px}.barra,.fx{margin-left:8px;margin-right:8px}.area,.guias{margin-left:8px;margin-right:8px}.busca{width:120px}.pres span.t{display:none}}
+@media (max-width:700px){.fita{margin-left:8px;margin-right:8px}.barra,.fx{margin-left:8px;margin-right:8px}.guias{margin-left:8px;margin-right:8px}.busca{width:120px}.pres span.t{display:none}}
 </style>
 <script>try{ var t = localStorage.getItem('theme'); if(t === 'claro') document.documentElement.setAttribute('data-theme', 'claro'); }catch(e){}</script>
 </head>
@@ -317,7 +384,9 @@ kbd{font-family:var(--f-num);font-size:11px;padding:1px 6px;border-radius:5px;bo
     <button class="btn" id="bTema" title="Tema claro / escuro" aria-label="Tema claro ou escuro"></button>
   </div>
 </div>
-<div class="fita" id="fita" role="toolbar" aria-label="Página Inicial">
+<div class="fita" id="fita" role="toolbar" aria-label="Faixa de opções">
+<div class="abasf" role="tablist"><button data-aba="inicio">Página Inicial</button><button data-aba="inserir">Inserir</button><button data-aba="formulas">Fórmulas</button><button data-aba="dados">Dados</button><button data-aba="revisao">Revisão</button><button data-aba="exibir">Exibir</button></div>
+<div class="grupos">
   <div class="grp so-edita"><div class="grow"><button class="fb" data-cmd="desfaz" id="bDesfaz" title="Desfazer (Ctrl+Z)" disabled><svg viewBox="0 0 16 16"><path d="M5.5 3.5L2.5 6.5l3 3M2.8 6.5h6.7a4 4 0 0 1 0 8H7"/></svg></button><button class="fb" data-cmd="refaz" id="bRefaz" title="Refazer (Ctrl+Y)" disabled><svg viewBox="0 0 16 16"><path d="M10.5 3.5l3 3-3 3M13.2 6.5H6.5a4 4 0 0 0 0 8H9"/></svg></button></div><span class="gl">Desfazer</span></div>
   <div class="grp"><div class="grow"><button class="fb big so-edita" data-cmd="colar" title="Colar (Ctrl+V)"><svg viewBox="0 0 16 16"><rect x="3" y="3" width="10" height="11.5" rx="1.3"/><path d="M6 3V2h4v1"/><path d="M5.5 7.5h5M5.5 10h5"/></svg><span>Colar</span></button>
     <div class="fcol"><button class="fb so-edita" data-cmd="recortar" title="Recortar (Ctrl+X)"><svg viewBox="0 0 16 16"><circle cx="4.5" cy="12" r="2"/><circle cx="11.5" cy="12" r="2"/><path d="M5.8 10.5L11.5 2M10.2 10.5L4.5 2"/></svg></button><button class="fb" data-cmd="copiar" title="Copiar (Ctrl+C)"><svg viewBox="0 0 16 16"><rect x="5" y="5" width="8.5" height="9" rx="1.2"/><path d="M3 11V3a1 1 0 0 1 1-1h6"/></svg></button><button class="fb so-edita" data-cmd="pincel" title="Pincel de formatação: copia o formato da célula e aplica em outras"><svg viewBox="0 0 16 16"><rect x="2" y="2" width="10" height="4" rx="1"/><path d="M12 4h1.5v3.5H8V10"/><rect x="6.8" y="10" width="2.4" height="4.5" rx=".6"/></svg></button></div></div><span class="gl">Área de Transferência</span></div>
@@ -334,9 +403,23 @@ kbd{font-family:var(--f-num);font-size:11px;padding:1px 6px;border-radius:5px;bo
   <div class="grp"><div class="fcol"><button class="fb wide so-edita" data-cmd="cond"><svg viewBox="0 0 16 16"><rect x="2" y="2" width="12" height="12" rx="1"/><path d="M2 6h12M2 10h12M6 2v12"/><rect x="7" y="7" width="6" height="2" fill="#e2564f" stroke="none"/></svg><span>Formatação Condicional</span><i class="seta"></i></button><button class="fb wide so-edita" data-cmd="tabela"><svg viewBox="0 0 16 16"><rect x="2" y="2" width="12" height="12" rx="1"/><path d="M2 6h12M2 10h12M6 6v8M10 6v8"/><rect x="2" y="2" width="12" height="4" fill="currentColor" stroke="none" opacity=".45"/></svg><span>Formatar como Tabela</span><i class="seta"></i></button><button class="fb wide so-edita" data-cmd="limpafmt"><svg viewBox="0 0 16 16"><path d="M9.5 2.5l4 4-6 6h-4l-1.5-1.5z"/><path d="M6 6l4 4M8 14.5h6"/></svg><span>Limpar Formatação</span></button></div><span class="gl">Estilos</span></div>
   <div class="grp so-edita"><div class="fcol"><button class="fb wide" data-cmd="inserir"><svg viewBox="0 0 16 16"><rect x="2" y="3" width="12" height="10" rx="1"/><path d="M8 5.5v5M5.5 8h5"/></svg><span>Inserir</span><i class="seta"></i></button><button class="fb wide" data-cmd="excluir"><svg viewBox="0 0 16 16"><rect x="2" y="3" width="12" height="10" rx="1"/><path d="M6 6l4 4M10 6l-4 4"/></svg><span>Excluir</span><i class="seta"></i></button><button class="fb wide" data-cmd="formatar"><svg viewBox="0 0 16 16"><rect x="2" y="3" width="12" height="10" rx="1"/><path d="M6 3v10M2 8h12"/></svg><span>Formatar</span><i class="seta"></i></button></div><span class="gl">Células</span></div>
   <div class="grp"><div class="fcol"><button class="fb wide so-edita" data-cmd="soma" title="AutoSoma"><b class="tx" style="font-size:15px">Σ</b><span>AutoSoma</span><i class="seta"></i></button><button class="fb wide" data-cmd="classifica"><svg viewBox="0 0 16 16"><path d="M4 2.5v11M2 11.5l2 2 2-2M8.5 3.5h5l-3.5 4.5v4l-1.5 1v-5z"/></svg><span>Classificar e Filtrar</span><i class="seta"></i></button><button class="fb wide" data-cmd="localiza"><svg viewBox="0 0 16 16"><circle cx="7" cy="7" r="4.2"/><path d="M10.2 10.2l3.3 3.3"/></svg><span>Localizar</span><i class="seta"></i></button></div><span class="gl">Edição</span></div>
+  <div class="grp so-edita" data-aba="inserir"><div class="grow"><button class="fb big" data-cmd="grafico" title="Inserir gráfico"><svg viewBox="0 0 16 16"><path d="M2.5 13.5h11"/><rect x="3.5" y="8" width="2.2" height="5" rx=".6"/><rect x="7" y="4.5" width="2.2" height="8.5" rx=".6"/><rect x="10.5" y="6.5" width="2.2" height="6.5" rx=".6"/></svg><span>Gráfico ▾</span></button></div><span class="gl">Gráficos</span></div>
+  <div class="grp so-edita" data-aba="inserir"><div class="grow"><button class="fb big" data-cmd="comentar" title="Novo comentário (Shift+F2)"><svg viewBox="0 0 16 16"><path d="M2.5 3.5h11v7h-6l-3 2.5v-2.5h-2z"/><path d="M8 5.5v3M6.5 7h3"/></svg><span>Comentário</span></button><button class="fb big" data-cmd="link" title="Inserir link"><svg viewBox="0 0 16 16"><path d="M6.5 9.5l3-3M7 4.5l1-1a2.5 2.5 0 0 1 3.5 3.5l-1 1M9 11.5l-1 1a2.5 2.5 0 0 1-3.5-3.5l1-1"/></svg><span>Link</span></button></div><span class="gl">Anotações</span></div>
+  <div class="grp so-edita" data-aba="inserir"><div class="fcol"><button class="fb wide" data-cmd="inslinha"><svg viewBox="0 0 16 16"><rect x="2" y="3" width="12" height="10" rx="1"/><path d="M2 8h12"/></svg><span>Linha acima</span></button><button class="fb wide" data-cmd="inscoluna"><svg viewBox="0 0 16 16"><rect x="2" y="3" width="12" height="10" rx="1"/><path d="M8 3v10"/></svg><span>Coluna à esquerda</span></button><button class="fb wide" data-cmd="insguia"><svg viewBox="0 0 16 16"><path d="M2.5 12.5h11M4 12.5V6h8v6.5M8 7.5v3M6.5 9h3"/></svg><span>Nova guia</span></button></div><span class="gl">Células</span></div>
+  <div class="grp so-edita" data-aba="formulas"><div class="grow"><button class="fb big" data-cmd="funcao" title="Inserir função (Shift+F3)"><b class="tx" style="font-size:18px;font-style:italic;font-family:Georgia,serif">fx</b><span>Inserir função</span></button><button class="fb big" data-cmd="soma" title="AutoSoma (Alt+=)"><b class="tx" style="font-size:20px">Σ</b><span>AutoSoma ▾</span></button><button class="fb big" data-cmd="fncat" title="Funções por categoria"><svg viewBox="0 0 16 16"><rect x="2.5" y="2.5" width="4.5" height="4.5" rx="1"/><rect x="9" y="2.5" width="4.5" height="4.5" rx="1"/><rect x="2.5" y="9" width="4.5" height="4.5" rx="1"/><rect x="9" y="9" width="4.5" height="4.5" rx="1"/></svg><span>Biblioteca ▾</span></button></div><span class="gl">Biblioteca de funções</span></div>
+  <div class="grp" data-aba="formulas"><div class="fcol"><button class="fb wide" data-cmd="mostrafx"><b class="tx" style="font-size:11px">=fx</b><span>Mostrar fórmulas</span></button><button class="fb wide" data-cmd="recalc"><svg viewBox="0 0 16 16"><path d="M13 8a5 5 0 1 1-1.5-3.6M13 2.5v3h-3"/></svg><span>Recalcular (F9)</span></button></div><span class="gl">Auditoria</span></div>
+  <div class="grp" data-aba="dados"><div class="grow"><button class="fb big" data-cmd="az" title="Classificar de A a Z"><b class="tx" style="font-size:12px">A↓Z</b><span>A → Z</span></button><button class="fb big" data-cmd="za" title="Classificar de Z a A"><b class="tx" style="font-size:12px">Z↓A</b><span>Z → A</span></button><button class="fb big" data-cmd="classvarias" title="Classificar por várias colunas"><svg viewBox="0 0 16 16"><path d="M4 2.5v11M2 11.5l2 2 2-2M8.5 4h5M8.5 8h4M8.5 12h3"/></svg><span>Classificar…</span></button></div><span class="gl">Classificar</span></div>
+  <div class="grp" data-aba="dados"><div class="grow"><button class="fb big" data-cmd="filtro" title="Filtro (Ctrl+Shift+L)"><svg viewBox="0 0 16 16"><path d="M2.5 3h11l-4.2 5.2v4.3l-2.6 1.2V8.2z"/></svg><span>Filtro</span></button><button class="fb big" data-cmd="limpafiltro" title="Limpar filtros"><svg viewBox="0 0 16 16"><path d="M2.5 3h11l-4.2 5.2v4.3l-2.6 1.2V8.2z"/><path d="M11 11l3 3M14 11l-3 3"/></svg><span>Limpar</span></button></div><span class="gl">Filtro</span></div>
+  <div class="grp so-edita" data-aba="dados"><div class="grow"><button class="fb big" data-cmd="validacao" title="Validação de dados (lista suspensa e regras)"><svg viewBox="0 0 16 16"><rect x="2" y="3" width="12" height="10" rx="1"/><path d="M10 6.5l1.5 1.5L10 9.5M4.5 6.5l1.8 2 3-3.5"/></svg><span>Validação</span></button><button class="fb big" data-cmd="duplicatas" title="Remover duplicatas"><svg viewBox="0 0 16 16"><rect x="2.5" y="2.5" width="7" height="7" rx="1"/><rect x="6.5" y="6.5" width="7" height="7" rx="1"/><path d="M8.5 10l3 2M11.5 10l-3 2"/></svg><span>Duplicatas</span></button><button class="fb big" data-cmd="importar" title="Importar Excel ou CSV"><svg viewBox="0 0 16 16"><path d="M8 2.5v7.5M5 7l3 3 3-3M3 11.5v2h10v-2"/></svg><span>Importar</span></button></div><span class="gl">Ferramentas de dados</span></div>
+  <div class="grp" data-aba="revisao"><div class="grow"><button class="fb big so-edita" data-cmd="comentar" title="Novo comentário (Shift+F2)"><svg viewBox="0 0 16 16"><path d="M2.5 3.5h11v7h-6l-3 2.5v-2.5h-2z"/><path d="M8 5.5v3M6.5 7h3"/></svg><span>Novo</span></button><button class="fb big" data-cmd="comentarios" title="Todos os comentários"><svg viewBox="0 0 16 16"><path d="M2.5 3.5h11v7h-6l-3 2.5v-2.5h-2z"/><path d="M5 6h6M5 8h4"/></svg><span>Comentários</span></button></div><span class="gl">Comentários</span></div>
+  <div class="grp" data-aba="revisao"><div class="grow"><button class="fb big" data-cmd="historico" title="Quem mudou o quê, e quando"><svg viewBox="0 0 16 16"><circle cx="8" cy="8" r="5.5"/><path d="M8 5v3.2l2 1.3M2.5 8H1"/></svg><span>Histórico</span></button><button class="fb big" data-cmd="histcel" title="Histórico só da célula selecionada"><svg viewBox="0 0 16 16"><rect x="2.5" y="2.5" width="11" height="11" rx="1"/><circle cx="8" cy="8" r="2.8"/><path d="M8 6.6v1.5l1 .7"/></svg><span>Desta célula</span></button></div><span class="gl">Alterações</span></div>
+  <div class="grp" data-aba="exibir"><div class="grow"><button class="fb big so-edita" data-cmd="congelar" title="Congelar painéis"><svg viewBox="0 0 16 16"><rect x="2" y="2.5" width="12" height="11" rx="1"/><path d="M2 6h12M6 2.5v11" stroke-width="2"/></svg><span>Congelar ▾</span></button><button class="fb big so-edita" data-cmd="ocultar" title="Ocultar ou reexibir linhas e colunas"><svg viewBox="0 0 16 16"><path d="M1.5 8s2.5-4.5 6.5-4.5S14.5 8 14.5 8 12 12.5 8 12.5 1.5 8 1.5 8z"/><circle cx="8" cy="8" r="2"/><path d="M2.5 13.5l11-11"/></svg><span>Ocultar ▾</span></button></div><span class="gl">Janela</span></div>
+  <div class="grp" data-aba="exibir"><div class="fcol"><button class="fb wide" data-cmd="grade"><svg viewBox="0 0 16 16"><rect x="2" y="2" width="12" height="12" rx="1"/><path d="M2 6h12M2 10h12M6 2v12M10 2v12"/></svg><span>Linhas de grade</span></button><button class="fb wide" data-cmd="mostrafx"><b class="tx" style="font-size:11px">=fx</b><span>Mostrar fórmulas</span></button><button class="fb wide" data-cmd="barras"><svg viewBox="0 0 16 16"><path d="M2.5 6V2.5H6M10 2.5h3.5V6M13.5 10v3.5H10M6 13.5H2.5V10"/></svg><span>Barras e tela cheia</span></button></div><span class="gl">Mostrar</span></div>
+  <div class="grp" data-aba="exibir"><div class="grow"><button class="fb" data-cmd="zmenos" title="Diminuir zoom (Ctrl + rolar)"><b class="tx">−</b></button><button class="fb" data-cmd="z100" title="Voltar para 100%" style="min-width:52px"><span id="zVal">100%</span></button><button class="fb" data-cmd="zmais" title="Aumentar zoom (Ctrl + rolar)"><b class="tx">+</b></button></div><span class="gl">Zoom</span></div>
+</div>
 </div>
 <div class="fx" id="fxBar"><span class="end" id="fxEnd">—</span><b>fx</b><input id="fxIn" spellcheck="false" placeholder="Digite um valor, ou = para fórmula (ex.: =PROCV)" autocomplete="off"></div>
-<main class="area" id="area"><div class="vis" id="vis"></div><div class="cursores" id="cursores"></div></main>
+<div class="corpo"><main class="area" id="area"><div class="vis" id="vis"></div><div class="cursores" id="cursores"></div></main><aside class="gaveta" id="gaveta" aria-label="Comentários e histórico"></aside></div>
 <nav class="guias" id="guias" aria-label="Guias"></nav>
 <input type="file" id="arq" accept=".xlsx,.xls,.csv" class="hidden">
  <button class="exflut hidden" id="exFlut" title="Mostrar barras (Ctrl+Shift+F1)"><svg viewBox="0 0 16 16" width="14" height="14" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M6 2.5H2.5V6M13.5 6V2.5H10M10 13.5h3.5V10M2.5 10v3.5H6"/></svg><span>Barras</span></button>
@@ -480,13 +563,57 @@ kbd{font-family:var(--f-num);font-size:11px;padding:1px 6px;border-radius:5px;bo
     ANO: ([v]) => +serieData(num(v)).slice(0, 4), MES: ([v]) => +serieData(num(v)).slice(5, 7), DIA: ([v]) => +serieData(num(v)).slice(8, 10),
     CONCATENAR: a => plano(a).map(txt).join(''),
     MAIUSCULA: ([v]) => txt(v).toUpperCase(), MINUSCULA: ([v]) => txt(v).toLowerCase(), ARRUMAR: ([v]) => txt(v).replace(/\s+/g, ' ').trim(),
-    'ECEL.VAZIA': ([v]) => vazio(v)
+    'ECEL.VAZIA': ([v]) => vazio(v),
+    // vários critérios: SOMASES(soma; int1; crit1; int2; crit2…) e CONT.SES(int1; crit1; …)
+    SOMASES: ([s, ...p]) => { const S = plano(s), ok = pares(p, S.length); return S.reduce((t, v, i) => ok(i) && !ehErro(num(v)) && !vazio(v) ? t + num(v) : t, 0); },
+    'CONT.SES': p => { const n = plano(p[0]).length, ok = pares(p, n); let c = 0; for(let i = 0; i < n; i++) if(ok(i)) c++; return c; },
+    MEDIASES: ([s, ...p]) => { const S = plano(s), ok = pares(p, S.length), l = S.filter((v, i) => ok(i) && !vazio(v) && !ehErro(num(v))).map(num); return l.length ? l.reduce((a, b) => a + b, 0) / l.length : E('#DIV/0!'); },
+    MAXIMOSES: ([s, ...p]) => { const S = plano(s), ok = pares(p, S.length), l = S.filter((v, i) => ok(i) && !vazio(v) && !ehErro(num(v))).map(num); return l.length ? Math.max(...l) : 0; },
+    MINIMOSES: ([s, ...p]) => { const S = plano(s), ok = pares(p, S.length), l = S.filter((v, i) => ok(i) && !vazio(v) && !ehErro(num(v))).map(num); return l.length ? Math.min(...l) : 0; },
+    SES: a => { for(let i = 0; i + 1 < a.length; i += 2) if(bool(a[i])) return a[i + 1]; return E('#N/D'); },
+    ESQUERDA: ([t, n]) => txt(t).slice(0, n === undefined ? 1 : num(n)),
+    DIREITA: ([t, n]) => { const s = txt(t), k = n === undefined ? 1 : num(n); return k <= 0 ? '' : s.slice(-k); },
+    'EXT.TEXTO': ([t, i, n]) => txt(t).substr(num(i) - 1, num(n)),
+    'NUM.CARACT': ([t]) => txt(t).length,
+    PROCURAR: ([a, t, i]) => { const k = txt(t).indexOf(txt(a), (i === undefined ? 1 : num(i)) - 1); return k < 0 ? E('#VALOR!') : k + 1; },
+    LOCALIZAR: ([a, t, i]) => { const k = semAc(txt(t)).indexOf(semAc(txt(a)), (i === undefined ? 1 : num(i)) - 1); return k < 0 ? E('#VALOR!') : k + 1; },
+    SUBSTITUIR: ([t, a, b, n]) => { const s = txt(t), x = txt(a), y = txt(b); if(!x) return s; if(n === undefined) return s.split(x).join(y); let k = -1; for(let c = 0; c < num(n); c++){ k = s.indexOf(x, k + 1); if(k < 0) return s; } return s.slice(0, k) + y + s.slice(k + x.length); },
+    MUDAR: ([t, i, n, novo]) => { const s = txt(t), a = num(i) - 1; return s.slice(0, a) + txt(novo) + s.slice(a + num(n)); },
+    TEXTO: ([v, f]) => formataTexto(v, txt(f)),
+    VALOR: ([v]) => num(v),
+    AGORA: () => { const d = new Date(); return (Date.UTC(d.getFullYear(), d.getMonth(), d.getDate()) - BASE) / 864e5 + (d.getHours() * 3600 + d.getMinutes() * 60 + d.getSeconds()) / 86400; },
+    'DIA.DA.SEMANA': ([v, t]) => { const d = new Date(BASE + Math.floor(num(v)) * 864e5).getUTCDay(); const k = t === undefined ? 1 : num(t); return k === 2 ? (d + 6) % 7 + 1 : k === 3 ? (d + 6) % 7 : d + 1; },
+    FIMMES: ([v, m]) => { const d = new Date(BASE + Math.floor(num(v)) * 864e5); const f = Date.UTC(d.getUTCFullYear(), d.getUTCMonth() + num(m || 0) + 1, 0); return Math.round((f - BASE) / 864e5); },
+    DIATRABALHOTOTAL: ([a, b, fer]) => { let x = Math.floor(num(a)), y = Math.floor(num(b)), sinal = 1; if(x > y){ [x, y] = [y, x]; sinal = -1; } const F2 = new Set(plano(fer || []).filter(v => !vazio(v)).map(v => Math.floor(num(v)))); let c = 0; for(let d = x; d <= y; d++){ const w = new Date(BASE + d * 864e5).getUTCDay(); if(w && w !== 6 && !F2.has(d)) c++; } return c * sinal; },
+    DIATRABALHO: ([a, n, fer]) => { let d = Math.floor(num(a)), k = num(n); const F2 = new Set(plano(fer || []).filter(v => !vazio(v)).map(v => Math.floor(num(v)))); const passo = k < 0 ? -1 : 1; k = Math.abs(k); while(k > 0){ d += passo; const w = new Date(BASE + d * 864e5).getUTCDay(); if(w && w !== 6 && !F2.has(d)) k--; } return d; },
+    'CONT.VAZIO': a => plano(a).filter(vazio).length,
+    'ARREDONDAR.PARA.CIMA': ([v, d]) => { const k = Math.pow(10, d === undefined ? 0 : num(d)); return Math.ceil(num(v) * k - 1e-9) / k; },
+    'ARREDONDAR.PARA.BAIXO': ([v, d]) => { const k = Math.pow(10, d === undefined ? 0 : num(d)); return Math.floor(num(v) * k + 1e-9) / k; },
+    INT: ([v]) => Math.floor(num(v)), MOD: ([a, b]) => { const y = num(b); if(y === 0) return E('#DIV/0!'); const x = num(a); return x - y * Math.floor(x / y); },
+    'E.NUM': ([v]) => typeof v === 'number', 'E.TEXTO': ([v]) => typeof v === 'string' && v !== '' && dataSerie(v) == null, 'E.ERROS': ([v]) => ehErro(v)
   };
+  // pares (intervalo; critério) dos *SES → função que diz se a linha i passa em todos
+  function pares(p, n){ const l = []; for(let k = 0; k + 1 < p.length; k += 2) l.push([plano(p[k]), criterio(p[k + 1])]); return i => l.every(([R, ok]) => i < R.length && ok(R[i])); }
+  // TEXTO(valor; "0,00" | "#.##0,00" | "R$ #.##0,00" | "0%" | "dd/mm/aaaa" | "mm/aaaa" | "dddd"…)
+  function formataTexto(v, f){
+    const n = num(v); if(ehErro(n)) return txt(v); const fl = f.toLowerCase();
+    if(/[dmay]/.test(fl.replace(/r\$/, '')) && !/[#0]/.test(fl)){ const d = new Date(BASE + Math.round(n * 864e5)), dd = d.getUTCDate(), mm = d.getUTCMonth(), aa = d.getUTCFullYear();
+      const MES = ['janeiro', 'fevereiro', 'março', 'abril', 'maio', 'junho', 'julho', 'agosto', 'setembro', 'outubro', 'novembro', 'dezembro'], SEM = ['domingo', 'segunda-feira', 'terça-feira', 'quarta-feira', 'quinta-feira', 'sexta-feira', 'sábado'];
+      return f.replace(/dddd|ddd|dd|d|mmmm|mmm|mm|m|aaaa|yyyy|aa|yy|hh|nn|ss/gi, t => { const k = t.toLowerCase();
+        return k === 'dddd' ? SEM[d.getUTCDay()] : k === 'ddd' ? SEM[d.getUTCDay()].slice(0, 3) : k === 'dd' ? String(dd).padStart(2, '0') : k === 'd' ? String(dd) : k === 'mmmm' ? MES[mm] : k === 'mmm' ? MES[mm].slice(0, 3) : k === 'mm' ? String(mm + 1).padStart(2, '0') : k === 'm' ? String(mm + 1)
+          : k === 'aaaa' || k === 'yyyy' ? String(aa) : k === 'aa' || k === 'yy' ? String(aa).slice(2) : k === 'hh' ? String(d.getUTCHours()).padStart(2, '0') : k === 'nn' ? String(d.getUTCMinutes()).padStart(2, '0') : String(d.getUTCSeconds()).padStart(2, '0'); }); }
+    const pct = fl.includes('%'), x = pct ? n * 100 : n, m = /[0#]+(?:[.,][0#]+)?/.exec(f.replace(/[.](?=[0#]{3})/g, '')) || ['0'];
+    const dec = (/[,.]([0#]+)/.exec(m[0]) || [, ''])[1].length, mil = /#[.]##0|0[.]000/.test(f);
+    const s = new Intl.NumberFormat('pt-BR', {minimumFractionDigits:dec, maximumFractionDigits:dec, useGrouping:mil}).format(x);
+    return f.replace(/[#0.,]+(?:[#0.,]+)*/, s).replace(/%/, pct ? '%' : '');
+  }
   const ALIAS = {SUM:'SOMA', AVERAGE:'MEDIA', MIN:'MINIMO', MAX:'MAXIMO', COUNTA:'CONT.VALORES', COUNT:'CONT.NUM', COUNTIF:'CONT.SE', SUMIF:'SOMASE', AVERAGEIF:'MEDIASE',
     IF:'SE', AND:'E', OR:'OU', NOT:'NAO', IFERROR:'SEERRO', VLOOKUP:'PROCV', XLOOKUP:'PROCX', INDEX:'INDICE', MATCH:'CORRESP', ROUND:'ARRED', TODAY:'HOJE', DAYS:'DIAS',
-    DATE:'DATA', YEAR:'ANO', MONTH:'MES', DAY:'DIA', CONCATENATE:'CONCATENAR', UPPER:'MAIUSCULA', LOWER:'MINUSCULA', TRIM:'ARRUMAR', ISBLANK:'ECEL.VAZIA', CONCAT:'CONCATENAR'};
+    SUMIFS:'SOMASES', COUNTIFS:'CONT.SES', AVERAGEIFS:'MEDIASES', MAXIFS:'MAXIMOSES', MINIFS:'MINIMOSES', IFS:'SES', LEFT:'ESQUERDA', RIGHT:'DIREITA', MID:'EXT.TEXTO', LEN:'NUM.CARACT', FIND:'PROCURAR', SEARCH:'LOCALIZAR', SUBSTITUTE:'SUBSTITUIR', REPLACE:'MUDAR', TEXT:'TEXTO', VALUE:'VALOR', NOW:'AGORA', WEEKDAY:'DIA.DA.SEMANA', EOMONTH:'FIMMES', NETWORKDAYS:'DIATRABALHOTOTAL', WORKDAY:'DIATRABALHO', COUNTBLANK:'CONT.VAZIO', ROUNDUP:'ARREDONDAR.PARA.CIMA', ROUNDDOWN:'ARREDONDAR.PARA.BAIXO', ISNUMBER:'E.NUM', ISTEXT:'E.TEXTO', ISERROR:'E.ERROS', DATE:'DATA', YEAR:'ANO', MONTH:'MES', DAY:'DIA', CONCATENATE:'CONCATENAR', UPPER:'MAIUSCULA', LOWER:'MINUSCULA', TRIM:'ARRUMAR', ISBLANK:'ECEL.VAZIA', CONCAT:'CONCATENAR'};
   const LISTA = ['SOMA', 'MÉDIA', 'MÍNIMO', 'MÁXIMO', 'CONT.VALORES', 'CONT.NÚM', 'CONT.SE', 'SOMASE', 'MÉDIASE', 'SE', 'E', 'OU', 'NÃO', 'SEERRO', 'PROCV', 'PROCX', 'ÍNDICE', 'CORRESP',
-    'ARRED', 'ABS', 'HOJE', 'DIAS', 'DATA', 'ANO', 'MÊS', 'DIA', 'CONCATENAR', 'MAIÚSCULA', 'MINÚSCULA', 'ARRUMAR', 'ÉCÉL.VAZIA'];
+    'ARRED', 'ABS', 'HOJE', 'DIAS', 'DATA', 'ANO', 'MÊS', 'DIA', 'CONCATENAR', 'MAIÚSCULA', 'MINÚSCULA', 'ARRUMAR', 'ÉCÉL.VAZIA',
+    'SOMASES', 'CONT.SES', 'MÉDIASES', 'MÁXIMOSES', 'MÍNIMOSES', 'SES', 'ESQUERDA', 'DIREITA', 'EXT.TEXTO', 'NÚM.CARACT', 'PROCURAR', 'LOCALIZAR', 'SUBSTITUIR', 'MUDAR', 'TEXTO', 'VALOR',
+    'AGORA', 'DIA.DA.SEMANA', 'FIMMÊS', 'DIATRABALHOTOTAL', 'DIATRABALHO', 'CONT.VAZIO', 'ARREDONDAR.PARA.CIMA', 'ARREDONDAR.PARA.BAIXO', 'INT', 'MOD', 'É.NÚM', 'É.TEXTO', 'É.ERROS'];
 
   // ---------- avaliação ----------
   // ctx: {guia(nome|null) → {cols, linhas: n, valor(l, c)}} ; valor devolve o valor JÁ calculado (o próprio motor resolve fórmulas por baixo)
@@ -521,7 +648,7 @@ kbd{font-family:var(--f-num);font-size:11px;padding:1px 6px;border-radius:5px;bo
         const f = F[nome]; if(!f) return E('#NOME?');
         const args = n.args.map(a => avaliaNo(a, ctx, gAtual));
         const err = ['SOMA', 'MEDIA', 'MINIMO', 'MAXIMO', 'CONT.VALORES', 'CONT.NUM', 'CONCATENAR', 'E', 'OU'].includes(nome) ? plano(args).find(ehErro) : args.find(a => ehErro(a));
-        if(err && nome !== 'CONT.SE' && nome !== 'SOMASE') return err;
+        if(err && !['CONT.SE', 'SOMASE', 'SOMASES', 'CONT.SES', 'MEDIASES', 'MAXIMOSES', 'MINIMOSES', 'E.ERROS', 'CONT.VAZIO'].includes(nome)) return err;
         try{ return f(args); }catch(e){ return ehErro(e) ? e : E('#VALOR!'); }
       }
     }
@@ -536,7 +663,7 @@ kbd{font-family:var(--f-num);font-size:11px;padding:1px 6px;border-radius:5px;bo
 </script>
 <script type="module">
 import { initializeApp } from "https://www.gstatic.com/firebasejs/10.14.1/firebase-app.js";
-import { getFirestore, doc, getDoc, setDoc, updateDoc, onSnapshot, FieldPath, deleteField } from "https://www.gstatic.com/firebasejs/10.14.1/firebase-firestore.js";
+import { getFirestore, doc, getDoc, setDoc, updateDoc, onSnapshot, FieldPath, deleteField, arrayUnion } from "https://www.gstatic.com/firebasejs/10.14.1/firebase-firestore.js";
 import { getAuth, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.14.1/firebase-auth.js";
 
 // mesma configuração do board: quem está logado no board já entra direto
@@ -596,7 +723,7 @@ function confere(){
   nivel = ehAdmin || doSetor || String(meta.criadoPor || '').toLowerCase() === String(eu.email).toLowerCase() || c.some(x => x.nivel === 'editar') ? 'editar' : 'ver';
   document.body.classList.toggle('soler', nivel !== 'editar');
   $('#soLer').classList.toggle('hidden', nivel === 'editar');
-  document.querySelectorAll('.so-edita').forEach(b => b.classList.toggle('hidden', nivel !== 'editar'));
+  document.querySelectorAll('.so-edita').forEach(b => b.classList.toggle('semperm', nivel !== 'editar'));
   $('#nome').readOnly = nivel !== 'editar';
   $('#pasta').textContent = 'Pasta ' + setorNome + (doSetor || ehAdmin ? '' : ' · compartilhada com você');
   if(document.activeElement !== $('#nome')) $('#nome').value = meta.nome;
@@ -613,6 +740,7 @@ function confere(){
     primeira = false;
   }, () => { live('off'); });
   onSnapshot(PRES, s => { pres = (s.exists() && s.data().u) || {}; pintaPres(); });
+  ouveComentarios();
   presenca(); setInterval(presenca, 20000);
   addEventListener('pagehide', () => { setDoc(PRES, {u:{[eu.uid]:deleteField()}}, {merge:true}).catch(() => {}); });
   addEventListener('online', () => live('ok')); addEventListener('offline', () => live('off'));
@@ -684,6 +812,7 @@ let tMeta = 0;
 async function grava(pares, {semDesfazer = false, rotulo = ''} = {}){
   if(nivel !== 'editar' || !pares.length) return;
   if(!semDesfazer){ refazer = []; desfazer.push(pares.map(([p]) => [p, pega(p)])); if(desfazer.length > 100) desfazer.shift(); $('#bDesfaz').disabled = false; }
+  if(eu) registraHist(pares);
   pares.forEach(([p, v]) => poe(p, v));     // tela muda na hora; o Firestore confirma em seguida
   live('salvando');
   try{
@@ -721,29 +850,31 @@ function pinta(antes){
 }
 function linhasVisiveis(){
   const o = ordem(), q = busca.toLowerCase(), fl = Object.entries(filtros[g] || {}).filter(([, h]) => h && h.size).map(([cid, h]) => [cols().findIndex(c => c.id === cid), h]).filter(([ci]) => ci >= 0);
-  let l = o.map((rid, i) => ({rid, i}));
+  let l = o.map((rid, i) => ({rid, i})).filter(({rid}) => !rOculta(rid));
   if(fl.length) l = l.filter(({i}) => fl.every(([ci, h]) => !h.has(textoCel(i, ci))));
   if(q) l = l.filter(({i}) => cols().some((c, ci) => textoCel(i, ci).toLowerCase().includes(q) || String(valor(g, i, ci)).toLowerCase().includes(q)));
   return l;
 }
 function pintaGrade(antes){
   const box = $('#vis'), cs = cols(), lst = linhasVisiveis();
-  const largs = cs.map(c => c.larg || (tipoDe(c) === 'texto' ? 220 : tipoDe(c) === 'caixa' ? 90 : 150));
+  const largs = cs.map(c => cOculta(c.id) ? 8 : c.larg || (tipoDe(c) === 'texto' ? 220 : tipoDe(c) === 'caixa' ? 90 : 150));
+  const ocR = new Set(ocultas().r || []);
   const novas = antes && antes.guias && antes.guias[g] ? new Set(ordem().filter(r => !(antes.guias[g].ordem || []).includes(r))) : new Set();
   const mudou = (rid, cid) => antes && antes.dados && antes.dados[g] && JSON.stringify(((antes.dados[g] || {})[rid] || {})[cid]) !== JSON.stringify(cel(g, rid, cid)) && !novas.has(rid);
   const sx = box.scrollLeft, sy = box.scrollTop, selVelha = box.querySelector('.selbox');
   const stats = statsCond(), tab = G().tabela, comFiltro = temFiltro(), filt = filtros[g] || {};
   box.innerHTML = `<table class="g${tab ? ' tab' : ''}" id="gT" style="width:${46 + largs.reduce((a, b) => a + b, 0)}px${tab ? ';--tb:' + tab.cor : ''}"><colgroup><col style="width:46px">${largs.map(w => `<col style="width:${w}px">`).join('')}</colgroup>
-    <thead><tr><th class="rn" id="selTudo" title="Selecionar tudo (Ctrl+A)"></th>${cs.map((c, ci) => `<th class="${ci === 0 ? 'c0' : ''}" data-col="${ci}" title="${esc(c.nome)} · ${esc(TIPOS.find(t => t[0] === tipoDe(c))[1])}${c.formula ? ' com fórmula' : ''} · clique ou arraste para selecionar · dois cliques: renomear · botão direito: opções">${comFiltro ? `<button class="fbt${filt[c.id] && filt[c.id].size ? ' ativo' : ''}" data-filtro="${ci}" title="Filtrar e classificar">▼</button>` : ''}<span class="l">${F.colLetra(ci)}</span>${esc(c.nome)}</th>`).join('')}</tr></thead>
-    <tbody>${lst.map(({rid, i}) => `<tr data-r="${i}"${novas.has(rid) ? ' class="nova"' : ''}><td class="rn" data-rn="${i}">${i + 1}</td>${cs.map((c, ci) => { const raw = bruto(g, rid, c), ehF = typeof raw === 'string' && raw[0] === '='; const fm = fmtDe(rid, c.id), cd = condDe(c.id, i, ci, stats), m = mostraFormulas && ehF ? {h:esc(raw), cls:''} : mostra(c, valor(g, i, ci), ehF, fm), est = estiloCel(fm, cd);
+    <thead><tr><th class="rn" id="selTudo" title="Selecionar tudo (Ctrl+A)"></th>${cs.map((c, ci) => cOculta(c.id) ? `<th class="ocl" data-col="${ci}" data-oc="1" title="Coluna oculta (${esc(c.nome)}) · dois cliques para reexibir"></th>` : `<th class="${ci === 0 ? 'c0' : ''}" data-col="${ci}" title=""${esc(c.nome)} · ${esc(TIPOS.find(t => t[0] === tipoDe(c))[1])}${c.formula ? ' com fórmula' : ''} · clique ou arraste para selecionar · dois cliques: renomear · botão direito: opções">${comFiltro ? `<button class="fbt${filt[c.id] && filt[c.id].size ? ' ativo' : ''}" data-filtro="${ci}" title="Filtrar e classificar">▼</button>` : ''}<span class="l">${F.colLetra(ci)}</span>${esc(c.nome)}</th>`).join('')}</tr></thead>
+    <tbody>${lst.map(({rid, i}) => `<tr data-r="${i}"${novas.has(rid) ? ' class="nova"' : ''}><td class="rn${i > 0 && ocR.has(ordem()[i - 1]) ? ' pos-oc' : ''}" data-rn="${i}"${i > 0 && ocR.has(ordem()[i - 1]) ? ' title="Há linhas ocultas acima · Exibir ▸ Ocultar ▸ Reexibir"' : ''}>${i + 1}</td>${cs.map((c, ci) => { if(cOculta(c.id)) return `<td class="ocl" data-r="${i}" data-c="${ci}"></td>`; const raw = bruto(g, rid, c), ehF = typeof raw === 'string' && raw[0] === '='; const fm = fmtDe(rid, c.id), cd = condDe(c.id, i, ci, stats), m = mostraFormulas && ehF ? {h:esc(raw), cls:''} : mostra(c, valor(g, i, ci), ehF, fm), est = estiloCel(fm, cd);
       const venc = ehPrazo(c) && raw && String(ehF ? '' : raw) < hojeISO() && linhaAberta(rid);
-      return `<td data-r="${i}" data-c="${ci}" class="${ci === 0 ? 'c0 ' : ''}${m.cls}${ehF && raw === cel(g, rid, c.id) ? ' fm' : ''}${venc ? ' late' : ''}${mudou(rid, c.id) ? ' brilha' : ''}"${est ? ` style="${est}"` : ''}>${m.h}</td>`; }).join('')}</tr>`).join('')}
+      return `<td data-r="${i}" data-c="${ci}" class="${ci === 0 ? 'c0 ' : ''}${m.cls}${ehF && raw === cel(g, rid, c.id) ? ' fm' : ''}${venc ? ' late' : ''}${mudou(rid, c.id) ? ' brilha' : ''}${temComAberto(rid, c.id) ? ' tem-com' : ''}${regra(c.id) && confereRegra(c, rid, raw) ? ' inval' : ''}"${est ? ` style="${est}"` : ''}>${m.h}</td>`; }).join('')}</tr>`).join('')}
     ${nivel === 'editar' && !busca && !filtroAtivo() ? `<tr class="addl"><td class="rn">+</td><td colspan="${cs.length}" id="addLinha">Nova linha</td></tr>` : ''}</tbody>
     ${tab && tab.total ? `<tfoot><tr><td class="rn">Σ</td>${cs.map((c, ci) => { const t = tipoDe(c); const vs = lst.map(({i}) => valor(g, i, ci)).filter(v => typeof v === 'number' || (t === 'numero' || t === 'moeda') && v !== '' && v != null && !F.ehErro(F.num(v)));
       if(ci === 0 && !vs.length) return `<td class="c0">Total</td>`; if(!vs.length || !['numero', 'moeda'].includes(t) && vs.length < lst.length / 2) return '<td></td>';
       const sm = vs.reduce((a, v) => a + F.num(v), 0); return `<td class="num${ci === 0 ? ' c0' : ''}">${t === 'moeda' ? mfmt.format(sm) : nfmt.format(sm)}</td>`; }).join('')}</tr></tfoot>` : ''}</table>
     ${!cs.length ? '<div class="vazio">Esta guia não tem colunas. Clique em <b>+ Coluna</b>.</div>' : ''}`;
   if(selVelha) box.appendChild(selVelha);
+  aplicaCongela(); pintaGraficos();
   box.scrollLeft = sx; box.scrollTop = sy;
   marcaSel();
 }
@@ -762,7 +893,7 @@ function marcaSel(){
     sb.style.transform = `translate(${a1.left - v.left + box.scrollLeft - 1}px,${a1.top - v.top + box.scrollTop - 1}px)`;
     sb.style.width = (b1.right - a1.left + 2) + 'px'; sb.style.height = (b1.bottom - a1.top + 2) + 'px';
     // seta de lista na célula ativa (status, pessoa, data): um clique abre
-    const co = cols()[sel.c], lista = nivel === 'editar' && r0 === r1 && c0 === c1 && co && ['status', 'pessoa', 'data'].includes(tipoDe(co));
+    const co = cols()[sel.c], lista = nivel === 'editar' && r0 === r1 && c0 === c1 && co && (['status', 'pessoa', 'data'].includes(tipoDe(co)) || regra(co.id) && regra(co.id).tipo === 'lista');
     let dd = sb.querySelector('.ddbtn'); if(lista && !dd){ dd = document.createElement('button'); dd.className = 'ddbtn'; dd.title = 'Escolher (Alt+↓)'; dd.innerHTML = '▾'; dd.addEventListener('mousedown', e => { e.preventDefault(); e.stopPropagation(); abreEditor(); }); sb.appendChild(dd); } else if(!lista && dd) dd.remove();
   } else if(sb) sb.remove();
   document.querySelectorAll('#gT thead th.selc, #gT td.rn.sell').forEach(x => x.classList.remove('selc', 'sell', 'cheia'));
@@ -891,7 +1022,9 @@ function abreEditor(inicial){
   fechaEditor();
   const box = $('#area').getBoundingClientRect(), r = td.getBoundingClientRect();
   let ed;
-  if(!ehF && inicial === undefined && t === 'status'){ ed = document.createElement('select'); ed.innerHTML = '<option value="">—</option>' + (c.opcoes || []).map(o => `<option${String(o.v) === String(atual) ? ' selected' : ''}>${esc(o.v)}</option>`).join(''); }
+  const rgL = regra(c.id) && regra(c.id).tipo === 'lista' ? opcoesLista(regra(c.id)) : null;
+  if(!ehF && inicial === undefined && rgL && t !== 'pessoa'){ ed = document.createElement('select'); const atualT = t === 'data' ? dataBR(atual || '') : String(atual ?? ''); ed.innerHTML = '<option value="">—</option>' + rgL.map(o => `<option${o === atualT ? ' selected' : ''}>${esc(o)}</option>`).join(''); }
+  else if(!ehF && inicial === undefined && t === 'status'){ ed = document.createElement('select'); ed.innerHTML = '<option value="">—</option>' + (c.opcoes || []).map(o => `<option${String(o.v) === String(atual) ? ' selected' : ''}>${esc(o.v)}</option>`).join(''); }
   else if(!ehF && inicial === undefined && t === 'pessoa'){ ed = document.createElement('select'); ed.innerHTML = '<option value="">—</option>' + DIR.slice().sort((a, b) => String(a.name || a.email).localeCompare(String(b.name || b.email))).map(p => `<option value="${esc(p.email)}"${p.email === atual ? ' selected' : ''}>${esc(p.name || p.email)}</option>`).join(''); }
   else if(!ehF && inicial === undefined && t === 'data'){ ed = document.createElement('input'); ed.type = 'date'; ed.value = /^\d{4}-\d{2}-\d{2}$/.test(String(atual)) ? atual : ''; }
   else { ed = document.createElement('input'); ed.value = inicial !== undefined ? inicial : (atual === undefined ? '' : t === 'data' && !ehF ? dataBR(atual) : t === 'pessoa' && !ehF ? nomeP(atual) : String(atual)); ed.spellcheck = false; }
@@ -917,14 +1050,19 @@ function abreEditor(inicial){
 function fechaEditor(){ if(editando){ const e = editando.ed; editando = null; e.remove(); } pegaRef = null; fechaAssist(); }
 function confirma(dr, dc = 0){
   if(!editando) return; const {ed, rid, c} = editando; let v = ed.value;
-  fechaEditor();
   const novo = converte(c, v), velho = cel(g, rid, c.id);
+  const erro = JSON.stringify(novo) !== JSON.stringify(velho ?? '') && confereRegra(c, rid, novo);
+  if(erro){ toast('⚠ ' + erro); if(dr === null){ fechaEditor(); return; } ed.classList.remove('erro'); void ed.offsetWidth; ed.classList.add('erro'); ed.focus(); return; }   // como no Excel: não aceita fora da regra
+  fechaEditor();
   if(JSON.stringify(novo) !== JSON.stringify(velho ?? '')) grava([[['dados', g, rid, c.id], novo]]);
   if(dr !== null){ move(dr || 0, dc); }
   pinta(); if(dr !== null) $('#vis').focus();
 }
 function move(dr, dc, estende){
-  const nr = Math.max(0, Math.min(ordem().length - 1, sel.r + dr)), nc = Math.max(0, Math.min(cols().length - 1, sel.c + dc));
+  let nr = sel.r, nc = sel.c;
+  // pula linhas e colunas ocultas
+  if(dr){ let k = Math.abs(dr); while(k > 0){ const t = nr + Math.sign(dr); if(t < 0 || t > ordem().length - 1) break; nr = t; if(!rOculta(ordem()[nr])) k--; } if(rOculta(ordem()[nr])) nr = sel.r; }
+  if(dc){ let k = Math.abs(dc); while(k > 0){ const t = nc + Math.sign(dc); if(t < 0 || t > cols().length - 1) break; nc = t; if(!cOculta(cols()[nc].id)) k--; } if(cOculta(cols()[nc].id)) nc = sel.c; }
   if(estende){ ancora = ancora || {...sel}; } else ancora = null;
   sel = {r:nr, c:nc}; marcaSel(); presenca();
   const td = celTd(sel.r, sel.c); if(td) td.scrollIntoView({block:'nearest', inline:'nearest', behavior:reduz ? 'auto' : 'smooth'});
@@ -1013,7 +1151,8 @@ addEventListener('mouseup', () => { if(apontando){ apontando = null; return; } i
 vEl.addEventListener('dblclick', e => { if(e.target.closest('td[data-c]')) abreEditor(); });
 // dois cliques no nome da coluna: renomeia ali mesmo (Enter salva, Esc cancela)
 vEl.addEventListener('dblclick', e => {
-  const th = e.target.closest('th[data-col]'); if(!th || nivel !== 'editar' || e.target.closest('[data-filtro]') || th.querySelector('input')) return;
+  const th = e.target.closest('th[data-col]'); if(th && th.dataset.oc && nivel === 'editar'){ const cid = cols()[+th.dataset.col].id; grava([[['guias', g, 'ocultas'], {...ocultas(), c:(ocultas().c || []).filter(x => x !== cid)}]]); pinta(); return; }
+  if(!th || nivel !== 'editar' || e.target.closest('[data-filtro]') || th.querySelector('input')) return;
   const ci = +th.dataset.col, c = cols()[ci]; if(!c) return;
   const inp = document.createElement('input'); inp.className = 'renomeia'; inp.value = c.nome; inp.setAttribute('aria-label', 'Nome da coluna');
   th.textContent = ''; th.appendChild(inp); inp.focus(); inp.select();
@@ -1564,6 +1703,9 @@ document.addEventListener('keydown', e => {
   if(ctrl && (k === 'PageDown' || k === 'PageUp')){ para(); const l = guiasOrd(), i = l.findIndex(x => x.id === g), n = l[(i + (k === 'PageDown' ? 1 : -1) + l.length) % l.length]; if(n && n.id !== g){ g = n.id; sel = {r:0, c:0}; ancora = null; trocaVis('grade'); } return; }
   if(sh && k === 'F11'){ para(); const b = document.getElementById('novaGuia'); if(b) b.click(); return; }
   if(k === 'F9'){ para(); pinta(); toast('Recalculado'); return; }
+  if(ctrl && (cd === 'Digit9' || cd === 'Digit0')){ para(); if(ed) ocultaSel(cd === 'Digit9' ? 'r' : 'c', sh); return; }
+  if(sh && k === 'F2'){ para(); abreGaveta('com', {rid:ordem()[sel.r], cid:(cols()[sel.c] || {}).id}); return; }
+  if(sh && k === 'F3'){ para(); janelaFuncao(); return; }
   if(sh && k === 'F10' || k === 'ContextMenu'){ para(); const td = celTd(sel.r, sel.c); if(td) menuCelula(td); return; }
   // movimento
   const passo = Math.max(1, Math.floor(($('#vis').clientHeight - 40) / 32));
@@ -1588,8 +1730,8 @@ document.addEventListener('keydown', e => {
 // colar só os valores (Ctrl+Shift+V): marca antes do evento "paste" chegar
 document.addEventListener('keydown', e => { if((e.ctrlKey || e.metaKey) && e.shiftKey && (e.key === 'v' || e.key === 'V')){ colarValores = true; setTimeout(() => { colarValores = false; }, 600); } }, true);
 function menuCelula(el){
-  const ed = nivel === 'editar';
-  menu([['Recortar  Ctrl+X', () => CMD.recortar()], ['Copiar  Ctrl+C', () => CMD.copiar()], ...(ed ? [['Colar  Ctrl+V', () => CMD.colar()], '-', ['Inserir…  Ctrl +', janelaInserir], ['Excluir…  Ctrl -', janelaExcluir], ['Limpar conteúdo  Delete', limpaSel], '-', ['Formatar células…  Ctrl+1', janelaFormatar]] : []), '-', ['Classificar de A a Z', () => ordena(sel.c, 1)], ['Classificar de Z a A', () => ordena(sel.c, -1)]], el);
+  const ed = nivel === 'editar', alvo = {rid:ordem()[sel.r], cid:(cols()[sel.c] || {}).id}, nCom = comsDaCel(alvo.rid, alvo.cid).length;
+  menu([[nCom ? `Comentários (${nCom})` : 'Novo comentário  Shift+F2', () => abreGaveta('com', alvo)], ['Histórico desta célula', () => abreGaveta('hist', alvo)], '-', ['Recortar  Ctrl+X', () => CMD.recortar()], ['Copiar  Ctrl+C', () => CMD.copiar()], ...(ed ? [['Colar  Ctrl+V', () => CMD.colar()], '-', ['Inserir…  Ctrl +', janelaInserir], ['Excluir…  Ctrl -', janelaExcluir], ['Limpar conteúdo  Delete', limpaSel], '-', ['Formatar células…  Ctrl+1', janelaFormatar], ['Validação de dados…', janelaValidacao], '-', ['Ocultar linha(s)  Ctrl+9', () => ocultaSel('r')], ['Ocultar coluna(s)  Ctrl+0', () => ocultaSel('c')], ['Reexibir aqui', () => { ocultaSel('r', true); ocultaSel('c', true); }]] : []), '-', ['Classificar de A a Z', () => ordena(sel.c, 1)], ['Classificar de Z a A', () => ordena(sel.c, -1)]], el);
 }
 vEl.addEventListener('contextmenu', e => {
   const td = e.target.closest('td[data-c]'), th = e.target.closest('th[data-col]'), rn = e.target.closest('td[data-rn]');
@@ -1751,6 +1893,382 @@ function menuArquivo(el){
 }
 $('#bArquivo').onclick = e => menuArquivo(e.currentTarget);
 addEventListener('keydown', e => { if((e.ctrlKey || e.metaKey) && (e.key === 'p' || e.key === 'P') && S){ e.preventDefault(); exportaPlanilha('imprimir', true); } });
+
+// =================== Lote Excel: congelar, ocultar, validação, duplicatas, classificar, histórico, comentários, gráficos ===================
+const pegaG = () => G() || {};
+// ---------- ocultar linhas / colunas (vale para todos, como no arquivo do Excel) ----------
+const ocultas = () => pegaG().ocultas || {};
+const rOculta = rid => (ocultas().r || []).includes(rid);
+const cOculta = cid => (ocultas().c || []).includes(cid);
+function ocultaSel(tipo, mostrar){
+  if(nivel !== 'editar') return; const {r0, r1, c0, c1} = intervalo(), o = {r:[...(ocultas().r || [])], c:[...(ocultas().c || [])]};
+  if(tipo === 'r'){ const ids = ordem().slice(r0, r1 + 1); if(mostrar){ const ini = Math.max(0, r0 - 1), fim = Math.min(ordem().length - 1, r1 + 1), viz = ordem().slice(ini, fim + 1); o.r = o.r.filter(x => !viz.includes(x)); } else o.r = [...new Set([...o.r, ...ids])]; }
+  else { const ids = cols().slice(c0, c1 + 1).map(c => c.id); if(mostrar){ const viz = cols().slice(Math.max(0, c0 - 1), c1 + 2).map(c => c.id); o.c = o.c.filter(x => !viz.includes(x)); } else { if(ids.length >= cols().length){ toast('Deixe pelo menos uma coluna à mostra'); return; } o.c = [...new Set([...o.c, ...ids])]; } }
+  grava([[['guias', g, 'ocultas'], o.r.length || o.c.length ? o : '']]); pinta();
+  toast(mostrar ? 'Reexibido' : (tipo === 'r' ? 'Linha(s) oculta(s)' : 'Coluna(s) oculta(s)') + ' · Exibir ▸ Reexibir para voltar');
+}
+function reexibeTudo(){ if(nivel !== 'editar') return; grava([[['guias', g, 'ocultas'], '']]); pinta(); toast('Tudo reexibido'); }
+
+// ---------- congelar painéis ----------
+const congela = () => { const z = pegaG().congela; return {l:z ? z.l || 0 : 0, c:z ? z.c ?? 1 : 1}; };
+function defineCongela(l, c){ if(nivel !== 'editar'){ toast('Somente leitura'); return; } grava([[['guias', g, 'congela'], {l, c}]]); pinta(); toast(l || c ? `Congelado: ${l} linha(s) e ${c} coluna(s)` : 'Painéis descongelados'); }
+function aplicaCongela(){
+  const t = document.getElementById('gT'); if(!t) return; const z = congela();
+  const larg = [...t.querySelectorAll('colgroup col')].map(c => parseFloat(c.style.width) || 0);
+  const left = []; let acc = 0; larg.forEach((w, i) => { left[i] = acc; acc += w; });   // left[0] = coluna dos números
+  t.querySelectorAll('th[data-col], td[data-c]').forEach(x => { const c = +(x.dataset.col ?? x.dataset.c); if(c < z.c){ x.classList.add('fz'); x.style.left = left[c + 1] + 'px'; if(c === z.c - 1) x.classList.add('fzc'); } });
+  t.querySelectorAll('tfoot td').forEach((x, i) => { if(i > 0 && i - 1 < z.c){ x.classList.add('fz'); x.style.left = left[i] + 'px'; } });
+  if(z.l > 0){ const cab = t.tHead.getBoundingClientRect().height; let top = cab;
+    for(const tr of t.querySelectorAll('tbody tr[data-r]')){ if(+tr.dataset.r >= z.l) break; const h = tr.getBoundingClientRect().height;
+      tr.querySelectorAll('td').forEach(x => { x.classList.add('fzr'); x.style.top = top + 'px'; }); top += h; tr.classList.add('fzlin'); }
+    const ult = t.querySelectorAll('tbody tr.fzlin'); if(ult.length) ult[ult.length - 1].classList.add('fzfim'); }
+}
+
+// ---------- validação de dados (lista suspensa, número, data, texto, sem repetir) ----------
+const regra = cid => (pegaG().valid || {})[cid];
+function opcoesLista(rg){
+  const f = String(rg.fonte || '').trim();
+  const m = /^=(?:'?([^'!]+)'?!)?\$?([A-Z]+)\$?(\d*)(?::\$?([A-Z]+)\$?(\d*))?$/i.exec(f);
+  if(m){ const gu = m[1] ? guiasOrd().find(x => x.nome.toLowerCase() === m[1].toLowerCase()) : pegaG() && {id:g, ...pegaG()}; if(!gu) return [];
+    const c = F.colNum(m[2].toUpperCase()), l1 = m[3] ? +m[3] - 1 : 0, l2 = m[5] ? +m[5] - 1 : (gu.ordem || []).length - 1, out = [];
+    for(let l = l1; l <= l2 && l < (gu.ordem || []).length; l++){ const v = textoCel(l, c, gu.id || g); if(v !== '' && !out.includes(v)) out.push(v); } return out; }
+  return f.split(/[;\n]/).map(x => x.trim()).filter(Boolean);
+}
+function confereRegra(c, rid, v){
+  const rg = regra(c.id); if(!rg || v === '' || v == null || typeof v === 'string' && v[0] === '=') return null;
+  const n = F.num(v), msg = rg.msg || null;
+  if(rg.tipo === 'lista'){ const op = opcoesLista(rg); const t = tipoDe(c) === 'pessoa' ? nomeP(v) : tipoDe(c) === 'data' ? dataBR(v) : String(v); return op.some(x => x.toLowerCase() === t.toLowerCase()) ? null : msg || 'Escolha um valor da lista: ' + op.slice(0, 6).join(', ') + (op.length > 6 ? '…' : ''); }
+  if(rg.tipo === 'numero' || rg.tipo === 'inteiro'){ if(F.ehErro(n) || typeof v === 'string' && !/^[\s\d.,R$%-]+$/.test(v)) return msg || 'Digite um número';
+    if(rg.tipo === 'inteiro' && Math.floor(n) !== n) return msg || 'Digite um número inteiro';
+    if(rg.min !== '' && rg.min != null && n < F.num(rg.min)) return msg || 'O valor precisa ser pelo menos ' + rg.min; if(rg.max !== '' && rg.max != null && n > F.num(rg.max)) return msg || 'O valor pode ser no máximo ' + rg.max; return null; }
+  if(rg.tipo === 'data'){ const s = typeof v === 'number' ? F.serieData(v) : String(v); if(!/^\d{4}-\d{2}-\d{2}$/.test(s)) return msg || 'Digite uma data (dd/mm/aaaa)';
+    const iso = x => { const k = /^(\d{1,2})\/(\d{1,2})\/(\d{4})$/.exec(String(x || '').trim()); return k ? `${k[3]}-${k[2].padStart(2, '0')}-${k[1].padStart(2, '0')}` : String(x || ''); };
+    if(rg.min && s < iso(rg.min)) return msg || 'A data precisa ser a partir de ' + rg.min; if(rg.max && s > iso(rg.max)) return msg || 'A data precisa ser até ' + rg.max; return null; }
+  if(rg.tipo === 'texto'){ return rg.max && String(v).length > +rg.max ? msg || 'Use no máximo ' + rg.max + ' caracteres' : null; }
+  if(rg.tipo === 'unico'){ const k = String(v).trim().toLowerCase(); return ordem().some(r => r !== rid && String(cel(g, r, c.id) ?? '').trim().toLowerCase() === k) ? msg || 'Esse valor já existe nesta coluna' : null; }
+  return null;
+}
+function janelaValidacao(){
+  if(nivel !== 'editar') return; const {c0, c1} = intervalo(), cs = cols().slice(c0, c1 + 1), rg = regra(cs[0].id) || {tipo:'lista', fonte:''};
+  const f = janela(`<h3>Validação de dados</h3><p class="ajuda">Para a(s) coluna(s) <b>${esc(cs.map(c => c.nome).join(', '))}</b>. Valores fora da regra não são aceitos ao digitar.</p>
+    <label class="campo">Permitir<select id="vTipo">${[['lista', 'Lista suspensa'], ['numero', 'Número (decimal)'], ['inteiro', 'Número inteiro'], ['data', 'Data'], ['texto', 'Texto com tamanho máximo'], ['unico', 'Sem repetir (valor único)']].map(([k, n]) => `<option value="${k}"${rg.tipo === k ? ' selected' : ''}>${n}</option>`).join('')}</select></label>
+    <label class="campo" id="vFonteW">Opções (uma por linha, ou um intervalo como <code>=Itens!B:B</code>)<textarea id="vFonte" rows="4">${esc(rg.fonte || '')}</textarea></label>
+    <div style="display:flex;gap:8px" id="vMinMaxW"><label class="campo" style="flex:1"><span id="vMinL">Mínimo</span><input id="vMin" value="${esc(rg.min ?? '')}"></label><label class="campo" style="flex:1">Máximo<input id="vMax" value="${esc(rg.max ?? '')}"></label></div>
+    <label class="campo">Mensagem quando errar (opcional)<input id="vMsg" value="${esc(rg.msg || '')}" placeholder="Ex.: Escolha um status da lista"></label>
+    <div class="acoes">${cs.some(c => regra(c.id)) ? '<button class="btn" id="vTira">Remover validação</button>' : ''}<button class="btn" data-x>Cancelar</button><button class="btn pri" data-ok>Aplicar</button></div>`);
+  const aj = () => { const t = f.querySelector('#vTipo').value; f.querySelector('#vFonteW').classList.toggle('hidden', t !== 'lista'); f.querySelector('#vMinMaxW').classList.toggle('hidden', !['numero', 'inteiro', 'data', 'texto'].includes(t)); f.querySelector('#vMinL').parentElement.classList.toggle('hidden', t === 'texto'); };
+  f.querySelector('#vTipo').onchange = aj; aj();
+  const salva = nova => { const v = {...(pegaG().valid || {})}; cs.forEach(c => { if(nova) v[c.id] = nova; else delete v[c.id]; }); grava([[['guias', g, 'valid'], Object.keys(v).length ? v : '']]); fecha(f); pinta(); };
+  f.querySelector('[data-ok]').onclick = () => { const q = s => f.querySelector(s).value.trim(), t = q('#vTipo'); const nova = {tipo:t, msg:q('#vMsg')}; if(t === 'lista'){ nova.fonte = q('#vFonte'); if(!nova.fonte){ toast('Escreva as opções da lista'); return; } } else { nova.min = q('#vMin'); nova.max = q('#vMax'); } salva(nova); toast('Validação aplicada'); };
+  const tira = f.querySelector('#vTira'); if(tira) tira.onclick = () => { salva(null); toast('Validação removida'); };
+}
+
+// ---------- remover duplicatas ----------
+function janelaDuplicatas(){
+  if(nivel !== 'editar') return; const {c0, c1} = intervalo(), sele = c1 > c0;
+  const f = janela(`<h3>Remover duplicatas</h3><p class="ajuda">Linhas iguais nas colunas marcadas: fica a primeira, as outras saem.</p>
+    <div class="ops">${cols().map((c, i) => `<label class="fl"><input type="checkbox" value="${i}"${!sele || i >= c0 && i <= c1 ? ' checked' : ''}> ${esc(c.nome)}</label>`).join('')}</div>
+    <div class="acoes"><button class="btn" data-x>Cancelar</button><button class="btn pri" data-ok>Remover</button></div>`);
+  f.querySelector('[data-ok]').onclick = () => { const cis = [...f.querySelectorAll('input:checked')].map(x => +x.value); if(!cis.length){ toast('Marque pelo menos uma coluna'); return; }
+    const vistos = new Set(), fora = []; ordem().forEach((rid, r) => { const cheia = cols().some(c => { const v = cel(g, rid, c.id); return v !== undefined && v !== ''; }); if(!cheia) return;
+      const k = cis.map(ci => textoCel(r, ci).trim().toLowerCase()).join('\u0001'); if(vistos.has(k)) fora.push(rid); else vistos.add(k); });
+    fecha(f); if(!fora.length){ toast('Nenhuma duplicata encontrada'); return; }
+    const o = ordem().filter(r => !fora.includes(r)), p = [[['guias', g, 'ordem'], o]]; fora.forEach(rid => { p.push([['dados', g, rid], '']); if(((S.fmt || {})[g] || {})[rid]) p.push([['fmt', g, rid], '']); });
+    grava(p); ancora = null; sel = {r:0, c:sel.c}; pinta(); toast(`${fora.length} linha(s) duplicada(s) removida(s) · ${vistos.size} única(s) ficaram`); };
+}
+// ---------- classificar por várias colunas ----------
+function janelaClassificar(){
+  let niveis = [{c:sel.c, d:1}];
+  const f = janela(`<h3>Classificar</h3><div id="kN" class="ops"></div><button class="btn" id="kAdd" style="justify-self:start">+ Adicionar nível</button>
+    <div class="acoes"><button class="btn" data-x>Cancelar</button><button class="btn pri" data-ok>Classificar</button></div>`);
+  const p = () => { f.querySelector('#kN').innerHTML = niveis.map((n, i) => `<div class="op"><span class="ajuda" style="width:90px">${i ? 'E depois por' : 'Classificar por'}</span><select data-i="${i}" data-k="c">${cols().map((c, ci) => `<option value="${ci}"${ci === n.c ? ' selected' : ''}>${esc(c.nome)}</option>`).join('')}</select>
+      <select data-i="${i}" data-k="d"><option value="1"${n.d === 1 ? ' selected' : ''}>A → Z / menor → maior</option><option value="-1"${n.d === -1 ? ' selected' : ''}>Z → A / maior → menor</option></select>${i ? `<button class="btn" data-del="${i}">×</button>` : ''}</div>`).join('');
+    f.querySelectorAll('select').forEach(s => s.onchange = () => { niveis[+s.dataset.i][s.dataset.k] = +s.value; }); f.querySelectorAll('[data-del]').forEach(b => b.onclick = () => { niveis.splice(+b.dataset.del, 1); p(); }); };
+  p(); f.querySelector('#kAdd').onclick = () => { niveis.push({c:0, d:1}); p(); };
+  f.querySelector('[data-ok]').onclick = () => { fecha(f); ordenaVarias(niveis); };
+}
+function chaveOrd(c, v){ if(v === '' || v == null || F.ehErro(v)) return null; if(tipoDe(c) === 'pessoa') return nomeP(v); const n = F.num(v); if(['numero', 'moeda', 'data'].includes(tipoDe(c)) && !F.ehErro(n)) return n; if(typeof v === 'number') return v; return String(v); }
+function ordenaVarias(niveis){
+  if(nivel !== 'editar'){ toast('Somente leitura'); return; }
+  const l = ordem().map((rid, i) => ({rid, ks:niveis.map(n => chaveOrd(cols()[n.c], valor(g, i, n.c)))}));
+  const cheia = rid => cols().some(c => { const v = cel(g, rid, c.id); return v !== undefined && v !== ''; });
+  const dados = l.filter(x => cheia(x.rid)), vazias = l.filter(x => !cheia(x.rid));
+  dados.sort((a, b) => { for(let k = 0; k < niveis.length; k++){ const x = a.ks[k], y = b.ks[k]; if(x === y) continue; if(x === null) return 1; if(y === null) return -1;
+    const r = typeof x === 'number' && typeof y === 'number' ? x - y : String(x).localeCompare(String(y), 'pt-BR', {numeric:true}); if(r) return r * niveis[k].d; } return 0; });
+  grava([[['guias', g, 'ordem'], [...dados, ...vazias].map(x => x.rid)]]); pinta(); toast('Classificado');
+}
+
+// ---------- histórico de alterações ----------
+// cada mudança de célula vira uma linha em boards/planilha-<id>-hist-AAAAMMDD (lote a cada 4 s, para gastar pouca gravação)
+let histBuf = [];
+const diaChave = d => d.toISOString().slice(0, 10).replace(/-/g, '');
+const HIST = dia => doc(db, 'boards', 'planilha-' + ID + '-hist-' + dia);
+const curto = v => v === undefined || v === null ? '' : typeof v === 'object' ? JSON.stringify(v).slice(0, 120) : String(v).slice(0, 200);
+function registraHist(pares){
+  pares.forEach(([p, v]) => { if(p[0] !== 'dados' || p.length !== 4) return; const de = pega(p); if(curto(de) === curto(v)) return;
+    histBuf.push({t:Date.now(), u:eu.nome, e:eu.email, g:p[1], r:p[2], c:p[3], de:curto(de), para:curto(v)}); });
+  if(histBuf.length > 400) histBuf = histBuf.slice(-400);
+}
+setInterval(() => { if(!histBuf.length || !eu) return; const lote = histBuf.splice(0, 200); setDoc(HIST(diaChave(new Date())), {ev:arrayUnion(...lote)}, {merge:true}).catch(() => {}); }, 4000);
+addEventListener('pagehide', () => { if(histBuf.length && eu) setDoc(HIST(diaChave(new Date())), {ev:arrayUnion(...histBuf.splice(0))}, {merge:true}).catch(() => {}); });
+async function carregaHist(dias = 7){
+  const l = []; const hoje = new Date();
+  const docs = await Promise.all(Array.from({length:dias}, (_, k) => getDoc(HIST(diaChave(new Date(hoje - k * 864e5)))).catch(() => null)));
+  docs.forEach(s => { if(s && s.exists()) l.push(...(s.data().ev || [])); });
+  return l.concat(histBuf).sort((a, b) => b.t - a.t);
+}
+
+// ---------- comentários com @menção ----------
+const COM = doc(db, 'boards', 'planilha-' + ID + '-coment');
+let COMS = {};
+const comsDaCel = (rid, cid, gid = g) => Object.entries(COMS).filter(([, c]) => c.g === gid && c.r === rid && c.c === cid);
+const temComAberto = (rid, cid) => comsDaCel(rid, cid).some(([, c]) => !c.resolvido);
+const mencionaMe = c => (c.mencoes || []).includes(String(eu.email).toLowerCase()) || (c.resp || []).some(r => (r.mencoes || []).includes(String(eu.email).toLowerCase()));
+function ouveComentarios(){ onSnapshot(COM, s => { COMS = (s.exists() && s.data().c) || {}; if(S && vis === 'grade') pinta(); pintaGaveta(); badgeRevisao(); }, () => {}); }
+function badgeRevisao(){ const n = Object.values(COMS).filter(c => !c.resolvido && mencionaMe(c)).length; const b = document.querySelector('.abasf [data-aba="revisao"]'); if(b) b.dataset.n = n || ''; }
+const marcaMencoes = t => esc(t).replace(/@([A-Za-zÀ-ÿ]+(?: [A-Za-zÀ-ÿ]+)?)/g, '<b class="men">@$1</b>');
+function achaMencoes(t){ const l = []; DIR.forEach(p => { const n = p.name || ''; if(n && t.includes('@' + n)) l.push(String(p.email).toLowerCase()); }); return [...new Set(l)]; }
+async function salvaComentario(rid, cid, txt){
+  txt = txt.trim(); if(!txt) return; const id = novoId();
+  try{ await setDoc(COM, {c:{[id]:{g, r:rid, c:cid, txt, autor:eu.nome, email:String(eu.email).toLowerCase(), t:Date.now(), resolvido:false, mencoes:achaMencoes(txt), resp:[]}}}, {merge:true}); toast('Comentário salvo'); }
+  catch(e){ toast('Não salvou o comentário: ' + (e.message || e)); }
+}
+async function respondeComentario(id, txt){ txt = txt.trim(); if(!txt) return; const c = COMS[id]; if(!c) return;
+  await updateDoc(COM, new FieldPath('c', id, 'resp'), [...(c.resp || []), {txt, autor:eu.nome, email:String(eu.email).toLowerCase(), t:Date.now(), mencoes:achaMencoes(txt)}]).catch(e => toast('Não salvou: ' + e.message)); }
+const resolveComentario = (id, v) => updateDoc(COM, new FieldPath('c', id, 'resolvido'), v).catch(() => {});
+const apagaComentario = id => updateDoc(COM, new FieldPath('c', id), deleteField()).catch(() => {});
+// @ no campo de texto: lista de pessoas do board
+function ligaMencao(ta){
+  ta.addEventListener('input', () => { const p = ta.selectionStart, m = /@([A-Za-zÀ-ÿ]*)$/.exec(ta.value.slice(0, p)); fechaMen(); if(!m) return;
+    const q = semAcento(m[1]), l = DIR.filter(x => x.name && semAcento(x.name).includes(q)).slice(0, 6); if(!l.length) return;
+    const b = document.createElement('div'); b.className = 'menu men-l'; b.innerHTML = l.map(x => `<button data-n="${esc(x.name)}"><b class="av" style="background:${corDe(x.email)}">${esc(iniciais(x.name))}</b>${esc(x.name)}</button>`).join('');
+    document.body.appendChild(b); const r = ta.getBoundingClientRect(); b.style.left = r.left + 'px'; b.style.top = (r.bottom + 4) + 'px';
+    b.querySelectorAll('button').forEach(x => x.onmousedown = e => { e.preventDefault(); const ini = p - m[0].length; ta.value = ta.value.slice(0, ini) + '@' + x.dataset.n + ' ' + ta.value.slice(p); const np = ini + x.dataset.n.length + 2; ta.setSelectionRange(np, np); fechaMen(); ta.focus(); }); });
+  ta.addEventListener('blur', () => setTimeout(fechaMen, 150));
+}
+const fechaMen = () => document.querySelectorAll('.men-l').forEach(x => x.remove());
+
+// ---------- gaveta lateral (comentários e histórico) ----------
+let gaveta = null;   // {tipo:'com'|'hist', soCel:{rid,cid}|null, filtro}
+function abreGaveta(tipo, soCel){ gaveta = {tipo, soCel:soCel || null, filtro:gaveta && gaveta.filtro || 'abertos'}; document.body.classList.add('com-gaveta'); pintaGaveta(true); }
+function fechaGaveta(){ gaveta = null; document.body.classList.remove('com-gaveta'); const d = document.getElementById('gaveta'); if(d) d.innerHTML = ''; setTimeout(() => { pintaPres(); marcaSel(); }, 260); }
+const refDe = (gid, rid, cid) => { const gu = S.guias[gid]; if(!gu) return '?'; const r = (gu.ordem || []).indexOf(rid), c = (gu.cols || []).findIndex(x => x.id === cid); return r < 0 || c < 0 ? '(apagada)' : F.colLetra(c) + (r + 1) + (gid !== g ? ' · ' + gu.nome : ''); };
+const quando = t => { const s = (Date.now() - t) / 1000; return s < 60 ? 'agora' : s < 3600 ? Math.floor(s / 60) + ' min' : s < 86400 ? Math.floor(s / 3600) + ' h' : new Date(t).toLocaleDateString('pt-BR', {day:'2-digit', month:'short'}) + ' ' + new Date(t).toLocaleTimeString('pt-BR', {hour:'2-digit', minute:'2-digit'}); };
+function irPara(gid, rid, cid){ if(gid !== g){ g = gid; trocaVis('grade'); } const r = ordem().indexOf(rid), c = cols().findIndex(x => x.id === cid); if(r < 0 || c < 0) return; ancora = null; sel = {r, c}; marcaSel(); const td = celTd(r, c); if(td) td.scrollIntoView({block:'center', inline:'nearest', behavior:'smooth'}); }
+async function pintaGaveta(primeira){
+  const d = document.getElementById('gaveta'); if(!d || !gaveta) return;
+  if(gaveta.tipo === 'com'){
+    if(!primeira && d.contains(document.activeElement) && document.activeElement.tagName === 'TEXTAREA') { pintaListaCom(d); return; }
+    const alvo = gaveta.soCel || {rid:ordem()[sel.r], cid:(cols()[sel.c] || {}).id};
+    d.innerHTML = `<header><b>Comentários</b><button class="btn" data-fg aria-label="Fechar">×</button></header>
+      <div class="gfil">${[['abertos', 'Abertos'], ['meus', 'Menções a mim'], ['resolvidos', 'Resolvidos']].map(([k, n]) => `<button data-fil="${k}" class="${gaveta.filtro === k ? 'on' : ''}">${n}</button>`).join('')}</div>
+      ${nivel === 'editar' || true ? `<div class="novo"><small>Novo na célula <b>${alvo.rid && alvo.cid ? refDe(g, alvo.rid, alvo.cid) : '—'}</b></small><textarea id="cNovo" rows="2" placeholder="Escreva… use @ para chamar alguém"></textarea><button class="btn pri" id="cSalva">Comentar</button></div>` : ''}
+      <div class="glista" id="gLista"></div>`;
+    d.querySelector('[data-fg]').onclick = fechaGaveta;
+    d.querySelectorAll('[data-fil]').forEach(b => b.onclick = () => { gaveta.filtro = b.dataset.fil; pintaGaveta(true); });
+    const ta = d.querySelector('#cNovo'); if(ta){ ligaMencao(ta); ta.addEventListener('keydown', e => { if(e.key === 'Enter' && (e.ctrlKey || e.metaKey)){ e.preventDefault(); d.querySelector('#cSalva').click(); } });
+      d.querySelector('#cSalva').onclick = () => { if(!alvo.rid || !alvo.cid) return; salvaComentario(alvo.rid, alvo.cid, ta.value); ta.value = ''; }; if(primeira && gaveta.soCel) setTimeout(() => ta.focus(), 250); }
+    pintaListaCom(d);
+  } else {
+    d.innerHTML = `<header><b>${gaveta.soCel ? 'Histórico da célula ' + refDe(g, gaveta.soCel.rid, gaveta.soCel.cid) : 'Histórico de alterações'}</b><button class="btn" data-fg aria-label="Fechar">×</button></header><div class="glista" id="gLista"><div class="carrega" style="margin:20px auto"></div></div>`;
+    d.querySelector('[data-fg]').onclick = fechaGaveta;
+    let l = await carregaHist(); if(!gaveta || gaveta.tipo !== 'hist') return;
+    if(gaveta.soCel) l = l.filter(x => x.r === gaveta.soCel.rid && x.c === gaveta.soCel.cid);
+    const nomeCol = (gid, cid) => ((S.guias[gid] || {}).cols || []).find(c => c.id === cid);
+    d.querySelector('#gLista').innerHTML = l.length ? l.slice(0, 300).map((x, i) => { const co = nomeCol(x.g, x.c); const fmtV = v => v === '' ? '<i>vazio</i>' : esc(co && tipoDe(co) === 'pessoa' ? nomeP(v) : co && tipoDe(co) === 'data' ? dataBR(v) : v);
+      return `<div class="hit" data-i="${i}"><b class="av" style="background:${corDe(x.e || x.u)}">${esc(iniciais(x.u))}</b><div><p><b>${esc(String(x.u).split(' ')[0])}</b> mudou <a data-ir="${i}">${esc(co ? co.nome : 'coluna')} · ${refDe(x.g, x.r, x.c)}</a></p>
+        <p class="dif"><s>${fmtV(x.de)}</s> → <span>${fmtV(x.para)}</span></p><small>${quando(x.t)}${nivel === 'editar' ? ` · <a data-volta="${i}">voltar para o valor anterior</a>` : ''}</small></div></div>`; }).join('') : '<p class="ajuda" style="padding:16px">Nenhuma alteração registrada nos últimos 7 dias.</p>';
+    d.querySelectorAll('[data-ir]').forEach(a => a.onclick = () => { const x = l[+a.dataset.ir]; irPara(x.g, x.r, x.c); });
+    d.querySelectorAll('[data-volta]').forEach(a => a.onclick = () => { const x = l[+a.dataset.volta]; const co = nomeCol(x.g, x.c); if(!co || !S.guias[x.g]) return; const vAntes = x.de === '' ? '' : co && ['numero', 'moeda'].includes(tipoDe(co)) && !F.ehErro(F.num(x.de)) && x.de[0] !== '=' ? F.num(x.de) : x.de === 'true' ? true : x.de === 'false' ? false : x.de;
+      const gAnt = g; g = x.g; grava([[['dados', x.g, x.r, x.c], vAntes]]); g = gAnt; pinta(); toast('Valor anterior restaurado'); irPara(x.g, x.r, x.c); });
+  }
+}
+function pintaListaCom(d){
+  const box = d.querySelector('#gLista'); if(!box) return;
+  let l = Object.entries(COMS).sort((a, b) => b[1].t - a[1].t);
+  if(gaveta.soCel) l = l.filter(([, c]) => c.r === gaveta.soCel.rid && c.c === gaveta.soCel.cid);
+  l = l.filter(([, c]) => gaveta.filtro === 'resolvidos' ? c.resolvido : !c.resolvido && (gaveta.filtro !== 'meus' || mencionaMe(c)));
+  box.innerHTML = l.length ? l.map(([id, c]) => `<div class="cth${c.resolvido ? ' ok' : ''}" data-id="${id}"><div class="ctop"><a data-ir="${id}">${refDe(c.g, c.r, c.c)}</a><span>${quando(c.t)}</span></div>
+      <div class="cmsg"><b class="av" style="background:${corDe(c.email)}">${esc(iniciais(c.autor))}</b><div><b>${esc(c.autor)}</b><p>${marcaMencoes(c.txt)}</p></div></div>
+      ${(c.resp || []).map(r => `<div class="cmsg resp"><b class="av" style="background:${corDe(r.email)}">${esc(iniciais(r.autor))}</b><div><b>${esc(r.autor)}</b> <small>${quando(r.t)}</small><p>${marcaMencoes(r.txt)}</p></div></div>`).join('')}
+      <div class="cacoes"><textarea rows="1" placeholder="Responder… (@ para chamar)" data-resp="${id}"></textarea><button class="btn" data-res="${id}">${c.resolvido ? 'Reabrir' : '✓ Resolver'}</button>${c.email === String(eu.email).toLowerCase() ? `<button class="btn" data-apaga="${id}" title="Excluir">🗑</button>` : ''}</div></div>`).join('')
+    : `<p class="ajuda" style="padding:16px">${gaveta.filtro === 'resolvidos' ? 'Nenhum comentário resolvido.' : gaveta.filtro === 'meus' ? 'Ninguém mencionou você ainda.' : 'Nenhum comentário aberto. Selecione uma célula e escreva acima.'}</p>`;
+  box.querySelectorAll('[data-ir]').forEach(a => a.onclick = () => { const c = COMS[a.dataset.ir]; if(c) irPara(c.g, c.r, c.c); });
+  box.querySelectorAll('[data-res]').forEach(b => b.onclick = () => resolveComentario(b.dataset.res, !COMS[b.dataset.res].resolvido));
+  box.querySelectorAll('[data-apaga]').forEach(b => b.onclick = () => apagaComentario(b.dataset.apaga));
+  box.querySelectorAll('[data-resp]').forEach(ta => { ligaMencao(ta); ta.addEventListener('keydown', e => { if(e.key === 'Enter' && !e.shiftKey){ e.preventDefault(); respondeComentario(ta.dataset.resp, ta.value); ta.value = ''; } }); });
+}
+// balão ao passar o mouse numa célula com comentário
+let balaoT = 0;
+vEl.addEventListener('mouseover', e => { const td = e.target.closest('td.tem-com'); clearTimeout(balaoT); const b = document.getElementById('balao'); if(!td){ if(b) b.remove(); return; }
+  balaoT = setTimeout(() => { const rid = ordem()[+td.dataset.r], cid = (cols()[+td.dataset.c] || {}).id, l = comsDaCel(rid, cid).filter(([, c]) => !c.resolvido); if(!l.length) return;
+    let x = document.getElementById('balao'); if(!x){ x = document.createElement('div'); x.id = 'balao'; document.body.appendChild(x); }
+    x.innerHTML = l.slice(0, 3).map(([, c]) => `<p><b>${esc(c.autor)}</b> ${marcaMencoes(c.txt)}${(c.resp || []).length ? ` <small>· ${(c.resp || []).length} resposta(s)</small>` : ''}</p>`).join('') + '<small>Clique com o botão direito ▸ Comentários para responder</small>';
+    const r = td.getBoundingClientRect(); x.style.left = Math.min(innerWidth - 300, r.right + 6) + 'px'; x.style.top = Math.max(8, r.top) + 'px'; }, 250); });
+vEl.addEventListener('mouseleave', () => { clearTimeout(balaoT); const b = document.getElementById('balao'); if(b) b.remove(); });
+
+// ---------- gráficos (ficam por cima da grade, atualizam ao vivo) ----------
+const TIPOS_GRAF = [['colunas', 'Colunas'], ['barras', 'Barras'], ['linhas', 'Linhas'], ['area', 'Área'], ['pizza', 'Pizza (rosca)']];
+const graficos = () => pegaG().graficos || [];
+function dadosGrafico(gr){
+  const ci = cols().findIndex(c => c.id === gr.cat); if(ci < 0) return null;
+  const vis2 = cols().map((c, i) => ({c, i})).filter(x => (gr.vals || []).includes(x.c.id));
+  const series = vis2.length ? vis2.map(x => ({nome:x.c.nome, i:x.i, moeda:tipoDe(x.c) === 'moeda'})) : [{nome:'Quantidade', i:-1}];
+  const grupos = new Map();
+  linhasVisiveis().forEach(({i}) => { const k = textoCel(i, ci); if(k === '') return; if(!grupos.has(k)) grupos.set(k, series.map(() => ({s:0, n:0})));
+    const acc = grupos.get(k); series.forEach((s, j) => { if(s.i < 0){ acc[j].s++; acc[j].n++; return; } const v = valor(g, i, s.i), n = F.num(v); if(v !== '' && v != null && !F.ehErro(n)){ acc[j].s += n; acc[j].n++; } }); });
+  let cats = [...grupos.entries()].map(([k, a]) => ({k, v:a.map(x => gr.agreg === 'media' ? (x.n ? x.s / x.n : 0) : gr.agreg === 'contagem' ? x.n : x.s)}));
+  const max = gr.tipo === 'pizza' ? 6 : 24;
+  if(gr.tipo !== 'linhas' && gr.tipo !== 'area' && cats.length > max){ cats.sort((a, b) => b.v[0] - a.v[0]); const resto = cats.slice(max - 1); cats = cats.slice(0, max - 1).concat([{k:'Outros', v:series.map((_, j) => resto.reduce((t, x) => t + x.v[j], 0))}]); }
+  return {cats, series};
+}
+const nCurto = n => Math.abs(n) >= 1e6 ? (n / 1e6).toLocaleString('pt-BR', {maximumFractionDigits:1}) + ' mi' : Math.abs(n) >= 1e4 ? (n / 1e3).toLocaleString('pt-BR', {maximumFractionDigits:1}) + ' mil' : n.toLocaleString('pt-BR', {maximumFractionDigits:2});
+function svgGrafico(gr, W, H){
+  const d = dadosGrafico(gr); if(!d || !d.cats.length) return `<div class="gvazio">Sem dados para mostrar ainda</div>`;
+  const {cats, series} = d, fmtV = (v, j) => series[j] && series[j].moeda ? mfmt.format(v) : v.toLocaleString('pt-BR', {maximumFractionDigits:2});
+  const cor = j => `var(--ser${j % 8 + 1})`;
+  if(gr.tipo === 'pizza'){ const tot = cats.reduce((t, c) => t + Math.max(0, c.v[0]), 0) || 1, R = Math.min(W * .32, H / 2 - 14), cx = R + 14, cy = H / 2, r0 = R * .58; let a = -Math.PI / 2;
+    const fat = cats.map((c, j) => { const f = Math.max(0, c.v[0]) / tot, a2 = a + f * Math.PI * 2, gap = .012, s = a + gap, e2 = Math.max(s, a2 - gap), big = e2 - s > Math.PI ? 1 : 0;
+      const P = (rr, an) => `${(cx + rr * Math.cos(an)).toFixed(1)},${(cy + rr * Math.sin(an)).toFixed(1)}`;
+      const path = f >= .999 ? `M${cx - R},${cy}a${R},${R} 0 1,0 ${2 * R},0a${R},${R} 0 1,0 ${-2 * R},0M${cx - r0},${cy}a${r0},${r0} 0 1,1 ${2 * r0},0a${r0},${r0} 0 1,1 ${-2 * r0},0` : `M${P(R, s)}A${R},${R} 0 ${big} 1 ${P(R, e2)}L${P(r0, e2)}A${r0},${r0} 0 ${big} 0 ${P(r0, s)}Z`;
+      a = a2; return `<path d="${path}" fill="${cor(j)}" data-tt="${esc(c.k)}: ${esc(fmtV(c.v[0], 0))} (${Math.round(f * 100)}%)"/>`; }).join('');
+    return `<svg viewBox="0 0 ${W} ${H}" width="${W}" height="${H}">${fat}<text x="${cx}" y="${cy - 2}" text-anchor="middle" class="gtot">${esc(nCurto(tot))}</text><text x="${cx}" y="${cy + 14}" text-anchor="middle" class="gsub">total</text>
+      <g transform="translate(${cx + R + 18},${Math.max(10, cy - cats.length * 11)})">${cats.map((c, j) => `<g transform="translate(0,${j * 22})" data-tt="${esc(c.k)}: ${esc(fmtV(c.v[0], 0))}"><rect width="10" height="10" rx="2" y="-9" fill="${cor(j)}"/><text x="16" class="gleg">${esc(String(c.k).slice(0, 22))}</text><text x="16" y="12" class="gsub">${esc(nCurto(c.v[0]))} · ${Math.round(Math.max(0, c.v[0]) / tot * 100)}%</text></g>`).join('')}</g></svg>`; }
+  const hor = gr.tipo === 'barras', legH = series.length > 1 ? 22 : 0, padL = hor ? Math.min(140, 12 + Math.max(...cats.map(c => String(c.k).length)) * 6.5) : 44, padB = hor ? 22 : 34, padT = 10 + legH, padR = 14;
+  const pw = W - padL - padR, ph = H - padT - padB; const todos = cats.flatMap(c => c.v), vmax = Math.max(0, ...todos), vmin = Math.min(0, ...todos);
+  const passo = (() => { const bruto = (vmax - vmin) / 4 || 1, p = Math.pow(10, Math.floor(Math.log10(bruto))), m = bruto / p; return (m > 5 ? 10 : m > 2 ? 5 : m > 1 ? 2 : 1) * p; })();
+  const top = Math.ceil(vmax / passo) * passo || passo, bot = Math.floor(vmin / passo) * passo, esc2 = v => (v - bot) / (top - bot);
+  const ticks = []; for(let v = bot; v <= top + 1e-9; v += passo) ticks.push(v);
+  let o = `<svg viewBox="0 0 ${W} ${H}" width="${W}" height="${H}">`;
+  if(series.length > 1) o += `<g transform="translate(${padL},14)">${series.map((s, j) => `<g transform="translate(${j * Math.min(140, pw / series.length)},0)"><rect width="10" height="10" rx="2" y="-9" fill="${cor(j)}"/><text x="15" class="gleg">${esc(s.nome.slice(0, 18))}</text></g>`).join('')}</g>`;
+  ticks.forEach(v => { if(hor){ const x = padL + esc2(v) * pw; o += `<line x1="${x}" x2="${x}" y1="${padT}" y2="${padT + ph}" class="ggrid"/><text x="${x}" y="${H - 6}" text-anchor="middle" class="gax">${esc(nCurto(v))}</text>`; }
+    else { const y = padT + ph - esc2(v) * ph; o += `<line x1="${padL}" x2="${W - padR}" y1="${y}" y2="${y}" class="ggrid"/><text x="${padL - 6}" y="${y + 4}" text-anchor="end" class="gax">${esc(nCurto(v))}</text>`; } });
+  const n = cats.length, banda = (hor ? ph : pw) / n, ns = series.length, larg = Math.max(3, Math.min(42, banda * .7 / ns - 2));
+  if(gr.tipo === 'colunas' || hor){
+    cats.forEach((c, k) => c.v.forEach((v, j) => { const meio = (hor ? padT : padL) + banda * k + banda / 2 - (ns * (larg + 2) - 2) / 2 + j * (larg + 2), z = esc2(0), e = esc2(v), r = Math.min(4, larg / 2);
+      const tt = `data-tt="${esc(c.k)}${ns > 1 ? ' · ' + esc(series[j].nome) : ''}: ${esc(fmtV(v, j))}"`;
+      if(hor){ const x0 = padL + Math.min(z, e) * pw, w = Math.abs(e - z) * pw; o += `<path d="M${x0},${meio}h${Math.max(0, w - r)}q${r},0 ${r},${r}v${Math.max(0, larg - 2 * r)}q0,${r} ${-r},${r}h${-Math.max(0, w - r)}z" fill="${cor(j)}" ${tt}/>`; }
+      else { const y0 = padT + ph - Math.max(z, e) * ph, h = Math.abs(e - z) * ph; o += `<path d="M${meio},${y0 + h}v${-Math.max(0, h - r)}q0,${-r} ${r},${-r}h${Math.max(0, larg - 2 * r)}q${r},0 ${r},${r}v${Math.max(0, h - r)}z" fill="${cor(j)}" ${tt}/>`; } }));
+    const pula = Math.ceil(n / Math.max(1, Math.floor((hor ? ph / 16 : pw / 64))));
+    cats.forEach((c, k) => { if(k % pula) return; const p = (hor ? padT : padL) + banda * k + banda / 2; o += hor ? `<text x="${padL - 6}" y="${p + 4}" text-anchor="end" class="gax">${esc(String(c.k).slice(0, 20))}</text>` : `<text x="${p}" y="${H - 14}" text-anchor="middle" class="gax">${esc(String(c.k).slice(0, 12))}</text>`; });
+  } else {
+    const X = k => padL + (n === 1 ? pw / 2 : k * pw / (n - 1)), Y = v => padT + ph - esc2(v) * ph;
+    series.forEach((s, j) => { const pts = cats.map((c, k) => `${X(k).toFixed(1)},${Y(c.v[j]).toFixed(1)}`);
+      if(gr.tipo === 'area') o += `<path d="M${X(0)},${Y(Math.max(0, bot))}L${pts.join('L')}L${X(n - 1)},${Y(Math.max(0, bot))}Z" fill="${cor(j)}" opacity=".18"/>`;
+      o += `<polyline points="${pts.join(' ')}" fill="none" stroke="${cor(j)}" stroke-width="2" stroke-linejoin="round" stroke-linecap="round"/>`;
+      cats.forEach((c, k) => { o += `<circle cx="${X(k)}" cy="${Y(c.v[j])}" r="${n > 30 ? 0 : 3}" fill="${cor(j)}" stroke="var(--s1)" stroke-width="2"/><circle cx="${X(k)}" cy="${Y(c.v[j])}" r="10" fill="transparent" data-tt="${esc(c.k)}${ns > 1 ? ' · ' + esc(s.nome) : ''}: ${esc(fmtV(c.v[j], j))}"/>`; }); });
+    const pula = Math.ceil(n / Math.max(1, Math.floor(pw / 64))); cats.forEach((c, k) => { if(k % pula) return; o += `<text x="${X(k)}" y="${H - 14}" text-anchor="middle" class="gax">${esc(String(c.k).slice(0, 12))}</text>`; });
+  }
+  return o + '</svg>';
+}
+function pintaGraficos(){
+  const box = $('#vis'); box.querySelectorAll('.grafico').forEach(x => x.remove()); if(vis !== 'grade') return;
+  graficos().forEach(gr => {
+    const el = document.createElement('div'); el.className = 'grafico'; el.dataset.id = gr.id;
+    const w = gr.w || 460, h = gr.h || 300; Object.assign(el.style, {left:(gr.x ?? 120) + 'px', top:(gr.y ?? 60) + 'px', width:w + 'px', height:h + 'px'});
+    const sub = (gr.vals || []).length ? (gr.agreg === 'media' ? 'Média' : gr.agreg === 'contagem' ? 'Contagem' : 'Soma') + ' por ' + ((cols().find(c => c.id === gr.cat) || {}).nome || '') : 'Quantidade por ' + ((cols().find(c => c.id === gr.cat) || {}).nome || '');
+    el.innerHTML = `<header><div><b>${esc(gr.titulo || 'Gráfico')}</b><small>${esc(sub)}</small></div>${nivel === 'editar' ? '<button class="gbtn" data-gm title="Opções do gráfico">⋯</button>' : ''}</header><div class="gcorpo">${svgGrafico(gr, w - 20, h - 58)}</div>${nivel === 'editar' ? '<i class="gres" title="Arraste para mudar o tamanho"></i>' : ''}`;
+    box.appendChild(el);
+    if(nivel !== 'editar') return;
+    el.querySelector('[data-gm]').onclick = e => menu([['Editar gráfico…', () => janelaGrafico(gr.id)], ['Trazer para perto da seleção', () => { const td = celTd(sel.r, sel.c); if(!td) return; const v = box.getBoundingClientRect(), r = td.getBoundingClientRect(); salvaGraf(gr.id, {x:Math.round(r.right - v.left + box.scrollLeft + 12), y:Math.round(r.top - v.top + box.scrollTop)}); }], '-', ['Excluir gráfico', () => { grava([[['guias', g, 'graficos'], graficos().filter(x => x.id !== gr.id)]]); pinta(); }, 'perigo']], e.currentTarget);
+    // arrastar pelo título e redimensionar pelo canto
+    const arrasta = (e, modo) => { e.preventDefault(); e.stopPropagation(); const x0 = e.clientX, y0 = e.clientY, gx = parseFloat(el.style.left), gy = parseFloat(el.style.top), gw = el.offsetWidth, gh = el.offsetHeight; el.classList.add('mexendo');
+      const mv = ev => { const dx = ev.clientX - x0, dy = ev.clientY - y0; if(modo === 'm'){ el.style.left = Math.max(0, gx + dx) + 'px'; el.style.top = Math.max(0, gy + dy) + 'px'; } else { el.style.width = Math.max(280, gw + dx) + 'px'; el.style.height = Math.max(200, gh + dy) + 'px'; } };
+      const up = () => { removeEventListener('mousemove', mv); removeEventListener('mouseup', up); el.classList.remove('mexendo'); salvaGraf(gr.id, modo === 'm' ? {x:Math.round(parseFloat(el.style.left)), y:Math.round(parseFloat(el.style.top))} : {w:Math.round(el.offsetWidth), h:Math.round(el.offsetHeight)}); };
+      addEventListener('mousemove', mv); addEventListener('mouseup', up); };
+    el.querySelector('header').addEventListener('mousedown', e => { if(!e.target.closest('[data-gm]')) arrasta(e, 'm'); });
+    el.querySelector('.gres').addEventListener('mousedown', e => arrasta(e, 'r'));
+  });
+}
+function salvaGraf(id, mut){ grava([[['guias', g, 'graficos'], graficos().map(x => x.id === id ? {...x, ...mut} : x)]], {semDesfazer:true}); pinta(); }
+// dica ao passar o mouse nas barras, fatias e pontos
+document.addEventListener('mouseover', e => { const m = e.target.closest && e.target.closest('.grafico [data-tt]'); let t = document.getElementById('gtip'); if(!m){ if(t) t.classList.add('hidden'); return; }
+  if(!t){ t = document.createElement('div'); t.id = 'gtip'; document.body.appendChild(t); } t.textContent = m.dataset.tt; t.classList.remove('hidden'); const r = m.getBoundingClientRect(); t.style.left = Math.min(innerWidth - t.offsetWidth - 8, r.left + r.width / 2 - t.offsetWidth / 2) + 'px'; t.style.top = Math.max(8, r.top - t.offsetHeight - 6) + 'px'; });
+function janelaGrafico(id, tipoIni){
+  if(nivel !== 'editar') return;
+  const ex = id ? graficos().find(x => x.id === id) : null, {c0, c1} = intervalo();
+  const ehNumCol = c => ['numero', 'moeda'].includes(tipoDe(c)) || c.formula && ordem().some((_, i) => typeof valor(g, i, cols().indexOf(c)) === 'number');
+  const catPad = ex ? ex.cat : ((cols().slice(c0, c1 + 1).find(c => !ehNumCol(c)) || cols().find(c => ['status', 'pessoa', 'texto'].includes(tipoDe(c)) && !ehNumCol(c)) || cols()[0]).id);
+  const valsPad = ex ? ex.vals || [] : cols().slice(c0, c1 + 1).filter(ehNumCol).map(c => c.id);
+  const f = janela(`<h3>${ex ? 'Editar gráfico' : 'Inserir gráfico'}</h3>
+    <div class="gtipos">${TIPOS_GRAF.map(([k, n]) => `<button class="gtipo${(ex ? ex.tipo : tipoIni || 'colunas') === k ? ' on' : ''}" data-t="${k}"><span class="gi gi-${k}"></span>${n}</button>`).join('')}</div>
+    <label class="campo">Título<input id="gTit" value="${esc(ex ? ex.titulo : '')}" placeholder="Ex.: Solicitações por status"></label>
+    <label class="campo">Agrupar por (categorias)<select id="gCat">${cols().map(c => `<option value="${c.id}"${c.id === catPad ? ' selected' : ''}>${esc(c.nome)}</option>`).join('')}</select></label>
+    <div class="campo">Valores <span class="ajuda">(nenhum marcado = contar as linhas)</span><div class="ops" style="grid-template-columns:repeat(2,1fr)">${cols().filter(ehNumCol).map(c => `<label class="fl"><input type="checkbox" value="${c.id}"${valsPad.includes(c.id) ? ' checked' : ''}> ${esc(c.nome)}</label>`).join('') || '<span class="ajuda">Esta guia não tem colunas de número: o gráfico conta as linhas.</span>'}</div></div>
+    <label class="campo">Cálculo<select id="gAg"><option value="soma">Soma</option><option value="media"${ex && ex.agreg === 'media' ? ' selected' : ''}>Média</option><option value="contagem"${ex && ex.agreg === 'contagem' ? ' selected' : ''}>Contagem</option></select></label>
+    <div class="acoes"><button class="btn" data-x>Cancelar</button><button class="btn pri" data-ok>${ex ? 'Salvar' : 'Inserir'}</button></div>`);
+  let tipo = ex ? ex.tipo : tipoIni || 'colunas';
+  f.querySelectorAll('.gtipo').forEach(b => b.onclick = () => { tipo = b.dataset.t; f.querySelectorAll('.gtipo').forEach(x => x.classList.toggle('on', x === b)); });
+  f.querySelector('[data-ok]').onclick = () => {
+    const cat = f.querySelector('#gCat').value, vals = [...f.querySelectorAll('.ops input:checked')].map(x => x.value), nomeCat = (cols().find(c => c.id === cat) || {}).nome;
+    const novo = {...(ex || {}), id:ex ? ex.id : novoId(), tipo, cat, vals:tipo === 'pizza' ? vals.slice(0, 1) : vals.slice(0, 8), agreg:f.querySelector('#gAg').value, titulo:f.querySelector('#gTit').value.trim() || (vals.length ? (cols().find(c => c.id === vals[0]) || {}).nome + ' por ' + nomeCat : 'Linhas por ' + nomeCat)};
+    if(!ex){ const box = $('#vis'); novo.x = Math.round(box.scrollLeft + Math.max(60, box.clientWidth - 520)); novo.y = Math.round(box.scrollTop + 40); novo.w = 480; novo.h = 310; }
+    fecha(f); grava([[['guias', g, 'graficos'], ex ? graficos().map(x => x.id === ex.id ? novo : x) : [...graficos(), novo]]]); pinta(); toast(ex ? 'Gráfico atualizado' : 'Gráfico inserido: arraste pelo título para mover');
+  };
+}
+
+// ---------- inserir função (Shift+F3) ----------
+const CATS_FN = {'Matemática':['SOMA', 'SOMASE', 'SOMASES', 'MÉDIA', 'MÉDIASE', 'MÉDIASES', 'MÍNIMO', 'MÁXIMO', 'MÁXIMOSES', 'MÍNIMOSES', 'ARRED', 'ARREDONDAR.PARA.CIMA', 'ARREDONDAR.PARA.BAIXO', 'INT', 'MOD', 'ABS'],
+  'Contagem':['CONT.VALORES', 'CONT.NÚM', 'CONT.SE', 'CONT.SES', 'CONT.VAZIO'], 'Lógica':['SE', 'SES', 'E', 'OU', 'NÃO', 'SEERRO', 'É.NÚM', 'É.TEXTO', 'É.ERROS', 'ÉCÉL.VAZIA'],
+  'Pesquisa':['PROCV', 'PROCX', 'ÍNDICE', 'CORRESP'], 'Texto':['CONCATENAR', 'ESQUERDA', 'DIREITA', 'EXT.TEXTO', 'NÚM.CARACT', 'PROCURAR', 'LOCALIZAR', 'SUBSTITUIR', 'MUDAR', 'TEXTO', 'VALOR', 'MAIÚSCULA', 'MINÚSCULA', 'ARRUMAR'],
+  'Data e hora':['HOJE', 'AGORA', 'DATA', 'DIA', 'MÊS', 'ANO', 'DIAS', 'DIA.DA.SEMANA', 'FIMMÊS', 'DIATRABALHOTOTAL', 'DIATRABALHO']};
+Object.assign(SIG, {
+  'SOMASES':['Soma o que atende a vários critérios', 'intervalo_soma; intervalo1; critério1; [intervalo2; critério2]; …'], 'CONT.SES':['Conta o que atende a vários critérios', 'intervalo1; critério1; [intervalo2; critério2]; …'],
+  'MÉDIASES':['Média do que atende a vários critérios', 'intervalo_média; intervalo1; critério1; …'], 'MÁXIMOSES':['Maior valor com critérios', 'intervalo_máximo; intervalo1; critério1; …'], 'MÍNIMOSES':['Menor valor com critérios', 'intervalo_mínimo; intervalo1; critério1; …'],
+  'SES':['Testa várias condições em ordem', 'teste1; valor1; [teste2; valor2]; …'], 'ESQUERDA':['Primeiros caracteres do texto', 'texto; [núm_caract]'], 'DIREITA':['Últimos caracteres do texto', 'texto; [núm_caract]'],
+  'EXT.TEXTO':['Pedaço do meio do texto', 'texto; núm_inicial; núm_caract'], 'NÚM.CARACT':['Quantidade de caracteres', 'texto'], 'PROCURAR':['Posição de um texto (diferencia maiúsculas)', 'texto_procurado; no_texto; [núm_inicial]'],
+  'LOCALIZAR':['Posição de um texto (sem diferenciar)', 'texto_procurado; no_texto; [núm_inicial]'], 'SUBSTITUIR':['Troca um texto por outro', 'texto; texto_antigo; novo_texto; [núm_da_ocorrência]'], 'MUDAR':['Troca caracteres por posição', 'texto_antigo; núm_inicial; núm_caract; novo_texto'],
+  'TEXTO':['Formata número/data como texto', 'valor; "formato" (ex.: "dd/mm/aaaa", "#.##0,00", "0%")'], 'VALOR':['Converte texto em número', 'texto'], 'AGORA':['Data e hora de agora', ''],
+  'DIA.DA.SEMANA':['Dia da semana (1 = domingo)', 'data; [tipo]'], 'FIMMÊS':['Último dia do mês', 'data_inicial; meses'], 'DIATRABALHOTOTAL':['Dias úteis entre duas datas', 'data_inicial; data_final; [feriados]'],
+  'DIATRABALHO':['Data depois de N dias úteis', 'data_inicial; dias; [feriados]'], 'CONT.VAZIO':['Conta células vazias', 'intervalo'], 'ARREDONDAR.PARA.CIMA':['Arredonda para cima', 'núm; núm_dígitos'],
+  'ARREDONDAR.PARA.BAIXO':['Arredonda para baixo', 'núm; núm_dígitos'], 'INT':['Parte inteira (para baixo)', 'núm'], 'MOD':['Resto da divisão', 'núm; divisor'], 'É.NÚM':['Verdadeiro se for número', 'valor'], 'É.TEXTO':['Verdadeiro se for texto', 'valor'], 'É.ERROS':['Verdadeiro se for erro', 'valor']});
+function janelaFuncao(){
+  if(nivel !== 'editar') return; let cat = 'Matemática', fn = 'SOMA';
+  const f = janela(`<h3>Inserir função</h3><input id="fnB" class="busca" style="width:100%" placeholder="Procure: o que você quer fazer? (ex.: somar com condição, dias úteis)">
+    <div class="fnw"><div id="fnC"></div><div id="fnL"></div></div><div id="fnD" class="fnd"></div>
+    <div class="acoes"><button class="btn" data-x>Cancelar</button><button class="btn pri" data-ok>Inserir</button></div>`);
+  f.querySelector('.janela').classList.add('larga');
+  const pinta2 = () => { const q = semAcento(f.querySelector('#fnB').value.trim());
+    const lista = q ? Object.keys(SIG).filter(n => semAcento(n).includes(q) || semAcento(SIG[n][0]).includes(q)) : CATS_FN[cat];
+    f.querySelector('#fnC').innerHTML = Object.keys(CATS_FN).map(c => `<button class="${!q && c === cat ? 'on' : ''}" data-c="${c}">${c}</button>`).join('');
+    f.querySelector('#fnL').innerHTML = lista.map(n => `<button class="${n === fn ? 'on' : ''}" data-f="${n}"><b>${n}</b><span>${esc(SIG[n] ? SIG[n][0] : '')}</span></button>`).join('') || '<p class="ajuda">Nada encontrado</p>';
+    f.querySelector('#fnD').innerHTML = SIG[fn] ? `<b>${fn}(${esc(SIG[fn][1])})</b><p>${esc(SIG[fn][0])}</p>` : '';
+    f.querySelectorAll('[data-c]').forEach(b => b.onclick = () => { cat = b.dataset.c; fn = CATS_FN[cat][0]; f.querySelector('#fnB').value = ''; pinta2(); });
+    f.querySelectorAll('[data-f]').forEach(b => { b.onclick = () => { fn = b.dataset.f; pinta2(); }; b.ondblclick = () => f.querySelector('[data-ok]').click(); }); };
+  f.querySelector('#fnB').oninput = pinta2; pinta2(); setTimeout(() => f.querySelector('#fnB').focus(), 50);
+  f.querySelector('[data-ok]').onclick = () => { fecha(f); abreEditor('=' + fn + '('); };
+}
+
+// ---------- zoom e linhas de grade (de cada pessoa) ----------
+let zoom = 100; try{ zoom = +localStorage.getItem('planilhaZoom') || 100; }catch(e){}
+let semGrade = false; try{ semGrade = localStorage.getItem('planilhaGrade') === '0'; }catch(e){}
+function aplicaZoom(z){ zoom = Math.max(50, Math.min(200, z)); document.documentElement.style.setProperty('--zoom', zoom / 100); const b = document.getElementById('zVal'); if(b) b.textContent = zoom + '%'; try{ localStorage.setItem('planilhaZoom', zoom); }catch(e){} if(S) setTimeout(() => { marcaSel(); pintaPres(); aplicaCongela(); }, 30); }
+function aplicaGrade(){ document.body.classList.toggle('sem-grade', semGrade); try{ localStorage.setItem('planilhaGrade', semGrade ? '0' : '1'); }catch(e){} const b = document.querySelector('[data-cmd="grade"]'); if(b) b.classList.toggle('on', !semGrade); }
+vEl.addEventListener('wheel', e => { if(!(e.ctrlKey || e.metaKey)) return; e.preventDefault(); aplicaZoom(zoom + (e.deltaY < 0 ? 10 : -10)); }, {passive:false});
+
+// ---------- comandos das abas novas ----------
+Object.assign(CMD, {
+  grafico:el => menu(TIPOS_GRAF.map(([k, n]) => [n, () => janelaGrafico(null, k)]), el),
+  comentar:() => abreGaveta('com', {rid:ordem()[sel.r], cid:(cols()[sel.c] || {}).id}),
+  comentarios:() => abreGaveta('com'), historico:() => abreGaveta('hist'), histcel:() => abreGaveta('hist', {rid:ordem()[sel.r], cid:(cols()[sel.c] || {}).id}),
+  link:() => { if(nivel !== 'editar') return; const c = cols()[sel.c], rid = ordem()[sel.r]; const f = janela(`<h3>Inserir link</h3><label class="campo">Endereço<input id="lU" placeholder="https://…" value="${esc(String(cel(g, rid, c.id) || '').match(/^https?:/) ? cel(g, rid, c.id) : '')}"></label><div class="acoes"><button class="btn" data-x>Cancelar</button><button class="btn pri" data-ok>OK</button></div>`);
+    f.querySelector('[data-ok]').onclick = () => { let u = f.querySelector('#lU').value.trim(); if(u && !/^https?:\/\//i.test(u)) u = 'https://' + u; fecha(f); grava([[['dados', g, rid, c.id], u]]); pinta(); }; },
+  inslinha:() => insereLinhas(intervalo().r0, intervalo().r1 - intervalo().r0 + 1), inscoluna:() => janelaColuna(null, intervalo().c0), insguia:() => { const b = document.getElementById('novaGuia'); if(b) b.click(); },
+  funcao:() => janelaFuncao(), mostrafx:() => { mostraFormulas = !mostraFormulas; pinta(); }, recalc:() => { pinta(); toast('Recalculado'); },
+  fncat:el => menu(Object.entries(CATS_FN).map(([c, l]) => [c + ' ▸', () => menu(l.map(n => [n + '  ·  ' + (SIG[n] ? SIG[n][0] : ''), () => abreEditor('=' + n + '(')]), el)]), el),
+  az:() => ordena(sel.c, 1), za:() => ordena(sel.c, -1), classvarias:() => janelaClassificar(),
+  filtro:() => { if(nivel !== 'editar'){ toast('Somente leitura'); return; } grava([[['guias', g, 'filtro'], G().filtro ? '' : true]]); pinta(); }, limpafiltro:() => { filtros[g] = {}; pinta(); },
+  validacao:() => janelaValidacao(), duplicatas:() => janelaDuplicatas(), importar:() => $('#arq').click(),
+  congelar:el => { const z = congela(); menu([['Congelar até a seleção (linhas acima e colunas à esquerda)', () => defineCongela(sel.r, sel.c)], ['Congelar linha superior', () => defineCongela(1, z.c)], ['Congelar primeira coluna', () => defineCongela(z.l, 1)], '-', ['Descongelar painéis', () => defineCongela(0, 0)]], el); },
+  ocultar:el => menu([['Ocultar linhas  Ctrl+9', () => ocultaSel('r')], ['Ocultar colunas  Ctrl+0', () => ocultaSel('c')], '-', ['Reexibir linhas  Ctrl+Shift+9', () => ocultaSel('r', true)], ['Reexibir colunas  Ctrl+Shift+0', () => ocultaSel('c', true)], ['Reexibir tudo', reexibeTudo]], el),
+  grade:() => { semGrade = !semGrade; aplicaGrade(); }, zmenos:() => aplicaZoom(zoom - 10), zmais:() => aplicaZoom(zoom + 10), z100:() => aplicaZoom(100),
+  barras:el => menuExibir(el), telacheia:() => { if(document.fullscreenElement) document.exitFullscreen(); else document.documentElement.requestFullscreen().catch(() => toast('Use F11')); }
+});
+// abas da faixa
+let abaFita = 'inicio'; try{ abaFita = localStorage.getItem('planilhaAba') || 'inicio'; }catch(e){}
+function mostraAba(a){ abaFita = a; document.querySelectorAll('.abasf [data-aba]').forEach(b => b.classList.toggle('on', b.dataset.aba === a)); document.querySelectorAll('#fita .grp').forEach(gp => gp.classList.toggle('hidden', (gp.dataset.aba || 'inicio') !== a)); try{ localStorage.setItem('planilhaAba', a); }catch(e){} }
+document.querySelectorAll('.abasf [data-aba]').forEach(b => b.onclick = () => mostraAba(b.dataset.aba));
+mostraAba(abaFita); aplicaZoom(zoom); aplicaGrade();
 
 // ---------- ajuda ----------
 $('#bAtalhos').onclick = janelaAtalhos;
