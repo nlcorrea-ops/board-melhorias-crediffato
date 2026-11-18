@@ -2169,6 +2169,82 @@
   body[data-aba="routines"]{--tc:var(--pa);}
   body[data-aba="validations"]{--tc:var(--st-concluido);}
   body[data-aba="archive"]{--tc:#4f9cff;}
+  /* ---------- aba Planilhas (as planilhas abrem em planilha.html, numa guia própria) ---------- */
+  body[data-aba="planilhas"]{--tc:#4ee2a0;}
+  .pl-wrap{display:grid; grid-template-columns:230px minmax(0,1fr); gap:18px; align-items:start;}
+  .pl-side{position:sticky; top:16px; display:grid; gap:4px; padding:12px; border:1px solid var(--hairline); border-radius:var(--radius); background:var(--ink-1);}
+  .pl-side h4{margin:12px 8px 4px; font-size:11px; letter-spacing:.08em; text-transform:uppercase; color:var(--text-low); font-weight:600;}
+  .pl-side h4:first-of-type{margin-top:4px;}
+  .pl-pasta{all:unset; cursor:pointer; display:flex; align-items:center; gap:9px; padding:8px 10px; border-radius:9px; font-size:13.5px; color:var(--text-mid); transition:background .15s, color .15s;}
+  .pl-pasta:hover{background:var(--ink-2); color:var(--text-hi);}
+  .pl-pasta.on{background:var(--ink-2); color:var(--text-hi); box-shadow:inset 3px 0 0 var(--c, var(--brand-red));}
+  .pl-pasta svg{flex:none; color:var(--c, var(--text-low));}
+  .pl-pasta em{margin-left:auto; font-style:normal; font-family:var(--font-mono); font-size:11.5px; color:var(--text-low);}
+  .pl-nova{all:unset; cursor:pointer; display:flex; align-items:center; justify-content:center; gap:8px; padding:10px; border-radius:10px; background:var(--brand-red); color:#fff; font-weight:600; font-size:13.5px; margin-bottom:6px; transition:transform .12s, filter .15s;}
+  .pl-nova:hover{filter:brightness(1.1);} .pl-nova:active{transform:scale(.97);}
+  .pl-head{display:flex; align-items:flex-end; gap:12px; flex-wrap:wrap; margin-bottom:14px;}
+  .pl-head h2{margin:0; font-size:22px;}
+  .pl-head p{margin:2px 0 0; color:var(--text-mid); font-size:13px;}
+  .pl-busca{margin-left:auto; padding:8px 12px; border-radius:10px; border:1px solid var(--hairline); background:var(--ink-1); color:var(--text-hi); font:inherit; font-size:13px; width:240px; max-width:100%;}
+  .pl-kpis{display:grid; grid-template-columns:repeat(4,minmax(0,1fr)); gap:10px; margin-bottom:16px;}
+  .pl-kpi{padding:12px 14px; border:1px solid var(--hairline); border-radius:12px; background:var(--ink-1);}
+  .pl-kpi span{display:block; font-size:12px; color:var(--text-low);}
+  .pl-kpi b{display:block; font-family:var(--font-mono); font-size:24px; font-weight:500; margin-top:2px;}
+  .pl-grid{display:grid; grid-template-columns:repeat(auto-fill,minmax(250px,1fr)); gap:12px;}
+  .pl-card{position:relative; display:grid; gap:10px; padding:14px; border:1px solid var(--hairline); border-radius:14px; background:var(--ink-1); cursor:pointer; text-align:left; transition:transform .22s cubic-bezier(.2,.8,.2,1), border-color .2s, box-shadow .22s; animation:plSobe .4s cubic-bezier(.2,.8,.2,1) both; overflow:hidden;}
+  .pl-card::before{content:""; position:absolute; inset:0 0 auto 0; height:3px; background:var(--c, var(--brand-red)); transform:scaleX(.25); transform-origin:left; transition:transform .35s cubic-bezier(.2,.8,.2,1);}
+  .pl-card:hover{transform:translateY(-3px); border-color:color-mix(in srgb, var(--c, var(--brand-red)) 55%, var(--hairline)); box-shadow:0 18px 40px -24px var(--c, #000);}
+  .pl-card:hover::before{transform:scaleX(1);}
+  .pl-card:focus-visible{outline:2px solid var(--c, var(--brand-red)); outline-offset:2px;}
+  .pl-card .t{display:flex; align-items:center; gap:10px; min-width:0;}
+  .pl-ico{width:34px; height:34px; border-radius:10px; display:grid; place-items:center; flex:none; background:color-mix(in srgb, var(--c, var(--brand-red)) 16%, transparent); color:var(--c, var(--brand-red));}
+  .pl-card h5{margin:0; font-size:14.5px; font-weight:600; overflow:hidden; text-overflow:ellipsis; white-space:nowrap;}
+  .pl-card small{display:block; color:var(--text-low); font-size:12px;}
+  .pl-mini{display:grid; grid-template-columns:repeat(6,1fr); gap:3px; height:34px; opacity:.7;}
+  .pl-mini i{border-radius:3px; background:var(--ink-2);}
+  .pl-mini i.c{background:color-mix(in srgb, var(--c, var(--brand-red)) 35%, var(--ink-2));}
+  .pl-pe{display:flex; align-items:center; gap:8px; font-size:12px; color:var(--text-mid);}
+  .pl-pe .avs{display:inline-flex; margin-left:auto;}
+  .pl-pe .avs b{width:20px; height:20px; border-radius:50%; display:grid; place-items:center; font-size:9px; font-weight:700; color:#0b0b0d; border:2px solid var(--ink-1); margin-left:-6px;}
+  .pl-tag{font-size:11px; padding:2px 8px; border-radius:99px; border:1px solid var(--hairline); color:var(--text-mid); white-space:nowrap;}
+  .pl-mais{all:unset; position:absolute; top:10px; right:10px; width:28px; height:28px; border-radius:8px; display:grid; place-items:center; color:var(--text-low); opacity:0; transition:opacity .15s, background .15s;}
+  .pl-card:hover .pl-mais, .pl-mais:focus-visible{opacity:1;} .pl-mais:hover{background:var(--ink-2); color:var(--text-hi);}
+  .pl-card.voa{animation:plVoa .5s cubic-bezier(.5,0,.2,1) forwards; pointer-events:none;}
+  .pl-vazio{padding:46px 20px; text-align:center; color:var(--text-mid); border:1px dashed var(--hairline); border-radius:14px; display:grid; gap:10px; justify-items:center;}
+  .pl-vazio b{color:var(--text-hi); font-size:15px;}
+  .pl-mudou{margin-top:18px; border:1px solid var(--hairline); border-radius:14px; background:var(--ink-1); padding:6px 14px;}
+  .pl-mudou h4{margin:8px 0; font-size:13px; color:var(--text-mid); font-weight:600;}
+  .pl-mudou div{display:flex; gap:10px; align-items:center; padding:8px 0; border-top:1px solid var(--hairline); font-size:13px; cursor:pointer;}
+  .pl-mudou div:hover b{text-decoration:underline;}
+  .pl-mudou time{margin-left:auto; color:var(--text-low); font-size:12px; white-space:nowrap;}
+  .pl-menu{position:fixed; z-index:1200; background:var(--ink-1); border:1px solid var(--hairline); border-radius:12px; padding:6px; min-width:200px; box-shadow:0 20px 50px -20px #000; display:grid; gap:2px; animation:plSobe .16s ease both;}
+  .pl-menu button{all:unset; cursor:pointer; padding:8px 10px; border-radius:8px; font-size:13px;}
+  .pl-menu button:hover{background:var(--ink-2);} .pl-menu .perigo{color:var(--sev-critica);}
+  .pl-fundo{position:fixed; inset:0; z-index:1100; background:rgba(0,0,0,.55); display:grid; place-items:center; padding:16px; animation:plAparece .2s ease both;}
+  .pl-jan{width:min(620px,100%); max-height:90vh; overflow:auto; background:var(--ink-1); border:1px solid var(--hairline); border-radius:16px; padding:20px; display:grid; gap:14px; box-shadow:0 30px 80px -30px #000; animation:plSobe .28s cubic-bezier(.2,.8,.2,1) both;}
+  .pl-jan h3{margin:0; font-size:17px;}
+  .pl-jan label{display:grid; gap:6px; font-size:12.5px; color:var(--text-mid);}
+  .pl-jan input, .pl-jan select{padding:9px 11px; border-radius:10px; border:1px solid var(--hairline); background:var(--ink-2); color:var(--text-hi); font:inherit; font-size:13.5px;}
+  .pl-mods{display:grid; grid-template-columns:repeat(auto-fill,minmax(160px,1fr)); gap:8px;}
+  .pl-mod{all:unset; cursor:pointer; padding:12px; border-radius:12px; border:1px solid var(--hairline); display:grid; gap:4px; font-size:12px; color:var(--text-mid); transition:border-color .15s, background .15s, transform .12s;}
+  .pl-mod b{color:var(--text-hi); font-size:13.5px; display:flex; align-items:center; gap:8px;}
+  .pl-mod:hover{border-color:var(--text-low);} .pl-mod.on{border-color:var(--c); background:color-mix(in srgb, var(--c) 10%, transparent);}
+  .pl-mod:active{transform:scale(.98);}
+  .pl-acoes{display:flex; gap:8px; justify-content:flex-end; flex-wrap:wrap;}
+  .pl-btn{all:unset; cursor:pointer; padding:8px 14px; border-radius:10px; border:1px solid var(--hairline); font-size:13px;}
+  .pl-btn:hover{border-color:var(--text-low);} .pl-btn.pri{background:var(--brand-red); border-color:var(--brand-red); color:#fff; font-weight:600;}
+  .pl-btn.perigo{background:var(--sev-critica); border-color:var(--sev-critica); color:#fff; font-weight:600;}
+  .pl-comp{display:grid; gap:6px;}
+  .pl-comp div{display:flex; align-items:center; gap:10px; padding:8px 10px; border:1px solid var(--hairline); border-radius:10px; font-size:13px;}
+  .pl-comp div span{flex:1; min-width:0; overflow:hidden; text-overflow:ellipsis;}
+  .pl-comp select{padding:5px 8px; font-size:12.5px;}
+  .pl-linha{display:grid; grid-template-columns:minmax(0,1fr) 110px auto; gap:8px; align-items:end;}
+  .pl-nota{font-size:12px; color:var(--text-low); line-height:1.5;}
+  @keyframes plSobe{from{opacity:0; transform:translateY(10px) scale(.98);} to{opacity:1; transform:none;}}
+  @keyframes plAparece{from{opacity:0;} to{opacity:1;}}
+  @keyframes plVoa{40%{transform:translateY(-8px) scale(1.03);} 100%{transform:translate(0,-60vh) scale(.35); opacity:0;}}
+  @media (prefers-reduced-motion:reduce){.pl-card, .pl-card.voa, .pl-jan, .pl-menu{animation:none;}}
+  @media (max-width:860px){.pl-wrap{grid-template-columns:1fr;} .pl-side{position:static;} .pl-kpis{grid-template-columns:repeat(2,minmax(0,1fr));} .pl-busca{margin-left:0; width:100%;} .pl-linha{grid-template-columns:1fr;}}
   body[data-aba="admin"]{--tc:var(--ql);}
   body[data-aba="agorasei"]{--tc:#c792ea;}
   ::selection{background:color-mix(in srgb, var(--tc) 35%, transparent);}
@@ -2576,6 +2652,7 @@
     <button type="button" data-tab="validations" id="nav-validations-btn" style="display:none;"><span class="nav-icon"><svg width="16" height="16" viewBox="0 0 16 16" fill="none" aria-hidden="true"><circle cx="8" cy="8" r="6" stroke="currentColor" stroke-width="1.4"/><path d="M5.3 8.2l1.8 1.8 3.6-4" stroke="currentColor" stroke-width="1.4" stroke-linecap="round" stroke-linejoin="round"/></svg></span><span class="nav-label">Validações</span></button>
     <button type="button" data-tab="archive"><span class="nav-icon"><svg width="16" height="16" viewBox="0 0 16 16" fill="none" aria-hidden="true"><rect x="1.8" y="3" width="12.4" height="3" rx="1" stroke="currentColor" stroke-width="1.3"/><path d="M2.8 6v6.2a1 1 0 0 0 1 1h8.4a1 1 0 0 0 1-1V6" stroke="currentColor" stroke-width="1.3"/><path d="M6.3 8.6h3.4" stroke="currentColor" stroke-width="1.3" stroke-linecap="round"/></svg></span><span class="nav-label">Arquivo</span></button>
     <button type="button" data-tab="admin" id="nav-admin-btn" style="display:none;"><span class="nav-icon"><svg width="16" height="16" viewBox="0 0 16 16" fill="none" aria-hidden="true"><circle cx="6" cy="5.3" r="2.3" stroke="currentColor" stroke-width="1.3"/><path d="M1.8 13.2c.5-2.5 2.2-3.8 4.2-3.8s3.7 1.3 4.2 3.8" stroke="currentColor" stroke-width="1.3" stroke-linecap="round"/><circle cx="11.6" cy="5.6" r="1.8" stroke="currentColor" stroke-width="1.2"/><path d="M10.6 9.7c1.6.1 2.8 1.2 3.2 3.1" stroke="currentColor" stroke-width="1.2" stroke-linecap="round"/></svg></span><span class="nav-label">Acessos</span></button>
+    <button type="button" data-tab="planilhas" id="nav-planilhas-btn"><span class="nav-icon"><svg width="16" height="16" viewBox="0 0 16 16" fill="none" aria-hidden="true"><rect x="1.8" y="2.3" width="12.4" height="11.4" rx="1.4" stroke="currentColor" stroke-width="1.3"/><path d="M1.8 6h12.4M1.8 9.8h12.4M6 6v7.7" stroke="currentColor" stroke-width="1.3"/></svg></span><span class="nav-label">Planilhas</span></button>
     <button type="button" data-tab="painel" id="nav-painel-btn"><span class="nav-icon"><svg width="16" height="16" viewBox="0 0 16 16" fill="none" aria-hidden="true"><rect x="1.8" y="1.8" width="5.4" height="6.4" rx="1" stroke="currentColor" stroke-width="1.3"/><rect x="8.8" y="1.8" width="5.4" height="3.6" rx="1" stroke="currentColor" stroke-width="1.3"/><rect x="8.8" y="7" width="5.4" height="7.2" rx="1" stroke="currentColor" stroke-width="1.3"/><rect x="1.8" y="9.8" width="5.4" height="4.4" rx="1" stroke="currentColor" stroke-width="1.3"/></svg></span><span class="nav-label">Painel Central</span></button>
     <button type="button" data-tab="agorasei"><span class="nav-icon"><svg width="16" height="16" viewBox="0 0 16 16" fill="none" aria-hidden="true"><path d="M8 1.5C5.5 1.5 3.7 3.4 3.7 5.7C3.7 7.3 4.5 8.3 5.3 9.2C5.9 9.9 6.2 10.4 6.2 11.2H9.8C9.8 10.4 10.1 9.9 10.7 9.2C11.5 8.3 12.3 7.3 12.3 5.7C12.3 3.4 10.5 1.5 8 1.5Z" stroke="currentColor" stroke-width="1.3" stroke-linejoin="round"/><path d="M6.3 13H9.7M6.6 14.3H9.4" stroke="currentColor" stroke-width="1.3" stroke-linecap="round"/></svg></span><span class="nav-label">Agora Eu Sei</span></button>
   </div>
@@ -2879,6 +2956,8 @@
       </div>
     </div>
   </div>
+
+  <div class="tab-panel" id="planilhas-tab" style="display:none;"></div>
 
   <div class="tab-panel" id="agorasei-tab" style="display:none;">
     <div class="agorasei-layout" id="agorasei-chat-layout" style="display:none;">
@@ -3242,7 +3321,7 @@
 // que a comparação ">"/"<" abaixo saiba qual versão é mais nova) — é a única forma de o mecanismo
 // perceber que existe uma versão nova. Só funciona pra quem está conectado ao Firestore (modo de
 // contingência sem Firebase não tem sincronização em tempo real de nada, essa checagem incluída).
-const APP_VERSION = "2026-11-18T13:50:00Z";
+const APP_VERSION = "2026-11-18T19:00:00Z";
 
 // Desloga e recarrega — usado tanto pela verificação de versão nova quanto pelos sinais de
 // desconexão manual (shutdown geral ou alguém sendo desconectado individualmente).
@@ -7711,6 +7790,7 @@ function renderTabs(){
   const archiveTab = document.getElementById("archive-tab");
   const adminTab = document.getElementById("admin-tab");
   const agoraseiTab = document.getElementById("agorasei-tab");
+  const planilhasTab = document.getElementById("planilhas-tab");
 
   const navOverviewBtn = document.getElementById("nav-overview-btn");
   if(navOverviewBtn) navOverviewBtn.style.display = canManage() ? "" : "none";
@@ -7728,7 +7808,7 @@ function renderTabs(){
   const isOperador = currentUser && currentUser.role === "operador";
   const globalFiltersRow = document.getElementById("global-filters-row");
   const filtersPanelEl = document.getElementById("filters-panel");
-  const noGlobalFilters = isOperador || state.tab === "admin" || state.tab === "routines" || state.tab === "agorasei";
+  const noGlobalFilters = isOperador || state.tab === "admin" || state.tab === "routines" || state.tab === "agorasei" || state.tab === "planilhas";
   if(globalFiltersRow) globalFiltersRow.style.display = noGlobalFilters ? "none" : "";
   if(filtersPanelEl && noGlobalFilters) filtersPanelEl.classList.remove("open");
 
@@ -7742,6 +7822,7 @@ function renderTabs(){
   if(archiveTab) archiveTab.style.display = state.tab === "archive" ? "" : "none";
   if(adminTab) adminTab.style.display = state.tab === "admin" ? "" : "none";
   if(agoraseiTab) agoraseiTab.style.display = state.tab === "agorasei" ? "" : "none";
+  if(planilhasTab) planilhasTab.style.display = state.tab === "planilhas" ? "" : "none";
 
   if(state.tab === "overview") renderOverview();
   else if(state.tab === "board") render();
@@ -7751,6 +7832,7 @@ function renderTabs(){
   else if(state.tab === "archive") renderArchive();
   else if(state.tab === "admin") renderAdminLists();
   else if(state.tab === "agorasei") renderAgorasei();
+  else if(state.tab === "planilhas") renderPlanilhas();
 
   updateSummary();
   updateSideNavIndicator();
@@ -9717,6 +9799,252 @@ function painelPartDoc(version, i){ return fsDoc(db, "boards", `crediffato-paine
 // empilhar uma nova a cada clique. A versão vai no endereço porque o GitHub Pages deixa o
 // navegador guardar o arquivo por até 10 min -- sem isso, depois de uma publicação o navegador
 // seguia abrindo a cópia antiga do painel.html guardada em cache.
+// ===================== Aba Planilhas =====================
+// Índice e permissões em boards/planilhas ({itens:{<id>:meta}}); o conteúdo de cada planilha fica em
+// boards/planilha-<id> e abre em planilha.html, numa guia própria do navegador (edição ao vivo, com cursores).
+// Quem vê: admin, quem é do setor da pasta, ou com quem a planilha foi compartilhada (pessoa ou setor).
+let PL_ITENS = {}, plOuvindo = false, plPasta = "recentes", plBusca = "";
+const PL_ICONES = {
+  branco:'<path d="M3 3.5h10v9H3zM3 6.5h10M6.5 3.5v9" stroke="currentColor" stroke-width="1.3" fill="none"/>',
+  estoque:'<path d="M2.5 5.2L8 2.5l5.5 2.7v5.6L8 13.5l-5.5-2.7z M2.5 5.2L8 8l5.5-2.8M8 8v5.5" stroke="currentColor" stroke-width="1.3" fill="none" stroke-linejoin="round"/>',
+  solicitacoes:'<path d="M2.5 3.5h11v7h-6l-3 2.5v-2.5h-2z" stroke="currentColor" stroke-width="1.3" fill="none" stroke-linejoin="round"/>',
+  prazos:'<circle cx="8" cy="8.5" r="5" stroke="currentColor" stroke-width="1.3" fill="none"/><path d="M8 5.8v2.9l1.9 1.2M6.3 1.8h3.4" stroke="currentColor" stroke-width="1.3" stroke-linecap="round" fill="none"/>',
+  checklist:'<path d="M2.5 4.2l1.3 1.3 2.2-2.4M2.5 9.2l1.3 1.3 2.2-2.4M8 4.5h5.5M8 9.5h5.5" stroke="currentColor" stroke-width="1.3" stroke-linecap="round" stroke-linejoin="round" fill="none"/>',
+  importada:'<path d="M8 2.5v7M5 6.8L8 9.8l3-3M3 11v2h10v-2" stroke="currentColor" stroke-width="1.3" stroke-linecap="round" stroke-linejoin="round" fill="none"/>'
+};
+const plIco = (k, n = 16) => `<svg width="${n}" height="${n}" viewBox="0 0 16 16" aria-hidden="true">${PL_ICONES[k] || PL_ICONES.branco}</svg>`;
+const PL_PASTA_SVG = '<svg width="16" height="16" viewBox="0 0 16 16" aria-hidden="true"><path d="M1.8 4.2a1 1 0 0 1 1-1h3.4l1.4 1.6h5.6a1 1 0 0 1 1 1v6.4a1 1 0 0 1-1 1H2.8a1 1 0 0 1-1-1z" stroke="currentColor" stroke-width="1.3" fill="none"/></svg>';
+const plId = () => Math.random().toString(36).slice(2, 8) + Date.now().toString(36).slice(-4);
+
+// ---- modelos (a planilha nasce com colunas tipadas, guias e fórmulas prontas) ----
+function plModelo(tipo){
+  const c = (nome, tipo, x = {}) => ({id:plId(), nome, tipo, ...x});
+  const linhas = n => Array.from({length:n}, plId);
+  const guia = (nome, pos, cols, n = 20) => [plId(), {nome, pos, cols, ordem:linhas(n)}];
+  const st = (...o) => o.map(([v, cor]) => ({v, c:cor}));
+  let gs;
+  if(tipo === "estoque"){
+    const itens = [c("Código", "texto", {larg:110}), c("Item", "texto"), c("Categoria", "status", {opcoes:st(["Escritório", "#8b8dfb"], ["Limpeza", "#37b8a6"], ["Informática", "#d8a94a"], ["Outros", "#7f7f88"])}),
+      c("Saldo", "numero", {larg:110}), c("Mínimo", "numero", {larg:110}), c("Situação", "status", {larg:130, opcoes:st(["OK", "#4ee2a0"], ["Repor", "#e2564f"])})];
+    // Saldo = soma dos movimentos daquele código (outra guia); Situação compara com o mínimo
+    itens[3].formula = "=SOMASE(Movimentos!B:B;A#;Movimentos!F:F)";
+    itens[5].formula = '=SE(D#<=E#;"Repor";"OK")';
+    const mov = [c("Data", "data", {larg:120}), c("Código", "texto", {larg:110}), c("Item", "texto"), c("Tipo", "status", {larg:120, opcoes:st(["Entrada", "#4ee2a0"], ["Saída", "#e2564f"])}),
+      c("Quantidade", "numero", {larg:120}), c("Movimento", "numero", {larg:120}), c("Responsável", "pessoa")];
+    mov[2].formula = '=SEERRO(PROCV(B#;Itens!A:B;2;0);"código não cadastrado")';   // PROCV entre guias
+    mov[5].formula = '=SE(D#="Saída";-E#;E#)';
+    gs = [guia("Itens", 1, itens), guia("Movimentos", 2, mov, 30)];
+  } else if(tipo === "solicitacoes"){
+    const cs = [c("Protocolo", "texto", {larg:120}), c("Cliente", "texto"), c("Assunto", "texto"), c("Abertura", "data", {larg:120}),
+      c("Status", "status", {larg:150, opcoes:st(["Novo", "#8b8dfb"], ["Em andamento", "#d8a94a"], ["Aguardando cliente", "#6c8cff"], ["Resolvido", "#4ee2a0"])}),
+      c("Responsável", "pessoa"), c("Prazo", "data", {larg:120}), c("Dias em aberto", "numero", {larg:130})];
+    cs[7].formula = '=SE(E#="Resolvido";"";DIAS(HOJE();D#))';
+    gs = [guia("Solicitações", 1, cs, 25)];
+  } else if(tipo === "prazos"){
+    const cs = [c("Tarefa", "texto", {larg:260}), c("Responsável", "pessoa"), c("Prazo", "data", {larg:120}),
+      c("Status", "status", {larg:140, opcoes:st(["A fazer", "#8b8dfb"], ["Em andamento", "#d8a94a"], ["Concluído", "#4ee2a0"], ["Atrasado", "#e2564f"])}),
+      c("Faltam (dias)", "numero", {larg:120}), c("Observação", "texto", {larg:240})];
+    cs[4].formula = '=SE(D#="Concluído";"";DIAS(C#;HOJE()))';
+    gs = [guia("Prazos", 1, cs)];
+  } else if(tipo === "checklist"){
+    gs = [guia("Checklist", 1, [c("Feito", "caixa", {larg:80}), c("Item", "texto", {larg:300}), c("Responsável", "pessoa"), c("Data", "data", {larg:120}), c("Observação", "texto", {larg:240})])];
+  } else {
+    gs = [guia("Guia 1", 1, ["A", "B", "C", "D", "E", "F"].map(l => c("Coluna " + l, "texto", {larg:160})), 30)];
+  }
+  return {guias:Object.fromEntries(gs), dados:{}};
+}
+const PL_MODELOS = [
+  ["branco", "Em branco", "Colunas livres, do seu jeito", "#7f7f88"],
+  ["estoque", "Estoque", "Itens + movimentos, saldo automático com PROCV entre guias", "#37b8a6"],
+  ["solicitacoes", "Solicitações", "Protocolo, status, responsável e dias em aberto", "#8b8dfb"],
+  ["prazos", "Prazos", "Tarefas com prazo, quem faz e quanto falta", "#d8a94a"],
+  ["checklist", "Checklist", "Marque o que foi feito; o resumo mostra o %", "#4ee2a0"],
+];
+
+// ---- permissões ----
+const plEmail = () => String((currentUser && currentUser.email) || "").toLowerCase();
+const plMinhas = () => areasForUser();
+function plCompart(m){ return (m.compart || []).filter(x => (x.tipo === "pessoa" && String(x.id).toLowerCase() === plEmail()) || (x.tipo === "setor" && plMinhas().includes(x.id))); }
+function plPodeVer(m){ return !!currentUser && (currentUser.role === "admin" || plMinhas().includes(m.setor) || String(m.criadoPor || "").toLowerCase() === plEmail() || plCompart(m).length > 0); }
+function plPodeEditar(m){ return !!currentUser && (currentUser.role === "admin" || plMinhas().includes(m.setor) || String(m.criadoPor || "").toLowerCase() === plEmail() || plCompart(m).some(x => x.nivel === "editar")); }
+function plPodeGerir(m){ return !!currentUser && (currentUser.role === "admin" || String(m.criadoPor || "").toLowerCase() === plEmail() || (canManage() && plMinhas().includes(m.setor))); }
+
+// ---- dados ----
+function plOuve(){
+  if(plOuvindo || !firebaseReady || !db) return;
+  plOuvindo = true;
+  fsOnSnapshot(fsDoc(db, "boards", "planilhas"), s => {
+    PL_ITENS = (s.exists() && s.data().itens) || {};
+    if(state.tab === "planilhas") renderPlanilhas();
+  }, e => { plOuvindo = false; console.error("Planilhas: não consegui ler o índice", e); });
+}
+const plVisiveis = () => Object.entries(PL_ITENS).map(([id, m]) => ({id, ...m})).filter(m => !m.excluida && plPodeVer(m));
+function plTempo(iso){
+  if(!iso) return "";
+  const s = (Date.now() - new Date(iso).getTime()) / 1000;
+  if(s < 60) return "agora"; if(s < 3600) return "há " + Math.floor(s / 60) + " min"; if(s < 86400) return "há " + Math.floor(s / 3600) + " h";
+  if(s < 172800) return "ontem"; return new Date(iso).toLocaleDateString("pt-BR", {day:"2-digit", month:"short"});
+}
+const plIni = n => String(n || "?").trim().split(/\s+/).map(w => w[0]).slice(0, 2).join("").toUpperCase();
+const PL_CORES = ["#ff9db0", "#8ee6c7", "#c3c4ff", "#ffd88a", "#9fd5ff", "#f0a6ff", "#b8f28b", "#ffb38a"];
+const plCor = s => { let h = 0; for(const ch of String(s)) h = (h * 31 + ch.charCodeAt(0)) | 0; return PL_CORES[Math.abs(h) % PL_CORES.length]; };
+
+// ---- tela ----
+function renderPlanilhas(){
+  const box = document.getElementById("planilhas-tab"); if(!box) return;
+  plOuve();
+  const todas = plVisiveis(), minhas = plMinhas();
+  const compartilhadas = todas.filter(m => !minhas.includes(m.setor) && currentUser.role !== "admin" && String(m.criadoPor || "").toLowerCase() !== plEmail());
+  const pastas = SECTORS.filter(s => minhas.includes(s.key) || todas.some(m => m.setor === s.key && !compartilhadas.includes(m)));
+  if(plPasta !== "recentes" && plPasta !== "compart" && !pastas.some(p => p.key === plPasta)) plPasta = "recentes";
+  let lista = plPasta === "recentes" ? todas : plPasta === "compart" ? compartilhadas : todas.filter(m => m.setor === plPasta && !compartilhadas.includes(m));
+  lista = lista.slice().sort((a, b) => String(b.atualizadoEm || b.criadoEm || "").localeCompare(String(a.atualizadoEm || a.criadoEm || "")));
+  if(plPasta === "recentes") lista = lista.slice(0, 24);
+  if(plBusca) lista = lista.filter(m => (m.nome + " " + sectorLabel(m.setor)).toLowerCase().includes(plBusca.toLowerCase()));
+  const titulo = plPasta === "recentes" ? "Recentes" : plPasta === "compart" ? "Compartilhadas comigo" : sectorLabel(plPasta);
+  const sub = plPasta === "recentes" ? "As últimas planilhas mexidas, de todas as suas pastas." : plPasta === "compart" ? "De outros setores, que alguém compartilhou com você ou com o seu setor." : "Todo mundo de " + sectorLabel(plPasta) + " vê e edita estas planilhas.";
+  const hoje = new Date().toISOString().slice(0, 10);
+  const kpi = [["Planilhas", todas.length], ["Mexidas hoje", todas.filter(m => String(m.atualizadoEm || "").slice(0, 10) === hoje).length], ["Compartilhadas comigo", compartilhadas.length], ["Pastas", pastas.length]];
+  const pastaBtn = (k, nome, n, cor, svg) => `<button type="button" class="pl-pasta${plPasta === k ? " on" : ""}" data-pl-pasta="${k}" style="--c:${cor}">${svg}<span>${escapeHtml(nome)}</span><em>${n}</em></button>`;
+  const relogio = '<svg width="16" height="16" viewBox="0 0 16 16" aria-hidden="true"><circle cx="8" cy="8" r="5.6" stroke="currentColor" stroke-width="1.3" fill="none"/><path d="M8 5v3.2l2 1.3" stroke="currentColor" stroke-width="1.3" stroke-linecap="round" fill="none"/></svg>';
+  const compSvg = '<svg width="16" height="16" viewBox="0 0 16 16" aria-hidden="true"><circle cx="4.5" cy="8" r="1.8" stroke="currentColor" stroke-width="1.3" fill="none"/><circle cx="11.5" cy="4" r="1.8" stroke="currentColor" stroke-width="1.3" fill="none"/><circle cx="11.5" cy="12" r="1.8" stroke="currentColor" stroke-width="1.3" fill="none"/><path d="M6.1 7.1l3.8-2.2M6.1 8.9l3.8 2.2" stroke="currentColor" stroke-width="1.3" fill="none"/></svg>';
+  const mudou = todas.filter(m => m.atualizadoEm).sort((a, b) => String(b.atualizadoEm).localeCompare(String(a.atualizadoEm))).slice(0, 6);
+  box.innerHTML = `<div class="pl-wrap">
+    <aside class="pl-side" aria-label="Pastas">
+      ${minhas.length ? `<button type="button" class="pl-nova" id="pl-nova"><svg width="14" height="14" viewBox="0 0 16 16" aria-hidden="true"><path d="M8 2.5v11M2.5 8h11" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/></svg>Nova planilha</button>` : ""}
+      ${pastaBtn("recentes", "Recentes", todas.length, "var(--text-mid)", relogio)}
+      ${pastaBtn("compart", "Compartilhadas comigo", compartilhadas.length, "#c3c4ff", compSvg)}
+      <h4>Pastas dos setores</h4>
+      ${pastas.length ? pastas.map(s => pastaBtn(s.key, s.label, todas.filter(m => m.setor === s.key && !compartilhadas.includes(m)).length, sectorColor(s.key), PL_PASTA_SVG)).join("") : '<p class="pl-nota" style="margin:4px 8px;">Você ainda não está em nenhum setor. Peça para um gestor te vincular em Acessos.</p>'}
+    </aside>
+    <section>
+      <div class="pl-head"><div><h2>${escapeHtml(titulo)}</h2><p>${escapeHtml(sub)}</p></div>
+        <input type="search" class="pl-busca" id="pl-busca" placeholder="Buscar planilha…" aria-label="Buscar planilha" value="${escapeHtml(plBusca)}"></div>
+      <div class="pl-kpis">${kpi.map(([t, n]) => `<div class="pl-kpi"><span>${t}</span><b data-pl-conta="${n}">0</b></div>`).join("")}</div>
+      ${lista.length ? `<div class="pl-grid">${lista.map((m, i) => plCard(m, i)).join("")}</div>` : `<div class="pl-vazio">${plIco("branco", 28)}<b>${plBusca ? "Nada com esse nome" : plPasta === "compart" ? "Ninguém compartilhou planilhas com você ainda" : "Nenhuma planilha aqui ainda"}</b>
+        <span>${plPasta === "compart" || plBusca ? "" : "Crie a primeira: controles, estoque, acompanhamento de solicitações…"}</span>
+        ${plPasta !== "compart" && !plBusca && minhas.length ? '<button type="button" class="pl-btn pri" id="pl-nova2">Nova planilha</button>' : ""}</div>`}
+      ${mudou.length && !plBusca ? `<div class="pl-mudou"><h4>O que mudou</h4>${mudou.map(m => `<div data-pl-abre="${m.id}"><span class="pl-ico" style="--c:${m.cor || sectorColor(m.setor)};width:26px;height:26px;border-radius:8px">${plIco(m.modelo, 13)}</span><span><b>${escapeHtml(m.atualizadoPor || "Alguém")}</b> mexeu em <b>${escapeHtml(m.nome)}</b></span><time>${plTempo(m.atualizadoEm)}</time></div>`).join("")}</div>` : ""}
+    </section></div>`;
+  // números sobem até o valor (só na primeira pintura de cada valor)
+  box.querySelectorAll("[data-pl-conta]").forEach(el => {
+    const alvo = +el.dataset.plConta; if(matchMedia("(prefers-reduced-motion: reduce)").matches || !alvo){ el.textContent = alvo; return; }
+    const t0 = performance.now(); const passo = t => { const p = Math.min(1, (t - t0) / 600); el.textContent = Math.round(alvo * (1 - Math.pow(1 - p, 3))); if(p < 1) requestAnimationFrame(passo); }; requestAnimationFrame(passo);
+  });
+}
+function plCard(m, i){
+  const cor = m.cor || sectorColor(m.setor), comp = m.compart || [];
+  const mini = Array.from({length:12}, (_, k) => `<i class="${(k * 7 + m.nome.length) % 5 === 0 || k < 6 && k % 3 === 0 ? "c" : ""}"></i>`).join("");
+  const avs = comp.slice(0, 3).map(x => `<b style="background:${x.tipo === "setor" ? sectorColor(x.id) : plCor(x.id)}" title="${escapeHtml(x.tipo === "setor" ? "Setor " + sectorLabel(x.id) : x.id)} (${x.nivel === "editar" ? "edita" : "vê"})">${escapeHtml(x.tipo === "setor" ? plIni(sectorLabel(x.id)) : plIni((DIRECTORY.find(d => String(d.email).toLowerCase() === String(x.id).toLowerCase()) || {}).name || x.id))}</b>`).join("");
+  return `<div class="pl-card" role="link" tabindex="0" data-pl-abre="${m.id}" style="--c:${cor}; animation-delay:${Math.min(i, 12) * 0.035}s" title="Abrir em uma nova guia">
+    <div class="t"><span class="pl-ico">${plIco(m.modelo, 17)}</span><div style="min-width:0"><h5>${escapeHtml(m.nome)}</h5><small>${escapeHtml(sectorLabel(m.setor))}${plPodeEditar(m) ? "" : " · só leitura"}</small></div></div>
+    <div class="pl-mini" aria-hidden="true">${mini}</div>
+    <div class="pl-pe"><span>${m.atualizadoEm ? escapeHtml((m.atualizadoPor || "").split(" ")[0]) + " · " + plTempo(m.atualizadoEm) : "criada " + plTempo(m.criadoEm)}</span>${comp.length ? `<span class="avs">${avs}</span>` : ""}</div>
+    ${plPodeGerir(m) || plPodeEditar(m) ? `<button type="button" class="pl-mais" data-pl-menu="${m.id}" aria-label="Opções de ${escapeHtml(m.nome)}"><svg width="16" height="16" viewBox="0 0 16 16" aria-hidden="true"><circle cx="3.5" cy="8" r="1.3" fill="currentColor"/><circle cx="8" cy="8" r="1.3" fill="currentColor"/><circle cx="12.5" cy="8" r="1.3" fill="currentColor"/></svg></button>` : ""}
+  </div>`;
+}
+function plAbre(id, card){
+  // abre já (o navegador só deixa abrir guia nova direto no clique); o cartão "voa" para a guia enquanto isso
+  window.open("planilha.html?id=" + encodeURIComponent(id) + "&v=" + encodeURIComponent(APP_VERSION), "planilha-" + id);
+  if(card && !matchMedia("(prefers-reduced-motion: reduce)").matches){ card.classList.add("voa"); setTimeout(() => card.classList.remove("voa"), 900); }
+}
+function plFechaMenu(){ document.querySelectorAll(".pl-menu").forEach(m => m.remove()); }
+function plMenu(id, el){
+  plFechaMenu(); const m = PL_ITENS[id]; if(!m) return;
+  const menu = document.createElement("div"); menu.className = "pl-menu";
+  const itens = [["Abrir em nova guia", () => plAbre(id)]];
+  if(plPodeEditar(m)) itens.push(["Renomear", () => plJanelaNome(id)]);
+  if(plPodeGerir(m)) itens.push(["Compartilhar…", () => plJanelaCompart(id)], ["Excluir", () => plJanelaExclui(id), "perigo"]);
+  itens.forEach(([t, fn, cls]) => { const b = document.createElement("button"); b.type = "button"; b.textContent = t; if(cls) b.className = cls; b.onclick = () => { plFechaMenu(); fn(); }; menu.appendChild(b); });
+  document.body.appendChild(menu); const r = el.getBoundingClientRect();
+  menu.style.left = Math.max(8, Math.min(innerWidth - menu.offsetWidth - 8, r.right - menu.offsetWidth)) + "px"; menu.style.top = Math.min(innerHeight - menu.offsetHeight - 8, r.bottom + 4) + "px";
+  setTimeout(() => document.addEventListener("mousedown", function fora(e){ if(!menu.contains(e.target)) plFechaMenu(); else document.addEventListener("mousedown", fora, {once:true}); }, {once:true}), 0);
+}
+function plJanela(html){
+  const f = document.createElement("div"); f.className = "pl-fundo"; f.innerHTML = `<div class="pl-jan" role="dialog" aria-modal="true">${html}</div>`; document.body.appendChild(f);
+  f.addEventListener("mousedown", e => { if(e.target === f) f.remove(); }); f.addEventListener("keydown", e => { if(e.key === "Escape") f.remove(); });
+  f.querySelectorAll("[data-pl-x]").forEach(b => b.onclick = () => f.remove());
+  setTimeout(() => { const i = f.querySelector("input,select"); if(i) i.focus(); }, 40); return f;
+}
+function plJanelaNova(){
+  const minhas = SECTORS.filter(s => plMinhas().includes(s.key));
+  if(!minhas.length){ showActionToast("Você não está em nenhum setor para criar planilhas", "error"); return; }
+  const pasta = minhas.some(s => s.key === plPasta) ? plPasta : minhas[0].key;
+  let modelo = "branco";
+  const f = plJanela(`<h3>Nova planilha</h3>
+    <label>Nome<input id="pl-n-nome" maxlength="80" placeholder="Ex.: Controle de estoque do almoxarifado"></label>
+    <label>Pasta (setor)<select id="pl-n-setor">${minhas.map(s => `<option value="${s.key}"${s.key === pasta ? " selected" : ""}>${escapeHtml(s.label)}</option>`).join("")}</select></label>
+    <div style="display:grid;gap:6px"><span style="font-size:12.5px;color:var(--text-mid)">Começar de</span><div class="pl-mods">${PL_MODELOS.map(([k, n, d, c]) => `<button type="button" class="pl-mod${k === modelo ? " on" : ""}" data-pl-mod="${k}" style="--c:${c}"><b><span style="color:${c}">${plIco(k)}</span>${n}</b>${d}</button>`).join("")}</div></div>
+    <p class="pl-nota">Todo mundo do setor escolhido vê e edita. Para mostrar a outro setor ou pessoa, use <b>Compartilhar</b> depois.</p>
+    <div class="pl-acoes"><button type="button" class="pl-btn" data-pl-x>Cancelar</button><button type="button" class="pl-btn pri" id="pl-n-ok">Criar e abrir</button></div>`);
+  f.querySelectorAll("[data-pl-mod]").forEach(b => b.onclick = () => { modelo = b.dataset.plMod; f.querySelectorAll("[data-pl-mod]").forEach(x => x.classList.toggle("on", x === b));
+    const nome = f.querySelector("#pl-n-nome"); if(!nome.value.trim() || nome.dataset.auto){ nome.value = modelo === "branco" ? "" : PL_MODELOS.find(x => x[0] === modelo)[1]; nome.dataset.auto = "1"; } });
+  f.querySelector("#pl-n-nome").addEventListener("input", e => { delete e.target.dataset.auto; });
+  f.querySelector("#pl-n-nome").addEventListener("keydown", e => { if(e.key === "Enter") f.querySelector("#pl-n-ok").click(); });
+  f.querySelector("#pl-n-ok").onclick = async () => {
+    const nome = f.querySelector("#pl-n-nome").value.trim() || "Planilha sem nome", setor = f.querySelector("#pl-n-setor").value, id = plId();
+    // a guia é aberta antes de gravar (o navegador bloqueia guia nova aberta depois de um "await"); ela espera os dados chegarem
+    const win = window.open("planilha.html?id=" + encodeURIComponent(id) + "&v=" + encodeURIComponent(APP_VERSION), "planilha-" + id);
+    f.remove();
+    try{
+      const agora = new Date().toISOString();
+      await fsSetDoc(fsDoc(db, "boards", "planilha-" + id), plModelo(modelo));
+      await fsSetDoc(fsDoc(db, "boards", "planilhas"), {itens:{[id]:{nome, setor, modelo, cor:PL_MODELOS.find(x => x[0] === modelo)[3] === "#7f7f88" ? sectorColor(setor) : PL_MODELOS.find(x => x[0] === modelo)[3],
+        criadoPor:currentUser.email, criadoPorNome:currentUser.name || currentUser.email, criadoEm:agora, atualizadoEm:agora, atualizadoPor:currentUser.name || currentUser.email, compart:[]}}}, {merge:true});
+      plPasta = setor; showActionToast("Planilha criada: " + nome, "success");
+    }catch(e){ if(win) win.close(); showActionToast("Não consegui criar a planilha: " + (e.message || e), "error"); }
+  };
+}
+function plJanelaNome(id){
+  const m = PL_ITENS[id]; if(!m) return;
+  const f = plJanela(`<h3>Renomear</h3><label>Nome<input id="pl-r-nome" maxlength="80" value="${escapeHtml(m.nome)}"></label><div class="pl-acoes"><button type="button" class="pl-btn" data-pl-x>Cancelar</button><button type="button" class="pl-btn pri" id="pl-r-ok">Salvar</button></div>`);
+  const ok = async () => { const v = f.querySelector("#pl-r-nome").value.trim(); if(!v) return; f.remove();
+    try{ await fsUpdateDoc(fsDoc(db, "boards", "planilhas"), new fsFieldPath("itens", id, "nome"), v); }catch(e){ showActionToast("Não salvou: " + (e.message || e), "error"); } };
+  f.querySelector("#pl-r-ok").onclick = ok; f.querySelector("#pl-r-nome").addEventListener("keydown", e => { if(e.key === "Enter") ok(); });
+}
+function plJanelaCompart(id){
+  const m = PL_ITENS[id]; if(!m) return;
+  let lista = (m.compart || []).map(x => ({...x}));
+  const pessoas = DIRECTORY.filter(d => !d.disabled && d.email).sort((a, b) => String(a.name || a.email).localeCompare(String(b.name || b.email)));
+  const f = plJanela(`<h3>Compartilhar “${escapeHtml(m.nome)}”</h3>
+    <p class="pl-nota">Quem é de <b>${escapeHtml(sectorLabel(m.setor))}</b> já vê e edita. Aqui você libera para outras pessoas ou setores inteiros.</p>
+    <div class="pl-linha"><label>Pessoa ou setor<select id="pl-c-quem"><optgroup label="Setores">${SECTORS.filter(s => s.key !== m.setor).map(s => `<option value="setor:${s.key}">Setor ${escapeHtml(s.label)}</option>`).join("")}</optgroup>
+      <optgroup label="Pessoas">${pessoas.map(p => `<option value="pessoa:${escapeHtml(p.email)}">${escapeHtml(p.name || p.email)}</option>`).join("")}</optgroup></select></label>
+      <label>Pode<select id="pl-c-nivel"><option value="editar">editar</option><option value="ver">só ver</option></select></label>
+      <button type="button" class="pl-btn" id="pl-c-add">Adicionar</button></div>
+    <div class="pl-comp" id="pl-c-lista"></div>
+    <div class="pl-acoes"><button type="button" class="pl-btn" data-pl-x>Cancelar</button><button type="button" class="pl-btn pri" id="pl-c-ok">Salvar</button></div>`);
+  const pinta = () => { f.querySelector("#pl-c-lista").innerHTML = lista.length ? lista.map((x, i) => `<div><span>${x.tipo === "setor" ? "Setor " + escapeHtml(sectorLabel(x.id)) : escapeHtml((pessoas.find(p => String(p.email).toLowerCase() === String(x.id).toLowerCase()) || {}).name || x.id)}</span>
+      <select data-pl-niv="${i}"><option value="editar"${x.nivel === "editar" ? " selected" : ""}>edita</option><option value="ver"${x.nivel === "ver" ? " selected" : ""}>só vê</option></select><button type="button" class="pl-btn" data-pl-tira="${i}" aria-label="Tirar">×</button></div>`).join("") : '<p class="pl-nota">Ainda não está compartilhada com ninguém de fora do setor.</p>';
+    f.querySelectorAll("[data-pl-niv]").forEach(s => s.onchange = () => { lista[+s.dataset.plNiv].nivel = s.value; });
+    f.querySelectorAll("[data-pl-tira]").forEach(b => b.onclick = () => { lista.splice(+b.dataset.plTira, 1); pinta(); }); };
+  pinta();
+  f.querySelector("#pl-c-add").onclick = () => { const [tipo, ...r] = f.querySelector("#pl-c-quem").value.split(":"), idq = r.join(":"); if(!idq) return;
+    const ex = lista.find(x => x.tipo === tipo && String(x.id).toLowerCase() === idq.toLowerCase()); if(ex) ex.nivel = f.querySelector("#pl-c-nivel").value; else lista.push({tipo, id:idq, nivel:f.querySelector("#pl-c-nivel").value}); pinta(); };
+  f.querySelector("#pl-c-ok").onclick = async () => { f.remove();
+    try{ await fsUpdateDoc(fsDoc(db, "boards", "planilhas"), new fsFieldPath("itens", id, "compart"), lista); showActionToast("Compartilhamento salvo", "success"); }
+    catch(e){ showActionToast("Não salvou: " + (e.message || e), "error"); } };
+}
+function plJanelaExclui(id){
+  const m = PL_ITENS[id]; if(!m) return;
+  const f = plJanela(`<h3>Excluir “${escapeHtml(m.nome)}”?</h3><p class="pl-nota">A planilha some para todo mundo, com todas as guias. Isso não tem volta. Se quiser guardar, abra e use <b>Exportar Excel</b> antes.</p>
+    <div class="pl-acoes"><button type="button" class="pl-btn" data-pl-x>Cancelar</button><button type="button" class="pl-btn perigo" id="pl-e-ok">Excluir</button></div>`);
+  f.querySelector("#pl-e-ok").onclick = async () => { f.remove();
+    try{ await fsUpdateDoc(fsDoc(db, "boards", "planilhas"), new fsFieldPath("itens", id), fsDeleteField());
+      await fsDeleteDoc(fsDoc(db, "boards", "planilha-" + id)).catch(() => {}); await fsDeleteDoc(fsDoc(db, "boards", "planilha-" + id + "-pres")).catch(() => {});
+      showActionToast("Planilha excluída", "success"); }
+    catch(e){ showActionToast("Não excluiu: " + (e.message || e), "error"); } };
+}
+document.addEventListener("click", e => {
+  const tab = e.target.closest("#planilhas-tab"); if(!tab) return;
+  const menuBtn = e.target.closest("[data-pl-menu]"); if(menuBtn){ e.stopPropagation(); plMenu(menuBtn.dataset.plMenu, menuBtn); return; }
+  const pasta = e.target.closest("[data-pl-pasta]"); if(pasta){ plPasta = pasta.dataset.plPasta; withViewTransition(() => renderPlanilhas()); return; }
+  if(e.target.closest("#pl-nova, #pl-nova2")){ plJanelaNova(); return; }
+  const abre = e.target.closest("[data-pl-abre]"); if(abre){ plAbre(abre.dataset.plAbre, abre.classList.contains("pl-card") ? abre : null); }
+});
+document.addEventListener("keydown", e => { const c = e.target.closest && e.target.closest("#planilhas-tab .pl-card"); if(c && (e.key === "Enter" || e.key === " ") && e.target === c){ e.preventDefault(); plAbre(c.dataset.plAbre, c); } });
+document.addEventListener("input", e => { if(e.target.id !== "pl-busca") return; plBusca = e.target.value; clearTimeout(e.target._t); e.target._t = setTimeout(() => { renderPlanilhas(); const i = document.getElementById("pl-busca"); if(i){ i.focus(); i.setSelectionRange(i.value.length, i.value.length); } }, 180); });
+
 function openPainelCentral(){
   window.open("painel.html?v=" + encodeURIComponent(APP_VERSION), "painel-central-crediffato");
 }

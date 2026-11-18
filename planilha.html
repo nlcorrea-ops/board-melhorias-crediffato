@@ -1,0 +1,965 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Planilha · Crediffato</title>
+<link rel="icon" href="logo.png">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500;600&family=IBM+Plex+Sans:wght@400;500;600;700&display=swap">
+<!--
+  Planilhas do Crediffato Gestão: abre numa guia própria do navegador (a partir da aba Planilhas do board).
+  Os dados ficam no Firestore do board (mesmo login): boards/planilhas (índice e permissões),
+  boards/planilha-<id> (guias, colunas e células) e boards/planilha-<id>-pres (quem está aqui e onde).
+  Cada célula é gravada sozinha (campo dados.<guia>.<linha>.<coluna>): duas pessoas mexendo em células
+  diferentes ao mesmo tempo nunca apagam o trabalho uma da outra. Este arquivo não guarda dado nenhum.
+-->
+<style>
+:root{
+  --bg:#09090b; --s1:#131315; --s2:#1c1c1f; --s3:#27272b; --hair:#2c2c31; --hair2:#222226;
+  --t1:#f5f5f7; --t2:#a5a5ad; --t3:#7f7f88; --red:#d40f3a; --red-hi:#ff4d6d; --red-dim:rgba(212,15,58,.15);
+  --ok:#4ee2a0; --warn:#d8a94a; --crit:#e2564f; --info:#8b8dfb; --teal:#37b8a6;
+  --f-ui:'IBM Plex Sans','Segoe UI',system-ui,sans-serif; --f-num:'IBM Plex Mono',ui-monospace,Consolas,monospace;
+  --sel:#ff4d6d; color-scheme:dark;
+}
+:root[data-theme="claro"]{ --bg:#f4f4f6; --s1:#ffffff; --s2:#f0f0f2; --s3:#e4e4e8; --hair:#dcdce0; --hair2:#e8e8ec; --t1:#18181b; --t2:#55555c; --t3:#83838a; --red-dim:rgba(212,15,58,.08); color-scheme:light; }
+*{box-sizing:border-box}
+html,body{margin:0;height:100%}
+body{background:var(--bg);color:var(--t1);font-family:var(--f-ui);font-size:13.5px;display:flex;flex-direction:column;overflow:hidden}
+button{font:inherit;color:inherit}
+:focus-visible{outline:2px solid var(--red-hi);outline-offset:2px}
+.hidden{display:none!important}
+
+/* topo */
+.topo{display:flex;align-items:center;gap:12px;padding:10px 16px;background:var(--s1);border-bottom:1px solid var(--hair);flex-wrap:wrap;position:relative}
+.topo::after{content:"";position:absolute;left:0;right:0;bottom:-1px;height:1px;background:linear-gradient(90deg,var(--red),var(--red-hi) 25%,transparent 70%)}
+.marca{display:flex;align-items:center;gap:8px;font-weight:700;white-space:nowrap;text-decoration:none;color:var(--t1)}
+.marca img{width:22px;height:22px;object-fit:contain}
+.marca i{font-style:normal;color:var(--red-hi)}
+.tit{display:grid;min-width:0}
+.tit small{color:var(--t3);font-size:11.5px}
+.tit input{all:unset;font-weight:600;font-size:16px;min-width:120px;max-width:44vw;border-radius:6px;padding:1px 4px;margin-left:-4px}
+.tit input:hover:not([readonly]){background:var(--s2)}.tit input:focus{background:var(--s2);box-shadow:0 0 0 1px var(--hair)}
+.live{display:inline-flex;align-items:center;gap:7px;font-size:12px;color:var(--ok);white-space:nowrap}
+.live i{width:8px;height:8px;border-radius:50%;background:var(--ok);box-shadow:0 0 8px var(--ok);animation:pulso 2s infinite}
+.live.salvando{color:var(--warn)}.live.salvando i{background:var(--warn);box-shadow:0 0 8px var(--warn)}
+.live.off{color:var(--crit)}.live.off i{background:var(--crit);box-shadow:none;animation:none}
+.ler{font-family:var(--f-num);font-size:11px;padding:2px 8px;border-radius:99px;border:1px solid var(--hair);color:var(--t2)}
+.pres{margin-left:auto;display:flex;align-items:center;gap:8px;color:var(--t3);font-size:12px}
+.avs{display:inline-flex}.avs b{width:24px;height:24px;border-radius:50%;display:grid;place-items:center;font-size:10px;font-weight:700;border:2px solid var(--s1);margin-left:-7px;color:#0b0b0d;animation:pop .45s cubic-bezier(.3,1.6,.5,1) both;cursor:default}
+.avs b:first-child{margin-left:0}
+.btn{all:unset;cursor:pointer;display:inline-flex;align-items:center;gap:6px;padding:6px 11px;border-radius:9px;border:1px solid var(--hair);background:var(--s1);font-size:12.5px;color:var(--t1);white-space:nowrap;transition:border-color .15s,background .15s,transform .1s}
+.btn:hover{border-color:var(--t3)}.btn:active{transform:scale(.97)}
+.btn.pri{background:var(--red);border-color:var(--red);color:#fff;font-weight:600}
+.btn[disabled]{opacity:.4;pointer-events:none}
+.btn svg{width:14px;height:14px}
+
+/* barra de visões e ferramentas */
+.barra{display:flex;align-items:center;gap:10px;padding:8px 16px 0;background:var(--bg);flex-wrap:wrap}
+.vts{display:flex;gap:2px;border-bottom:1px solid var(--hair)}
+.vt{all:unset;cursor:pointer;padding:8px 13px;font-size:13px;color:var(--t2);border-bottom:2px solid transparent;transition:color .15s}
+.vt:hover{color:var(--t1)}.vt.on{color:var(--t1);border-bottom-color:var(--red)}
+.ferr{display:flex;gap:6px;align-items:center;flex-wrap:wrap;margin-left:auto;padding-bottom:6px}
+.busca{padding:6px 10px;border-radius:9px;border:1px solid var(--hair);background:var(--s1);color:var(--t1);font:inherit;font-size:12.5px;width:180px}
+.fx{display:flex;align-items:center;gap:8px;margin:8px 16px 0;padding:0 10px;border:1px solid var(--hair);border-radius:10px;background:var(--s1);height:34px}
+.fx .end{font-family:var(--f-num);font-size:12px;color:var(--t2);min-width:52px;border-right:1px solid var(--hair);padding-right:8px}
+.fx b{font-family:var(--f-num);color:var(--red-hi);font-style:italic;font-size:12px}
+.fx input{all:unset;flex:1;font-family:var(--f-num);font-size:12.5px;min-width:0}
+.fx .dica{color:var(--t3);font-size:11.5px;white-space:nowrap}
+
+/* área */
+.area{flex:1;min-height:0;position:relative;margin:8px 16px 0;border:1px solid var(--hair);border-radius:12px 12px 0 0;background:var(--s1);overflow:hidden;display:flex;flex-direction:column}
+.vis{flex:1;min-height:0;overflow:auto;position:relative}
+.vis.entra{animation:entra .32s cubic-bezier(.2,.8,.2,1)}
+
+/* grade */
+table.g{border-collapse:separate;border-spacing:0;font-size:13px;table-layout:fixed}
+.g th,.g td{border-right:1px solid var(--hair2);border-bottom:1px solid var(--hair2);padding:0 9px;height:32px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;text-align:left}
+.g thead th{position:sticky;top:0;background:var(--s2);z-index:3;font-weight:600;color:var(--t2);font-size:12px;cursor:pointer;user-select:none}
+.g thead th:hover{color:var(--t1)}
+.g thead th .l{font-family:var(--f-num);font-weight:500;color:var(--t3);margin-right:6px}
+.g thead th .ti{float:right;font-family:var(--f-num);font-weight:400;color:var(--t3);font-size:10.5px}
+.g .rn{width:46px;text-align:center;color:var(--t3);font-family:var(--f-num);font-size:11px;background:var(--s2);position:sticky;left:0;z-index:2;cursor:pointer;padding:0}
+.g thead .rn{z-index:4;cursor:default}
+.g td.c0{position:sticky;left:46px;background:var(--s1);z-index:1}
+.g thead th.c0{left:46px;z-index:4}
+.g td{cursor:cell}
+.g td.num{font-family:var(--f-num);text-align:right;font-variant-numeric:tabular-nums}
+.g td.err{color:var(--crit);font-family:var(--f-num)}
+.g td.fm{background-image:linear-gradient(135deg,transparent 88%,var(--teal) 88%);background-size:8px 8px;background-repeat:no-repeat;background-position:top right}
+.g td.ins{background:var(--red-dim)!important}
+.g td.cur{box-shadow:inset 0 0 0 2px var(--sel);background:rgba(212,15,58,.06)}
+.g td.outro{box-shadow:inset 0 0 0 2px var(--cor)}
+.g td.brilha{animation:brilho 1.6s ease-out}
+.g tr:hover td:not(.rn):not(.ins){background-color:rgba(255,255,255,.025)}
+.g tr.nova td{animation:linha .35s ease both}
+.g .addl td{color:var(--t3);cursor:pointer;height:34px}
+.g .addl td:hover{color:var(--t1)}
+.pill{display:inline-flex;align-items:center;gap:6px;padding:2px 9px;border-radius:99px;font-size:12px;font-weight:600;max-width:100%;overflow:hidden;text-overflow:ellipsis}
+.pill::before{content:"";width:6px;height:6px;border-radius:50%;background:currentColor;flex:none}
+.pes{display:inline-flex;align-items:center;gap:6px}.pes b{width:20px;height:20px;border-radius:50%;display:grid;place-items:center;font-size:9px;color:#0b0b0d;flex:none}
+.chk{width:16px;height:16px;border-radius:4px;border:1.5px solid var(--t3);display:inline-grid;place-items:center;vertical-align:middle;transition:background .15s,border-color .15s}
+.chk.on{background:var(--ok);border-color:var(--ok)}.chk.on::after{content:"";width:8px;height:4px;border-left:2px solid #0b0b0d;border-bottom:2px solid #0b0b0d;transform:rotate(-45deg) translate(1px,-1px)}
+.late{color:var(--crit);font-weight:600}
+a.lk{color:#7fb3ff;text-decoration:none}a.lk:hover{text-decoration:underline}
+.editor{position:absolute;z-index:9;border:2px solid var(--sel);background:var(--s1);color:var(--t1);font:inherit;font-size:13px;padding:0 8px;outline:none;box-shadow:0 10px 30px -10px #000}
+select.editor{padding:0 4px}
+
+/* guias */
+.guias{display:flex;align-items:center;gap:2px;padding:4px 8px;margin:0 16px 10px;border:1px solid var(--hair);border-top:0;border-radius:0 0 12px 12px;background:var(--s2);overflow-x:auto}
+.gu{all:unset;cursor:pointer;padding:6px 14px;border-radius:7px;font-size:12.5px;color:var(--t2);white-space:nowrap;transition:background .15s,color .15s}
+.gu:hover{color:var(--t1)}.gu.on{background:var(--s1);color:var(--t1);box-shadow:inset 0 2px 0 var(--red)}
+.gu input{all:unset;width:110px}
+.guias .soma{margin-left:auto;font-family:var(--f-num);font-size:11.5px;color:var(--t3);padding:0 8px;white-space:nowrap}
+
+/* quadro e calendário */
+.kan{display:flex;gap:12px;padding:14px;align-items:flex-start;min-height:100%}
+.col{width:270px;flex:none;background:var(--s2);border:1px solid var(--hair2);border-radius:12px;padding:10px;display:flex;flex-direction:column;gap:8px;transition:border-color .15s,background .15s}
+.col.sobre{border-color:var(--red);background:var(--red-dim)}
+.col h5{margin:0;font-size:12.5px;display:flex;align-items:center;gap:8px}
+.col h5 em{font-style:normal;margin-left:auto;font-family:var(--f-num);color:var(--t3)}
+.kc{background:var(--s1);border:1px solid var(--hair2);border-radius:10px;padding:10px 11px;display:grid;gap:7px;font-size:12.5px;cursor:grab;transition:transform .2s,box-shadow .2s;animation:sobe .3s ease both}
+.kc:hover{transform:translateY(-2px);box-shadow:0 12px 24px -16px #000}
+.kc.arrasta{opacity:.4}
+.kc b{font-weight:600}.kc small{color:var(--t3);display:flex;justify-content:space-between;gap:8px;flex-wrap:wrap}
+.cal{padding:14px;display:grid;gap:10px}
+.calhead{display:flex;align-items:center;gap:10px}
+.calhead b{font-size:15px}
+.calg{display:grid;grid-template-columns:repeat(7,minmax(0,1fr));gap:6px}
+.calg .dn{color:var(--t3);font-size:11.5px;text-align:center}
+.dia{min-height:92px;background:var(--s2);border:1px solid var(--hair2);border-radius:10px;padding:6px;display:flex;flex-direction:column;gap:4px;font-size:11.5px;min-width:0}
+.dia.fora{opacity:.35}.dia.hoje{border-color:var(--red)}
+.dia .n{font-family:var(--f-num);color:var(--t3)}
+.dia .ev{padding:2px 6px;border-radius:6px;background:var(--s3);overflow:hidden;text-overflow:ellipsis;white-space:nowrap;border-left:3px solid var(--c,var(--t3))}
+.res{padding:16px;display:grid;gap:14px;grid-template-columns:repeat(auto-fill,minmax(260px,1fr));align-content:start}
+.rc{background:var(--s2);border:1px solid var(--hair2);border-radius:12px;padding:14px;display:grid;gap:10px;align-content:start;animation:sobe .35s ease both}
+.rc h4{margin:0;font-size:13px;color:var(--t2);font-weight:600}
+.rc .big{font-family:var(--f-num);font-size:30px;font-weight:500}
+.barr{display:grid;grid-template-columns:110px 1fr 40px;gap:8px;align-items:center;font-size:12.5px}
+.barr i{height:8px;border-radius:99px;background:var(--s3);overflow:hidden;display:block}
+.barr i span{display:block;height:100%;border-radius:99px;transform-origin:left;animation:cresce .7s cubic-bezier(.2,.8,.2,1) both}
+.barr em{font-style:normal;font-family:var(--f-num);text-align:right;color:var(--t2)}
+.vazio{padding:40px;text-align:center;color:var(--t3);display:grid;gap:10px;justify-items:center}
+
+/* cursores ao vivo */
+.cursores{position:absolute;inset:0;pointer-events:none;overflow:hidden;z-index:8}
+.curs{position:absolute;left:0;top:0;transition:transform .55s cubic-bezier(.2,.8,.2,1),opacity .3s;will-change:transform}
+.curs svg{display:block;filter:drop-shadow(0 2px 4px rgba(0,0,0,.5))}
+.curs span{position:absolute;left:14px;top:16px;padding:2px 8px;border-radius:7px 7px 7px 2px;font-size:11px;font-weight:600;color:#0b0b0d;white-space:nowrap}
+
+/* menus e janelas */
+.menu{position:fixed;z-index:30;background:var(--s1);border:1px solid var(--hair);border-radius:12px;padding:6px;min-width:210px;box-shadow:0 20px 50px -20px #000;animation:sobe .18s ease both;display:grid;gap:2px}
+.menu button{all:unset;cursor:pointer;padding:7px 10px;border-radius:8px;font-size:13px;display:flex;gap:8px;align-items:center}
+.menu button:hover{background:var(--s2)}.menu hr{border:0;border-top:1px solid var(--hair);margin:4px 0}
+.menu .perigo{color:var(--crit)}
+.fundo{position:fixed;inset:0;background:rgba(0,0,0,.55);display:grid;place-items:center;z-index:40;padding:16px;animation:aparece .2s ease both}
+.janela{width:min(460px,100%);background:var(--s1);border:1px solid var(--hair);border-radius:14px;padding:18px;display:grid;gap:12px;box-shadow:0 30px 80px -30px #000;animation:sobe .25s cubic-bezier(.2,.8,.2,1) both;max-height:90vh;overflow:auto}
+.janela h3{margin:0;font-size:16px}
+.campo{display:grid;gap:5px;font-size:12.5px;color:var(--t2)}
+.campo input,.campo select{padding:8px 10px;border-radius:9px;border:1px solid var(--hair);background:var(--s2);color:var(--t1);font:inherit;font-size:13px}
+.ops{display:grid;gap:6px}
+.op{display:flex;gap:8px;align-items:center}
+.op input[type=text]{flex:1;padding:6px 8px;border-radius:8px;border:1px solid var(--hair);background:var(--s2);color:var(--t1);font:inherit;font-size:12.5px}
+.op input[type=color]{width:32px;height:30px;border:0;background:none;padding:0;cursor:pointer}
+.acoes{display:flex;gap:8px;justify-content:flex-end;flex-wrap:wrap}
+.toast{position:fixed;right:18px;bottom:18px;background:var(--s2);border:1px solid var(--hair);border-radius:10px;padding:9px 13px;font-size:12.5px;z-index:50;opacity:0;transform:translateY(8px);transition:opacity .2s,transform .2s;pointer-events:none;max-width:360px}
+.toast.on{opacity:1;transform:none}
+.aviso{position:fixed;inset:0;background:var(--bg);display:grid;place-items:center;z-index:60;padding:20px}
+.aviso div{max-width:420px;text-align:center;display:grid;gap:12px;justify-items:center}
+.aviso h1{margin:0;font-size:20px}.aviso p{margin:0;color:var(--t2)}
+.carrega{width:34px;height:34px;border-radius:50%;border:3px solid var(--s3);border-top-color:var(--red);animation:gira .8s linear infinite}
+.ajuda{color:var(--t3);font-size:12px;line-height:1.5}
+.ajuda code{font-family:var(--f-num);color:var(--t2)}
+
+@keyframes pulso{0%,100%{box-shadow:0 0 0 0 rgba(78,226,160,.45)}60%{box-shadow:0 0 0 6px rgba(78,226,160,0)}}
+@keyframes pop{0%{transform:scale(.4);opacity:0}70%{transform:scale(1.12)}100%{transform:scale(1);opacity:1}}
+@keyframes entra{from{opacity:0;transform:translateY(8px)}to{opacity:1;transform:none}}
+@keyframes sobe{from{opacity:0;transform:translateY(8px) scale(.98)}to{opacity:1;transform:none}}
+@keyframes aparece{from{opacity:0}to{opacity:1}}
+@keyframes brilho{0%{background-color:rgba(142,230,199,.3)}100%{background-color:transparent}}
+@keyframes linha{from{opacity:0;transform:translateY(-5px)}to{opacity:1;transform:none}}
+@keyframes cresce{from{transform:scaleX(0)}to{transform:scaleX(1)}}
+@keyframes gira{to{transform:rotate(360deg)}}
+@media (prefers-reduced-motion:reduce){*{animation:none!important;transition:none!important}}
+@media (max-width:700px){.barra,.fx{margin-left:8px;margin-right:8px}.area,.guias{margin-left:8px;margin-right:8px}.busca{width:120px}.pres span.t{display:none}}
+</style>
+<script>try{ var t = localStorage.getItem('theme'); if(t === 'claro') document.documentElement.setAttribute('data-theme', 'claro'); }catch(e){}</script>
+</head>
+<body>
+<header class="topo">
+  <a class="marca" href="index.html" title="Voltar ao Crediffato Gestão"><img src="logo.png" alt="">Crediffato <i>Planilhas</i></a>
+  <div class="tit"><small id="pasta">…</small><input id="nome" aria-label="Nome da planilha" readonly value="Carregando…"></div>
+  <span class="live" id="live"><i></i><span>Conectando…</span></span>
+  <span class="ler hidden" id="soLer">somente leitura</span>
+  <div class="pres"><span class="avs" id="avs"></span><span class="t" id="presTxt"></span></div>
+</header>
+<div class="barra">
+  <div class="vts" role="tablist"><button class="vt on" data-v="grade">Grade</button><button class="vt" data-v="quadro">Quadro</button><button class="vt" data-v="cal">Calendário</button><button class="vt" data-v="resumo">Resumo</button></div>
+  <div class="ferr">
+    <input class="busca" id="busca" type="search" placeholder="Buscar nesta guia…" aria-label="Buscar nesta guia">
+    <button class="btn so-edita" id="bLinha" title="Nova linha no fim">+ Linha</button>
+    <button class="btn so-edita" id="bColuna" title="Nova coluna">+ Coluna</button>
+    <button class="btn so-edita" id="bDesfaz" title="Desfazer (Ctrl+Z)" disabled>↶ Desfazer</button>
+    <button class="btn so-edita" id="bImporta" title="Trazer guias de um arquivo do Excel">Importar Excel</button>
+    <button class="btn" id="bExporta" title="Baixar como arquivo do Excel">Exportar Excel</button>
+    <button class="btn" id="bAjuda" title="Fórmulas e atalhos">?</button>
+  </div>
+</div>
+<div class="fx" id="fxBar"><span class="end" id="fxEnd">—</span><b>fx</b><input id="fxIn" spellcheck="false" placeholder="Escolha uma célula. Fórmulas começam com =, ex.: =PROCV(A2;Estoque!A:C;2;0)"><span class="dica" id="fxDica"></span></div>
+<main class="area" id="area"><div class="vis" id="vis"></div><div class="cursores" id="cursores"></div></main>
+<nav class="guias" id="guias" aria-label="Guias"></nav>
+<input type="file" id="arq" accept=".xlsx,.xls,.csv" class="hidden">
+<div class="toast" id="toast" role="status" aria-live="polite"></div>
+<div class="aviso" id="aviso"><div><div class="carrega" id="avisoGira"></div><h1 id="avisoT">Abrindo a planilha…</h1><p id="avisoP"></p><a class="btn hidden" id="avisoL" href="index.html">Ir para o Crediffato Gestão</a></div></div>
+
+<script>
+// ===== Fórmulas das Planilhas (estilo Excel em português) =====
+// Referências: A1 (coluna A = 1ª coluna, linha 1 = 1ª linha de dados), intervalos A1:C10, colunas inteiras A:C,
+// outra guia: Estoque!A:C ou 'Guia com espaço'!B2. Separador de argumentos ";" (vírgula também vale fora de número).
+// Funções: SOMA, MÉDIA, MÍNIMO, MÁXIMO, CONT.VALORES, CONT.NÚM, CONT.SE, SOMASE, MÉDIASE, SE, E, OU, NÃO, SEERRO,
+// PROCV, PROCX, ÍNDICE, CORRESP, ARRED, ABS, HOJE, DIAS, DATA, ANO, MÊS, DIA, CONCATENAR, MAIÚSCULA, MINÚSCULA, ARRUMAR, ÉCÉL.VAZIA
+// (nomes em inglês também: SUM, IF, VLOOKUP…).
+(function(root){
+  class Erro { constructor(c){ this.c = c; } toString(){ return this.c; } }
+  const E = c => new Erro(c), ehErro = v => v instanceof Erro;
+  const semAc = s => String(s).normalize('NFD').replace(/[̀-ͯ]/g, '').toUpperCase();
+  const colNum = l => { let n = 0; for(const ch of l.toUpperCase()) n = n * 26 + ch.charCodeAt(0) - 64; return n - 1; };
+  const colLetra = i => { let s = ''; i++; while(i){ const m = (i - 1) % 26; s = String.fromCharCode(65 + m) + s; i = (i - m - 1) / 26; } return s; };
+  // datas: 'AAAA-MM-DD' ↔ número de série (dias desde 30/12/1899, como o Excel)
+  const BASE = Date.UTC(1899, 11, 30);
+  const dataSerie = s => { const m = /^(\d{4})-(\d{2})-(\d{2})$/.exec(String(s)); return m ? Math.round((Date.UTC(+m[1], +m[2] - 1, +m[3]) - BASE) / 864e5) : null; };
+  const serieData = n => { const d = new Date(BASE + Math.round(n) * 864e5); return d.toISOString().slice(0, 10); };
+
+  // ---------- leitura ----------
+  function tokens(src){
+    const t = []; let i = 0;
+    const ehDig = c => c >= '0' && c <= '9';
+    // vírgula: decimal quando a fórmula usa ";" (padrão brasileiro) ou não tem função; separador no estilo inglês SOMA(1,2)
+    const virgDec = src.includes(';') || !src.includes('(');
+    while(i < src.length){
+      const c = src[i];
+      if(c === ' ' || c === '\t' || c === '\n'){ i++; continue; }
+      if(c === '"'){ let s = ''; i++; while(i < src.length){ if(src[i] === '"'){ if(src[i + 1] === '"'){ s += '"'; i += 2; continue; } break; } s += src[i++]; } i++; t.push({k:'str', v:s}); continue; }
+      if(c === "'"){ let s = ''; i++; while(i < src.length && src[i] !== "'") s += src[i++]; i++; if(src[i] === '!'){ i++; t.push({k:'guia', v:s}); } else t.push({k:'str', v:s}); continue; }
+      if(ehDig(c) || (c === '.' || (c === ',' && virgDec)) && ehDig(src[i + 1] || '')){
+        let s = ''; while(i < src.length && (ehDig(src[i]) || ((src[i] === '.' || (src[i] === ',' && virgDec)) && ehDig(src[i + 1] || '')))) s += src[i++];
+        // "1.234,56" → 1234.56 ; "1,5" → 1.5 ; "1.5" → 1.5
+        const n = s.includes(',') ? +s.replace(/\./g, '').replace(',', '.') : +s; t.push({k:'num', v:n}); continue; }
+      if(/[A-Za-zÀ-ÿ_]/.test(c)){
+        let s = ''; while(i < src.length && /[A-Za-zÀ-ÿ0-9_.]/.test(src[i])) s += src[i++];
+        if(src[i] === '!'){ i++; t.push({k:'guia', v:s}); continue; }
+        if(src[i] === '(') { t.push({k:'fn', v:semAc(s)}); continue; }
+        const u = s.toUpperCase();
+        if(u === 'VERDADEIRO' || u === 'TRUE'){ t.push({k:'bool', v:true}); continue; }
+        if(u === 'FALSO' || u === 'FALSE'){ t.push({k:'bool', v:false}); continue; }
+        if(/^[A-Z]{1,3}\d*$/.test(u)){ t.push({k:'ref', v:u}); continue; }
+        t.push({k:'nome', v:s}); continue; }
+      const d2 = src.slice(i, i + 2);
+      if(d2 === '<=' || d2 === '>=' || d2 === '<>'){ t.push({k:'op', v:d2}); i += 2; continue; }
+      if('+-*/^&=<>%'.includes(c)){ t.push({k:'op', v:c}); i++; continue; }
+      if(c === '(' || c === ')'){ t.push({k:c}); i++; continue; }
+      if(c === ';' || c === ','){ t.push({k:';'}); i++; continue; }
+      if(c === ':'){ t.push({k:':'}); i++; continue; }
+      throw E('#NOME?');
+    }
+    return t;
+  }
+  // ---------- árvore ----------
+  function parse(src){
+    const t = tokens(src); let p = 0;
+    const olha = () => t[p], pega = () => t[p++];
+    const espera = k => { if(!t[p] || t[p].k !== k) throw E('#NOME?'); return t[p++]; };
+    const PREC = {'=':1, '<>':1, '<':1, '>':1, '<=':1, '>=':1, '&':2, '+':3, '-':3, '*':4, '/':4, '^':5};
+    function expr(min = 1){
+      let esq = unario();
+      for(;;){ const o = olha(); if(!o || o.k !== 'op' || !(o.v in PREC) || PREC[o.v] < min) break; pega();
+        const dir = expr(o.v === '^' ? PREC[o.v] : PREC[o.v] + 1); esq = {k:'bin', o:o.v, a:esq, b:dir}; }
+      return esq;
+    }
+    function unario(){ const o = olha(); if(o && o.k === 'op' && (o.v === '-' || o.v === '+')){ pega(); const v = unario(); return o.v === '-' ? {k:'neg', a:v} : v; }
+      let v = prim(); while(olha() && olha().k === 'op' && olha().v === '%'){ pega(); v = {k:'bin', o:'/', a:v, b:{k:'num', v:100}}; } return v; }
+    function ref(guia){
+      const a = espera('ref').v; if(olha() && olha().k === ':'){ pega(); const b = espera('ref').v; return {k:'int', g:guia, a, b}; }
+      if(!/\d/.test(a)) throw E('#REF!'); return {k:'cel', g:guia, a};
+    }
+    function prim(){
+      const o = olha(); if(!o) throw E('#NOME?');
+      if(o.k === 'num' || o.k === 'str' || o.k === 'bool'){ pega(); return {k:o.k, v:o.v}; }
+      if(o.k === '('){ pega(); const v = expr(); espera(')'); return v; }
+      if(o.k === 'guia'){ pega(); return ref(o.v); }
+      if(o.k === 'ref') return ref(null);
+      if(o.k === 'fn'){ pega(); espera('('); const args = [];
+        if(olha() && olha().k !== ')'){ for(;;){ if(olha() && (olha().k === ';' || olha().k === ')')) args.push({k:'vazio'}); else args.push(expr()); if(olha() && olha().k === ';'){ pega(); continue; } break; } }
+        espera(')'); return {k:'fn', n:o.v, args}; }
+      throw E('#NOME?');
+    }
+    const r = expr(); if(p < t.length) throw E('#NOME?'); return r;
+  }
+
+  // ---------- conversões ----------
+  const num = v => { if(ehErro(v)) return v; if(typeof v === 'number') return v; if(typeof v === 'boolean') return v ? 1 : 0; if(v == null || v === '') return 0;
+    const ds = dataSerie(v); if(ds != null) return ds; const s = String(v).trim().replace(/^R\$\s*/, ''); const n = s.includes(',') ? +s.replace(/\./g, '').replace(',', '.') : +s; return isFinite(n) ? n : E('#VALOR!'); };
+  const txt = v => v == null ? '' : typeof v === 'boolean' ? (v ? 'VERDADEIRO' : 'FALSO') : typeof v === 'number' ? String(+v.toFixed(10)).replace('.', ',') : String(v);
+  const bool = v => typeof v === 'boolean' ? v : typeof v === 'number' ? v !== 0 : /^(verdadeiro|true|1|sim)$/i.test(String(v).trim());
+  const vazio = v => v == null || v === '';
+  const plano = l => { const out = []; (function f(x){ if(Array.isArray(x)) x.forEach(f); else out.push(x); })(l); return out; };
+  const numeros = l => plano(l).filter(v => typeof v === 'number' || (typeof v === 'string' && v.trim() !== '' && !ehErro(num(v)) && /^[\d\s.,R$-]+$|^\d{4}-\d{2}-\d{2}$/.test(v.trim()))).map(num);
+  const iguais = (a, b) => { if(typeof a === 'number' || typeof b === 'number'){ const x = num(a), y = num(b); if(!ehErro(x) && !ehErro(y)) return x === y; } return semAc(txt(a)).trim() === semAc(txt(b)).trim(); };
+  // critério do CONT.SE/SOMASE: ">10", "<>Cancelado", "Ent*", 5
+  function criterio(c){
+    if(typeof c === 'number') return v => iguais(v, c);
+    const m = /^(<=|>=|<>|<|>|=)?(.*)$/.exec(String(c)); const op = m[1] || '=', alvo = m[2];
+    const n = alvo.trim() !== '' && !ehErro(num(alvo)) ? num(alvo) : null;
+    if(n != null && op !== '=' && op !== '<>') return v => { const x = num(v); if(ehErro(x) || vazio(v)) return false; return op === '>' ? x > n : op === '<' ? x < n : op === '>=' ? x >= n : x <= n; };
+    const rx = /[*?]/.test(alvo) ? new RegExp('^' + semAc(alvo).replace(/[.+^${}()|[\]\\]/g, '\\$&').replace(/\*/g, '.*').replace(/\?/g, '.') + '$') : null;
+    const ok = v => rx ? rx.test(semAc(txt(v)).trim()) : (n != null ? iguais(v, n) : semAc(txt(v)).trim() === semAc(alvo).trim());
+    return op === '<>' ? v => !ok(v) : ok;
+  }
+
+  // ---------- funções ----------
+  const F = {
+    SOMA: a => numeros(a).reduce((s, v) => s + v, 0),
+    MEDIA: a => { const l = numeros(a); return l.length ? l.reduce((s, v) => s + v, 0) / l.length : E('#DIV/0!'); },
+    MINIMO: a => { const l = numeros(a); return l.length ? Math.min(...l) : 0; },
+    MAXIMO: a => { const l = numeros(a); return l.length ? Math.max(...l) : 0; },
+    'CONT.VALORES': a => plano(a).filter(v => !vazio(v)).length,
+    'CONT.NUM': a => numeros(a).length,
+    'CONT.SE': ([r, c]) => plano(r).filter(criterio(c)).length,
+    SOMASE: ([r, c, s]) => { const R = plano(r), S = s ? plano(s) : R, ok = criterio(c); return R.reduce((t, v, i) => ok(v) ? t + (ehErro(num(S[i])) ? 0 : num(S[i])) : t, 0); },
+    MEDIASE: ([r, c, s]) => { const R = plano(r), S = s ? plano(s) : R, ok = criterio(c); const l = R.map((v, i) => ok(v) ? num(S[i]) : null).filter(v => v != null && !ehErro(v)); return l.length ? l.reduce((a, b) => a + b, 0) / l.length : E('#DIV/0!'); },
+    SE: ([c, a, b]) => bool(c) ? (a === undefined ? true : a) : (b === undefined ? false : b),
+    E: a => plano(a).every(bool), OU: a => plano(a).some(bool), NAO: ([v]) => !bool(v),
+    SEERRO: null, // tratado na avaliação (precisa pegar o erro do 1º argumento)
+    PROCV: ([v, tab, col, aprox]) => {
+      if(!Array.isArray(tab) || !Array.isArray(tab[0])) return E('#REF!');
+      const c = num(col); if(ehErro(c) || c < 1 || c > tab[0].length) return E('#REF!');
+      const exato = aprox === undefined ? true : !bool(aprox);   // diferente do Excel: sem 4º argumento, procura o valor exato (o que todo mundo quer)
+      if(exato){ const l = tab.find(r => iguais(r[0], v)); return l ? (l[c - 1] ?? '') : E('#N/D'); }
+      let ach = null; const x = num(v); for(const r of tab){ const y = num(r[0]); if(!ehErro(y) && !ehErro(x) && y <= x) ach = r; } return ach ? (ach[c - 1] ?? '') : E('#N/D'); },
+    PROCX: ([v, busca, ret, seNao]) => { const B = plano(busca), R = plano(ret); const i = B.findIndex(x => iguais(x, v)); return i >= 0 ? (R[i] ?? '') : (seNao !== undefined ? seNao : E('#N/D')); },
+    INDICE: ([tab, l, c]) => { if(!Array.isArray(tab)) return tab; const L = num(l), C = c === undefined ? 1 : num(c); const lin = Array.isArray(tab[0]) ? tab[L - 1] : [tab[L - 1]]; return lin && lin[C - 1] !== undefined ? lin[C - 1] : E('#REF!'); },
+    CORRESP: ([v, l]) => { const i = plano(l).findIndex(x => iguais(x, v)); return i >= 0 ? i + 1 : E('#N/D'); },
+    ARRED: ([v, d]) => { const n = num(v), k = Math.pow(10, d === undefined ? 0 : num(d)); return ehErro(n) ? n : Math.round(n * k) / k; },
+    ABS: ([v]) => { const n = num(v); return ehErro(n) ? n : Math.abs(n); },
+    HOJE: () => { const d = new Date(); return Math.round((Date.UTC(d.getFullYear(), d.getMonth(), d.getDate()) - BASE) / 864e5); },
+    DIAS: ([f, i]) => { const a = num(f), b = num(i); return ehErro(a) ? a : ehErro(b) ? b : a - b; },
+    DATA: ([a, m, d]) => Math.round((Date.UTC(num(a), num(m) - 1, num(d)) - BASE) / 864e5),
+    ANO: ([v]) => +serieData(num(v)).slice(0, 4), MES: ([v]) => +serieData(num(v)).slice(5, 7), DIA: ([v]) => +serieData(num(v)).slice(8, 10),
+    CONCATENAR: a => plano(a).map(txt).join(''),
+    MAIUSCULA: ([v]) => txt(v).toUpperCase(), MINUSCULA: ([v]) => txt(v).toLowerCase(), ARRUMAR: ([v]) => txt(v).replace(/\s+/g, ' ').trim(),
+    'ECEL.VAZIA': ([v]) => vazio(v)
+  };
+  const ALIAS = {SUM:'SOMA', AVERAGE:'MEDIA', MIN:'MINIMO', MAX:'MAXIMO', COUNTA:'CONT.VALORES', COUNT:'CONT.NUM', COUNTIF:'CONT.SE', SUMIF:'SOMASE', AVERAGEIF:'MEDIASE',
+    IF:'SE', AND:'E', OR:'OU', NOT:'NAO', IFERROR:'SEERRO', VLOOKUP:'PROCV', XLOOKUP:'PROCX', INDEX:'INDICE', MATCH:'CORRESP', ROUND:'ARRED', TODAY:'HOJE', DAYS:'DIAS',
+    DATE:'DATA', YEAR:'ANO', MONTH:'MES', DAY:'DIA', CONCATENATE:'CONCATENAR', UPPER:'MAIUSCULA', LOWER:'MINUSCULA', TRIM:'ARRUMAR', ISBLANK:'ECEL.VAZIA', CONCAT:'CONCATENAR'};
+  const LISTA = ['SOMA', 'MÉDIA', 'MÍNIMO', 'MÁXIMO', 'CONT.VALORES', 'CONT.NÚM', 'CONT.SE', 'SOMASE', 'MÉDIASE', 'SE', 'E', 'OU', 'NÃO', 'SEERRO', 'PROCV', 'PROCX', 'ÍNDICE', 'CORRESP',
+    'ARRED', 'ABS', 'HOJE', 'DIAS', 'DATA', 'ANO', 'MÊS', 'DIA', 'CONCATENAR', 'MAIÚSCULA', 'MINÚSCULA', 'ARRUMAR', 'ÉCÉL.VAZIA'];
+
+  // ---------- avaliação ----------
+  // ctx: {guia(nome|null) → {cols, linhas: n, valor(l, c)}} ; valor devolve o valor JÁ calculado (o próprio motor resolve fórmulas por baixo)
+  function avaliaNo(n, ctx, gAtual){
+    switch(n.k){
+      case 'num': case 'str': case 'bool': return n.v;
+      case 'vazio': return undefined;
+      case 'neg': { const v = num(avaliaNo(n.a, ctx, gAtual)); return ehErro(v) ? v : -v; }
+      case 'cel': { const g = ctx.guia(n.g || gAtual); if(!g) return E('#REF!'); const m = /^([A-Z]+)(\d+)$/.exec(n.a); const c = colNum(m[1]), l = +m[2] - 1;
+        if(c >= g.cols || l < 0) return E('#REF!'); if(l >= g.linhas) return ''; return g.valor(l, c); }
+      case 'int': { const g = ctx.guia(n.g || gAtual); if(!g) return E('#REF!');
+        const pa = /^([A-Z]+)(\d*)$/.exec(n.a), pb = /^([A-Z]+)(\d*)$/.exec(n.b); if(!pa || !pb) return E('#REF!');
+        const c1 = colNum(pa[1]), c2 = colNum(pb[1]), l1 = pa[2] ? +pa[2] - 1 : 0, l2 = pb[2] ? +pb[2] - 1 : g.linhas - 1;
+        const out = []; for(let l = Math.min(l1, l2); l <= Math.min(Math.max(l1, l2), g.linhas - 1); l++){ const lin = []; for(let c = Math.min(c1, c2); c <= Math.max(c1, c2); c++) lin.push(c < g.cols ? g.valor(l, c) : ''); out.push(lin); }
+        return out; }
+      case 'bin': {
+        const a = avaliaNo(n.a, ctx, gAtual), b = avaliaNo(n.b, ctx, gAtual);
+        if(ehErro(a)) return a; if(ehErro(b)) return b;
+        const um = x => Array.isArray(x) ? (plano(x)[0] ?? '') : x; const A = um(a), B = um(b);
+        if(n.o === '&') return txt(A) + txt(B);
+        if(['=', '<>', '<', '>', '<=', '>='].includes(n.o)){
+          let cmp; const x = num(A), y = num(B);
+          if(!ehErro(x) && !ehErro(y) && (typeof A === 'number' || typeof B === 'number' || dataSerie(A) != null)) cmp = x - y; else cmp = semAc(txt(A)).localeCompare(semAc(txt(B)));
+          return n.o === '=' ? (n.o === '=' && iguais(A, B)) : n.o === '<>' ? !iguais(A, B) : n.o === '<' ? cmp < 0 : n.o === '>' ? cmp > 0 : n.o === '<=' ? cmp <= 0 : cmp >= 0; }
+        const x = num(A), y = num(B); if(ehErro(x)) return x; if(ehErro(y)) return y;
+        if(n.o === '+') return x + y; if(n.o === '-') return x - y; if(n.o === '*') return x * y; if(n.o === '^') return Math.pow(x, y);
+        if(n.o === '/') return y === 0 ? E('#DIV/0!') : x / y; return E('#VALOR!'); }
+      case 'fn': {
+        const nome = ALIAS[n.n] || n.n.replace(/\.$/, '');
+        if(nome === 'SEERRO'){ const v = avaliaNo(n.args[0], ctx, gAtual); return ehErro(v) ? (n.args[1] ? avaliaNo(n.args[1], ctx, gAtual) : '') : v; }
+        if(nome === 'SE'){ const c = avaliaNo(n.args[0], ctx, gAtual); if(ehErro(c)) return c; const ramo = bool(c) ? n.args[1] : n.args[2]; if(!ramo || ramo.k === 'vazio') return bool(c) ? true : false; return avaliaNo(ramo, ctx, gAtual); }
+        const f = F[nome]; if(!f) return E('#NOME?');
+        const args = n.args.map(a => avaliaNo(a, ctx, gAtual));
+        const err = ['SOMA', 'MEDIA', 'MINIMO', 'MAXIMO', 'CONT.VALORES', 'CONT.NUM', 'CONCATENAR', 'E', 'OU'].includes(nome) ? plano(args).find(ehErro) : args.find(a => ehErro(a));
+        if(err && nome !== 'CONT.SE' && nome !== 'SOMASE') return err;
+        try{ return f(args); }catch(e){ return ehErro(e) ? e : E('#VALOR!'); }
+      }
+    }
+    return E('#VALOR!');
+  }
+  const cache = new Map();
+  function compila(src){ if(cache.has(src)) return cache.get(src); let r; try{ r = parse(src.replace(/^=/, '')); }catch(e){ r = ehErro(e) ? e : E('#NOME?'); } if(cache.size > 5000) cache.clear(); cache.set(src, r); return r; }
+  function avalia(src, ctx, gAtual){ const a = compila(src); if(ehErro(a)) return a; const v = avaliaNo(a, ctx, gAtual); return Array.isArray(v) ? (plano(v)[0] ?? '') : v; }
+  root.Formula = {avalia, Erro, ehErro, num, txt, colLetra, colNum, dataSerie, serieData, LISTA};
+})(typeof window !== 'undefined' ? window : globalThis);
+
+</script>
+<script type="module">
+import { initializeApp } from "https://www.gstatic.com/firebasejs/10.14.1/firebase-app.js";
+import { getFirestore, doc, getDoc, setDoc, updateDoc, onSnapshot, FieldPath, deleteField } from "https://www.gstatic.com/firebasejs/10.14.1/firebase-firestore.js";
+import { getAuth, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.14.1/firebase-auth.js";
+
+// mesma configuração do board: quem está logado no board já entra direto
+const firebaseConfig = {
+  apiKey: "AIzaSyBt7bmMF1R8LPCudnU0Qfh5mR4TXAH79lg",
+  authDomain: "board-crediffato.firebaseapp.com",
+  projectId: "board-crediffato",
+  storageBucket: "board-crediffato.firebasestorage.app",
+  messagingSenderId: "1010277250901",
+  appId: "1:1010277250901:web:99e214f915db73f4e161dc"
+};
+const app = initializeApp(firebaseConfig), db = getFirestore(app), auth = getAuth(app);
+const F = window.Formula;
+const $ = s => document.querySelector(s), esc = s => String(s ?? '').replace(/[&<>"]/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
+const ID = new URLSearchParams(location.search).get('id') || '';
+const REF = doc(db, 'boards', 'planilha-' + ID), PRES = doc(db, 'boards', 'planilha-' + ID + '-pres'), IDX = doc(db, 'boards', 'planilhas');
+const CORES = ['#ff9db0', '#8ee6c7', '#c3c4ff', '#ffd88a', '#9fd5ff', '#f0a6ff', '#b8f28b', '#ffb38a'];
+const TIPOS = [['texto', 'Texto', 'Aa'], ['numero', 'Número', '123'], ['moeda', 'Valor (R$)', 'R$'], ['data', 'Data', 'dia'], ['pessoa', 'Pessoa', '@'], ['status', 'Status', '●'], ['caixa', 'Caixa de marcar', '✓'], ['link', 'Link', '↗']];
+const novoId = () => Math.random().toString(36).slice(2, 8) + Date.now().toString(36).slice(-3);
+const corDe = s => { let h = 0; for(const ch of String(s)) h = (h * 31 + ch.charCodeAt(0)) | 0; return CORES[Math.abs(h) % CORES.length]; };
+const iniciais = n => String(n || '?').trim().split(/\s+/).map(w => w[0]).slice(0, 2).join('').toUpperCase();
+const reduz = matchMedia('(prefers-reduced-motion: reduce)').matches;
+
+let eu = null, nivel = 'ver', meta = null, S = null, DIR = [], SETORES = [], g = null, vis = 'grade', busca = '';
+let sel = {r:0, c:0}, ancora = null, editando = null, desfazer = [], mesAtual = null, primeira = true;
+
+// ---------- avisos ----------
+function aviso(t, p, link){ $('#aviso').classList.remove('hidden'); $('#avisoT').textContent = t; $('#avisoP').textContent = p || ''; $('#avisoL').classList.toggle('hidden', !link); $('#avisoGira').classList.toggle('hidden', !!link); }
+const toast = t => { const e = $('#toast'); e.textContent = t; e.classList.add('on'); clearTimeout(e._t); e._t = setTimeout(() => e.classList.remove('on'), 2800); };
+function live(estado){ const l = $('#live'); l.className = 'live' + (estado === 'salvando' ? ' salvando' : estado === 'off' ? ' off' : ''); l.lastChild.textContent = estado === 'salvando' ? 'Salvando…' : estado === 'off' ? 'Sem conexão: suas mudanças aparecem quando voltar' : 'Salvo · ao vivo'; }
+
+// ---------- entrada: login → permissão → dados ao vivo ----------
+if(!ID) aviso('Planilha não encontrada', 'Abra pela aba Planilhas do Crediffato Gestão.', true);
+onAuthStateChanged(auth, async user => {
+  if(!ID) return;
+  if(!user){ aviso('Entre no Crediffato Gestão', 'Faça login no board e abra a planilha de novo.', true); return; }
+  try{
+    const [uSnap, bSnap] = await Promise.all([getDoc(doc(db, 'users', user.uid)), getDoc(doc(db, 'boards', 'crediffato'))]);
+    const u = uSnap.exists() ? uSnap.data() : {};
+    DIR = ((bSnap.exists() && bSnap.data().directory) || []).filter(x => !x.disabled); SETORES = (bSnap.exists() && bSnap.data().sectors) || [];
+    const d = DIR.find(x => x.uid === user.uid) || {};
+    eu = {uid:user.uid, email:user.email, nome:u.name || d.name || user.email, role:u.role || d.role || '', areas:u.assignedAreas || d.assignedAreas || []};
+    eu.cor = corDe(eu.uid);
+    onSnapshot(IDX, s => { meta = ((s.exists() && s.data().itens) || {})[ID] || null; confere(); }, () => aviso('Sem acesso', 'Não consegui ler a lista de planilhas.', true));
+  }catch(e){ aviso('Não foi possível abrir', String(e.message || e), true); }
+});
+let ouvindo = false;
+function confere(){
+  if(!meta || meta.excluida){
+    // planilha recém-criada: a guia abre antes de o board terminar de gravar; espera um pouco antes de desistir
+    if(!S && performance.now() < 12000){ clearTimeout(confere._t); confere._t = setTimeout(confere, 1500); return; }
+    aviso('Planilha não encontrada', 'Ela pode ter sido excluída ou o endereço está errado.', true); return; }
+  const setorNome = (SETORES.find(x => x.key === meta.setor) || {}).label || meta.setor;
+  const ehAdmin = eu.role === 'admin', doSetor = eu.areas.includes(meta.setor);
+  const c = (meta.compart || []).filter(x => (x.tipo === 'pessoa' && String(x.id).toLowerCase() === String(eu.email).toLowerCase()) || (x.tipo === 'setor' && eu.areas.includes(x.id)));
+  if(!ehAdmin && !doSetor && !c.length && String(meta.criadoPor || '').toLowerCase() !== String(eu.email).toLowerCase()){ aviso('Sem acesso a esta planilha', 'Ela é do setor ' + setorNome + '. Peça para alguém de lá compartilhar com você.', true); return; }
+  nivel = ehAdmin || doSetor || String(meta.criadoPor || '').toLowerCase() === String(eu.email).toLowerCase() || c.some(x => x.nivel === 'editar') ? 'editar' : 'ver';
+  document.body.classList.toggle('soler', nivel !== 'editar');
+  $('#soLer').classList.toggle('hidden', nivel === 'editar');
+  document.querySelectorAll('.so-edita').forEach(b => b.classList.toggle('hidden', nivel !== 'editar'));
+  $('#nome').readOnly = nivel !== 'editar';
+  $('#pasta').textContent = 'Pasta ' + setorNome + (doSetor || ehAdmin ? '' : ' · compartilhada com você');
+  if(document.activeElement !== $('#nome')) $('#nome').value = meta.nome;
+  document.title = meta.nome + ' · Planilhas';
+  if(ouvindo) return; ouvindo = true;
+  onSnapshot(REF, {includeMetadataChanges:true}, s => {
+    if(!s.exists()){ aviso('Planilha vazia', 'Os dados desta planilha não foram encontrados.', true); return; }
+    live(s.metadata.hasPendingWrites ? 'salvando' : 'ok');
+    if(s.metadata.hasPendingWrites && S && !primeira) return;   // eco da minha própria mudança: a tela já está certa
+    const antes = S; S = s.data(); S.guias = S.guias || {}; S.dados = S.dados || {};
+    if(!g || !S.guias[g]) g = guiasOrd()[0] && guiasOrd()[0].id;
+    $('#aviso').classList.add('hidden');
+    pinta(antes);
+    primeira = false;
+  }, () => { live('off'); });
+  onSnapshot(PRES, s => { pres = (s.exists() && s.data().u) || {}; pintaPres(); });
+  presenca(); setInterval(presenca, 20000);
+  addEventListener('pagehide', () => { setDoc(PRES, {u:{[eu.uid]:deleteField()}}, {merge:true}).catch(() => {}); });
+  addEventListener('online', () => live('ok')); addEventListener('offline', () => live('off'));
+}
+
+// ---------- modelo ----------
+const guiasOrd = () => Object.entries(S.guias).map(([id, x]) => ({id, ...x})).sort((a, b) => (a.pos || 0) - (b.pos || 0));
+const G = () => S.guias[g];
+const cols = () => G().cols || [];
+const ordem = () => G().ordem || [];
+const cel = (gid, rid, cid) => ((S.dados[gid] || {})[rid] || {})[cid];
+const colDe = (gid, i) => (S.guias[gid].cols || [])[i];
+const tipoDe = c => (c && c.tipo) || 'texto';
+// coluna de prazo: data cujo nome fala de prazo/vencimento (só ela fica vermelha quando passa do dia)
+const ehPrazo = c => tipoDe(c) === 'data' && /prazo|venc|entrega|limite|até/i.test(c.nome || '');
+const colData = () => cols().find(ehPrazo) || cols().find(c => tipoDe(c) === 'data');
+
+// "fórmula da coluna": vale para toda linha que tem algum dado e não tem valor próprio naquela célula
+// (# vira o número da linha). Assim linha nova já sai calculada, sem copiar fórmula.
+function bruto(gid, rid, c){
+  const v = cel(gid, rid, c.id); if(v !== undefined && v !== '' || !c.formula) return v;
+  const gu = S.guias[gid], li = (gu.ordem || []).indexOf(rid);
+  const temDado = (gu.cols || []).some(x => !x.formula && cel(gid, rid, x.id) !== undefined && cel(gid, rid, x.id) !== '');
+  return temDado ? String(c.formula).replace(/#/g, li + 1) : v;
+}
+// valores calculados (fórmulas) — memória por pintura, com proteção contra ciclo
+let memo = new Map(), pilha = new Set();
+function valor(gid, li, ci){
+  const gu = S.guias[gid]; if(!gu) return new F.Erro('#REF!');
+  const rid = (gu.ordem || [])[li], c = (gu.cols || [])[ci]; if(!rid || !c) return '';
+  const v = bruto(gid, rid, c); if(typeof v !== 'string' || v[0] !== '=') return v ?? '';
+  const k = gid + '|' + li + '|' + ci; if(memo.has(k)) return memo.get(k);
+  if(pilha.has(k)) return new F.Erro('#CICLO!');
+  pilha.add(k); const r = F.avalia(v, ctxF, gid); pilha.delete(k); memo.set(k, r); return r;
+}
+const ctxF = {guia: n => { const lst = guiasOrd(); const x = lst.find(q => q.id === n) || lst.find(q => String(q.nome).trim().toLowerCase() === String(n).trim().toLowerCase()); if(!x) return null;
+  return {cols:(x.cols || []).length, linhas:(x.ordem || []).length, valor:(l, c) => valor(x.id, l, c)}; }};
+
+// ---------- formatos ----------
+const nfmt = new Intl.NumberFormat('pt-BR', {maximumFractionDigits:6}), mfmt = new Intl.NumberFormat('pt-BR', {style:'currency', currency:'BRL'});
+const dataBR = s => { const m = /^(\d{4})-(\d{2})-(\d{2})$/.exec(String(s)); return m ? `${m[3]}/${m[2]}/${m[1]}` : String(s); };
+const hojeISO = () => { const d = new Date(); return new Date(d - d.getTimezoneOffset() * 6e4).toISOString().slice(0, 10); };
+const pessoa = email => DIR.find(x => String(x.email).toLowerCase() === String(email).toLowerCase());
+const nomeP = email => { const p = pessoa(email); return p ? (p.name || p.email) : String(email); };
+const statusOp = (c, v) => (c.opcoes || []).find(o => String(o.v).toLowerCase() === String(v).toLowerCase());
+function mostra(c, v, ehF){
+  if(F.ehErro(v)) return {h:esc(String(v)), cls:'err'};
+  const t = tipoDe(c);
+  if(v === '' || v == null) return {h:'', cls:''};
+  if(t === 'numero'){ const n = F.num(v); return F.ehErro(n) ? {h:esc(v), cls:''} : {h:nfmt.format(n), cls:'num'}; }
+  if(t === 'moeda'){ const n = F.num(v); return F.ehErro(n) ? {h:esc(v), cls:''} : {h:mfmt.format(n), cls:'num'}; }
+  if(t === 'data'){ const s = typeof v === 'number' ? F.serieData(v) : String(v); const venc = s < hojeISO() && c.alertaVencido !== false; return {h:esc(dataBR(s)), cls:venc && !ehF ? '' : ''}; }
+  if(t === 'status'){ const o = statusOp(c, v); const cor = o ? o.c : '#7f7f88'; return {h:`<span class="pill" style="color:${cor};background:${cor}22">${esc(o ? o.v : v)}</span>`, cls:''}; }
+  if(t === 'pessoa'){ const n = nomeP(v); return {h:`<span class="pes"><b style="background:${corDe(v)}">${esc(iniciais(n))}</b>${esc(n)}</span>`, cls:''}; }
+  if(t === 'caixa'){ const on = v === true || /^(true|sim|verdadeiro|1|x)$/i.test(String(v)); return {h:`<span class="chk${on ? ' on' : ''}"></span>`, cls:''}; }
+  if(t === 'link'){ const u = String(v); const ok = /^https?:\/\//i.test(u); return {h:ok ? `<a class="lk" href="${esc(u)}" target="_blank" rel="noopener">${esc(u.replace(/^https?:\/\//, ''))}</a>` : esc(u), cls:''}; }
+  if(typeof v === 'number') return {h:nfmt.format(v), cls:'num'};
+  if(typeof v === 'boolean') return {h:v ? 'VERDADEIRO' : 'FALSO', cls:''};
+  return {h:esc(v), cls:''};
+}
+
+// ---------- gravação ----------
+let tMeta = 0;
+async function grava(pares, {semDesfazer = false, rotulo = ''} = {}){
+  if(nivel !== 'editar' || !pares.length) return;
+  if(!semDesfazer){ desfazer.push(pares.map(([p]) => [p, pega(p)])); if(desfazer.length > 100) desfazer.shift(); $('#bDesfaz').disabled = false; }
+  pares.forEach(([p, v]) => poe(p, v));     // tela muda na hora; o Firestore confirma em seguida
+  live('salvando');
+  try{
+    for(let i = 0; i < pares.length; i += 200){
+      const args = []; pares.slice(i, i + 200).forEach(([p, v]) => { args.push(new FieldPath(...p), v === undefined || v === '' || v === null ? deleteField() : v); });
+      await updateDoc(REF, ...args);
+    }
+    if(Date.now() - tMeta > 30000){ tMeta = Date.now(); updateDoc(IDX, new FieldPath('itens', ID, 'atualizadoEm'), new Date().toISOString(), new FieldPath('itens', ID, 'atualizadoPor'), eu.nome).catch(() => {}); }
+  }catch(e){ toast('Não salvou: ' + (e.message || e)); live('off'); }
+}
+const pega = p => p.reduce((o, k) => o == null ? undefined : o[k], S);
+const poe = (p, v) => { let o = S; for(let i = 0; i < p.length - 1; i++){ o[p[i]] = o[p[i]] || {}; o = o[p[i]]; } if(v === undefined || v === '' || v === null) delete o[p[p.length - 1]]; else o[p[p.length - 1]] = v; };
+const tamanho = () => JSON.stringify(S).length;
+function cabe(){ if(tamanho() > 900000){ toast('Esta planilha está perto do limite de tamanho. Para crescer mais, divida em outra planilha.'); return false; } return true; }
+
+// conversão do que a pessoa digitou para o tipo da coluna
+function converte(c, s){
+  s = String(s); if(s === '') return '';
+  if(s[0] === '=') return s;
+  const t = tipoDe(c);
+  if(t === 'numero' || t === 'moeda'){ const n = F.num(s.replace(/^R\$\s*/, '')); return F.ehErro(n) ? s : n; }
+  if(t === 'data'){ const m = /^(\d{1,2})\/(\d{1,2})(?:\/(\d{2,4}))?$/.exec(s.trim()); if(m){ const a = m[3] ? (m[3].length === 2 ? '20' + m[3] : m[3]) : String(new Date().getFullYear()); return `${a}-${m[2].padStart(2, '0')}-${m[1].padStart(2, '0')}`; } return s; }
+  if(t === 'caixa') return /^(true|sim|verdadeiro|1|x)$/i.test(s.trim());
+  if(t === 'pessoa'){ const p = DIR.find(x => (x.name || '').toLowerCase() === s.trim().toLowerCase() || String(x.email).toLowerCase() === s.trim().toLowerCase()); return p ? p.email : s; }
+  return s;
+}
+
+// ---------- pintura ----------
+function pinta(antes){
+  memo = new Map();
+  pintaGuias();
+  if(vis === 'grade') pintaGrade(antes); else if(vis === 'quadro') pintaQuadro(); else if(vis === 'cal') pintaCal(); else pintaResumo();
+  pintaFx(); pintaPres();
+}
+function linhasVisiveis(){
+  const o = ordem(); if(!busca) return o.map((rid, i) => ({rid, i}));
+  const q = busca.toLowerCase();
+  return o.map((rid, i) => ({rid, i})).filter(({i}) => cols().some((c, ci) => { const v = valor(g, i, ci); return String(c.tipo === 'pessoa' ? nomeP(v) : v).toLowerCase().includes(q); }));
+}
+function pintaGrade(antes){
+  const box = $('#vis'), cs = cols(), lst = linhasVisiveis();
+  const largs = cs.map(c => c.larg || (tipoDe(c) === 'texto' ? 220 : tipoDe(c) === 'caixa' ? 90 : 150));
+  const novas = antes && antes.guias && antes.guias[g] ? new Set(ordem().filter(r => !(antes.guias[g].ordem || []).includes(r))) : new Set();
+  const mudou = (rid, cid) => antes && antes.dados && antes.dados[g] && JSON.stringify(((antes.dados[g] || {})[rid] || {})[cid]) !== JSON.stringify(cel(g, rid, cid)) && !novas.has(rid);
+  const sx = box.scrollLeft, sy = box.scrollTop;
+  box.innerHTML = `<table class="g" id="gT" style="width:${46 + largs.reduce((a, b) => a + b, 0)}px"><colgroup><col style="width:46px">${largs.map(w => `<col style="width:${w}px">`).join('')}</colgroup>
+    <thead><tr><th class="rn"></th>${cs.map((c, ci) => `<th class="${ci === 0 ? 'c0' : ''}" data-col="${ci}" title="${esc(TIPOS.find(t => t[0] === tipoDe(c))[1])} · clique para opções"><span class="l">${F.colLetra(ci)}</span>${esc(c.nome)}<span class="ti">${c.formula ? 'fx' : esc(TIPOS.find(t => t[0] === tipoDe(c))[2])}</span></th>`).join('')}</tr></thead>
+    <tbody>${lst.map(({rid, i}) => `<tr data-r="${i}"${novas.has(rid) ? ' class="nova"' : ''}><td class="rn" data-rn="${i}">${i + 1}</td>${cs.map((c, ci) => { const raw = bruto(g, rid, c), ehF = typeof raw === 'string' && raw[0] === '='; const m = mostra(c, valor(g, i, ci), ehF);
+      const venc = ehPrazo(c) && raw && String(ehF ? '' : raw) < hojeISO() && linhaAberta(rid);
+      return `<td data-r="${i}" data-c="${ci}" class="${ci === 0 ? 'c0 ' : ''}${m.cls}${ehF && raw === cel(g, rid, c.id) ? ' fm' : ''}${venc ? ' late' : ''}${mudou(rid, c.id) ? ' brilha' : ''}">${m.h}</td>`; }).join('')}</tr>`).join('')}
+    ${nivel === 'editar' && !busca ? `<tr class="addl"><td class="rn">+</td><td colspan="${cs.length}" id="addLinha">Nova linha</td></tr>` : ''}</tbody></table>
+    ${!cs.length ? '<div class="vazio">Esta guia não tem colunas. Clique em <b>+ Coluna</b>.</div>' : ''}`;
+  box.scrollLeft = sx; box.scrollTop = sy;
+  marcaSel();
+}
+// linha "aberta" = status que não é de concluído (para pintar prazo vencido só no que falta fazer)
+function linhaAberta(rid){ const c = cols().find(x => tipoDe(x) === 'status'); if(!c) return true; const v = String(cel(g, rid, c.id) || ''); return !/conclu|resolvid|respondid|feito|entregue|finaliz|cancel|ok$/i.test(v); }
+function marcaSel(){
+  document.querySelectorAll('#gT td.cur, #gT td.ins').forEach(x => x.classList.remove('cur', 'ins'));
+  const a = ancora || sel, r0 = Math.min(a.r, sel.r), r1 = Math.max(a.r, sel.r), c0 = Math.min(a.c, sel.c), c1 = Math.max(a.c, sel.c);
+  if(r0 !== r1 || c0 !== c1) document.querySelectorAll('#gT td[data-c]').forEach(td => { const r = +td.dataset.r, c = +td.dataset.c; if(r >= r0 && r <= r1 && c >= c0 && c <= c1) td.classList.add('ins'); });
+  const td = celTd(sel.r, sel.c); if(td){ td.classList.add('cur'); }
+  pintaFx();
+}
+const celTd = (r, c) => document.querySelector(`#gT td[data-r="${r}"][data-c="${c}"]`);
+function pintaFx(){
+  if(!S || !G() || vis !== 'grade'){ $('#fxEnd').textContent = '—'; return; }
+  const c = cols()[sel.c], rid = ordem()[sel.r];
+  $('#fxEnd').textContent = c && rid ? F.colLetra(sel.c) + (sel.r + 1) : '—';
+  if(document.activeElement !== $('#fxIn')){ const v = c && rid ? bruto(g, rid, c) : ''; $('#fxIn').value = v === undefined ? '' : (tipoDe(c) === 'data' && v && v[0] !== '=' ? dataBR(v) : tipoDe(c) === 'pessoa' && v ? nomeP(v) : String(v)); }
+  $('#fxIn').readOnly = nivel !== 'editar';
+  const a = ancora || sel; const n = (Math.abs(a.r - sel.r) + 1) * (Math.abs(a.c - sel.c) + 1);
+  if(n > 1){ const vals = []; for(let r = Math.min(a.r, sel.r); r <= Math.max(a.r, sel.r); r++) for(let c2 = Math.min(a.c, sel.c); c2 <= Math.max(a.c, sel.c); c2++){ const v = F.num(valor(g, r, c2)); if(!F.ehErro(v) && valor(g, r, c2) !== '') vals.push(v); }
+    $('#fxDica').textContent = vals.length ? `Soma ${nfmt.format(vals.reduce((x, y) => x + y, 0))} · Média ${nfmt.format(vals.reduce((x, y) => x + y, 0) / vals.length)} · ${n} células` : n + ' células'; }
+  else $('#fxDica').textContent = '';
+}
+function pintaGuias(){
+  const box = $('#guias'), lst = guiasOrd();
+  box.innerHTML = lst.map(x => `<button class="gu${x.id === g ? ' on' : ''}" data-g="${x.id}" title="Clique duas vezes para renomear">${esc(x.nome)}</button>`).join('') +
+    (nivel === 'editar' ? '<button class="gu" id="novaGuia" title="Nova guia">+</button>' : '') + `<span class="soma">${ordem().length} linhas · ${cols().length} colunas</span>`;
+}
+
+// ---------- quadro ----------
+function pintaQuadro(){
+  const box = $('#vis'), cs = cols(), cSt = cs.find(c => tipoDe(c) === 'status');
+  if(!cSt){ box.innerHTML = `<div class="vazio entra">O quadro organiza as linhas por <b>Status</b>.<br>Crie uma coluna do tipo Status (+ Coluna) para usar esta visão.</div>`; return; }
+  const txts = cs.filter(c => tipoDe(c) === 'texto'), cTit = txts[0] || cs[0], cSub = txts.find(c => !/protocolo|c[óo]digo|id$/i.test(c.nome) && c !== cTit) || txts[1], cPes = cs.find(c => tipoDe(c) === 'pessoa'), cDt = colData();
+  const ops = (cSt.opcoes || []).concat([{v:'', c:'#7f7f88', nome:'Sem status'}]);
+  const cheias = linhasVisiveis().filter(({rid}) => cols().some(c => !c.formula && cel(g, rid, c.id) !== undefined && cel(g, rid, c.id) !== ''));
+  const grupos = ops.map(o => ({o, l:cheias.filter(({rid}) => { const v = String(cel(g, rid, cSt.id) ?? ''); return o.v === '' ? !v || !statusOp(cSt, v) : v.toLowerCase() === String(o.v).toLowerCase(); })}));
+  box.innerHTML = `<div class="kan entra">${grupos.filter(x => x.o.v !== '' || x.l.length).map(({o, l}) => `<div class="col" data-st="${esc(o.v)}"><h5><span class="pill" style="color:${o.c};background:${o.c}22">${esc(o.nome || o.v)}</span><em>${l.length}</em></h5>
+    ${l.map(({rid, i}) => { const t = cTit ? valor(g, i, cs.indexOf(cTit)) : ''; const dt = cDt ? cel(g, rid, cDt.id) : '';
+      const sub = cSub ? valor(g, i, cs.indexOf(cSub)) : '';
+      return `<div class="kc" draggable="${nivel === 'editar'}" data-rid="${rid}" style="animation-delay:${Math.min(i, 12) * 0.02}s"><b>${esc(F.ehErro(t) ? t : t || '(sem título)')}</b>${sub && !F.ehErro(sub) ? `<span style="color:var(--t2)">${esc(sub)}</span>` : ''}
+        <small><span>${cPes && cel(g, rid, cPes.id) ? mostra(cPes, cel(g, rid, cPes.id)).h : ''}</span><span class="${dt && ehPrazo(cDt) && dt < hojeISO() && o.v !== '' && linhaAberta(rid) ? 'late' : ''}">${dt && typeof dt === 'string' && dt[0] !== '=' ? dataBR(dt) : ''}</span></small></div>`; }).join('')}</div>`).join('')}</div>`;
+  if(nivel !== 'editar') return;
+  let arr = null;
+  box.querySelectorAll('.kc').forEach(k => { k.addEventListener('dragstart', e => { arr = k.dataset.rid; k.classList.add('arrasta'); e.dataTransfer.effectAllowed = 'move'; }); k.addEventListener('dragend', () => k.classList.remove('arrasta')); });
+  box.querySelectorAll('.col').forEach(col => {
+    col.addEventListener('dragover', e => { e.preventDefault(); col.classList.add('sobre'); });
+    col.addEventListener('dragleave', () => col.classList.remove('sobre'));
+    col.addEventListener('drop', e => { e.preventDefault(); col.classList.remove('sobre'); if(!arr) return; grava([[['dados', g, arr, cSt.id], col.dataset.st || '']]); pinta(); });
+  });
+}
+// ---------- calendário ----------
+function pintaCal(){
+  const box = $('#vis'), cs = cols(), cDt = colData();
+  if(!cDt){ box.innerHTML = `<div class="vazio entra">O calendário usa uma coluna do tipo <b>Data</b>.<br>Crie uma (+ Coluna) para usar esta visão.</div>`; return; }
+  const txts = cs.filter(c => tipoDe(c) === 'texto'), cTit = txts[0] || cs[0], cSub = txts.find(c => !/protocolo|c[óo]digo|id$/i.test(c.nome) && c !== cTit), cSt = cs.find(c => tipoDe(c) === 'status');
+  if(!mesAtual){ const d = new Date(); mesAtual = new Date(d.getFullYear(), d.getMonth(), 1); }
+  const ini = new Date(mesAtual); ini.setDate(1 - ini.getDay()); const hoje = hojeISO();
+  const porDia = {}; linhasVisiveis().forEach(({rid, i}) => { let v = valor(g, i, cs.indexOf(cDt)); if(typeof v === 'number') v = F.serieData(v); if(/^\d{4}-\d{2}-\d{2}$/.test(String(v))) (porDia[v] = porDia[v] || []).push({rid, i}); });
+  const dias = []; for(let k = 0; k < 42; k++){ const d = new Date(ini); d.setDate(ini.getDate() + k); dias.push(d); }
+  const iso = d => new Date(d - d.getTimezoneOffset() * 6e4).toISOString().slice(0, 10);
+  box.innerHTML = `<div class="cal entra"><div class="calhead"><button class="btn" id="mesAnt">‹</button><b>${(m => m[0].toUpperCase() + m.slice(1))(mesAtual.toLocaleDateString('pt-BR', {month:'long', year:'numeric'}))}</b><button class="btn" id="mesProx">›</button><button class="btn" id="mesHoje">Hoje</button></div>
+    <div class="calg">${['dom', 'seg', 'ter', 'qua', 'qui', 'sex', 'sáb'].map(d => `<div class="dn">${d}</div>`).join('')}
+    ${dias.map(d => { const k = iso(d), l = porDia[k] || []; return `<div class="dia${d.getMonth() !== mesAtual.getMonth() ? ' fora' : ''}${k === hoje ? ' hoje' : ''}"><span class="n">${d.getDate()}</span>${l.slice(0, 4).map(({rid, i}) => { const o = cSt ? statusOp(cSt, cel(g, rid, cSt.id)) : null; const t0 = cTit ? valor(g, i, cs.indexOf(cTit)) : '', sb = cSub ? valor(g, i, cs.indexOf(cSub)) : '', t = [t0, sb].filter(x => x !== '' && !F.ehErro(x)).join(' · ');
+      return `<span class="ev" style="--c:${o ? o.c : 'var(--t3)'}" title="${esc(t)}">${esc(F.ehErro(t) ? t : t || '—')}</span>`; }).join('')}${l.length > 4 ? `<span class="n">+${l.length - 4}</span>` : ''}</div>`; }).join('')}</div></div>`;
+  $('#mesAnt').onclick = () => { mesAtual = new Date(mesAtual.getFullYear(), mesAtual.getMonth() - 1, 1); pintaCal(); };
+  $('#mesProx').onclick = () => { mesAtual = new Date(mesAtual.getFullYear(), mesAtual.getMonth() + 1, 1); pintaCal(); };
+  $('#mesHoje').onclick = () => { mesAtual = null; pintaCal(); };
+}
+// ---------- resumo ----------
+function pintaResumo(){
+  const box = $('#vis'), cs = cols(), lst = linhasVisiveis().filter(({rid}) => cs.some(c => cel(g, rid, c.id) !== undefined && cel(g, rid, c.id) !== ''));
+  const cards = [`<div class="rc"><h4>Linhas preenchidas</h4><div class="big">${lst.length}</div></div>`];
+  cs.forEach((c, ci) => {
+    const t = tipoDe(c);
+    if(t === 'status' || t === 'pessoa'){ const cont = {}; lst.forEach(({i}) => { const v = valor(g, i, ci); const k = t === 'pessoa' ? (v ? nomeP(v) : '(ninguém)') : (v || '(sem status)'); cont[k] = (cont[k] || 0) + 1; });
+      const max = Math.max(1, ...Object.values(cont));
+      cards.push(`<div class="rc"><h4>${esc(c.nome)}</h4>${Object.entries(cont).sort((a, b) => b[1] - a[1]).map(([k, n], j) => { const o = t === 'status' ? statusOp(c, k) : null; const cor = o ? o.c : t === 'pessoa' ? corDe(k) : '#7f7f88';
+        return `<div class="barr"><span>${esc(k)}</span><i><span style="width:${n / max * 100}%;background:${cor};animation-delay:${j * 0.05}s"></span></i><em>${n}</em></div>`; }).join('')}</div>`); }
+    if(t === 'numero' || t === 'moeda'){ const vs = lst.map(({i}) => F.num(valor(g, i, ci))).filter(v => !F.ehErro(v)); const soma = vs.reduce((a, b) => a + b, 0); const f = t === 'moeda' ? mfmt : nfmt;
+      cards.push(`<div class="rc"><h4>${esc(c.nome)}</h4><div class="big">${f.format(soma)}</div><span class="ajuda">soma · média ${f.format(vs.length ? soma / vs.length : 0)} · ${vs.length} valores</span></div>`); }
+    if(t === 'caixa'){ const on = lst.filter(({i}) => { const v = valor(g, i, ci); return v === true || /^(true|sim|1|x)$/i.test(String(v)); }).length;
+      cards.push(`<div class="rc"><h4>${esc(c.nome)}</h4><div class="big">${on}<span class="ajuda"> de ${lst.length}</span></div><div class="barr" style="grid-template-columns:1fr 40px"><i><span style="width:${lst.length ? on / lst.length * 100 : 0}%;background:var(--ok)"></span></i><em>${lst.length ? Math.round(on / lst.length * 100) : 0}%</em></div></div>`); }
+  });
+  box.innerHTML = `<div class="res">${cards.join('')}</div>`;
+}
+
+// ---------- presença e cursores ----------
+let pres = {}, ultPres = 0, presPend = null, hoverCel = null;
+function presenca(extra){
+  if(!eu) return; const agora = Date.now();
+  const dado = {n:eu.nome, cor:eu.cor, g, r:ordem && S && G() ? (ordem()[sel.r] || '') : '', c:S && G() && cols()[sel.c] ? cols()[sel.c].id : '', h:hoverCel || '', t:agora, v:vis};
+  // no máximo uma gravação por segundo (o plano gratuito conta cada gravação)
+  if(agora - ultPres < 1000 && !extra){ clearTimeout(presPend); presPend = setTimeout(() => presenca(true), 1000 - (agora - ultPres)); return; }
+  ultPres = agora; setDoc(PRES, {u:{[eu.uid]:dado}}, {merge:true}).catch(() => {});
+}
+const outros = () => Object.entries(pres).filter(([uid, p]) => uid !== (eu && eu.uid) && p && Date.now() - (p.t || 0) < 60000);
+function pintaPres(){
+  if(!eu) return;
+  const ls = outros();
+  $('#avs').innerHTML = [`<b style="background:${eu.cor}" title="${esc(eu.nome)} (você)">${esc(iniciais(eu.nome))}</b>`].concat(ls.map(([uid, p]) => `<b style="background:${p.cor}" title="${esc(p.n)}">${esc(iniciais(p.n))}</b>`)).join('');
+  $('#presTxt').textContent = ls.length ? (ls.length === 1 ? ls[0][1].n.split(' ')[0] + ' está aqui com você' : (ls.length + 1) + ' pessoas aqui agora') : 'só você agora';
+  // cursor de cada pessoa: desliza até a célula onde ela está (ou passando o mouse) e marca a célula com a cor dela
+  const camada = $('#cursores'), area = $('#area').getBoundingClientRect();
+  document.querySelectorAll('#gT td.outro').forEach(td => td.classList.remove('outro'));
+  const vivos = new Set();
+  ls.forEach(([uid, p]) => {
+    if(p.g !== g || vis !== 'grade') return;
+    const alvo = String(p.h || '').split(':'), rid = alvo[0] || p.r, cid = alvo[1] || p.c;
+    const ri = ordem().indexOf(rid), ci = cols().findIndex(c => c.id === cid);
+    const tdSel = celTd(ordem().indexOf(p.r), cols().findIndex(c => c.id === p.c)); if(tdSel){ tdSel.style.setProperty('--cor', p.cor); tdSel.classList.add('outro'); }
+    const td = celTd(ri, ci); if(!td) return;
+    const r = td.getBoundingClientRect(); if(r.bottom < area.top || r.top > area.bottom) return;
+    vivos.add(uid);
+    let e = camada.querySelector(`[data-u="${uid}"]`);
+    if(!e){ e = document.createElement('div'); e.className = 'curs'; e.dataset.u = uid; e.innerHTML = `<svg width="16" height="20" viewBox="0 0 16 20"><path d="M1 1l13 8.5-6 1.2-3.2 6.3z" fill="${p.cor}" stroke="#0b0b0d" stroke-width="1.4" stroke-linejoin="round"/></svg><span style="background:${p.cor}">${esc(String(p.n).split(' ')[0])}</span>`; e.style.opacity = 0; camada.appendChild(e);
+      e.style.transform = `translate(${r.left - area.left + 20}px,${r.top - area.top + 10}px)`; requestAnimationFrame(() => { e.style.opacity = 1; }); }
+    e.style.transform = `translate(${r.left - area.left + Math.min(40, r.width * .35)}px,${r.top - area.top + r.height * .5}px)`;
+  });
+  camada.querySelectorAll('.curs').forEach(e => { if(!vivos.has(e.dataset.u)){ e.style.opacity = 0; setTimeout(() => { if(!vivos.has(e.dataset.u)) e.remove(); }, 300); } });
+}
+
+// ---------- edição ----------
+function abreEditor(inicial){
+  if(nivel !== 'editar' || vis !== 'grade') return;
+  const c = cols()[sel.c], rid = ordem()[sel.r], td = celTd(sel.r, sel.c); if(!c || !rid || !td) return;
+  const t = tipoDe(c), atual = cel(g, rid, c.id), ehF = typeof atual === 'string' && atual[0] === '=';
+  if(t === 'caixa' && inicial === undefined && !ehF){ grava([[['dados', g, rid, c.id], !(atual === true)]]); pinta(); return; }
+  fechaEditor();
+  const box = $('#area').getBoundingClientRect(), r = td.getBoundingClientRect();
+  let ed;
+  if(!ehF && inicial === undefined && t === 'status'){ ed = document.createElement('select'); ed.innerHTML = '<option value="">—</option>' + (c.opcoes || []).map(o => `<option${String(o.v) === String(atual) ? ' selected' : ''}>${esc(o.v)}</option>`).join(''); }
+  else if(!ehF && inicial === undefined && t === 'pessoa'){ ed = document.createElement('select'); ed.innerHTML = '<option value="">—</option>' + DIR.slice().sort((a, b) => String(a.name || a.email).localeCompare(String(b.name || b.email))).map(p => `<option value="${esc(p.email)}"${p.email === atual ? ' selected' : ''}>${esc(p.name || p.email)}</option>`).join(''); }
+  else if(!ehF && inicial === undefined && t === 'data'){ ed = document.createElement('input'); ed.type = 'date'; ed.value = /^\d{4}-\d{2}-\d{2}$/.test(String(atual)) ? atual : ''; }
+  else { ed = document.createElement('input'); ed.value = inicial !== undefined ? inicial : (atual === undefined ? '' : t === 'data' && !ehF ? dataBR(atual) : t === 'pessoa' && !ehF ? nomeP(atual) : String(atual)); ed.spellcheck = false; }
+  ed.className = 'editor'; Object.assign(ed.style, {left:(r.left - box.left - 1) + 'px', top:(r.top - box.top - 1) + 'px', width:Math.max(r.width + 2, 180) + 'px', height:(r.height + 2) + 'px'});
+  $('#area').appendChild(ed); ed.focus(); if(ed.select && inicial === undefined) ed.select();
+  editando = {ed, rid, c, r:sel.r, ci:sel.c};
+  if(ed.tagName === 'SELECT' || ed.type === 'date') ed.addEventListener('change', () => confirma(0));
+  ed.addEventListener('keydown', e => {
+    if(e.key === 'Enter'){ e.preventDefault(); confirma(e.shiftKey ? -1 : 1); }
+    else if(e.key === 'Tab'){ e.preventDefault(); confirma(0, e.shiftKey ? -1 : 1); }
+    else if(e.key === 'Escape'){ e.preventDefault(); fechaEditor(); $('#vis').focus(); }
+  });
+  ed.addEventListener('input', () => { $('#fxIn').value = ed.value; });
+  ed.addEventListener('blur', () => setTimeout(() => { if(editando && editando.ed === ed) confirma(null); }, 80));
+}
+function fechaEditor(){ if(editando){ const e = editando.ed; editando = null; e.remove(); } }
+function confirma(dr, dc = 0){
+  if(!editando) return; const {ed, rid, c} = editando; let v = ed.value;
+  fechaEditor();
+  const novo = converte(c, v), velho = cel(g, rid, c.id);
+  if(JSON.stringify(novo) !== JSON.stringify(velho ?? '')) grava([[['dados', g, rid, c.id], novo]]);
+  if(dr !== null){ move(dr || 0, dc); }
+  pinta(); if(dr !== null) $('#vis').focus();
+}
+function move(dr, dc, estende){
+  const nr = Math.max(0, Math.min(ordem().length - 1, sel.r + dr)), nc = Math.max(0, Math.min(cols().length - 1, sel.c + dc));
+  if(estende){ ancora = ancora || {...sel}; } else ancora = null;
+  sel = {r:nr, c:nc}; marcaSel(); presenca();
+  const td = celTd(sel.r, sel.c); if(td) td.scrollIntoView({block:'nearest', inline:'nearest'});
+}
+
+// ---------- copiar / colar (Excel) ----------
+function intervalo(){ const a = ancora || sel; return {r0:Math.min(a.r, sel.r), r1:Math.max(a.r, sel.r), c0:Math.min(a.c, sel.c), c1:Math.max(a.c, sel.c)}; }
+document.addEventListener('copy', e => {
+  if(vis !== 'grade' || editando || document.activeElement === $('#fxIn') || document.activeElement === $('#busca')) return;
+  const {r0, r1, c0, c1} = intervalo(), out = [];
+  for(let r = r0; r <= r1; r++){ const l = []; for(let c = c0; c <= c1; c++){ const v = valor(g, r, c); l.push(F.ehErro(v) ? String(v) : tipoDe(cols()[c]) === 'pessoa' ? nomeP(v) : tipoDe(cols()[c]) === 'data' && v ? dataBR(v) : typeof v === 'number' ? String(v).replace('.', ',') : String(v ?? '')); } out.push(l.join('\t')); }
+  e.clipboardData.setData('text/plain', out.join('\n')); e.preventDefault(); toast('Copiado: ' + ((r1 - r0 + 1) * (c1 - c0 + 1)) + ' célula(s)');
+});
+document.addEventListener('paste', e => {
+  if(vis !== 'grade' || editando || nivel !== 'editar' || document.activeElement === $('#fxIn') || document.activeElement === $('#busca') || document.activeElement === $('#nome')) return;
+  const txt = e.clipboardData.getData('text/plain'); if(!txt) return; e.preventDefault();
+  const linhas = txt.replace(/\r/g, '').replace(/\n$/, '').split('\n').map(l => l.split('\t'));
+  const pares = [], o = ordem().slice(); let novasLinhas = 0;
+  while(o.length < sel.r + linhas.length){ o.push(novoId()); novasLinhas++; }
+  if(novasLinhas) pares.push([['guias', g, 'ordem'], o]);
+  linhas.forEach((l, i) => l.forEach((v, j) => { const c = cols()[sel.c + j]; if(!c) return; pares.push([['dados', g, o[sel.r + i], c.id], converte(c, v)]); }));
+  grava(pares); pinta(); toast(`Colado: ${linhas.length} linha(s)${novasLinhas ? ' · ' + novasLinhas + ' nova(s)' : ''}`);
+});
+
+// ---------- eventos da grade ----------
+const vEl = $('#vis'); vEl.tabIndex = 0;
+vEl.addEventListener('mousedown', e => {
+  const td = e.target.closest('td[data-c]'); if(!td || e.target.closest('a')) return;
+  if(editando) confirma(null);
+  const r = +td.dataset.r, c = +td.dataset.c;
+  if(e.shiftKey){ ancora = ancora || {...sel}; } else ancora = null;
+  sel = {r, c}; marcaSel(); presenca();
+  if(tipoDe(cols()[c]) === 'caixa' && e.target.closest('.chk')) abreEditor();
+});
+vEl.addEventListener('dblclick', e => { if(e.target.closest('td[data-c]')) abreEditor(); });
+vEl.addEventListener('mouseover', e => { const td = e.target.closest('td[data-c]'); if(!td) return; const rid = ordem()[+td.dataset.r], c = cols()[+td.dataset.c]; const k = rid && c ? rid + ':' + c.id : ''; if(k !== hoverCel){ hoverCel = k; presenca(); } });
+vEl.addEventListener('scroll', () => pintaPres(), {passive:true});
+addEventListener('resize', () => pintaPres());
+vEl.addEventListener('click', e => {
+  if(e.target.id === 'addLinha'){ novaLinha(); return; }
+  const th = e.target.closest('th[data-col]'); if(th){ menuColuna(+th.dataset.col, th); return; }
+  const rn = e.target.closest('td[data-rn]'); if(rn){ menuLinha(+rn.dataset.rn, rn); }
+});
+document.addEventListener('keydown', e => {
+  if(!S || vis !== 'grade' || editando || document.querySelector('.fundo,.menu')) return;
+  const foco = document.activeElement; if(foco && (foco.tagName === 'INPUT' || foco.tagName === 'SELECT' || foco.tagName === 'TEXTAREA')) return;
+  const k = e.key, ctrl = e.ctrlKey || e.metaKey;
+  if(ctrl && (k === 'z' || k === 'Z')){ e.preventDefault(); volta(); return; }
+  if(ctrl && (k === 'f' || k === 'F')){ e.preventDefault(); $('#busca').focus(); return; }
+  if(k === 'ArrowDown'){ e.preventDefault(); move(1, 0, e.shiftKey); } else if(k === 'ArrowUp'){ e.preventDefault(); move(-1, 0, e.shiftKey); }
+  else if(k === 'ArrowRight'){ e.preventDefault(); move(0, 1, e.shiftKey); } else if(k === 'ArrowLeft'){ e.preventDefault(); move(0, -1, e.shiftKey); }
+  else if(k === 'Tab'){ e.preventDefault(); move(0, e.shiftKey ? -1 : 1); }
+  else if(k === 'Enter' || k === 'F2'){ e.preventDefault(); abreEditor(); }
+  else if((k === 'Delete' || k === 'Backspace') && nivel === 'editar'){ e.preventDefault(); const {r0, r1, c0, c1} = intervalo(), p = [];
+    for(let r = r0; r <= r1; r++) for(let c = c0; c <= c1; c++){ const rid = ordem()[r], co = cols()[c]; if(rid && co && cel(g, rid, co.id) !== undefined) p.push([['dados', g, rid, co.id], '']); }
+    grava(p); pinta(); }
+  else if(k === ' ' && tipoDe(cols()[sel.c]) === 'caixa'){ e.preventDefault(); abreEditor(); }
+  else if(k.length === 1 && !ctrl && !e.altKey){ abreEditor(k); e.preventDefault(); }
+});
+function volta(){ const u = desfazer.pop(); if(!u){ return; } grava(u.map(([p, v]) => [p, v === undefined ? '' : v]), {semDesfazer:true}); $('#bDesfaz').disabled = !desfazer.length; pinta(); toast('Desfeito'); }
+$('#bDesfaz').onclick = volta;
+
+// barra de fórmula
+$('#fxIn').addEventListener('keydown', e => {
+  if(e.key === 'Enter'){ e.preventDefault(); const c = cols()[sel.c], rid = ordem()[sel.r]; if(c && rid && nivel === 'editar'){ grava([[['dados', g, rid, c.id], converte(c, $('#fxIn').value)]]); } $('#fxIn').blur(); move(1, 0); pinta(); }
+  if(e.key === 'Escape'){ $('#fxIn').blur(); pintaFx(); }
+});
+
+// ---------- linhas, colunas e guias ----------
+function novaLinha(pos){
+  if(!cabe()) return; const o = ordem().slice(), rid = novoId(); if(pos === undefined) o.push(rid); else o.splice(pos, 0, rid);
+  grava([[['guias', g, 'ordem'], o]]); pinta(); sel = {r:pos === undefined ? o.length - 1 : pos, c:0}; marcaSel(); const td = celTd(sel.r, 0); if(td) td.scrollIntoView({block:'nearest'});
+}
+$('#bLinha').onclick = () => novaLinha();
+$('#bColuna').onclick = () => janelaColuna(null);
+function menu(itens, ancoraEl){
+  fechaMenus(); const m = document.createElement('div'); m.className = 'menu';
+  itens.forEach(it => { if(it === '-'){ m.appendChild(document.createElement('hr')); return; } const b = document.createElement('button'); b.textContent = it[0]; if(it[2]) b.className = it[2]; b.onclick = () => { fechaMenus(); it[1](); }; m.appendChild(b); });
+  document.body.appendChild(m); const r = ancoraEl.getBoundingClientRect();
+  m.style.left = Math.min(innerWidth - m.offsetWidth - 8, r.left) + 'px'; m.style.top = Math.min(innerHeight - m.offsetHeight - 8, r.bottom + 4) + 'px';
+  setTimeout(() => document.addEventListener('mousedown', fora, {once:true}), 0);
+  function fora(e){ if(!m.contains(e.target)) fechaMenus(); else document.addEventListener('mousedown', fora, {once:true}); }
+}
+const fechaMenus = () => document.querySelectorAll('.menu').forEach(m => m.remove());
+let ordenacao = null;
+function menuColuna(ci, el){
+  const c = cols()[ci], ed = nivel === 'editar';
+  menu([['Ordenar A → Z', () => ordena(ci, 1)], ['Ordenar Z → A', () => ordena(ci, -1)],
+    ...(ed ? ['-', ['Editar coluna (nome, tipo, opções)…', () => janelaColuna(ci)], ['Inserir coluna à esquerda', () => janelaColuna(null, ci)], ['Inserir coluna à direita', () => janelaColuna(null, ci + 1)],
+      ['Mais larga', () => largura(ci, 60)], ['Mais estreita', () => largura(ci, -40)], '-', ['Excluir coluna "' + c.nome + '"', () => confirmaExclusao('a coluna "' + c.nome + '" e tudo o que está nela', () => excluiColuna(ci)), 'perigo']] : [])], el);
+}
+function ordena(ci, dir){
+  // ordenar muda a ordem das linhas para todos (como no Excel); dá para desfazer
+  const c = cols()[ci], o = ordem().map((rid, i) => ({rid, v:valor(g, i, ci)}));
+  const val = x => { if(x.v === '' || x.v == null) return null; const n = F.num(x.v); return tipoDe(c) === 'pessoa' ? nomeP(x.v) : !F.ehErro(n) && typeof x.v !== 'string' || ['numero', 'moeda', 'data'].includes(tipoDe(c)) ? (F.ehErro(n) ? String(x.v) : n) : String(x.v); };
+  o.sort((a, b) => { const x = val(a), y = val(b); if(x === null) return 1; if(y === null) return -1; return (typeof x === 'number' && typeof y === 'number' ? x - y : String(x).localeCompare(String(y), 'pt-BR', {numeric:true})) * dir; });
+  if(nivel !== 'editar'){ toast('Somente leitura: ordenei só na sua tela'); S.guias[g].ordem = o.map(x => x.rid); pinta(); return; }
+  grava([[['guias', g, 'ordem'], o.map(x => x.rid)]]); pinta(); toast('Ordenado por ' + c.nome);
+}
+function largura(ci, d){ const cs = cols().map(x => ({...x})); cs[ci].larg = Math.max(70, (cs[ci].larg || 160) + d); grava([[['guias', g, 'cols'], cs]]); pinta(); }
+function excluiColuna(ci){ const cs = cols().slice(), c = cs.splice(ci, 1)[0], p = [[['guias', g, 'cols'], cs]]; ordem().forEach(rid => { if(cel(g, rid, c.id) !== undefined) p.push([['dados', g, rid, c.id], '']); }); grava(p); sel.c = Math.min(sel.c, cs.length - 1); pinta(); }
+function menuLinha(ri, el){
+  if(nivel !== 'editar') return;
+  menu([['Inserir linha acima', () => novaLinha(ri)], ['Inserir linha abaixo', () => novaLinha(ri + 1)], '-', ['Excluir linha ' + (ri + 1), () => { const o = ordem().slice(), rid = o.splice(ri, 1)[0]; grava([[['guias', g, 'ordem'], o], [['dados', g, rid], '']]); pinta(); }, 'perigo']], el);
+}
+function confirmaExclusao(oque, fn){
+  const f = janela(`<h3>Excluir?</h3><p class="ajuda">Vai excluir ${esc(oque)}. Dá para voltar com Desfazer enquanto esta guia estiver aberta.</p><div class="acoes"><button class="btn" data-x>Cancelar</button><button class="btn pri" data-ok>Excluir</button></div>`);
+  f.querySelector('[data-ok]').onclick = () => { fecha(f); fn(); };
+}
+function janela(html){ const f = document.createElement('div'); f.className = 'fundo'; f.innerHTML = `<div class="janela" role="dialog" aria-modal="true">${html}</div>`; document.body.appendChild(f);
+  f.addEventListener('mousedown', e => { if(e.target === f) fecha(f); }); f.querySelectorAll('[data-x]').forEach(b => b.onclick = () => fecha(f));
+  f.addEventListener('keydown', e => { if(e.key === 'Escape') fecha(f); }); setTimeout(() => { const i = f.querySelector('input,select,button'); if(i) i.focus(); }, 30); return f; }
+const fecha = f => f.remove();
+const STATUS_PADRAO = [['Novo', '#8b8dfb'], ['Em andamento', '#d8a94a'], ['Concluído', '#4ee2a0'], ['Atrasado', '#e2564f']];
+function janelaColuna(ci, inserirEm){
+  const c = ci === null ? {id:novoId(), nome:'Nova coluna', tipo:'texto'} : {...cols()[ci]};
+  const f = janela(`<h3>${ci === null ? 'Nova coluna' : 'Editar coluna'}</h3>
+    <label class="campo">Nome<input id="cNome" value="${esc(c.nome)}"></label>
+    <label class="campo">Tipo<select id="cTipo">${TIPOS.map(t => `<option value="${t[0]}"${t[0] === tipoDe(c) ? ' selected' : ''}>${t[1]}</option>`).join('')}</select></label>
+    <div id="cOps" class="campo"></div>
+    <label class="campo">Fórmula da coluna (opcional)<input id="cForm" value="${esc(c.formula || '')}" placeholder="ex.: =PROCV(B#;Itens!A:C;2;0)" spellcheck="false" style="font-family:var(--f-num)"></label>
+    <span class="ajuda">Vale para todas as linhas preenchidas; <code>#</code> vira o número da linha. Uma célula com valor próprio continua com o dela.</span>
+    <div class="acoes"><button class="btn" data-x>Cancelar</button><button class="btn pri" data-ok>Salvar</button></div>`);
+  let ops = (c.opcoes && c.opcoes.length ? c.opcoes : STATUS_PADRAO.map(([v, cor]) => ({v, c:cor}))).map(o => ({...o}));
+  const pOps = () => { const box = f.querySelector('#cOps'); if(f.querySelector('#cTipo').value !== 'status'){ box.innerHTML = ''; return; }
+    box.innerHTML = `Opções do status<div class="ops">${ops.map((o, i) => `<div class="op"><input type="color" value="${o.c}" data-i="${i}" data-k="c" aria-label="Cor"><input type="text" value="${esc(o.v)}" data-i="${i}" data-k="v" aria-label="Nome da opção"><button class="btn" data-del="${i}" title="Tirar">×</button></div>`).join('')}</div><button class="btn" id="addOp" style="justify-self:start">+ Opção</button>`;
+    box.querySelectorAll('input').forEach(inp => inp.oninput = () => { ops[+inp.dataset.i][inp.dataset.k] = inp.value; });
+    box.querySelectorAll('[data-del]').forEach(b => b.onclick = () => { ops.splice(+b.dataset.del, 1); pOps(); });
+    box.querySelector('#addOp').onclick = () => { ops.push({v:'Nova opção', c:CORES[ops.length % CORES.length]}); pOps(); }; };
+  f.querySelector('#cTipo').onchange = pOps; pOps();
+  f.querySelector('[data-ok]').onclick = () => {
+    c.nome = f.querySelector('#cNome').value.trim() || 'Coluna'; c.tipo = f.querySelector('#cTipo').value;
+    const fo = f.querySelector('#cForm').value.trim(); if(fo) c.formula = fo[0] === '=' ? fo : '=' + fo; else delete c.formula;
+    if(c.tipo === 'status') c.opcoes = ops.filter(o => String(o.v).trim()).map(o => ({v:String(o.v).trim(), c:o.c})); else delete c.opcoes;
+    const cs = cols().map(x => ({...x})); if(ci === null) cs.splice(inserirEm === undefined ? cs.length : inserirEm, 0, c); else cs[ci] = c;
+    grava([[['guias', g, 'cols'], cs]]); fecha(f); pinta(); };
+}
+$('#guias').addEventListener('click', e => {
+  const b = e.target.closest('[data-g]'); if(b){ if(b.dataset.g === g) return; fechaEditor(); g = b.dataset.g; sel = {r:0, c:0}; ancora = null; trocaVis(vis); presenca(); return; }
+  if(e.target.id === 'novaGuia'){ if(!cabe()) return; const id = novoId(), n = guiasOrd().length + 1;
+    const cs = [{id:novoId(), nome:'Coluna A', tipo:'texto'}, {id:novoId(), nome:'Coluna B', tipo:'texto'}, {id:novoId(), nome:'Coluna C', tipo:'texto'}];
+    grava([[['guias', id], {nome:'Guia ' + n, pos:Math.max(0, ...guiasOrd().map(x => x.pos || 0)) + 1, cols:cs, ordem:Array.from({length:10}, novoId)}]]); g = id; sel = {r:0, c:0}; pinta(); }
+});
+$('#guias').addEventListener('dblclick', e => { const b = e.target.closest('[data-g]'); if(!b || nivel !== 'editar') return; renomeiaGuia(b.dataset.g, b); });
+$('#guias').addEventListener('contextmenu', e => { const b = e.target.closest('[data-g]'); if(!b || nivel !== 'editar') return; e.preventDefault();
+  menu([['Renomear', () => renomeiaGuia(b.dataset.g, b)], ['Excluir guia', () => { if(guiasOrd().length < 2){ toast('A planilha precisa de pelo menos uma guia'); return; }
+    confirmaExclusao('a guia "' + S.guias[b.dataset.g].nome + '"', () => { const id = b.dataset.g; grava([[['guias', id], ''], [['dados', id], '']], {semDesfazer:true}); g = guiasOrd().find(x => x.id !== id).id; pinta(); }); }, 'perigo']], b); });
+function renomeiaGuia(id, b){ const inp = document.createElement('input'); inp.value = S.guias[id].nome; b.textContent = ''; b.appendChild(inp); inp.focus(); inp.select();
+  const ok = () => { const v = inp.value.trim(); if(v && v !== S.guias[id].nome){ if(guiasOrd().some(x => x.id !== id && x.nome.toLowerCase() === v.toLowerCase())){ toast('Já existe uma guia com esse nome'); } else grava([[['guias', id, 'nome'], v]]); } pinta(); };
+  inp.addEventListener('keydown', e => { if(e.key === 'Enter') inp.blur(); if(e.key === 'Escape'){ inp.value = S.guias[id].nome; inp.blur(); } }); inp.addEventListener('blur', ok, {once:true}); }
+$('#nome').addEventListener('change', () => { const v = $('#nome').value.trim(); if(!v || nivel !== 'editar'){ $('#nome').value = meta.nome; return; } updateDoc(IDX, new FieldPath('itens', ID, 'nome'), v).then(() => toast('Nome salvo')).catch(e => toast('Não salvou: ' + e.message)); });
+$('#nome').addEventListener('keydown', e => { if(e.key === 'Enter') $('#nome').blur(); });
+
+// ---------- visões ----------
+function trocaVis(v){ vis = v; document.querySelectorAll('.vt').forEach(b => b.classList.toggle('on', b.dataset.v === v)); $('#fxBar').classList.toggle('hidden', v !== 'grade');
+  const el = $('#vis'); el.classList.remove('entra'); void el.offsetWidth; if(!reduz) el.classList.add('entra'); pinta(); presenca(); }
+document.querySelectorAll('.vt').forEach(b => b.onclick = () => trocaVis(b.dataset.v));
+let tBusca = 0; $('#busca').addEventListener('input', e => { clearTimeout(tBusca); tBusca = setTimeout(() => { busca = e.target.value.trim(); pinta(); }, 150); });
+
+// ---------- Excel ----------
+let xlsxP = null;
+const xlsx = () => xlsxP || (xlsxP = new Promise((ok, erro) => { const s = document.createElement('script'); s.src = 'https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js'; s.onload = () => ok(window.XLSX); s.onerror = () => { xlsxP = null; erro(new Error('não consegui carregar o leitor de Excel (sem internet?)')); }; document.head.appendChild(s); }));
+$('#bExporta').onclick = async () => {
+  try{ const X = await xlsx(), wb = X.utils.book_new();
+    guiasOrd().forEach(gu => { const cs = gu.cols || [], aoa = [cs.map(c => c.nome)];
+      (gu.ordem || []).forEach((rid, li) => { aoa.push(cs.map((c, ci) => { const v = valor(gu.id, li, ci); if(F.ehErro(v)) return String(v); const t = tipoDe(c);
+        if(t === 'data' && v){ const s = typeof v === 'number' ? F.serieData(v) : String(v); return /^\d{4}-\d{2}-\d{2}$/.test(s) ? new Date(s + 'T00:00') : s; }
+        if(t === 'pessoa') return v ? nomeP(v) : ''; if(t === 'caixa') return v === true ? 'Sim' : ''; return v; })); });
+      while(aoa.length > 1 && aoa[aoa.length - 1].every(x => x === '' || x == null)) aoa.pop();
+      const ws = X.utils.aoa_to_sheet(aoa, {cellDates:true}); ws['!cols'] = cs.map(c => ({wch:Math.round((c.larg || 160) / 7)}));
+      X.utils.book_append_sheet(wb, ws, String(gu.nome).replace(/[\\/?*[\]:]/g, ' ').slice(0, 31)); });
+    X.writeFile(wb, (meta.nome || 'planilha').replace(/[\\/:*?"<>|]/g, '_') + '.xlsx'); toast('Excel baixado (fórmulas saem com o valor calculado)');
+  }catch(e){ toast('Não exportou: ' + (e.message || e)); }
+};
+$('#bImporta').onclick = () => $('#arq').click();
+$('#arq').onchange = async () => {
+  const fl = $('#arq').files[0]; $('#arq').value = ''; if(!fl) return;
+  try{ const X = await xlsx(), wb = X.read(new Uint8Array(await fl.arrayBuffer()), {type:'array', cellDates:true});
+    const pares = []; let pos = Math.max(0, ...guiasOrd().map(x => x.pos || 0)), nomes = [];
+    wb.SheetNames.forEach(sn => {
+      const aoa = X.utils.sheet_to_json(wb.Sheets[sn], {header:1, defval:'', raw:true}); if(!aoa.length) return;
+      const cab = aoa[0].map((h, i) => String(h || '').trim() || 'Coluna ' + F.colLetra(i)), corpo = aoa.slice(1).filter(l => l.some(v => v !== '' && v != null));
+      const cs = cab.map((n, i) => { const vs = corpo.map(l => l[i]).filter(v => v !== '' && v != null); const tipo = vs.length && vs.every(v => v instanceof Date) ? 'data' : vs.length && vs.every(v => typeof v === 'number') ? 'numero' : 'texto'; return {id:novoId(), nome:n, tipo}; });
+      const gid = novoId(), ordem = [], dados = {};
+      corpo.forEach(l => { const rid = novoId(); ordem.push(rid); const linha = {}; cs.forEach((c, i) => { let v = l[i]; if(v === '' || v == null) return; if(v instanceof Date) v = new Date(v - v.getTimezoneOffset() * 6e4).toISOString().slice(0, 10); linha[c.id] = v; }); if(Object.keys(linha).length) dados[rid] = linha; });
+      let nome = sn; while(guiasOrd().some(x => x.nome.toLowerCase() === nome.toLowerCase()) || nomes.includes(nome)) nome += ' (2)'; nomes.push(nome);
+      pares.push([['guias', gid], {nome, pos:++pos, cols:cs, ordem}], [['dados', gid], dados]);
+    });
+    if(!pares.length){ toast('O arquivo não tem dados'); return; }
+    const novoTam = tamanho() + JSON.stringify(pares).length; if(novoTam > 900000){ toast('O arquivo é grande demais para uma planilha só (limite ~900 mil caracteres). Divida em partes.'); return; }
+    await grava(pares, {semDesfazer:true}); g = pares[0][0][1]; pinta(); toast('Importado: ' + nomes.join(', ') + ' (valores; fórmulas do Excel vêm com o resultado)');
+  }catch(e){ toast('Não importou: ' + (e.message || e)); }
+};
+
+// ---------- ajuda ----------
+$('#bAjuda').onclick = () => janela(`<h3>Fórmulas e atalhos</h3>
+  <div class="ajuda"><b>Fórmulas</b> começam com <code>=</code>, separadas por <code>;</code>. Colunas são letras (A, B, C…) e linhas são os números da esquerda.<br>
+  Exemplos: <code>=SOMA(C1:C20)</code> · <code>=SE(C2&lt;D2;"Repor";"OK")</code> · <code>=CONT.SE(B:B;"Concluído")</code><br>
+  <b>PROCV entre guias:</b> <code>=PROCV(A2;Estoque!A:D;3;0)</code> procura o valor de A2 na 1ª coluna da guia Estoque e traz a 3ª coluna. Guia com espaço no nome: <code>'Minha guia'!A:D</code>.<br>
+  <code>=SEERRO(PROCV(...);"não achei")</code> mostra um texto quando não encontra.<br><br>
+  Funções: ${F.LISTA.join(', ')}.<br><br>
+  <b>Atalhos:</b> setas andam · Enter ou F2 edita · digitar começa a editar · Shift+setas seleciona várias · Delete limpa · Ctrl+C / Ctrl+V copia e cola (inclusive do Excel) · Ctrl+Z desfaz · Ctrl+F busca.<br>
+  Clique no cabeçalho de uma coluna para ordenar, mudar o tipo ou excluir. Clique no número da linha para inserir ou excluir. Clique duas vezes numa guia para renomear.</div>
+  <div class="acoes"><button class="btn pri" data-x>Entendi</button></div>`);
+</script>
+</body>
+</html>
