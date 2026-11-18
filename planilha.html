@@ -103,7 +103,8 @@ body.fxmodo .g thead th .l{display:inline}
 .g td.rn.sell{background:color-mix(in srgb,var(--red) 16%,var(--s2));color:var(--t1);box-shadow:inset -2px 0 0 var(--red)}
 .g.tab thead th.selc:not(.rn){box-shadow:inset 0 -3px 0 #fff}
 .g thead th.rn#selTudo{cursor:pointer;background-image:linear-gradient(135deg,transparent 60%,var(--t3) 60%,var(--t3) 66%,transparent 66%)}
-.g thead th[data-col]{cursor:s-resize}.g td.rn[data-rn]{cursor:e-resize}
+.g thead th[data-col]{cursor:s-resize}
+.g thead th input.renomeia{all:unset;box-sizing:border-box;width:100%;height:24px;padding:0 6px;border-radius:5px;background:var(--s1);color:var(--t1);box-shadow:0 0 0 2px var(--sel);font-weight:600;font-size:12.5px;cursor:text;animation:edIn .14s ease-out}.g td.rn[data-rn]{cursor:e-resize}
 .ddbtn{all:unset;pointer-events:auto;position:absolute;right:-1px;top:50%;transform:translateY(-50%);width:20px;height:22px;display:grid;place-items:center;font-size:11px;color:#fff;background:var(--sel);border-radius:4px 0 0 4px;cursor:pointer;animation:aparece .2s ease}
 .refbox{position:absolute;left:0;top:0;pointer-events:none;z-index:3;border:2px dashed var(--rc);background:color-mix(in srgb,var(--rc) 10%,transparent);border-radius:2px;animation:aparece .15s ease}
 .assist{position:fixed;z-index:45;min-width:260px;max-width:520px;background:var(--s1);border:1px solid var(--hair);border-radius:10px;box-shadow:0 18px 40px -16px #000;overflow:hidden;animation:sobe .14s ease both;font-size:12.5px}
@@ -273,6 +274,8 @@ body.sem-guias .area{border-radius:12px;margin-bottom:10px}
 body.sem-topo.sem-barra.sem-fita.sem-fx .area{margin-top:10px}
 .exflut{all:unset;cursor:pointer;position:fixed;top:10px;right:14px;z-index:25;display:inline-flex;align-items:center;gap:6px;padding:6px 11px;border-radius:99px;background:var(--s2);border:1px solid var(--hair);font-size:12px;color:var(--t2);box-shadow:0 8px 24px -12px #000;opacity:.75;transition:opacity .2s,transform .2s;animation:sobe .3s ease both}
 .exflut:hover{opacity:1;transform:translateY(-1px);color:var(--t1)}
+.exflut.noTopo{position:static;margin-left:auto;box-shadow:none;opacity:1;animation:none}
+.exflut.noTopo + .pres{margin-left:12px}
 ::view-transition-old(root),::view-transition-new(root){animation-duration:.28s}
 .janela.larga{width:min(1040px,100%)}
 .janela:focus{outline:none}
@@ -731,7 +734,7 @@ function pintaGrade(antes){
   const sx = box.scrollLeft, sy = box.scrollTop, selVelha = box.querySelector('.selbox');
   const stats = statsCond(), tab = G().tabela, comFiltro = temFiltro(), filt = filtros[g] || {};
   box.innerHTML = `<table class="g${tab ? ' tab' : ''}" id="gT" style="width:${46 + largs.reduce((a, b) => a + b, 0)}px${tab ? ';--tb:' + tab.cor : ''}"><colgroup><col style="width:46px">${largs.map(w => `<col style="width:${w}px">`).join('')}</colgroup>
-    <thead><tr><th class="rn" id="selTudo" title="Selecionar tudo (Ctrl+A)"></th>${cs.map((c, ci) => `<th class="${ci === 0 ? 'c0' : ''}" data-col="${ci}" title="${esc(c.nome)} · ${esc(TIPOS.find(t => t[0] === tipoDe(c))[1])}${c.formula ? ' com fórmula' : ''} · clique ou arraste para selecionar · botão direito: opções">${comFiltro ? `<button class="fbt${filt[c.id] && filt[c.id].size ? ' ativo' : ''}" data-filtro="${ci}" title="Filtrar e classificar">▼</button>` : ''}<span class="l">${F.colLetra(ci)}</span>${esc(c.nome)}</th>`).join('')}</tr></thead>
+    <thead><tr><th class="rn" id="selTudo" title="Selecionar tudo (Ctrl+A)"></th>${cs.map((c, ci) => `<th class="${ci === 0 ? 'c0' : ''}" data-col="${ci}" title="${esc(c.nome)} · ${esc(TIPOS.find(t => t[0] === tipoDe(c))[1])}${c.formula ? ' com fórmula' : ''} · clique ou arraste para selecionar · dois cliques: renomear · botão direito: opções">${comFiltro ? `<button class="fbt${filt[c.id] && filt[c.id].size ? ' ativo' : ''}" data-filtro="${ci}" title="Filtrar e classificar">▼</button>` : ''}<span class="l">${F.colLetra(ci)}</span>${esc(c.nome)}</th>`).join('')}</tr></thead>
     <tbody>${lst.map(({rid, i}) => `<tr data-r="${i}"${novas.has(rid) ? ' class="nova"' : ''}><td class="rn" data-rn="${i}">${i + 1}</td>${cs.map((c, ci) => { const raw = bruto(g, rid, c), ehF = typeof raw === 'string' && raw[0] === '='; const fm = fmtDe(rid, c.id), cd = condDe(c.id, i, ci, stats), m = mostraFormulas && ehF ? {h:esc(raw), cls:''} : mostra(c, valor(g, i, ci), ehF, fm), est = estiloCel(fm, cd);
       const venc = ehPrazo(c) && raw && String(ehF ? '' : raw) < hojeISO() && linhaAberta(rid);
       return `<td data-r="${i}" data-c="${ci}" class="${ci === 0 ? 'c0 ' : ''}${m.cls}${ehF && raw === cel(g, rid, c.id) ? ' fm' : ''}${venc ? ' late' : ''}${mudou(rid, c.id) ? ' brilha' : ''}"${est ? ` style="${est}"` : ''}>${m.h}</td>`; }).join('')}</tr>`).join('')}
@@ -1008,6 +1011,20 @@ addEventListener('mouseup', () => { if(apontando){ apontando = null; return; } i
   if(!arrastando) return; arrastando = false; if(ancora && ancora.r === sel.r && ancora.c === sel.c) ancora = null;
   if(pincel){ const f = pincel; pincel = null; document.body.classList.remove('pinc'); aplicaFmt(f, true); } presenca(); });
 vEl.addEventListener('dblclick', e => { if(e.target.closest('td[data-c]')) abreEditor(); });
+// dois cliques no nome da coluna: renomeia ali mesmo (Enter salva, Esc cancela)
+vEl.addEventListener('dblclick', e => {
+  const th = e.target.closest('th[data-col]'); if(!th || nivel !== 'editar' || e.target.closest('[data-filtro]') || th.querySelector('input')) return;
+  const ci = +th.dataset.col, c = cols()[ci]; if(!c) return;
+  const inp = document.createElement('input'); inp.className = 'renomeia'; inp.value = c.nome; inp.setAttribute('aria-label', 'Nome da coluna');
+  th.textContent = ''; th.appendChild(inp); inp.focus(); inp.select();
+  let feito = false;
+  const sai = salvar => { if(feito) return; feito = true; const v = inp.value.trim();
+    if(salvar && v && v !== c.nome){ const cs = cols().map(x => ({...x})); cs[ci].nome = v; grava([[['guias', g, 'cols'], cs]]); toast('Coluna renomeada'); }
+    pinta(); $('#vis').focus(); };
+  inp.addEventListener('keydown', ev => { ev.stopPropagation(); if(ev.key === 'Enter'){ ev.preventDefault(); sai(true); } else if(ev.key === 'Escape'){ ev.preventDefault(); sai(false); } });
+  inp.addEventListener('mousedown', ev => ev.stopPropagation());
+  inp.addEventListener('blur', () => sai(true));
+});
 vEl.addEventListener('mouseover', e => { const td = e.target.closest('td[data-c]'); if(!td) return; const rid = ordem()[+td.dataset.r], c = cols()[+td.dataset.c]; const k = rid && c ? rid + ':' + c.id : ''; if(k !== hoverCel){ hoverCel = k; presenca(); } });
 // editor e ajudante acompanham a célula quando a grade rola
 function reposEditor(){ if(!editando) return; const td = celTd(editando.r, editando.ci), box = $('#area').getBoundingClientRect(); if(!td) return; const r = td.getBoundingClientRect();
@@ -1357,7 +1374,7 @@ function janelaLargura(){ const c = cols()[sel.c]; const f = janela(`<h3>Largura
 
 // ---- fita: comandos ----
 const CMD = {
-  desfaz:() => volta(), refaz:() => refaz(),
+  desfaz:() => { if(editando){ fechaEditor(); return; } volta(); }, refaz:() => refaz(),
   colar:async () => { try{ colaTexto(await navigator.clipboard.readText()); }catch(e){ toast('Use Ctrl+V para colar (o navegador não deixou o botão ler a área de transferência)'); } },
   copiar:() => { corte = false; document.execCommand('copy'); }, recortar:() => { corte = true; document.execCommand('copy'); },
   pincel:() => { pincel = pincel ? null : {...ativo()}; document.body.classList.toggle('pinc', !!pincel); if(pincel) toast('Pincel: selecione as células que vão receber a formatação'); },
@@ -1486,7 +1503,11 @@ function janelaFormatar(){
 const PARTES = [['fita', 'Faixa de opções (Página Inicial)', 'Ctrl+F1'], ['fx', 'Barra de fórmulas', ''], ['barra', 'Visões, busca e Excel', ''], ['topo', 'Cabeçalho (nome e quem está aqui)', ''], ['guias', 'Guias (embaixo)', '']];
 let exibe = {fita:1, fx:1, barra:1, topo:1, guias:1}; try{ Object.assign(exibe, JSON.parse(localStorage.getItem('planilhaExibir') || '{}')); }catch(e){}
 function aplicaExibe(anima){
-  const vai = () => { PARTES.forEach(([k]) => document.body.classList.toggle('sem-' + k, !exibe[k])); document.getElementById('exFlut').classList.toggle('hidden', PARTES.every(([k]) => exibe[k])); try{ localStorage.setItem('planilhaExibir', JSON.stringify(exibe)); }catch(e){} };
+  const vai = () => { PARTES.forEach(([k]) => document.body.classList.toggle('sem-' + k, !exibe[k])); const fl = document.getElementById('exFlut');
+    // o botão de voltar só aparece quando o "Exibir" está escondido; com o cabeçalho visível ele fica dentro dele (sem cobrir nada)
+    fl.classList.toggle('hidden', !!exibe.barra);
+    if(exibe.topo){ fl.classList.add('noTopo'); const pr = document.querySelector('.topo .pres'); if(fl.parentElement !== pr.parentElement) pr.before(fl); }
+    else { fl.classList.remove('noTopo'); if(fl.parentElement !== document.body) document.body.appendChild(fl); } try{ localStorage.setItem('planilhaExibir', JSON.stringify(exibe)); }catch(e){} };
   if(anima && document.startViewTransition && !reduz) document.startViewTransition(() => { vai(); }).finished.then(() => { pintaPres(); marcaSel(); }); else { vai(); if(S) setTimeout(() => { pintaPres(); marcaSel(); }, 50); }
 }
 function menuExibir(el){
