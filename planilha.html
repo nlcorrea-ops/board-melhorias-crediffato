@@ -228,6 +228,19 @@ body.pinc #vis td[data-c]{cursor:copy}
 .g tfoot td{position:sticky;bottom:0;z-index:2;background:var(--s2);font-weight:700;border-top:2px solid var(--tb,var(--red));height:32px}
 .g tfoot td.rn{z-index:3}
 
+/* esconder barras */
+body.sem-fita .fita,body.sem-fx #fxBar,body.sem-barra .barra,body.sem-topo .topo,body.sem-guias .guias{display:none!important}
+body.sem-guias .area{border-radius:12px;margin-bottom:10px}
+body.sem-topo.sem-barra.sem-fita.sem-fx .area{margin-top:10px}
+.exflut{all:unset;cursor:pointer;position:fixed;top:10px;right:14px;z-index:25;display:inline-flex;align-items:center;gap:6px;padding:6px 11px;border-radius:99px;background:var(--s2);border:1px solid var(--hair);font-size:12px;color:var(--t2);box-shadow:0 8px 24px -12px #000;opacity:.75;transition:opacity .2s,transform .2s;animation:sobe .3s ease both}
+.exflut:hover{opacity:1;transform:translateY(-1px);color:var(--t1)}
+::view-transition-old(root),::view-transition-new(root){animation-duration:.28s}
+.janela.larga{width:min(1040px,100%)}
+.janela:focus{outline:none}
+.atl{display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:14px}
+.atl h4{margin:0 0 6px;font-size:12.5px;color:var(--red-hi)}
+.atl p{margin:0;padding:4px 0;display:flex;gap:8px;align-items:baseline;font-size:12px;color:var(--t2);border-bottom:1px solid var(--hair2)}
+kbd{font-family:var(--f-num);font-size:11px;padding:1px 6px;border-radius:5px;border:1px solid var(--hair);border-bottom-width:2px;background:var(--s2);color:var(--t1);white-space:nowrap}
 @keyframes pulso{0%,100%{box-shadow:0 0 0 0 rgba(78,226,160,.45)}60%{box-shadow:0 0 0 6px rgba(78,226,160,0)}}
 @keyframes pop{0%{transform:scale(.4);opacity:0}70%{transform:scale(1.12)}100%{transform:scale(1);opacity:1}}
 @keyframes entra{from{opacity:0;transform:translateY(8px)}to{opacity:1;transform:none}}
@@ -258,7 +271,9 @@ body.pinc #vis td[data-c]{cursor:copy}
     <input class="busca" id="busca" type="search" placeholder="Buscar nesta guia…" aria-label="Buscar nesta guia">
     <button class="btn so-edita" id="bImporta" title="Trazer guias de um arquivo do Excel">Importar Excel</button>
     <button class="btn" id="bExporta" title="Baixar como arquivo do Excel">Exportar Excel</button>
-    <button class="btn" id="bAjuda" title="Fórmulas e atalhos">?</button>
+    <button class="btn" id="bAtalhos" title="Atalhos do teclado (como no Excel)">⌨ Atalhos</button>
+    <button class="btn" id="bAjuda" title="Fórmulas">?</button>
+    <button class="btn" id="bExibir" title="Esconder ou mostrar barras (Ctrl+F1 / Ctrl+Shift+F1)"><svg viewBox="0 0 16 16" width="15" height="15" fill="none" stroke="currentColor" stroke-width="1.4" stroke-linecap="round" stroke-linejoin="round"><path d="M2.5 6V2.5H6M10 2.5h3.5V6M13.5 10v3.5H10M6 13.5H2.5V10"/></svg> Exibir</button>
     <button class="btn" id="bTema" title="Tema claro / escuro" aria-label="Tema claro ou escuro"></button>
   </div>
 </div>
@@ -284,6 +299,7 @@ body.pinc #vis td[data-c]{cursor:copy}
 <main class="area" id="area"><div class="vis" id="vis"></div><div class="cursores" id="cursores"></div></main>
 <nav class="guias" id="guias" aria-label="Guias"></nav>
 <input type="file" id="arq" accept=".xlsx,.xls,.csv" class="hidden">
+ <button class="exflut hidden" id="exFlut" title="Mostrar barras (Ctrl+Shift+F1)"><svg viewBox="0 0 16 16" width="14" height="14" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M6 2.5H2.5V6M13.5 6V2.5H10M10 13.5h3.5V10M2.5 10v3.5H6"/></svg><span>Barras</span></button>
 <div class="toast" id="toast" role="status" aria-live="polite"></div>
 <div class="aviso" id="aviso"><div><div class="carrega" id="avisoGira"></div><h1 id="avisoT">Abrindo a planilha…</h1><p id="avisoP"></p><a class="btn hidden" id="avisoL" href="index.html">Ir para o Crediffato Gestão</a></div></div>
 
@@ -676,8 +692,8 @@ function pintaGrade(antes){
   const sx = box.scrollLeft, sy = box.scrollTop, selVelha = box.querySelector('.selbox');
   const stats = statsCond(), tab = G().tabela, comFiltro = temFiltro(), filt = filtros[g] || {};
   box.innerHTML = `<table class="g${tab ? ' tab' : ''}" id="gT" style="width:${46 + largs.reduce((a, b) => a + b, 0)}px${tab ? ';--tb:' + tab.cor : ''}"><colgroup><col style="width:46px">${largs.map(w => `<col style="width:${w}px">`).join('')}</colgroup>
-    <thead><tr><th class="rn"></th>${cs.map((c, ci) => `<th class="${ci === 0 ? 'c0' : ''}" data-col="${ci}" title="${esc(TIPOS.find(t => t[0] === tipoDe(c))[1])} · clique para opções">${comFiltro ? `<button class="fbt${filt[c.id] && filt[c.id].size ? ' ativo' : ''}" data-filtro="${ci}" title="Filtrar e classificar">▼</button>` : ''}<span class="l">${F.colLetra(ci)}</span>${esc(c.nome)}<span class="ti"${comFiltro ? ' hidden' : ''}>${c.formula ? 'fx' : esc(TIPOS.find(t => t[0] === tipoDe(c))[2])}</span></th>`).join('')}</tr></thead>
-    <tbody>${lst.map(({rid, i}) => `<tr data-r="${i}"${novas.has(rid) ? ' class="nova"' : ''}><td class="rn" data-rn="${i}">${i + 1}</td>${cs.map((c, ci) => { const raw = bruto(g, rid, c), ehF = typeof raw === 'string' && raw[0] === '='; const fm = fmtDe(rid, c.id), cd = condDe(c.id, i, ci, stats), m = mostra(c, valor(g, i, ci), ehF, fm), est = estiloCel(fm, cd);
+    <thead><tr><th class="rn"></th>${cs.map((c, ci) => `<th class="${ci === 0 ? 'c0' : ''}" data-col="${ci}" title="${esc(TIPOS.find(t => t[0] === tipoDe(c))[1])} · clique: seleciona a coluna · botão direito: opções">${comFiltro ? `<button class="fbt${filt[c.id] && filt[c.id].size ? ' ativo' : ''}" data-filtro="${ci}" title="Filtrar e classificar">▼</button>` : ''}<span class="l">${F.colLetra(ci)}</span>${esc(c.nome)}<span class="ti"${comFiltro ? ' hidden' : ''}>${c.formula ? 'fx' : esc(TIPOS.find(t => t[0] === tipoDe(c))[2])}</span></th>`).join('')}</tr></thead>
+    <tbody>${lst.map(({rid, i}) => `<tr data-r="${i}"${novas.has(rid) ? ' class="nova"' : ''}><td class="rn" data-rn="${i}">${i + 1}</td>${cs.map((c, ci) => { const raw = bruto(g, rid, c), ehF = typeof raw === 'string' && raw[0] === '='; const fm = fmtDe(rid, c.id), cd = condDe(c.id, i, ci, stats), m = mostraFormulas && ehF ? {h:esc(raw), cls:''} : mostra(c, valor(g, i, ci), ehF, fm), est = estiloCel(fm, cd);
       const venc = ehPrazo(c) && raw && String(ehF ? '' : raw) < hojeISO() && linhaAberta(rid);
       return `<td data-r="${i}" data-c="${ci}" class="${ci === 0 ? 'c0 ' : ''}${m.cls}${ehF && raw === cel(g, rid, c.id) ? ' fm' : ''}${venc ? ' late' : ''}${mudou(rid, c.id) ? ' brilha' : ''}"${est ? ` style="${est}"` : ''}>${m.h}</td>`; }).join('')}</tr>`).join('')}
     ${nivel === 'editar' && !busca && !filtroAtivo() ? `<tr class="addl"><td class="rn">+</td><td colspan="${cs.length}" id="addLinha">Nova linha</td></tr>` : ''}</tbody>
@@ -835,7 +851,10 @@ function abreEditor(inicial){
   editando = {ed, rid, c, r:sel.r, ci:sel.c};
   if(ed.tagName === 'SELECT' || ed.type === 'date') ed.addEventListener('change', () => confirma(0));
   ed.addEventListener('keydown', e => {
-    if(e.key === 'Enter'){ e.preventDefault(); confirma(e.shiftKey ? -1 : 1); }
+    if(e.key === 'Enter' && (e.ctrlKey || e.metaKey)){ e.preventDefault(); const txt = ed.value, base = {...sel}; fechaEditor();   // Ctrl+Enter: mesmo valor em toda a seleção
+      const p = []; celulasSel().forEach(({r, c, rid, cid}) => { const co = cols()[c]; p.push([['dados', g, rid, cid], txt[0] === '=' ? desloca(txt, r - base.r, c - base.c) : converte(co, txt)]); }); grava(p); pinta(); $('#vis').focus(); }
+    else if(e.key === 'F4'){ e.preventDefault(); if(ed.tagName === 'INPUT') alternaAbs(ed); }
+    else if(e.key === 'Enter'){ e.preventDefault(); confirma(e.shiftKey ? -1 : 1); }
     else if(e.key === 'Tab'){ e.preventDefault(); confirma(0, e.shiftKey ? -1 : 1); }
     else if(e.key === 'Escape'){ e.preventDefault(); fechaEditor(); $('#vis').focus(); }
   });
@@ -883,7 +902,7 @@ function colaTexto(txt){
   if(vis !== 'grade' || nivel !== 'editar' || !txt) return;
   const norm = t => t.replace(/\r/g, '').replace(/\n$/, '');
   const pares = [], o = ordem().slice(); let novasLinhas = 0, n;
-  if(area && norm(txt) === norm(area.txt)){
+  if(area && !colarValores && norm(txt) === norm(area.txt)){
     const dr = sel.r - area.r0, dc = sel.c - area.c0; n = area.cel.length;
     while(o.length < sel.r + n){ o.push(novoId()); novasLinhas++; }
     if(novasLinhas) pares.push([['guias', g, 'ordem'], o]);
@@ -927,28 +946,9 @@ addEventListener('resize', () => pintaPres());
 vEl.addEventListener('click', e => {
   if(e.target.id === 'addLinha'){ novaLinha(); return; }
   const fbt = e.target.closest('[data-filtro]'); if(fbt){ e.stopPropagation(); janelaFiltro(+fbt.dataset.filtro, fbt); return; }
-  const th = e.target.closest('th[data-col]'); if(th){ menuColuna(+th.dataset.col, th); return; }
-  const rn = e.target.closest('td[data-rn]'); if(rn){ menuLinha(+rn.dataset.rn, rn); }
-});
-document.addEventListener('keydown', e => {
-  if(!S || vis !== 'grade' || editando || document.querySelector('.fundo,.menu')) return;
-  const foco = document.activeElement; if(foco && (foco.tagName === 'INPUT' || foco.tagName === 'SELECT' || foco.tagName === 'TEXTAREA')) return;
-  const k = e.key, ctrl = e.ctrlKey || e.metaKey;
-  if(ctrl && (k === 'z' || k === 'Z')){ e.preventDefault(); if(e.shiftKey) refaz(); else volta(); return; }
-  if(ctrl && (k === 'y' || k === 'Y')){ e.preventDefault(); refaz(); return; }
-  if(ctrl && nivel === 'editar' && /^[bnius]$/i.test(k)){ e.preventDefault(); alterna({b:'b', n:'b', i:'i', u:'u', s:'u'}[k.toLowerCase()]); return; }
-  if(ctrl && (k === 'l' || k === 'L')){ e.preventDefault(); janelaLocalizar(false); return; }
-  if(k === 'Escape' && pincel){ pincel = null; document.body.classList.remove('pinc'); pintaFita(); return; }
-  if(ctrl && (k === 'f' || k === 'F')){ e.preventDefault(); $('#busca').focus(); return; }
-  if(k === 'ArrowDown'){ e.preventDefault(); move(1, 0, e.shiftKey); } else if(k === 'ArrowUp'){ e.preventDefault(); move(-1, 0, e.shiftKey); }
-  else if(k === 'ArrowRight'){ e.preventDefault(); move(0, 1, e.shiftKey); } else if(k === 'ArrowLeft'){ e.preventDefault(); move(0, -1, e.shiftKey); }
-  else if(k === 'Tab'){ e.preventDefault(); move(0, e.shiftKey ? -1 : 1); }
-  else if(k === 'Enter' || k === 'F2'){ e.preventDefault(); abreEditor(); }
-  else if((k === 'Delete' || k === 'Backspace') && nivel === 'editar'){ e.preventDefault(); const {r0, r1, c0, c1} = intervalo(), p = [];
-    for(let r = r0; r <= r1; r++) for(let c = c0; c <= c1; c++){ const rid = ordem()[r], co = cols()[c]; if(rid && co && cel(g, rid, co.id) !== undefined) p.push([['dados', g, rid, co.id], '']); }
-    grava(p); pinta(); }
-  else if(k === ' ' && tipoDe(cols()[sel.c]) === 'caixa'){ e.preventDefault(); abreEditor(); }
-  else if(k.length === 1 && !ctrl && !e.altKey){ abreEditor(k); e.preventDefault(); }
+  // clique no cabeçalho seleciona a coluna; no número, a linha (Shift aumenta). Botão direito abre as opções.
+  const th = e.target.closest('th[data-col]'); if(th){ const ci = +th.dataset.col, c0 = e.shiftKey && ancora ? ancora.c : ci; ancora = {r:0, c:c0}; sel = {r:Math.max(0, ultLin()), c:ci}; marcaSel(); presenca(); return; }
+  const rn = e.target.closest('td[data-rn]'); if(rn){ const ri = +rn.dataset.rn, r0 = e.shiftKey && ancora ? ancora.r : ri; ancora = {r:r0, c:0}; sel = {r:ri, c:Math.max(0, ultCol())}; marcaSel(); presenca(); }
 });
 let refazer = [];
 function volta(){ const u = desfazer.pop(); if(!u) return; refazer.push(u.map(([p]) => [p, pega(p)])); grava(u.map(([p, v]) => [p, v === undefined ? '' : v]), {semDesfazer:true}); $('#bDesfaz').disabled = !desfazer.length; pinta(); toast('Desfeito'); }
@@ -1000,7 +1000,7 @@ function confirmaExclusao(oque, fn){
   const f = janela(`<h3>Excluir?</h3><p class="ajuda">Vai excluir ${esc(oque)}. Dá para voltar com Desfazer enquanto esta guia estiver aberta.</p><div class="acoes"><button class="btn" data-x>Cancelar</button><button class="btn pri" data-ok>Excluir</button></div>`);
   f.querySelector('[data-ok]').onclick = () => { fecha(f); fn(); };
 }
-function janela(html){ const f = document.createElement('div'); f.className = 'fundo'; f.innerHTML = `<div class="janela" role="dialog" aria-modal="true">${html}</div>`; document.body.appendChild(f);
+function janela(html){ const f = document.createElement('div'); f.className = 'fundo'; f.innerHTML = `<div class="janela" role="dialog" aria-modal="true" tabindex="-1">${html}</div>`; document.body.appendChild(f);
   f.addEventListener('mousedown', e => { if(e.target === f) fecha(f); }); f.querySelectorAll('[data-x]').forEach(b => b.onclick = () => fecha(f));
   f.addEventListener('keydown', e => { if(e.key === 'Escape') fecha(f); }); setTimeout(() => { const i = f.querySelector('input,select,button'); if(i) i.focus(); }, 30); return f; }
 const fecha = f => f.remove();
@@ -1341,14 +1341,199 @@ $('#bTema').onclick = () => { temaAtual = temaAtual === 'claro' ? 'escuro' : 'cl
   const vai = () => aplicaTema(temaAtual); if(document.startViewTransition && !reduz) document.startViewTransition(vai); else vai(); };
 addEventListener('storage', e => { if(e.key === 'theme'){ temaAtual = e.newValue === 'claro' ? 'claro' : 'escuro'; aplicaTema(temaAtual); } });
 
+// ---------- atalhos do Excel ----------
+// Os mesmos do Excel no Windows (pt-BR). Alguns o navegador não deixa trocar (Ctrl+T, Ctrl+N, Ctrl+W): esses ficam com o navegador.
+const ultLin = () => ordem().length - 1, ultCol = () => cols().length - 1;
+const vaziaCel = (r, c) => { const rid = ordem()[r], co = cols()[c]; if(!rid || !co) return true; const v = bruto(g, rid, co); return v === undefined || v === ''; };
+// Ctrl+seta: pula até a borda do bloco de dados (como no Excel)
+function borda(r, c, dr, dc){
+  const dentro = (a, b) => a >= 0 && a <= ultLin() && b >= 0 && b <= ultCol();
+  let nr = r + dr, nc = c + dc; if(!dentro(nr, nc)) return {r, c};
+  if(!vaziaCel(r, c) && !vaziaCel(nr, nc)){ while(dentro(nr + dr, nc + dc) && !vaziaCel(nr + dr, nc + dc)){ nr += dr; nc += dc; } return {r:nr, c:nc}; }
+  while(dentro(nr, nc) && vaziaCel(nr, nc)){ if(!dentro(nr + dr, nc + dc)) return {r:nr, c:nc}; nr += dr; nc += dc; }
+  return {r:nr, c:nc};
+}
+function vaiPara(r, c, estende){
+  r = Math.max(0, Math.min(ultLin(), r)); c = Math.max(0, Math.min(ultCol(), c));
+  if(estende){ ancora = ancora || {...sel}; } else ancora = null;
+  sel = {r, c}; marcaSel(); presenca(); const td = celTd(r, c); if(td) td.scrollIntoView({block:'nearest', inline:'nearest', behavior:reduz ? 'auto' : 'smooth'});
+}
+const selLinhas = () => { const {r0, r1} = intervalo(); ancora = {r:r0, c:0}; sel = {r:r1, c:ultCol()}; marcaSel(); };
+const selColunas = () => { const {c0, c1} = intervalo(); ancora = {r:0, c:c0}; sel = {r:ultLin(), c:c1}; marcaSel(); };
+const linhaInteira = () => { const i = intervalo(); return i.c0 === 0 && i.c1 === ultCol() && cols().length > 1; };
+const colunaInteira = () => { const i = intervalo(); return i.r0 === 0 && i.r1 === ultLin() && ordem().length > 1; };
+function insereLinhas(pos, n){ if(!cabe()) return; const o = ordem().slice(); o.splice(pos, 0, ...Array.from({length:n}, novoId)); grava([[['guias', g, 'ordem'], o]]); pinta(); vaiPara(pos, sel.c); }
+function insereColunas(pos, n){ const cs = cols().map(x => ({...x})); cs.splice(pos, 0, ...Array.from({length:n}, (_, k) => ({id:novoId(), nome:'Coluna ' + F.colLetra(pos + k), tipo:'texto'}))); grava([[['guias', g, 'cols'], cs]]); pinta(); vaiPara(sel.r, pos); }
+function janelaInserir(){
+  if(nivel !== 'editar') return; const {r0, r1, c0, c1} = intervalo();
+  if(linhaInteira()){ insereLinhas(r0, r1 - r0 + 1); return; } if(colunaInteira()){ insereColunas(c0, c1 - c0 + 1); return; }
+  const f = janela(`<h3>Inserir</h3><label class="fl"><input type="radio" name="ins" value="l" checked> Linha inteira (acima)${r1 > r0 ? ` · ${r1 - r0 + 1} linhas` : ''}</label><label class="fl"><input type="radio" name="ins" value="c"> Coluna inteira (à esquerda)${c1 > c0 ? ` · ${c1 - c0 + 1} colunas` : ''}</label>
+    <div class="acoes"><button class="btn" data-x>Cancelar</button><button class="btn pri" data-ok>OK</button></div>`);
+  const ok = () => { const v = f.querySelector('input[name=ins]:checked').value; fecha(f); if(v === 'l') insereLinhas(r0, r1 - r0 + 1); else insereColunas(c0, c1 - c0 + 1); };
+  f.querySelector('[data-ok]').onclick = ok; f.addEventListener('keydown', e => { if(e.key === 'Enter'){ e.preventDefault(); ok(); } }); setTimeout(() => f.querySelector('[data-ok]').focus(), 40);
+}
+function janelaExcluir(){
+  if(nivel !== 'editar') return;
+  if(linhaInteira()){ excluiLinhasSel(); return; } if(colunaInteira()){ excluiColunasSel(); return; }
+  const f = janela(`<h3>Excluir</h3><label class="fl"><input type="radio" name="exc" value="l" checked> Linha(s) inteira(s)</label><label class="fl"><input type="radio" name="exc" value="c"> Coluna(s) inteira(s)</label><label class="fl"><input type="radio" name="exc" value="v"> Só o conteúdo das células</label>
+    <div class="acoes"><button class="btn" data-x>Cancelar</button><button class="btn pri" data-ok>OK</button></div>`);
+  const ok = () => { const v = f.querySelector('input[name=exc]:checked').value; fecha(f); if(v === 'l') excluiLinhasSel(); else if(v === 'c') excluiColunasSel(); else limpaSel(); };
+  f.querySelector('[data-ok]').onclick = ok; f.addEventListener('keydown', e => { if(e.key === 'Enter'){ e.preventDefault(); ok(); } }); setTimeout(() => f.querySelector('[data-ok]').focus(), 40);
+}
+function limpaSel(){ const p = []; celulasSel().forEach(({rid, cid}) => { if(cel(g, rid, cid) !== undefined) p.push([['dados', g, rid, cid], '']); }); if(p.length){ grava(p); pinta(); } }
+// Ctrl+D (para baixo) e Ctrl+R (para a direita): copia a primeira linha/coluna da seleção, com fórmula ajustada
+function preenche(dir){
+  if(nivel !== 'editar') return; let {r0, r1, c0, c1} = intervalo(); const p = [];
+  if(dir === 'baixo'){ if(r0 === r1){ if(r0 === 0) return; r0--; }
+    for(let c = c0; c <= c1; c++){ const co = cols()[c], src = ordem()[r0], v = cel(g, src, co.id), fm = fmtDe(src, co.id);
+      for(let r = r0 + 1; r <= r1; r++){ const rid = ordem()[r]; p.push([['dados', g, rid, co.id], typeof v === 'string' && v[0] === '=' ? desloca(v, r - r0, 0) : (v ?? '')]); p.push([['fmt', g, rid, co.id], Object.keys(fm).length ? fm : '']); } } }
+  else { if(c0 === c1){ if(c0 === 0) return; c0--; }
+    for(let r = r0; r <= r1; r++){ const rid = ordem()[r], src = cols()[c0], v = cel(g, rid, src.id), fm = fmtDe(rid, src.id);
+      for(let c = c0 + 1; c <= c1; c++){ const co = cols()[c]; p.push([['dados', g, rid, co.id], typeof v === 'string' && v[0] === '=' ? desloca(v, 0, c - c0) : converte(co, v ?? '')]); p.push([['fmt', g, rid, co.id], Object.keys(fm).length ? fm : '']); } } }
+  grava(p); pinta();
+}
+// Ctrl+' copia a fórmula da célula de cima; Ctrl+Shift+" copia o valor
+function deCima(valorSo){ if(nivel !== 'editar' || sel.r === 0) return; const c = cols()[sel.c], v = valorSo ? valor(g, sel.r - 1, sel.c) : bruto(g, ordem()[sel.r - 1], c); abreEditor(F.ehErro(v) ? String(v) : typeof v === 'number' ? String(v).replace('.', ',') : String(v ?? '')); }
+function poeEmTudo(texto){ if(nivel !== 'editar') return; const p = []; celulasSel().forEach(({rid, cid, r, c}) => { const co = cols()[c]; p.push([['dados', g, rid, cid], converte(co, texto)]); }); grava(p); pinta(); }
+// F4 no editor: alterna $ na referência onde está o cursor (A1 → $A$1 → A$1 → $A1 → A1)
+function alternaAbs(ed){
+  const s = ed.value, pos = ed.selectionStart, re = /(\$?)([A-Z]{1,3})(\$?)(\d+)/g; let m;
+  while((m = re.exec(s))){ if(pos >= m.index && pos <= m.index + m[0].length){
+    const ciclo = [['', ''], ['$', '$'], ['', '$'], ['$', '']], i = ciclo.findIndex(([a, b]) => a === m[1] && b === m[3]), [a, b] = ciclo[(i + 1) % 4];
+    const novo = a + m[2] + b + m[4]; ed.value = s.slice(0, m.index) + novo + s.slice(m.index + m[0].length); ed.selectionStart = ed.selectionEnd = m.index + novo.length; $('#fxIn').value = ed.value; return; } }
+}
+let mostraFormulas = false, colarValores = false;
+// ---- Formatar células (Ctrl+1) ----
+function janelaFormatar(){
+  if(nivel !== 'editar') return; const a = ativo();
+  const f = janela(`<h3>Formatar células</h3>
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px">
+    <label class="campo">Número<select id="xNf">${[['geral', 'Geral'], ['numero', 'Número'], ['moeda', 'Moeda (R$)'], ['pct', 'Porcentagem'], ['data', 'Data'], ['texto', 'Texto']].map(([k, n]) => `<option value="${k}"${(a.nf || 'geral') === k ? ' selected' : ''}>${n}</option>`).join('')}</select></label>
+    <label class="campo">Casas decimais<input id="xDec" type="number" min="0" max="6" value="${a.dec ?? ''}" placeholder="auto"></label>
+    <label class="campo">Alinhamento<select id="xAl">${[['', 'Geral'], ['left', 'Esquerda'], ['center', 'Centro'], ['right', 'Direita']].map(([k, n]) => `<option value="${k}"${(a.al || '') === k ? ' selected' : ''}>${n}</option>`).join('')}</select></label>
+    <label class="campo">Tamanho<input id="xFs" type="number" min="8" max="32" value="${a.fs || 13}"></label>
+    <label class="campo">Cor da fonte<input id="xFc" type="color" value="${a.fc || '#000000'}"></label>
+    <label class="campo">Preenchimento<input id="xBg" type="color" value="${a.bg || '#ffffff'}"></label></div>
+    <div style="display:flex;gap:14px;flex-wrap:wrap">${[['b', 'Negrito'], ['i', 'Itálico'], ['u', 'Sublinhado'], ['s', 'Tachado'], ['wr', 'Quebrar texto']].map(([k, n]) => `<label class="fl"><input type="checkbox" data-k="${k}"${a[k] ? ' checked' : ''}> ${n}</label>`).join('')}
+      <label class="fl"><input type="checkbox" id="xSemFc"${a.fc ? '' : ' checked'}> Cor automática</label><label class="fl"><input type="checkbox" id="xSemBg"${a.bg ? '' : ' checked'}> Sem preenchimento</label></div>
+    <div class="acoes"><button class="btn" data-x>Cancelar</button><button class="btn pri" data-ok>OK</button></div>`);
+  f.querySelector('#xFc').oninput = () => { f.querySelector('#xSemFc').checked = false; }; f.querySelector('#xBg').oninput = () => { f.querySelector('#xSemBg').checked = false; };
+  f.querySelector('[data-ok]').onclick = () => { const q = s => f.querySelector(s), d = q('#xDec').value;
+    const mut = {nf:q('#xNf').value === 'geral' ? null : q('#xNf').value, dec:d === '' ? null : +d, al:q('#xAl').value || null, fs:+q('#xFs').value === 13 ? null : +q('#xFs').value, fc:q('#xSemFc').checked ? null : q('#xFc').value, bg:q('#xSemBg').checked ? null : q('#xBg').value};
+    f.querySelectorAll('[data-k]').forEach(x => { mut[x.dataset.k] = x.checked || null; }); fecha(f); aplicaFmt(mut); };
+}
+// ---- Exibir: esconder barras para a planilha ocupar a tela ----
+const PARTES = [['fita', 'Faixa de opções (Página Inicial)', 'Ctrl+F1'], ['fx', 'Barra de fórmulas', ''], ['barra', 'Visões, busca e Excel', ''], ['topo', 'Cabeçalho (nome e quem está aqui)', ''], ['guias', 'Guias (embaixo)', '']];
+let exibe = {fita:1, fx:1, barra:1, topo:1, guias:1}; try{ Object.assign(exibe, JSON.parse(localStorage.getItem('planilhaExibir') || '{}')); }catch(e){}
+function aplicaExibe(anima){
+  const vai = () => { PARTES.forEach(([k]) => document.body.classList.toggle('sem-' + k, !exibe[k])); document.getElementById('exFlut').classList.toggle('hidden', PARTES.every(([k]) => exibe[k])); try{ localStorage.setItem('planilhaExibir', JSON.stringify(exibe)); }catch(e){} };
+  if(anima && document.startViewTransition && !reduz) document.startViewTransition(() => { vai(); }).finished.then(() => { pintaPres(); marcaSel(); }); else { vai(); if(S) setTimeout(() => { pintaPres(); marcaSel(); }, 50); }
+}
+function menuExibir(el){
+  menu([...PARTES.map(([k, n, at]) => [(exibe[k] ? '✓ ' : '  ') + n + (at ? '  (' + at + ')' : ''), () => { exibe[k] = exibe[k] ? 0 : 1; aplicaExibe(true); }]), '-',
+    ['Esconder tudo (só a planilha)  (Ctrl+Shift+F1)', () => focoTotal(true)], ['Mostrar tudo', () => focoTotal(false)], '-',
+    [document.fullscreenElement ? 'Sair da tela cheia' : 'Tela cheia do navegador', () => { if(document.fullscreenElement) document.exitFullscreen(); else document.documentElement.requestFullscreen().catch(() => toast('O navegador não deixou entrar em tela cheia (use F11)')); }]], el);
+}
+function focoTotal(on){ PARTES.forEach(([k]) => { exibe[k] = on && k !== 'guias' ? 0 : 1; }); aplicaExibe(true); if(on) toast('Barras escondidas · Ctrl+Shift+F1 ou o botão no canto mostra de novo'); }
+document.getElementById('bExibir').onclick = e => menuExibir(e.currentTarget);
+document.getElementById('exFlut').onclick = e => menuExibir(e.currentTarget);
+aplicaExibe(false);
+
+// ---- teclado da grade ----
+document.addEventListener('keydown', e => {
+  const k = e.key, ctrl = e.ctrlKey || e.metaKey, cd = e.code;
+  // estes valem em qualquer lugar da página
+  if(ctrl && k === 'F1'){ e.preventDefault(); if(e.shiftKey){ focoTotal(PARTES.some(([x]) => x !== 'guias' && exibe[x])); } else { exibe.fita = exibe.fita ? 0 : 1; aplicaExibe(true); } return; }
+  if(!S || vis !== 'grade' || editando || document.querySelector('.fundo,.menu')) return;
+  const foco = document.activeElement; if(foco && (foco.tagName === 'INPUT' || foco.tagName === 'SELECT' || foco.tagName === 'TEXTAREA')) return;
+  const ed = nivel === 'editar', sh = e.shiftKey, para = () => e.preventDefault();
+  // desfazer, refazer, formatação
+  if(ctrl && !sh && (k === 'z' || k === 'Z')){ para(); volta(); return; }
+  if(ctrl && (k === 'y' || k === 'Y' || sh && (k === 'z' || k === 'Z'))){ para(); refaz(); return; }
+  if(ctrl && !sh && /^[bnius]$/i.test(k)){ para(); if(ed) alterna({b:'b', n:'b', i:'i', u:'u', s:'u'}[k.toLowerCase()]); return; }
+  if(ctrl && !sh && cd === 'Digit5'){ para(); if(ed) alterna('s'); return; }
+  if(ctrl && !sh && cd === 'Digit1'){ para(); janelaFormatar(); return; }
+  if(ctrl && sh && (k === 'F' || k === 'f' || k === 'P' || k === 'p')){ para(); janelaFormatar(); return; }
+  if(ctrl && sh && cd === 'Digit1'){ para(); if(ed) aplicaFmt({nf:'numero', dec:2}); return; }
+  if(ctrl && sh && cd === 'Digit3'){ para(); if(ed) aplicaFmt({nf:'data', dec:null}); return; }
+  if(ctrl && sh && cd === 'Digit4'){ para(); if(ed) aplicaFmt({nf:'moeda', dec:null}); return; }
+  if(ctrl && sh && cd === 'Digit5'){ para(); if(ed) aplicaFmt({nf:'pct', dec:null}); return; }
+  if(ctrl && sh && cd === 'Digit7'){ para(); bordas('externa'); return; }
+  if(ctrl && sh && cd === 'Minus'){ para(); bordas('nenhuma'); return; }
+  if(ctrl && sh && (cd === 'Backquote' || cd === 'Quote' && k === '~')){ para(); if(ed) aplicaFmt({nf:null, dec:null}); return; }
+  if(ctrl && !sh && cd === 'Backquote'){ para(); mostraFormulas = !mostraFormulas; pinta(); toast(mostraFormulas ? 'Mostrando fórmulas (Ctrl+` volta)' : 'Mostrando resultados'); return; }
+  // inserir / excluir (Ctrl + e Ctrl -), preencher, data e hora
+  if(ctrl && (k === '+' || cd === 'NumpadAdd' || sh && cd === 'Equal')){ para(); janelaInserir(); return; }
+  if(ctrl && !sh && (k === '-' || cd === 'NumpadSubtract' || cd === 'Minus')){ para(); janelaExcluir(); return; }
+  if(ctrl && !sh && (k === 'd' || k === 'D')){ para(); preenche('baixo'); return; }
+  if(ctrl && !sh && (k === 'r' || k === 'R')){ para(); preenche('direita'); return; }
+  if(ctrl && !sh && (k === ';' || cd === 'Semicolon' && k !== ':' || cd === 'Slash' && k === ';')){ para(); poeEmTudo(dataBR(hojeISO())); return; }
+  if(ctrl && (k === ':' || sh && cd === 'Semicolon' || sh && cd === 'Slash' && k === ':')){ para(); const d = new Date(); poeEmTudo(String(d.getHours()).padStart(2, '0') + ':' + String(d.getMinutes()).padStart(2, '0')); return; }
+  if(ctrl && !sh && (k === "'" || cd === 'Quote' && k !== '"')){ para(); deCima(false); return; }
+  if(ctrl && (k === '"' || sh && cd === 'Quote')){ para(); deCima(true); return; }
+  if(e.altKey && (k === '=' || cd === 'Equal')){ para(); autoSoma('SOMA'); return; }
+  // seleção
+  if(ctrl && !sh && (k === 'a' || k === 'A') || ctrl && sh && k === ' '){ para(); ancora = {r:0, c:0}; sel = {r:ultLin(), c:ultCol()}; marcaSel(); return; }
+  if(ctrl && k === ' '){ para(); selColunas(); return; }
+  if(sh && !ctrl && k === ' '){ para(); selLinhas(); return; }
+  // localizar, filtro, guias
+  if(ctrl && !sh && (k === 'f' || k === 'F' || k === 'l' || k === 'L')){ para(); janelaLocalizar(false); return; }
+  if(ctrl && !sh && (k === 'h' || k === 'H')){ para(); if(ed) janelaLocalizar(true); return; }
+  if(ctrl && sh && (k === 'l' || k === 'L')){ para(); if(ed){ grava([[['guias', g, 'filtro'], G().filtro ? '' : true]]); pinta(); } return; }
+  if(ctrl && (k === 'PageDown' || k === 'PageUp')){ para(); const l = guiasOrd(), i = l.findIndex(x => x.id === g), n = l[(i + (k === 'PageDown' ? 1 : -1) + l.length) % l.length]; if(n && n.id !== g){ g = n.id; sel = {r:0, c:0}; ancora = null; trocaVis('grade'); } return; }
+  if(sh && k === 'F11'){ para(); const b = document.getElementById('novaGuia'); if(b) b.click(); return; }
+  if(k === 'F9'){ para(); pinta(); toast('Recalculado'); return; }
+  if(sh && k === 'F10' || k === 'ContextMenu'){ para(); const td = celTd(sel.r, sel.c); if(td) menuCelula(td); return; }
+  // movimento
+  const passo = Math.max(1, Math.floor(($('#vis').clientHeight - 40) / 32));
+  if(k.startsWith('Arrow') && !e.altKey){ para(); const [dr, dc] = {ArrowDown:[1, 0], ArrowUp:[-1, 0], ArrowRight:[0, 1], ArrowLeft:[0, -1]}[k];
+    if(ctrl){ const b = borda(sel.r, sel.c, dr, dc); vaiPara(b.r, b.c, sh); } else move(dr, dc, sh); return; }
+  if(e.altKey && k === 'ArrowDown'){ para(); abreEditor(); return; }
+  if(k === 'Home'){ para(); if(ctrl) vaiPara(0, 0, sh); else vaiPara(sel.r, 0, sh); return; }
+  if(k === 'End' && ctrl){ para(); let r = ultLin(); while(r > 0 && cols().every((_, c) => vaziaCel(r, c))) r--; let c = ultCol(); while(c > 0 && ordem().every((_, rr) => vaziaCel(rr, c))) c--; vaiPara(r, c, sh); return; }
+  if(k === 'PageDown'){ para(); if(e.altKey) vaiPara(sel.r, sel.c + 5, sh); else vaiPara(sel.r + passo, sel.c, sh); return; }
+  if(k === 'PageUp'){ para(); if(e.altKey) vaiPara(sel.r, sel.c - 5, sh); else vaiPara(sel.r - passo, sel.c, sh); return; }
+  if(k === 'Tab'){ para(); move(0, sh ? -1 : 1); return; }
+  if(k === 'Enter'){ para(); if(ctrl) return; move(sh ? -1 : 1, 0); return; }   // Enter anda, como no Excel (F2 edita)
+  if(k === 'Escape'){ if(pincel){ pincel = null; document.body.classList.remove('pinc'); pintaFita(); } ancora = null; marcaSel(); return; }
+  if(k === 'F2'){ para(); abreEditor(undefined, true); return; }
+  // edição
+  if(k === 'Delete' && ed){ para(); limpaSel(); return; }
+  if(k === 'Backspace' && ed){ para(); const c = cols()[sel.c]; if(c && ['status', 'pessoa', 'caixa'].includes(tipoDe(c))) limpaSel(); else abreEditor(''); return; }
+  if(k === ' ' && tipoDe(cols()[sel.c]) === 'caixa'){ para(); abreEditor(); return; }
+  if(k === '=' && ed && !ctrl && !e.altKey){ para(); abreEditor('='); return; }
+  if(k.length === 1 && !ctrl && !e.altKey){ abreEditor(k); para(); }
+});
+// colar só os valores (Ctrl+Shift+V): marca antes do evento "paste" chegar
+document.addEventListener('keydown', e => { if((e.ctrlKey || e.metaKey) && e.shiftKey && (e.key === 'v' || e.key === 'V')){ colarValores = true; setTimeout(() => { colarValores = false; }, 600); } }, true);
+function menuCelula(el){
+  const ed = nivel === 'editar';
+  menu([['Recortar  Ctrl+X', () => CMD.recortar()], ['Copiar  Ctrl+C', () => CMD.copiar()], ...(ed ? [['Colar  Ctrl+V', () => CMD.colar()], '-', ['Inserir…  Ctrl +', janelaInserir], ['Excluir…  Ctrl -', janelaExcluir], ['Limpar conteúdo  Delete', limpaSel], '-', ['Formatar células…  Ctrl+1', janelaFormatar]] : []), '-', ['Classificar de A a Z', () => ordena(sel.c, 1)], ['Classificar de Z a A', () => ordena(sel.c, -1)]], el);
+}
+vEl.addEventListener('contextmenu', e => {
+  const td = e.target.closest('td[data-c]'), th = e.target.closest('th[data-col]'), rn = e.target.closest('td[data-rn]');
+  if(td){ e.preventDefault(); const r = +td.dataset.r, c = +td.dataset.c; const {r0, r1, c0, c1} = intervalo(); if(!(r >= r0 && r <= r1 && c >= c0 && c <= c1)){ ancora = null; sel = {r, c}; marcaSel(); } menuCelula(td); }
+  else if(th){ e.preventDefault(); menuColuna(+th.dataset.col, th); }
+  else if(rn){ e.preventDefault(); menuLinha(+rn.dataset.rn, rn); }
+});
+function janelaAtalhos(){
+  const L = [['Mover e selecionar', [['Setas', 'anda uma célula'], ['Ctrl + setas', 'vai até a borda dos dados'], ['Shift + setas', 'aumenta a seleção'], ['Ctrl + Shift + setas', 'seleciona até a borda dos dados'], ['Home / Ctrl + Home', 'começo da linha / célula A1'], ['Ctrl + End', 'última célula com dados'], ['Page Up / Page Down', 'sobe / desce uma tela'], ['Alt + Page Up / Down', 'anda colunas'], ['Enter / Shift + Enter', 'desce / sobe'], ['Tab / Shift + Tab', 'direita / esquerda'], ['Ctrl + A', 'seleciona tudo'], ['Shift + Espaço', 'seleciona a linha inteira'], ['Ctrl + Espaço', 'seleciona a coluna inteira'], ['Ctrl + Page Down / Up', 'próxima / guia anterior']]],
+    ['Editar', [['F2', 'edita a célula'], ['Digitar', 'substitui o conteúdo'], ['Esc', 'cancela a edição'], ['Delete', 'limpa as células'], ['Backspace', 'limpa e começa a digitar'], ['Ctrl + Enter', 'no editor: põe o valor em toda a seleção'], ['F4', 'no editor: alterna $ (A1, $A$1, A$1, $A1)'], ['Alt + ↓', 'abre a lista (status, pessoa, data)'], ['Ctrl + D / Ctrl + R', 'preenche para baixo / para a direita'], ['Ctrl + ;', 'data de hoje'], ['Ctrl + Shift + :', 'hora agora'], ["Ctrl + '", 'copia a fórmula de cima'], ['Ctrl + Shift + "', 'copia o valor de cima'], ['Alt + =', 'AutoSoma'], ['Ctrl + Z / Ctrl + Y', 'desfaz / refaz'], ['Ctrl + C / X / V', 'copia / recorta / cola'], ['Ctrl + Shift + V', 'cola só os valores'], ['Ctrl + + / Ctrl + -', 'insere / exclui linhas ou colunas'], ['F9', 'recalcula'], ['Ctrl + `', 'mostra as fórmulas nas células']]],
+    ['Formatar', [['Ctrl + B ou N', 'negrito'], ['Ctrl + I', 'itálico'], ['Ctrl + U ou S', 'sublinhado'], ['Ctrl + 5', 'tachado'], ['Ctrl + 1', 'Formatar células'], ['Ctrl + Shift + 1', 'número com 2 casas'], ['Ctrl + Shift + 3', 'data'], ['Ctrl + Shift + 4', 'moeda R$'], ['Ctrl + Shift + 5', 'porcentagem'], ['Ctrl + Shift + ~', 'formato geral'], ['Ctrl + Shift + 7', 'borda externa'], ['Ctrl + Shift + -', 'tira as bordas']]],
+    ['Outros', [['Ctrl + F ou Ctrl + L', 'localizar'], ['Ctrl + H', 'substituir'], ['Ctrl + Shift + L', 'liga/desliga o filtro'], ['Shift + F11', 'nova guia'], ['Shift + F10', 'menu da célula (ou botão direito)'], ['Ctrl + F1', 'esconde/mostra a faixa de opções'], ['Ctrl + Shift + F1', 'esconde/mostra todas as barras']]]];
+  const fa = janela(`<h3>Atalhos do teclado</h3><div class="atl">${L.map(([t, l]) => `<div><h4>${t}</h4>${l.map(([a, b]) => `<p><kbd>${esc(a)}</kbd><span>${esc(b)}</span></p>`).join('')}</div>`).join('')}</div>
+    <p class="ajuda">Ctrl+T, Ctrl+N e Ctrl+W são do navegador (nova guia, nova janela, fechar) e não dá para trocar.</p><div class="acoes"><button class="btn pri" data-x>Fechar</button></div>`), jn = fa.querySelector('.janela'); jn.classList.add('larga'); setTimeout(() => { jn.scrollTop = 0; jn.focus({preventScroll:true}); }, 60);
+}
+
 // ---------- ajuda ----------
+$('#bAtalhos').onclick = janelaAtalhos;
 $('#bAjuda').onclick = () => janela(`<h3>Fórmulas e atalhos</h3>
   <div class="ajuda"><b>Fórmulas</b> começam com <code>=</code>, separadas por <code>;</code>. Colunas são letras (A, B, C…) e linhas são os números da esquerda.<br>
   Exemplos: <code>=SOMA(C1:C20)</code> · <code>=SE(C2&lt;D2;"Repor";"OK")</code> · <code>=CONT.SE(B:B;"Concluído")</code><br>
   <b>PROCV entre guias:</b> <code>=PROCV(A2;Estoque!A:D;3;0)</code> procura o valor de A2 na 1ª coluna da guia Estoque e traz a 3ª coluna. Guia com espaço no nome: <code>'Minha guia'!A:D</code>.<br>
   <code>=SEERRO(PROCV(...);"não achei")</code> mostra um texto quando não encontra.<br><br>
   Funções: ${F.LISTA.join(', ')}.<br><br>
-  <b>Atalhos:</b> setas andam · Enter ou F2 edita · digitar começa a editar · Shift+setas seleciona várias · Delete limpa · Ctrl+C / Ctrl+V copia e cola (inclusive do Excel) · Ctrl+Z desfaz · Ctrl+Y refaz · Ctrl+B negrito · Ctrl+I itálico · Ctrl+U sublinhado · Ctrl+X recorta · Ctrl+F busca · Ctrl+L localizar. Arraste com o mouse para selecionar várias células.<br>
+  <b>Atalhos:</b> setas andam · digitar começa a editar · Shift+setas seleciona várias · Delete limpa · Ctrl+C / Ctrl+V copia e cola (inclusive do Excel) · Enter desce (como no Excel) · F2 edita · e muito mais: veja o botão <b>⌨ Atalhos</b>. Arraste com o mouse para selecionar várias células; clique no cabeçalho para selecionar a coluna inteira.<br>
   Clique no cabeçalho de uma coluna para ordenar, mudar o tipo ou excluir. Clique no número da linha para inserir ou excluir. Clique duas vezes numa guia para renomear.</div>
   <div class="acoes"><button class="btn pri" data-x>Entendi</button></div>`);
 </script>
