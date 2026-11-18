@@ -19,9 +19,9 @@
   --t1:#f5f5f7; --t2:#a5a5ad; --t3:#7f7f88; --red:#d40f3a; --red-hi:#ff4d6d; --red-dim:rgba(212,15,58,.15);
   --ok:#4ee2a0; --warn:#d8a94a; --crit:#e2564f; --info:#8b8dfb; --teal:#37b8a6;
   --f-ui:'IBM Plex Sans','Segoe UI',system-ui,sans-serif; --f-num:'IBM Plex Mono',ui-monospace,Consolas,monospace;
-  --sel:#ff4d6d; color-scheme:dark;
+  --sel:#ff4d6d; --hov:rgba(255,255,255,.03); color-scheme:dark;
 }
-:root[data-theme="claro"]{ --bg:#f4f4f6; --s1:#ffffff; --s2:#f0f0f2; --s3:#e4e4e8; --hair:#dcdce0; --hair2:#e8e8ec; --t1:#18181b; --t2:#55555c; --t3:#83838a; --red-dim:rgba(212,15,58,.08); color-scheme:light; }
+:root[data-theme="claro"]{ --bg:#f4f4f6; --s1:#ffffff; --s2:#f0f0f2; --s3:#e4e4e8; --hair:#dcdce0; --hair2:#e8e8ec; --t1:#18181b; --t2:#55555c; --t3:#83838a; --red-dim:rgba(212,15,58,.08); --hov:rgba(0,0,0,.035); color-scheme:light; }
 *{box-sizing:border-box}
 html,body{margin:0;height:100%}
 body{background:var(--bg);color:var(--t1);font-family:var(--f-ui);font-size:13.5px;display:flex;flex-direction:column;overflow:hidden}
@@ -34,6 +34,7 @@ button{font:inherit;color:inherit}
 .topo::after{content:"";position:absolute;left:0;right:0;bottom:-1px;height:1px;background:linear-gradient(90deg,var(--red),var(--red-hi) 25%,transparent 70%)}
 .marca{display:flex;align-items:center;gap:8px;font-weight:700;white-space:nowrap;text-decoration:none;color:var(--t1)}
 .marca img{width:22px;height:22px;object-fit:contain}
+:root[data-theme="claro"] .marca img{filter:invert(1)}
 .marca i{font-style:normal;color:var(--red-hi)}
 .tit{display:grid;min-width:0}
 .tit small{color:var(--t3);font-size:11.5px}
@@ -99,7 +100,7 @@ html{scroll-behavior:auto}
 body{transition:background-color .3s,color .3s}
 .g td.outro{box-shadow:inset 0 0 0 2px var(--cor)}
 .g td.brilha{animation:brilho 1.6s ease-out}
-.g tr:hover td:not(.rn):not(.ins){background-color:rgba(255,255,255,.025)}
+.g tr:hover td:not(.rn):not(.ins){background-color:var(--hov)}
 .g tr.nova td{animation:linha .35s ease both}
 .g .addl td{color:var(--t3);cursor:pointer;height:34px}
 .g .addl td:hover{color:var(--t1)}
@@ -179,6 +180,54 @@ select.editor{padding:0 4px}
 .ajuda{color:var(--t3);font-size:12px;line-height:1.5}
 .ajuda code{font-family:var(--f-num);color:var(--t2)}
 
+/* fita (Página Inicial) */
+.fita{display:flex;align-items:stretch;gap:0;margin:8px 16px 0;padding:6px 6px 2px;border:1px solid var(--hair);border-radius:12px;background:var(--s1);overflow-x:auto;scrollbar-width:thin}
+.grp{display:flex;flex-direction:column;justify-content:space-between;gap:3px;padding:0 10px;border-right:1px solid var(--hair2);flex:none;position:relative}
+.grp:last-child{border-right:0}
+.grp > .grow,.grp > .fcol{display:flex;align-items:center;gap:2px}
+.grp > .fcol{flex-direction:column;align-items:stretch}
+.grp .grow + .grow{margin-top:2px}
+.grp .grow .fcol{display:flex;flex-direction:column;gap:1px}
+.gl{font-size:10.5px;color:var(--t3);text-align:center;white-space:nowrap;padding-top:2px}
+.fb{all:unset;cursor:pointer;display:inline-flex;align-items:center;justify-content:center;gap:5px;min-width:26px;height:26px;padding:0 4px;border-radius:6px;color:var(--t1);font-size:12px;position:relative;white-space:nowrap;transition:background .15s,transform .1s,color .15s;box-sizing:border-box}
+.fb:hover{background:var(--s2)}.fb:active{transform:scale(.94)}
+.fb.on{background:var(--red-dim);color:var(--red-hi);box-shadow:inset 0 0 0 1px rgba(255,77,109,.35)}
+.fb[disabled]{opacity:.35;pointer-events:none}
+.fb svg{width:16px;height:16px;fill:none;stroke:currentColor;stroke-width:1.3;stroke-linecap:round;stroke-linejoin:round;flex:none}
+.fb .tx{font-size:13.5px;line-height:1;font-weight:700}
+.fb .tx sup{font-size:8px}
+.fb.big{flex-direction:column;height:56px;min-width:46px;gap:2px;font-size:11.5px}.fb.big svg{width:24px;height:24px}
+.fb.wide{justify-content:flex-start;height:24px;padding:0 7px;font-size:12px}
+.fb .seta{width:0;height:0;border-left:3px solid transparent;border-right:3px solid transparent;border-top:4px solid currentColor;opacity:.6;margin-left:2px}
+.fb .barcor{position:absolute;left:5px;right:5px;bottom:2px;height:3px;border-radius:2px;box-shadow:0 0 0 1px var(--hair)}
+.fita select{height:26px;border-radius:6px;border:1px solid var(--hair);background:var(--s2);color:var(--t1);font:inherit;font-size:12px;padding:0 4px;max-width:130px}
+.fita select.tam{width:52px}.fita select.num{width:128px;max-width:none}
+body.soler .fita .so-edita{display:none!important}
+body.pinc #vis td[data-c]{cursor:copy}
+.menu.pal{min-width:0;padding:8px}
+.menu.pal .sw{display:grid;grid-template-columns:repeat(10,18px);gap:4px}
+.menu.pal .sw button{width:18px;height:18px;padding:0;border-radius:4px;box-shadow:inset 0 0 0 1px rgba(128,128,128,.4);transition:transform .12s}
+.menu.pal .sw button:hover{transform:scale(1.2);background:inherit}
+.menu.pal .mais{display:flex;align-items:center;gap:8px;padding:7px 10px;font-size:13px;cursor:pointer;border-radius:8px}
+.menu.pal .mais:hover{background:var(--s2)}
+.menu.pal .mais input{width:26px;height:20px;border:0;padding:0;background:none}
+.menu.pal .tabs{display:grid;grid-template-columns:repeat(4,52px);gap:6px;padding:4px}
+.menu.pal .tabs button{display:grid;grid-template-rows:7px 6px 6px 6px;gap:1px;padding:3px;border-radius:6px;box-shadow:inset 0 0 0 1px var(--hair);height:auto}
+.menu.pal .tabs button.on{box-shadow:inset 0 0 0 2px var(--red-hi)}
+.menu.pal .tabs i{display:block;border-radius:1px;background:var(--s3)}
+.menu.filtro{width:250px;padding:8px;gap:4px}
+.menu.filtro .fls{max-height:220px;overflow:auto;display:grid;gap:1px;padding:2px 0;border:1px solid var(--hair2);border-radius:8px}
+.fl{display:flex;align-items:center;gap:7px;font-size:12.5px;padding:4px 8px;cursor:pointer;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.fl:hover{background:var(--s2)}
+/* tabela formatada */
+.g.tab thead th:not(.rn){background:var(--tb);color:#fff}
+.g.tab thead th:not(.rn) .l,.g.tab thead th:not(.rn) .ti{color:rgba(255,255,255,.7)}
+.g.tab tbody tr[data-r]:nth-child(even) td:not(.rn){background-color:color-mix(in srgb,var(--tb) 10%,var(--s1))}
+.g thead th .fbt{all:unset;cursor:pointer;float:right;width:18px;height:18px;margin:6px -4px 0 4px;border-radius:4px;display:grid;place-items:center;font-size:9px;background:rgba(127,127,127,.18);transition:background .15s}
+.g thead th .fbt:hover{background:rgba(127,127,127,.35)}.g thead th .fbt.ativo{background:var(--red);color:#fff}
+.g tfoot td{position:sticky;bottom:0;z-index:2;background:var(--s2);font-weight:700;border-top:2px solid var(--tb,var(--red));height:32px}
+.g tfoot td.rn{z-index:3}
+
 @keyframes pulso{0%,100%{box-shadow:0 0 0 0 rgba(78,226,160,.45)}60%{box-shadow:0 0 0 6px rgba(78,226,160,0)}}
 @keyframes pop{0%{transform:scale(.4);opacity:0}70%{transform:scale(1.12)}100%{transform:scale(1);opacity:1}}
 @keyframes entra{from{opacity:0;transform:translateY(8px)}to{opacity:1;transform:none}}
@@ -191,7 +240,7 @@ select.editor{padding:0 4px}
 @keyframes pousa{0%{transform:scale(.92);opacity:.5}60%{transform:scale(1.04)}100%{transform:none;opacity:1}}
 @keyframes edIn{from{opacity:0;transform:scale(.97)}to{opacity:1;transform:none}}
 @media (prefers-reduced-motion:reduce){*{animation:none!important;transition:none!important}}
-@media (max-width:700px){.barra,.fx{margin-left:8px;margin-right:8px}.area,.guias{margin-left:8px;margin-right:8px}.busca{width:120px}.pres span.t{display:none}}
+@media (max-width:700px){.fita{margin-left:8px;margin-right:8px}.barra,.fx{margin-left:8px;margin-right:8px}.area,.guias{margin-left:8px;margin-right:8px}.busca{width:120px}.pres span.t{display:none}}
 </style>
 <script>try{ var t = localStorage.getItem('theme'); if(t === 'claro') document.documentElement.setAttribute('data-theme', 'claro'); }catch(e){}</script>
 </head>
@@ -207,13 +256,29 @@ select.editor{padding:0 4px}
   <div class="vts" role="tablist"><button class="vt on" data-v="grade">Grade</button><button class="vt" data-v="quadro">Quadro</button><button class="vt" data-v="cal">Calendário</button><button class="vt" data-v="resumo">Resumo</button></div>
   <div class="ferr">
     <input class="busca" id="busca" type="search" placeholder="Buscar nesta guia…" aria-label="Buscar nesta guia">
-    <button class="btn so-edita" id="bLinha" title="Nova linha no fim">+ Linha</button>
-    <button class="btn so-edita" id="bColuna" title="Nova coluna">+ Coluna</button>
-    <button class="btn so-edita" id="bDesfaz" title="Desfazer (Ctrl+Z)" disabled>↶ Desfazer</button>
     <button class="btn so-edita" id="bImporta" title="Trazer guias de um arquivo do Excel">Importar Excel</button>
     <button class="btn" id="bExporta" title="Baixar como arquivo do Excel">Exportar Excel</button>
     <button class="btn" id="bAjuda" title="Fórmulas e atalhos">?</button>
+    <button class="btn" id="bTema" title="Tema claro / escuro" aria-label="Tema claro ou escuro"></button>
   </div>
+</div>
+<div class="fita" id="fita" role="toolbar" aria-label="Página Inicial">
+  <div class="grp so-edita"><div class="grow"><button class="fb" data-cmd="desfaz" id="bDesfaz" title="Desfazer (Ctrl+Z)" disabled><svg viewBox="0 0 16 16"><path d="M5.5 3.5L2.5 6.5l3 3M2.8 6.5h6.7a4 4 0 0 1 0 8H7"/></svg></button><button class="fb" data-cmd="refaz" id="bRefaz" title="Refazer (Ctrl+Y)" disabled><svg viewBox="0 0 16 16"><path d="M10.5 3.5l3 3-3 3M13.2 6.5H6.5a4 4 0 0 0 0 8H9"/></svg></button></div><span class="gl">Desfazer</span></div>
+  <div class="grp"><div class="grow"><button class="fb big so-edita" data-cmd="colar" title="Colar (Ctrl+V)"><svg viewBox="0 0 16 16"><rect x="3" y="3" width="10" height="11.5" rx="1.3"/><path d="M6 3V2h4v1"/><path d="M5.5 7.5h5M5.5 10h5"/></svg><span>Colar</span></button>
+    <div class="fcol"><button class="fb so-edita" data-cmd="recortar" title="Recortar (Ctrl+X)"><svg viewBox="0 0 16 16"><circle cx="4.5" cy="12" r="2"/><circle cx="11.5" cy="12" r="2"/><path d="M5.8 10.5L11.5 2M10.2 10.5L4.5 2"/></svg></button><button class="fb" data-cmd="copiar" title="Copiar (Ctrl+C)"><svg viewBox="0 0 16 16"><rect x="5" y="5" width="8.5" height="9" rx="1.2"/><path d="M3 11V3a1 1 0 0 1 1-1h6"/></svg></button><button class="fb so-edita" data-cmd="pincel" title="Pincel de formatação: copia o formato da célula e aplica em outras"><svg viewBox="0 0 16 16"><rect x="2" y="2" width="10" height="4" rx="1"/><path d="M12 4h1.5v3.5H8V10"/><rect x="6.8" y="10" width="2.4" height="4.5" rx=".6"/></svg></button></div></div><span class="gl">Área de Transferência</span></div>
+  <div class="grp so-edita"><div class="grow"><select id="fFonte" title="Fonte"><option value="">IBM Plex Sans</option><option value="Arial, sans-serif">Arial</option><option value="Calibri, Carlito, sans-serif">Calibri</option><option value="'Segoe UI', sans-serif">Segoe UI</option><option value="Verdana, sans-serif">Verdana</option><option value="Georgia, serif">Georgia</option><option value="'Times New Roman', serif">Times New Roman</option><option value="'IBM Plex Mono', 'Courier New', monospace">Mono</option></select>
+    <select id="fTam" title="Tamanho da fonte" class="tam"><option>9</option><option>10</option><option>11</option><option>12</option><option>13</option><option>14</option><option>16</option><option>18</option><option>20</option><option>24</option><option>28</option></select><button class="fb" data-cmd="maior" title="Aumentar fonte"><b class="tx">A<sup>+</sup></b></button><button class="fb" data-cmd="menor" title="Diminuir fonte"><b class="tx" style="font-size:11px">A<sup>-</sup></b></button></div>
+    <div class="grow"><button class="fb" data-cmd="b" title="Negrito (Ctrl+N ou Ctrl+B)"><b class="tx">N</b></button><button class="fb" data-cmd="i" title="Itálico (Ctrl+I)"><i class="tx" style="font-family:Georgia,serif">I</i></button><button class="fb" data-cmd="u" title="Sublinhado (Ctrl+S ou Ctrl+U)"><u class="tx">S</u></button><button class="fb" data-cmd="s" title="Tachado"><s class="tx">abc</s></button>
+    <button class="fb" data-cmd="bordas" title="Bordas"><svg viewBox="0 0 16 16"><rect x="2.5" y="2.5" width="11" height="11" stroke-dasharray="1.5 1.5"/><path d="M2.5 13.5h11"/></svg><i class="seta"></i></button>
+    <button class="fb" data-cmd="bg" title="Cor de preenchimento"><svg viewBox="0 0 16 16"><path d="M3 8.5L8 3.5l4.5 4.5-5 5z"/><path d="M13 10.5c0 1-.6 1.6-1.2 1.6s-1.2-.6-1.2-1.6l1.2-1.8z"/></svg><i class="barcor" style="background:#ffeb9c"></i></button>
+    <button class="fb" data-cmd="fc" title="Cor da fonte"><b class="tx">A</b><i class="barcor" style="background:#ff0000"></i></button></div><span class="gl">Fonte</span></div>
+  <div class="grp so-edita"><div class="grow"><button class="fb" data-cmd="esq" title="Alinhar à esquerda"><svg viewBox="0 0 16 16"><path d="M2.5 3.5h11M2.5 6.5h7M2.5 9.5h11M2.5 12.5h7"/></svg></button><button class="fb" data-cmd="centro" title="Centralizar"><svg viewBox="0 0 16 16"><path d="M2.5 3.5h11M4.5 6.5h7M2.5 9.5h11M4.5 12.5h7"/></svg></button><button class="fb" data-cmd="dir" title="Alinhar à direita"><svg viewBox="0 0 16 16"><path d="M2.5 3.5h11M6.5 6.5h7M2.5 9.5h11M6.5 12.5h7"/></svg></button></div>
+    <div class="grow"><button class="fb wide" data-cmd="quebra" title="Quebrar texto automaticamente"><svg viewBox="0 0 16 16"><path d="M2.5 3.5h11M2.5 7.5h9a2 2 0 0 1 0 4H8M9.5 10l-1.5 1.5 1.5 1.5M2.5 11.5h3"/></svg><span>Quebrar texto</span></button></div><span class="gl">Alinhamento</span></div>
+  <div class="grp so-edita"><div class="grow"><select id="fNum" title="Formato de número" class="num"><option value="geral">Geral</option><option value="numero">Número</option><option value="moeda">Moeda (R$)</option><option value="pct">Porcentagem</option><option value="data">Data</option><option value="texto">Texto</option></select></div>
+    <div class="grow"><button class="fb" data-cmd="moeda" title="Moeda (R$)"><b class="tx" style="font-size:11px">R$</b></button><button class="fb" data-cmd="pct" title="Porcentagem"><b class="tx">%</b></button><button class="fb" data-cmd="milhar" title="Separador de milhar"><b class="tx" style="font-size:10px">000</b></button><button class="fb" data-cmd="mdec" title="Aumentar casas decimais"><b class="tx" style="font-size:9.5px">,00→</b></button><button class="fb" data-cmd="ndec" title="Diminuir casas decimais"><b class="tx" style="font-size:9.5px">←,0</b></button></div><span class="gl">Número</span></div>
+  <div class="grp"><div class="fcol"><button class="fb wide so-edita" data-cmd="cond"><svg viewBox="0 0 16 16"><rect x="2" y="2" width="12" height="12" rx="1"/><path d="M2 6h12M2 10h12M6 2v12"/><rect x="7" y="7" width="6" height="2" fill="#e2564f" stroke="none"/></svg><span>Formatação Condicional</span><i class="seta"></i></button><button class="fb wide so-edita" data-cmd="tabela"><svg viewBox="0 0 16 16"><rect x="2" y="2" width="12" height="12" rx="1"/><path d="M2 6h12M2 10h12M6 6v8M10 6v8"/><rect x="2" y="2" width="12" height="4" fill="currentColor" stroke="none" opacity=".45"/></svg><span>Formatar como Tabela</span><i class="seta"></i></button><button class="fb wide so-edita" data-cmd="limpafmt"><svg viewBox="0 0 16 16"><path d="M9.5 2.5l4 4-6 6h-4l-1.5-1.5z"/><path d="M6 6l4 4M8 14.5h6"/></svg><span>Limpar Formatação</span></button></div><span class="gl">Estilos</span></div>
+  <div class="grp so-edita"><div class="fcol"><button class="fb wide" data-cmd="inserir"><svg viewBox="0 0 16 16"><rect x="2" y="3" width="12" height="10" rx="1"/><path d="M8 5.5v5M5.5 8h5"/></svg><span>Inserir</span><i class="seta"></i></button><button class="fb wide" data-cmd="excluir"><svg viewBox="0 0 16 16"><rect x="2" y="3" width="12" height="10" rx="1"/><path d="M6 6l4 4M10 6l-4 4"/></svg><span>Excluir</span><i class="seta"></i></button><button class="fb wide" data-cmd="formatar"><svg viewBox="0 0 16 16"><rect x="2" y="3" width="12" height="10" rx="1"/><path d="M6 3v10M2 8h12"/></svg><span>Formatar</span><i class="seta"></i></button></div><span class="gl">Células</span></div>
+  <div class="grp"><div class="fcol"><button class="fb wide so-edita" data-cmd="soma" title="AutoSoma"><b class="tx" style="font-size:15px">Σ</b><span>AutoSoma</span><i class="seta"></i></button><button class="fb wide" data-cmd="classifica"><svg viewBox="0 0 16 16"><path d="M4 2.5v11M2 11.5l2 2 2-2M8.5 3.5h5l-3.5 4.5v4l-1.5 1v-5z"/></svg><span>Classificar e Filtrar</span><i class="seta"></i></button><button class="fb wide" data-cmd="localiza"><svg viewBox="0 0 16 16"><circle cx="7" cy="7" r="4.2"/><path d="M10.2 10.2l3.3 3.3"/></svg><span>Localizar</span><i class="seta"></i></button></div><span class="gl">Edição</span></div>
 </div>
 <div class="fx" id="fxBar"><span class="end" id="fxEnd">—</span><b>fx</b><input id="fxIn" spellcheck="false" placeholder="Escolha uma célula. Fórmulas começam com =, ex.: =PROCV(A2;Estoque!A:C;2;0)"><span class="dica" id="fxDica"></span></div>
 <main class="area" id="area"><div class="vis" id="vis"></div><div class="cursores" id="cursores"></div></main>
@@ -535,8 +600,13 @@ const hojeISO = () => { const d = new Date(); return new Date(d - d.getTimezoneO
 const pessoa = email => DIR.find(x => String(x.email).toLowerCase() === String(email).toLowerCase());
 const nomeP = email => { const p = pessoa(email); return p ? (p.name || p.email) : String(email); };
 const statusOp = (c, v) => (c.opcoes || []).find(o => String(o.v).toLowerCase() === String(v).toLowerCase());
-function mostra(c, v, ehF){
+function mostra(c, v, ehF, f){
   if(F.ehErro(v)) return {h:esc(String(v)), cls:'err'};
+  if(f && (f.nf || f.dec != null) && v !== '' && v != null){   // formato de número escolhido na fita vale mais que o tipo da coluna
+    if(f.nf === 'texto') return {h:esc(v), cls:''};
+    if(f.nf === 'data'){ const n = F.num(v); return {h:esc(dataBR(typeof v === 'number' ? F.serieData(v) : !F.ehErro(n) && typeof v !== 'string' ? F.serieData(n) : v)), cls:''}; }
+    const n = F.num(v); if(!F.ehErro(n) && (typeof v === 'number' || /^[\s\d.,R$%-]+$/.test(String(v)))) return {h:esc(numFmt(n, f.nf || (tipoDe(c) === 'moeda' ? 'moeda' : 'numero'), f.dec)), cls:'num'};
+  }
   const t = tipoDe(c);
   if(v === '' || v == null) return {h:'', cls:''};
   if(t === 'numero'){ const n = F.num(v); return F.ehErro(n) ? {h:esc(v), cls:''} : {h:nfmt.format(n), cls:'num'}; }
@@ -555,7 +625,7 @@ function mostra(c, v, ehF){
 let tMeta = 0;
 async function grava(pares, {semDesfazer = false, rotulo = ''} = {}){
   if(nivel !== 'editar' || !pares.length) return;
-  if(!semDesfazer){ desfazer.push(pares.map(([p]) => [p, pega(p)])); if(desfazer.length > 100) desfazer.shift(); $('#bDesfaz').disabled = false; }
+  if(!semDesfazer){ refazer = []; desfazer.push(pares.map(([p]) => [p, pega(p)])); if(desfazer.length > 100) desfazer.shift(); $('#bDesfaz').disabled = false; }
   pares.forEach(([p, v]) => poe(p, v));     // tela muda na hora; o Firestore confirma em seguida
   live('salvando');
   try{
@@ -592,9 +662,11 @@ function pinta(antes){
   pintaFx(); pintaPres();
 }
 function linhasVisiveis(){
-  const o = ordem(); if(!busca) return o.map((rid, i) => ({rid, i}));
-  const q = busca.toLowerCase();
-  return o.map((rid, i) => ({rid, i})).filter(({i}) => cols().some((c, ci) => { const v = valor(g, i, ci); return String(c.tipo === 'pessoa' ? nomeP(v) : v).toLowerCase().includes(q); }));
+  const o = ordem(), q = busca.toLowerCase(), fl = Object.entries(filtros[g] || {}).filter(([, h]) => h && h.size).map(([cid, h]) => [cols().findIndex(c => c.id === cid), h]).filter(([ci]) => ci >= 0);
+  let l = o.map((rid, i) => ({rid, i}));
+  if(fl.length) l = l.filter(({i}) => fl.every(([ci, h]) => !h.has(textoCel(i, ci))));
+  if(q) l = l.filter(({i}) => cols().some((c, ci) => textoCel(i, ci).toLowerCase().includes(q) || String(valor(g, i, ci)).toLowerCase().includes(q)));
+  return l;
 }
 function pintaGrade(antes){
   const box = $('#vis'), cs = cols(), lst = linhasVisiveis();
@@ -602,12 +674,16 @@ function pintaGrade(antes){
   const novas = antes && antes.guias && antes.guias[g] ? new Set(ordem().filter(r => !(antes.guias[g].ordem || []).includes(r))) : new Set();
   const mudou = (rid, cid) => antes && antes.dados && antes.dados[g] && JSON.stringify(((antes.dados[g] || {})[rid] || {})[cid]) !== JSON.stringify(cel(g, rid, cid)) && !novas.has(rid);
   const sx = box.scrollLeft, sy = box.scrollTop, selVelha = box.querySelector('.selbox');
-  box.innerHTML = `<table class="g" id="gT" style="width:${46 + largs.reduce((a, b) => a + b, 0)}px"><colgroup><col style="width:46px">${largs.map(w => `<col style="width:${w}px">`).join('')}</colgroup>
-    <thead><tr><th class="rn"></th>${cs.map((c, ci) => `<th class="${ci === 0 ? 'c0' : ''}" data-col="${ci}" title="${esc(TIPOS.find(t => t[0] === tipoDe(c))[1])} · clique para opções"><span class="l">${F.colLetra(ci)}</span>${esc(c.nome)}<span class="ti">${c.formula ? 'fx' : esc(TIPOS.find(t => t[0] === tipoDe(c))[2])}</span></th>`).join('')}</tr></thead>
-    <tbody>${lst.map(({rid, i}) => `<tr data-r="${i}"${novas.has(rid) ? ' class="nova"' : ''}><td class="rn" data-rn="${i}">${i + 1}</td>${cs.map((c, ci) => { const raw = bruto(g, rid, c), ehF = typeof raw === 'string' && raw[0] === '='; const m = mostra(c, valor(g, i, ci), ehF);
+  const stats = statsCond(), tab = G().tabela, comFiltro = temFiltro(), filt = filtros[g] || {};
+  box.innerHTML = `<table class="g${tab ? ' tab' : ''}" id="gT" style="width:${46 + largs.reduce((a, b) => a + b, 0)}px${tab ? ';--tb:' + tab.cor : ''}"><colgroup><col style="width:46px">${largs.map(w => `<col style="width:${w}px">`).join('')}</colgroup>
+    <thead><tr><th class="rn"></th>${cs.map((c, ci) => `<th class="${ci === 0 ? 'c0' : ''}" data-col="${ci}" title="${esc(TIPOS.find(t => t[0] === tipoDe(c))[1])} · clique para opções">${comFiltro ? `<button class="fbt${filt[c.id] && filt[c.id].size ? ' ativo' : ''}" data-filtro="${ci}" title="Filtrar e classificar">▼</button>` : ''}<span class="l">${F.colLetra(ci)}</span>${esc(c.nome)}<span class="ti"${comFiltro ? ' hidden' : ''}>${c.formula ? 'fx' : esc(TIPOS.find(t => t[0] === tipoDe(c))[2])}</span></th>`).join('')}</tr></thead>
+    <tbody>${lst.map(({rid, i}) => `<tr data-r="${i}"${novas.has(rid) ? ' class="nova"' : ''}><td class="rn" data-rn="${i}">${i + 1}</td>${cs.map((c, ci) => { const raw = bruto(g, rid, c), ehF = typeof raw === 'string' && raw[0] === '='; const fm = fmtDe(rid, c.id), cd = condDe(c.id, i, ci, stats), m = mostra(c, valor(g, i, ci), ehF, fm), est = estiloCel(fm, cd);
       const venc = ehPrazo(c) && raw && String(ehF ? '' : raw) < hojeISO() && linhaAberta(rid);
-      return `<td data-r="${i}" data-c="${ci}" class="${ci === 0 ? 'c0 ' : ''}${m.cls}${ehF && raw === cel(g, rid, c.id) ? ' fm' : ''}${venc ? ' late' : ''}${mudou(rid, c.id) ? ' brilha' : ''}">${m.h}</td>`; }).join('')}</tr>`).join('')}
-    ${nivel === 'editar' && !busca ? `<tr class="addl"><td class="rn">+</td><td colspan="${cs.length}" id="addLinha">Nova linha</td></tr>` : ''}</tbody></table>
+      return `<td data-r="${i}" data-c="${ci}" class="${ci === 0 ? 'c0 ' : ''}${m.cls}${ehF && raw === cel(g, rid, c.id) ? ' fm' : ''}${venc ? ' late' : ''}${mudou(rid, c.id) ? ' brilha' : ''}"${est ? ` style="${est}"` : ''}>${m.h}</td>`; }).join('')}</tr>`).join('')}
+    ${nivel === 'editar' && !busca && !filtroAtivo() ? `<tr class="addl"><td class="rn">+</td><td colspan="${cs.length}" id="addLinha">Nova linha</td></tr>` : ''}</tbody>
+    ${tab && tab.total ? `<tfoot><tr><td class="rn">Σ</td>${cs.map((c, ci) => { const t = tipoDe(c); const vs = lst.map(({i}) => valor(g, i, ci)).filter(v => typeof v === 'number' || (t === 'numero' || t === 'moeda') && v !== '' && v != null && !F.ehErro(F.num(v)));
+      if(ci === 0 && !vs.length) return `<td class="c0">Total</td>`; if(!vs.length || !['numero', 'moeda'].includes(t) && vs.length < lst.length / 2) return '<td></td>';
+      const sm = vs.reduce((a, v) => a + F.num(v), 0); return `<td class="num${ci === 0 ? ' c0' : ''}">${t === 'moeda' ? mfmt.format(sm) : nfmt.format(sm)}</td>`; }).join('')}</tr></tfoot>` : ''}</table>
     ${!cs.length ? '<div class="vazio">Esta guia não tem colunas. Clique em <b>+ Coluna</b>.</div>' : ''}`;
   if(selVelha) box.appendChild(selVelha);
   box.scrollLeft = sx; box.scrollTop = sy;
@@ -628,7 +704,7 @@ function marcaSel(){
     sb.style.transform = `translate(${a1.left - v.left + box.scrollLeft - 1}px,${a1.top - v.top + box.scrollTop - 1}px)`;
     sb.style.width = (b1.right - a1.left + 2) + 'px'; sb.style.height = (b1.bottom - a1.top + 2) + 'px';
   } else if(sb) sb.remove();
-  pintaFx();
+  pintaFx(); pintaFita();
 }
 const celTd = (r, c) => document.querySelector(`#gT td[data-r="${r}"][data-c="${c}"]`);
 function pintaFx(){
@@ -782,41 +858,75 @@ function move(dr, dc, estende){
   const td = celTd(sel.r, sel.c); if(td) td.scrollIntoView({block:'nearest', inline:'nearest', behavior:reduz ? 'auto' : 'smooth'});
 }
 
-// ---------- copiar / colar (Excel) ----------
+// ---------- copiar / recortar / colar (Excel e dentro da planilha) ----------
+// Dentro da planilha o colar leva fórmulas (com as referências ajustadas, como no Excel) e a formatação;
+// vindo do Excel ou de outro lugar, chegam os valores.
+let area = null, corte = false;
 function intervalo(){ const a = ancora || sel; return {r0:Math.min(a.r, sel.r), r1:Math.max(a.r, sel.r), c0:Math.min(a.c, sel.c), c1:Math.max(a.c, sel.c)}; }
-document.addEventListener('copy', e => {
-  if(vis !== 'grade' || editando || document.activeElement === $('#fxIn') || document.activeElement === $('#busca')) return;
-  const {r0, r1, c0, c1} = intervalo(), out = [];
-  for(let r = r0; r <= r1; r++){ const l = []; for(let c = c0; c <= c1; c++){ const v = valor(g, r, c); l.push(F.ehErro(v) ? String(v) : tipoDe(cols()[c]) === 'pessoa' ? nomeP(v) : tipoDe(cols()[c]) === 'data' && v ? dataBR(v) : typeof v === 'number' ? String(v).replace('.', ',') : String(v ?? '')); } out.push(l.join('\t')); }
-  e.clipboardData.setData('text/plain', out.join('\n')); e.preventDefault(); toast('Copiado: ' + ((r1 - r0 + 1) * (c1 - c0 + 1)) + ' célula(s)');
-});
+function desloca(f, dr, dc){
+  return String(f).split(/("[^"]*")/).map((pt, k) => k % 2 ? pt : pt.replace(/(^|[^A-Za-z0-9_.À-ú$])(\$?)([A-Z]{1,3})(\$?)(\d+)(?![A-Za-z0-9_(!])/g, (m, pre, d1, col, d2, lin) => {
+    const c = d1 ? F.colNum(col) : F.colNum(col) + dc, r = d2 ? +lin : +lin + dr; if(c < 0 || r < 1) return pre + '#REF!'; return pre + d1 + F.colLetra(c) + d2 + r; })).join('');
+}
+function copia(e, recorta){
+  if(vis !== 'grade' || editando || document.activeElement === $('#fxIn') || document.activeElement === $('#busca') || document.activeElement === $('#nome') || (document.activeElement && document.activeElement.closest && document.activeElement.closest('.fundo,.menu'))) return;
+  const {r0, r1, c0, c1} = intervalo(), out = [], cel2 = [];
+  for(let r = r0; r <= r1; r++){ const l = [], lc = []; for(let c = c0; c <= c1; c++){ const co = cols()[c], rid = ordem()[r]; const v = valor(g, r, c);
+    l.push(F.ehErro(v) ? String(v) : tipoDe(co) === 'pessoa' ? nomeP(v) : tipoDe(co) === 'data' && v ? dataBR(v) : typeof v === 'number' ? String(v).replace('.', ',') : String(v ?? ''));
+    lc.push({v:rid && co ? cel(g, rid, co.id) : undefined, f:rid && co ? fmtDe(rid, co.id) : {}, rid, cid:co && co.id}); } out.push(l.join('\t')); cel2.push(lc); }
+  const txt = out.join('\n'); e.clipboardData.setData('text/plain', txt); e.preventDefault();
+  area = {txt, g, r0, c0, cel:cel2, corte:recorta || corte}; corte = false;
+  toast((area.corte ? 'Recortado: ' : 'Copiado: ') + ((r1 - r0 + 1) * (c1 - c0 + 1)) + ' célula(s)' + (area.corte ? ' · cole no destino' : ''));
+}
+document.addEventListener('copy', e => copia(e, false));
+document.addEventListener('cut', e => { if(nivel === 'editar') copia(e, true); });
+function colaTexto(txt){
+  if(vis !== 'grade' || nivel !== 'editar' || !txt) return;
+  const norm = t => t.replace(/\r/g, '').replace(/\n$/, '');
+  const pares = [], o = ordem().slice(); let novasLinhas = 0, n;
+  if(area && norm(txt) === norm(area.txt)){
+    const dr = sel.r - area.r0, dc = sel.c - area.c0; n = area.cel.length;
+    while(o.length < sel.r + n){ o.push(novoId()); novasLinhas++; }
+    if(novasLinhas) pares.push([['guias', g, 'ordem'], o]);
+    if(area.corte && area.g === g) area.cel.forEach(l => l.forEach(x => { if(x.rid && x.cid){ pares.push([['dados', g, x.rid, x.cid], '']); if(Object.keys(x.f).length) pares.push([['fmt', g, x.rid, x.cid], '']); } }));
+    area.cel.forEach((l, i) => l.forEach((x, j) => { const c = cols()[sel.c + j]; if(!c) return; const rid = o[sel.r + i];
+      let v = x.v; if(typeof v === 'string' && v[0] === '=' && !area.corte) v = desloca(v, dr, dc);
+      pares.push([['dados', g, rid, c.id], v === undefined ? '' : v]); pares.push([['fmt', g, rid, c.id], Object.keys(x.f).length ? x.f : '']); }));
+    if(area.corte) area = null;
+  } else {
+    const linhas = norm(txt).split('\n').map(l => l.split('\t')); n = linhas.length;
+    while(o.length < sel.r + linhas.length){ o.push(novoId()); novasLinhas++; }
+    if(novasLinhas) pares.push([['guias', g, 'ordem'], o]);
+    linhas.forEach((l, i) => l.forEach((v, j) => { const c = cols()[sel.c + j]; if(!c) return; pares.push([['dados', g, o[sel.r + i], c.id], converte(c, v)]); }));
+  }
+  grava(pares); pinta(); toast(`Colado: ${n} linha(s)${novasLinhas ? ' · ' + novasLinhas + ' nova(s)' : ''}`);
+}
 document.addEventListener('paste', e => {
-  if(vis !== 'grade' || editando || nivel !== 'editar' || document.activeElement === $('#fxIn') || document.activeElement === $('#busca') || document.activeElement === $('#nome')) return;
-  const txt = e.clipboardData.getData('text/plain'); if(!txt) return; e.preventDefault();
-  const linhas = txt.replace(/\r/g, '').replace(/\n$/, '').split('\n').map(l => l.split('\t'));
-  const pares = [], o = ordem().slice(); let novasLinhas = 0;
-  while(o.length < sel.r + linhas.length){ o.push(novoId()); novasLinhas++; }
-  if(novasLinhas) pares.push([['guias', g, 'ordem'], o]);
-  linhas.forEach((l, i) => l.forEach((v, j) => { const c = cols()[sel.c + j]; if(!c) return; pares.push([['dados', g, o[sel.r + i], c.id], converte(c, v)]); }));
-  grava(pares); pinta(); toast(`Colado: ${linhas.length} linha(s)${novasLinhas ? ' · ' + novasLinhas + ' nova(s)' : ''}`);
+  if(vis !== 'grade' || editando || nivel !== 'editar' || document.activeElement === $('#fxIn') || document.activeElement === $('#busca') || document.activeElement === $('#nome') || (document.activeElement && document.activeElement.closest && document.activeElement.closest('.fundo,.menu'))) return;
+  const txt = e.clipboardData.getData('text/plain'); if(!txt) return; e.preventDefault(); colaTexto(txt);
 });
 
 // ---------- eventos da grade ----------
 const vEl = $('#vis'); vEl.tabIndex = 0;
+let arrastando = false;
 vEl.addEventListener('mousedown', e => {
-  const td = e.target.closest('td[data-c]'); if(!td || e.target.closest('a')) return;
+  const td = e.target.closest('td[data-c]'); if(!td || e.target.closest('a') || e.button !== 0) return;
   if(editando) confirma(null);
   const r = +td.dataset.r, c = +td.dataset.c;
-  if(e.shiftKey){ ancora = ancora || {...sel}; } else ancora = null;
-  sel = {r, c}; marcaSel(); presenca();
+  if(e.shiftKey){ ancora = ancora || {...sel}; } else ancora = {r, c};
+  sel = {r, c}; arrastando = true; marcaSel(); presenca();
   if(tipoDe(cols()[c]) === 'caixa' && e.target.closest('.chk')) abreEditor();
 });
+// arrastar com o botão apertado seleciona várias células (como no Excel)
+vEl.addEventListener('mousemove', e => { if(!arrastando) return; const td = e.target.closest('td[data-c]'); if(!td) return; const r = +td.dataset.r, c = +td.dataset.c; if(r !== sel.r || c !== sel.c){ sel = {r, c}; marcaSel(); } });
+addEventListener('mouseup', () => { if(!arrastando) return; arrastando = false; if(ancora && ancora.r === sel.r && ancora.c === sel.c) ancora = null;
+  if(pincel){ const f = pincel; pincel = null; document.body.classList.remove('pinc'); aplicaFmt(f, true); } presenca(); });
 vEl.addEventListener('dblclick', e => { if(e.target.closest('td[data-c]')) abreEditor(); });
 vEl.addEventListener('mouseover', e => { const td = e.target.closest('td[data-c]'); if(!td) return; const rid = ordem()[+td.dataset.r], c = cols()[+td.dataset.c]; const k = rid && c ? rid + ':' + c.id : ''; if(k !== hoverCel){ hoverCel = k; presenca(); } });
 vEl.addEventListener('scroll', () => pintaPres(), {passive:true});
 addEventListener('resize', () => pintaPres());
 vEl.addEventListener('click', e => {
   if(e.target.id === 'addLinha'){ novaLinha(); return; }
+  const fbt = e.target.closest('[data-filtro]'); if(fbt){ e.stopPropagation(); janelaFiltro(+fbt.dataset.filtro, fbt); return; }
   const th = e.target.closest('th[data-col]'); if(th){ menuColuna(+th.dataset.col, th); return; }
   const rn = e.target.closest('td[data-rn]'); if(rn){ menuLinha(+rn.dataset.rn, rn); }
 });
@@ -824,7 +934,11 @@ document.addEventListener('keydown', e => {
   if(!S || vis !== 'grade' || editando || document.querySelector('.fundo,.menu')) return;
   const foco = document.activeElement; if(foco && (foco.tagName === 'INPUT' || foco.tagName === 'SELECT' || foco.tagName === 'TEXTAREA')) return;
   const k = e.key, ctrl = e.ctrlKey || e.metaKey;
-  if(ctrl && (k === 'z' || k === 'Z')){ e.preventDefault(); volta(); return; }
+  if(ctrl && (k === 'z' || k === 'Z')){ e.preventDefault(); if(e.shiftKey) refaz(); else volta(); return; }
+  if(ctrl && (k === 'y' || k === 'Y')){ e.preventDefault(); refaz(); return; }
+  if(ctrl && nivel === 'editar' && /^[bnius]$/i.test(k)){ e.preventDefault(); alterna({b:'b', n:'b', i:'i', u:'u', s:'u'}[k.toLowerCase()]); return; }
+  if(ctrl && (k === 'l' || k === 'L')){ e.preventDefault(); janelaLocalizar(false); return; }
+  if(k === 'Escape' && pincel){ pincel = null; document.body.classList.remove('pinc'); pintaFita(); return; }
   if(ctrl && (k === 'f' || k === 'F')){ e.preventDefault(); $('#busca').focus(); return; }
   if(k === 'ArrowDown'){ e.preventDefault(); move(1, 0, e.shiftKey); } else if(k === 'ArrowUp'){ e.preventDefault(); move(-1, 0, e.shiftKey); }
   else if(k === 'ArrowRight'){ e.preventDefault(); move(0, 1, e.shiftKey); } else if(k === 'ArrowLeft'){ e.preventDefault(); move(0, -1, e.shiftKey); }
@@ -836,8 +950,9 @@ document.addEventListener('keydown', e => {
   else if(k === ' ' && tipoDe(cols()[sel.c]) === 'caixa'){ e.preventDefault(); abreEditor(); }
   else if(k.length === 1 && !ctrl && !e.altKey){ abreEditor(k); e.preventDefault(); }
 });
-function volta(){ const u = desfazer.pop(); if(!u){ return; } grava(u.map(([p, v]) => [p, v === undefined ? '' : v]), {semDesfazer:true}); $('#bDesfaz').disabled = !desfazer.length; pinta(); toast('Desfeito'); }
-$('#bDesfaz').onclick = volta;
+let refazer = [];
+function volta(){ const u = desfazer.pop(); if(!u) return; refazer.push(u.map(([p]) => [p, pega(p)])); grava(u.map(([p, v]) => [p, v === undefined ? '' : v]), {semDesfazer:true}); $('#bDesfaz').disabled = !desfazer.length; pinta(); toast('Desfeito'); }
+function refaz(){ const u = refazer.pop(); if(!u) return; desfazer.push(u.map(([p]) => [p, pega(p)])); $('#bDesfaz').disabled = false; grava(u.map(([p, v]) => [p, v === undefined ? '' : v]), {semDesfazer:true}); pinta(); toast('Refeito'); }
 
 // barra de fórmula
 $('#fxIn').addEventListener('keydown', e => {
@@ -850,8 +965,7 @@ function novaLinha(pos){
   if(!cabe()) return; const o = ordem().slice(), rid = novoId(); if(pos === undefined) o.push(rid); else o.splice(pos, 0, rid);
   grava([[['guias', g, 'ordem'], o]]); pinta(); sel = {r:pos === undefined ? o.length - 1 : pos, c:0}; marcaSel(); const td = celTd(sel.r, 0); if(td) td.scrollIntoView({block:'nearest'});
 }
-$('#bLinha').onclick = () => novaLinha();
-$('#bColuna').onclick = () => janelaColuna(null);
+
 function menu(itens, ancoraEl){
   fechaMenus(); const m = document.createElement('div'); m.className = 'menu';
   itens.forEach(it => { if(it === '-'){ m.appendChild(document.createElement('hr')); return; } const b = document.createElement('button'); b.textContent = it[0]; if(it[2]) b.className = it[2]; b.onclick = () => { fechaMenus(); it[1](); }; m.appendChild(b); });
@@ -971,6 +1085,262 @@ $('#arq').onchange = async () => {
   }catch(e){ toast('Não importou: ' + (e.message || e)); }
 };
 
+// ---------- Página Inicial (fita no estilo do Excel): formatação, tabelas, filtros, condicional ----------
+// Formatação fica em fmt.<guia>.<linha>.<coluna> = {b,i,u,s,fc,bg,al,wr,fs,ff,nf,dec,bd:{t,b,l,r}}; regras condicionais
+// em guias.<g>.cond e o estilo de tabela em guias.<g>.tabela. Filtro é de cada pessoa (não esconde linhas dos outros).
+const fmtDe = (rid, cid, gid = g) => (((S.fmt || {})[gid] || {})[rid] || {})[cid] || {};
+const lum = hex => { const m = /^#?([0-9a-f]{6})$/i.exec(hex || ''); if(!m) return .5; const n = parseInt(m[1], 16); const c = [n >> 16, n >> 8 & 255, n & 255].map(x => { x /= 255; return x <= .03928 ? x / 12.92 : Math.pow((x + .055) / 1.055, 2.4); }); return .2126 * c[0] + .7152 * c[1] + .0722 * c[2]; };
+function numFmt(n, nf, dec){
+  const o = dec != null ? {minimumFractionDigits:dec, maximumFractionDigits:dec} : null;
+  if(nf === 'moeda') return new Intl.NumberFormat('pt-BR', {style:'currency', currency:'BRL', ...(o || {})}).format(n);
+  if(nf === 'pct') return new Intl.NumberFormat('pt-BR', {style:'percent', ...(o || {maximumFractionDigits:2})}).format(n);
+  return new Intl.NumberFormat('pt-BR', o || {maximumFractionDigits:6}).format(n);
+}
+// texto que a célula mostra (para filtro, busca e localizar)
+function textoCel(li, ci, gid = g){
+  const c = (S.guias[gid].cols || [])[ci], v = valor(gid, li, ci);
+  if(F.ehErro(v)) return String(v); if(v === '' || v == null) return '';
+  const t = tipoDe(c); if(t === 'pessoa') return nomeP(v); if(t === 'data') return dataBR(typeof v === 'number' ? F.serieData(v) : v);
+  if(t === 'caixa') return v === true || /^(true|sim|1|x)$/i.test(String(v)) ? 'Sim' : 'Não';
+  if(typeof v === 'number') return t === 'moeda' ? mfmt.format(v) : nfmt.format(v); return String(v);
+}
+// ---- regras condicionais ----
+const COND_OPS = {maior:'Maior que', menor:'Menor que', igual:'Igual a', dif:'Diferente de', entre:'Entre', contem:'Contém o texto', vazio:'Está vazia', vencida:'Data já passou', duplicado:'Valores duplicados', escala:'Escala de cores', barra:'Barras de dados'};
+const PRESETS = [['Vermelho claro, texto vermelho', '#ffc7ce', '#9c0006'], ['Amarelo, texto marrom', '#ffeb9c', '#9c5700'], ['Verde, texto verde escuro', '#c6efce', '#006100'], ['Azul claro', '#cfe2ff', '#0b3d91'], ['Só texto vermelho', '', '#e2564f'], ['Negrito vermelho', '', '#ff4d6d']];
+function statsCond(){
+  const out = {};
+  (G().cond || []).forEach(rg => {
+    if(!['escala', 'barra', 'duplicado'].includes(rg.op)) return;
+    const st = {min:Infinity, max:-Infinity, cont:{}};
+    (rg.cols || []).forEach(cid => { const ci = cols().findIndex(c => c.id === cid); if(ci < 0) return;
+      ordem().forEach((rid, li) => { const v = valor(g, li, ci); if(v === '' || v == null || F.ehErro(v)) return; const n = F.num(v);
+        if(!F.ehErro(n) && typeof v !== 'string' || typeof v === 'string' && !F.ehErro(n) && /^[\d\s.,-]+$/.test(v)){ st.min = Math.min(st.min, n); st.max = Math.max(st.max, n); }
+        const k = String(v).trim().toLowerCase(); st.cont[k] = (st.cont[k] || 0) + 1; }); });
+    out[rg.id] = st;
+  });
+  return out;
+}
+function condDe(cid, li, ci, stats){
+  const r = {}; const v = valor(g, li, ci); const vazio = v === '' || v == null;
+  for(const rg of (G().cond || [])){
+    if(!(rg.cols || []).includes(cid)) continue;
+    const n = F.num(v), a = F.num(rg.v), b = F.num(rg.v2), txt = String(v ?? '').toLowerCase();
+    const numOk = !vazio && !F.ehErro(n), st = stats[rg.id];
+    let ok = false;
+    if(rg.op === 'maior') ok = numOk && !F.ehErro(a) && n > a;
+    else if(rg.op === 'menor') ok = numOk && !F.ehErro(a) && n < a;
+    else if(rg.op === 'entre') ok = numOk && !F.ehErro(a) && !F.ehErro(b) && n >= Math.min(a, b) && n <= Math.max(a, b);
+    else if(rg.op === 'igual') ok = !vazio && (numOk && !F.ehErro(a) && String(rg.v).trim() !== '' ? n === a : txt.trim() === String(rg.v || '').toLowerCase().trim());
+    else if(rg.op === 'dif') ok = !vazio && txt.trim() !== String(rg.v || '').toLowerCase().trim();
+    else if(rg.op === 'contem') ok = !vazio && String(rg.v || '') !== '' && txt.includes(String(rg.v).toLowerCase());
+    else if(rg.op === 'vazio') ok = vazio;
+    else if(rg.op === 'vencida'){ const s = typeof v === 'number' ? F.serieData(v) : String(v ?? ''); ok = /^\d{4}-\d{2}-\d{2}$/.test(s) && s < hojeISO(); }
+    else if(rg.op === 'duplicado') ok = !vazio && st && st.cont[String(v).trim().toLowerCase()] > 1;
+    else if(rg.op === 'escala' && numOk && st && st.max > st.min){ const p = (n - st.min) / (st.max - st.min); const cor = p < .5 ? mistura('#f8696b', '#ffeb84', p * 2) : mistura('#ffeb84', '#63be7b', (p - .5) * 2); r.bg = r.bg || cor; r.fc = r.fc || '#111'; continue; }
+    else if(rg.op === 'barra' && numOk && st && st.max > 0){ const p = Math.max(0, Math.min(100, n / st.max * 100)); r.barra = {p, cor:rg.bg || '#638ec6'}; continue; }
+    if(ok){ if(rg.bg && !r.bg) r.bg = rg.bg; if(rg.fc && !r.fc) r.fc = rg.fc; if(rg.b) r.b = true; }
+  }
+  return r;
+}
+function mistura(a, b, t){ const p = h => [1, 3, 5].map(i => parseInt(h.slice(i, i + 2), 16)); const x = p(a), y = p(b); return '#' + x.map((v, i) => Math.round(v + (y[i] - v) * t).toString(16).padStart(2, '0')).join(''); }
+function estiloCel(f, cd, ehC0){
+  const st = [];
+  if(f.b || cd.b) st.push('font-weight:700'); if(f.i) st.push('font-style:italic');
+  const deco = [f.u && 'underline', f.s && 'line-through'].filter(Boolean); if(deco.length) st.push('text-decoration:' + deco.join(' '));
+  const bg = cd.bg || f.bg, fc = cd.fc || f.fc || (bg ? (lum(bg) > .35 ? '#111' : '#fff') : '');
+  if(bg) st.push('background-color:' + bg); if(fc) st.push('color:' + fc);
+  if(cd.barra) st.push(`background-image:linear-gradient(90deg,${cd.barra.cor}88 ${cd.barra.p}%,transparent ${cd.barra.p}%)`);
+  if(f.al) st.push('text-align:' + f.al); if(f.wr) st.push('white-space:normal;word-break:break-word;line-height:1.3;padding-top:5px;padding-bottom:5px');
+  if(f.fs) st.push('font-size:' + f.fs + 'px'); if(f.ff) st.push('font-family:' + f.ff);
+  const bd = f.bd || {}, sh = [];
+  if(bd.t) sh.push('inset 0 2px 0 var(--t1)'); if(bd.b) sh.push('inset 0 -2px 0 var(--t1)'); if(bd.l) sh.push('inset 2px 0 0 var(--t1)'); if(bd.r) sh.push('inset -2px 0 0 var(--t1)');
+  if(sh.length) st.push('box-shadow:' + sh.join(','));
+  return st.join(';');
+}
+// ---- filtros (de cada pessoa) ----
+let filtros = {};
+const filtroAtivo = () => Object.values(filtros[g] || {}).some(s => s && s.size);
+const temFiltro = () => !!(G().tabela || G().filtro);
+
+// ---- aplicar formatação na seleção ----
+function celulasSel(){ const {r0, r1, c0, c1} = intervalo(), l = []; for(let r = r0; r <= r1; r++) for(let c = c0; c <= c1; c++){ const rid = ordem()[r], co = cols()[c]; if(rid && co) l.push({r, c, rid, cid:co.id}); } return l; }
+function aplicaFmt(mut, substitui){
+  if(nivel !== 'editar') return; const p = [];
+  celulasSel().forEach(({rid, cid}) => { const o = substitui ? {...mut} : {...fmtDe(rid, cid), ...mut}; Object.keys(o).forEach(k => { if(o[k] == null || o[k] === false || o[k] === '') delete o[k]; }); p.push([['fmt', g, rid, cid], Object.keys(o).length ? o : '']); });
+  grava(p); pinta();
+}
+const ativo = () => { const rid = ordem()[sel.r], c = cols()[sel.c]; return rid && c ? fmtDe(rid, c.id) : {}; };
+const alterna = k => aplicaFmt({[k]: ativo()[k] ? null : true});
+function bordas(tipo){
+  if(nivel !== 'editar') return; const {r0, r1, c0, c1} = intervalo(), p = [];
+  celulasSel().forEach(({r, c, rid, cid}) => { const f = {...fmtDe(rid, cid)}; let bd = {...(f.bd || {})};
+    if(tipo === 'nenhuma') bd = {}; else if(tipo === 'todas') bd = {t:1, b:1, l:1, r:1};
+    else if(tipo === 'externa'){ if(r === r0) bd.t = 1; if(r === r1) bd.b = 1; if(c === c0) bd.l = 1; if(c === c1) bd.r = 1; }
+    else if(tipo === 'inferior'){ if(r === r1) bd.b = 1; } else if(tipo === 'superior'){ if(r === r0) bd.t = 1; }
+    if(Object.keys(bd).length) f.bd = bd; else delete f.bd; p.push([['fmt', g, rid, cid], Object.keys(f).length ? f : '']); });
+  grava(p); pinta();
+}
+let pincel = null;
+// ---- paleta de cores ----
+const PALETA = ['#000000', '#ffffff', '#e7e6e6', '#44546a', '#4472c4', '#ed7d31', '#a5a5a5', '#ffc000', '#5b9bd5', '#70ad47',
+  '#7f7f7f', '#f2f2f2', '#d0cece', '#d6dce4', '#d9e2f3', '#fbe5d5', '#ededed', '#fff2cc', '#deebf6', '#e2efd9',
+  '#c00000', '#ff0000', '#ffc7ce', '#ffeb9c', '#c6efce', '#9c0006', '#00b050', '#0070c0', '#002060', '#7030a0', '#d40f3a', '#37b8a6', '#8b8dfb', '#d8a94a'];
+function paleta(el, campo){
+  fechaMenus(); const m = document.createElement('div'); m.className = 'menu pal';
+  m.innerHTML = `<div class="sw">${PALETA.map(c => `<button data-cor="${c}" style="background:${c}" title="${c}"></button>`).join('')}</div><hr><button data-cor="">${campo === 'bg' ? 'Sem preenchimento' : 'Cor automática'}</button><label class="mais">Mais cores… <input type="color" value="#d40f3a"></label>`;
+  document.body.appendChild(m); const r = el.getBoundingClientRect(); m.style.left = Math.min(innerWidth - m.offsetWidth - 8, r.left) + 'px'; m.style.top = Math.min(innerHeight - m.offsetHeight - 8, r.bottom + 4) + 'px';
+  const usa = cor => { fechaMenus(); ultCor[campo] = cor; const bar = document.querySelector(`[data-cmd="${campo}"] .barcor`); if(bar) bar.style.background = cor || 'transparent'; aplicaFmt({[campo]: cor || null}); };
+  m.querySelectorAll('[data-cor]').forEach(b => b.onclick = () => usa(b.dataset.cor));
+  m.querySelector('input[type=color]').onchange = e => usa(e.target.value);
+  setTimeout(() => document.addEventListener('mousedown', function fora(e){ if(!m.contains(e.target)) fechaMenus(); else document.addEventListener('mousedown', fora, {once:true}); }, {once:true}), 0);
+}
+const ultCor = {fc:'#ff0000', bg:'#ffeb9c'};
+
+// ---- tabela ----
+const CORES_TAB = [['Vermelho', '#d40f3a'], ['Azul', '#4472c4'], ['Verde', '#2e9e6a'], ['Laranja', '#ed7d31'], ['Roxo', '#7b5cd6'], ['Cinza', '#5f6b7a'], ['Turquesa', '#1f9e95'], ['Dourado', '#b8860b']];
+function menuTabela(el){
+  fechaMenus(); const m = document.createElement('div'); m.className = 'menu pal'; const tb = G().tabela;
+  m.innerHTML = `<b style="padding:4px 8px;font-size:12px;color:var(--t2)">Estilo da tabela (guia inteira)</b><div class="tabs">${CORES_TAB.map(([n, c]) => `<button data-tb="${c}" title="${n}" class="${tb && tb.cor === c ? 'on' : ''}"><i style="background:${c}"></i><i style="background:${c}33"></i><i></i><i style="background:${c}33"></i></button>`).join('')}</div>
+    <hr><button data-tot>${tb && tb.total ? '✓ ' : ''}Linha de total</button>${tb ? '<button data-rem class="perigo">Remover estilo de tabela</button>' : ''}`;
+  document.body.appendChild(m); const r = el.getBoundingClientRect(); m.style.left = Math.min(innerWidth - m.offsetWidth - 8, r.left) + 'px'; m.style.top = Math.min(innerHeight - m.offsetHeight - 8, r.bottom + 4) + 'px';
+  m.querySelectorAll('[data-tb]').forEach(b => b.onclick = () => { fechaMenus(); grava([[['guias', g, 'tabela'], {cor:b.dataset.tb, total:!!(tb && tb.total)}]]); pinta(); toast('Guia formatada como tabela: listras, filtro e cabeçalho'); });
+  m.querySelector('[data-tot]').onclick = () => { fechaMenus(); grava([[['guias', g, 'tabela'], {cor:(tb && tb.cor) || CORES_TAB[0][1], total:!(tb && tb.total)}]]); pinta(); };
+  const rm = m.querySelector('[data-rem]'); if(rm) rm.onclick = () => { fechaMenus(); grava([[['guias', g, 'tabela'], '']]); pinta(); };
+  setTimeout(() => document.addEventListener('mousedown', function fora(e){ if(!m.contains(e.target)) fechaMenus(); else document.addEventListener('mousedown', fora, {once:true}); }, {once:true}), 0);
+}
+// ---- formatação condicional ----
+function janelaCond(op){
+  const {c0, c1} = intervalo(), cids = cols().slice(c0, c1 + 1).map(c => c.id), letras = cids.map(id => F.colLetra(cols().findIndex(c => c.id === id))).join(', ');
+  const semValor = ['vazio', 'vencida', 'duplicado', 'escala', 'barra'].includes(op);
+  const f = janela(`<h3>Formatação condicional</h3>
+    <p class="ajuda">Vale para a(s) coluna(s) <b>${esc(letras)}</b> da guia inteira (linhas novas também).</p>
+    <label class="campo">Regra<select id="kOp">${Object.entries(COND_OPS).map(([k, n]) => `<option value="${k}"${k === op ? ' selected' : ''}>${n}</option>`).join('')}</select></label>
+    <div id="kVals" style="display:flex;gap:8px"><label class="campo" style="flex:1">Valor<input id="kV"></label><label class="campo hidden" id="kV2w" style="flex:1">e<input id="kV2"></label></div>
+    <label class="campo" id="kEstw">Formato<select id="kEst">${PRESETS.map(([n], i) => `<option value="${i}">${n}</option>`).join('')}</select></label>
+    <div class="acoes"><button class="btn" data-x>Cancelar</button><button class="btn pri" data-ok>Aplicar</button></div>`);
+  const ajusta = () => { const o = f.querySelector('#kOp').value; f.querySelector('#kVals').classList.toggle('hidden', ['vazio', 'vencida', 'duplicado', 'escala', 'barra'].includes(o)); f.querySelector('#kV2w').classList.toggle('hidden', o !== 'entre'); f.querySelector('#kEstw').classList.toggle('hidden', ['escala', 'barra'].includes(o)); };
+  f.querySelector('#kOp').onchange = ajusta; ajusta();
+  f.querySelector('[data-ok]').onclick = () => { const o = f.querySelector('#kOp').value, pr = PRESETS[+f.querySelector('#kEst').value];
+    const rg = {id:novoId(), cols:cids, op:o, v:f.querySelector('#kV').value.trim(), v2:f.querySelector('#kV2').value.trim()};
+    if(o === 'barra') rg.bg = '#638ec6'; else if(o !== 'escala'){ if(pr[1]) rg.bg = pr[1]; if(pr[2]) rg.fc = pr[2]; if(/Negrito/.test(pr[0])) rg.b = true; }
+    grava([[['guias', g, 'cond'], [...(G().cond || []), rg]]]); fecha(f); pinta(); toast('Regra aplicada'); };
+}
+function janelaRegras(){
+  const f = janela(`<h3>Regras de formatação condicional</h3><div id="kL" class="ops"></div><div class="acoes"><button class="btn pri" data-x>Fechar</button></div>`);
+  const p = () => { const l = G().cond || []; f.querySelector('#kL').innerHTML = l.length ? l.map((rg, i) => `<div class="op" style="justify-content:space-between;border:1px solid var(--hair);border-radius:9px;padding:7px 10px">
+      <span><span class="pill" style="background:${rg.bg || 'transparent'};color:${rg.fc || 'var(--t1)'}">${esc(COND_OPS[rg.op])}${rg.v ? ' ' + esc(rg.v) : ''}${rg.op === 'entre' ? ' e ' + esc(rg.v2) : ''}</span> <span class="ajuda">colunas ${esc((rg.cols || []).map(id => F.colLetra(cols().findIndex(c => c.id === id))).join(', '))}</span></span>
+      ${nivel === 'editar' ? `<button class="btn" data-del="${i}">Excluir</button>` : ''}</div>`).join('') : '<p class="ajuda">Nenhuma regra nesta guia.</p>';
+    f.querySelectorAll('[data-del]').forEach(b => b.onclick = () => { const n = (G().cond || []).slice(); n.splice(+b.dataset.del, 1); grava([[['guias', g, 'cond'], n.length ? n : '']]); pinta(); p(); }); };
+  p();
+}
+// ---- filtro de coluna ----
+function janelaFiltro(ci, el){
+  fechaMenus(); const c = cols()[ci], hid = new Set(((filtros[g] || {})[c.id]) || []);
+  const vals = [...new Set(ordem().map((rid, li) => textoCel(li, ci)))].sort((a, b) => a.localeCompare(b, 'pt-BR', {numeric:true}));
+  const m = document.createElement('div'); m.className = 'menu filtro';
+  m.innerHTML = `<button data-o="1">Classificar A → Z</button><button data-o="-1">Classificar Z → A</button><hr>
+    <input class="busca" placeholder="Pesquisar…" style="width:100%"><label class="fl"><input type="checkbox" data-todos checked> (Selecionar tudo)</label>
+    <div class="fls">${vals.map(v => `<label class="fl"><input type="checkbox" value="${esc(v)}"${hid.has(v) ? '' : ' checked'}> ${esc(v === '' ? '(vazias)' : v)}</label>`).join('')}</div>
+    <div class="acoes"><button class="btn" data-limpa>Limpar filtro</button><button class="btn pri" data-ok>OK</button></div>`;
+  document.body.appendChild(m); const r = el.getBoundingClientRect(); m.style.left = Math.min(innerWidth - m.offsetWidth - 8, r.left) + 'px'; m.style.top = Math.min(innerHeight - m.offsetHeight - 8, r.bottom + 4) + 'px';
+  const caixas = () => [...m.querySelectorAll('.fls input')];
+  m.querySelector('[data-todos]').checked = caixas().every(x => x.checked);
+  m.querySelector('[data-todos]').onchange = e => caixas().forEach(x => { if(x.parentElement.style.display !== 'none') x.checked = e.target.checked; });
+  m.querySelector('.busca').oninput = e => { const q = e.target.value.toLowerCase(); caixas().forEach(x => { x.parentElement.style.display = x.value.toLowerCase().includes(q) ? '' : 'none'; }); };
+  m.querySelectorAll('[data-o]').forEach(b => b.onclick = () => { fechaMenus(); ordena(ci, +b.dataset.o); });
+  m.querySelector('[data-limpa]').onclick = () => { fechaMenus(); if(filtros[g]) delete filtros[g][c.id]; pinta(); };
+  m.querySelector('[data-ok]').onclick = () => { fechaMenus(); const h = new Set(caixas().filter(x => !x.checked).map(x => x.value)); filtros[g] = filtros[g] || {}; if(h.size) filtros[g][c.id] = h; else delete filtros[g][c.id]; pinta(); if(h.size) toast('Filtro aplicado só na sua tela'); };
+  setTimeout(() => document.addEventListener('mousedown', function fora(e){ if(!m.contains(e.target)) fechaMenus(); else document.addEventListener('mousedown', fora, {once:true}); }, {once:true}), 0);
+  m.querySelector('.busca').focus();
+}
+// ---- AutoSoma ----
+function autoSoma(fn = 'SOMA'){
+  if(nivel !== 'editar') return; const {r0, r1, c0, c1} = intervalo(); const L = F.colLetra;
+  const ehNum = (r, c) => { const v = valor(g, r, c); return v !== '' && v != null && !F.ehErro(F.num(v)) && typeof v !== 'boolean'; };
+  if(r1 > r0){ // várias linhas selecionadas: resultado logo abaixo de cada coluna
+    const o = ordem().slice(), p = []; if(r1 + 1 >= o.length){ o.push(novoId()); p.push([['guias', g, 'ordem'], o]); }
+    for(let c = c0; c <= c1; c++) p.push([['dados', g, o[r1 + 1], cols()[c].id], `=${fn}(${L(c)}${r0 + 1}:${L(c)}${r1 + 1})`]);
+    grava(p); pinta(); return;
+  }
+  let a = sel.r - 1; while(a >= 0 && ehNum(a, sel.c)) a--;
+  let f;
+  if(a < sel.r - 1) f = `=${fn}(${L(sel.c)}${a + 2}:${L(sel.c)}${sel.r})`;
+  else { let b = sel.c - 1; while(b >= 0 && ehNum(sel.r, b)) b--; f = b < sel.c - 1 ? `=${fn}(${L(b + 1)}${sel.r + 1}:${L(sel.c - 1)}${sel.r + 1})` : `=${fn}()`; }
+  if(f.endsWith('()')){ abreEditor(f.slice(0, -1)); return; }
+  grava([[['dados', g, ordem()[sel.r], cols()[sel.c].id], f]]); pinta();
+}
+// ---- localizar e substituir ----
+function janelaLocalizar(subst){
+  const f = janela(`<h3>Localizar${subst ? ' e substituir' : ''}</h3><label class="campo">Localizar<input id="lQ"></label>
+    ${subst ? '<label class="campo">Substituir por<input id="lR"></label>' : ''}<span class="ajuda" id="lInfo"></span>
+    <div class="acoes"><button class="btn" data-x>Fechar</button>${subst ? '<button class="btn" id="lTudo">Substituir tudo</button><button class="btn" id="lUm">Substituir</button>' : ''}<button class="btn pri" id="lProx">Localizar próxima</button></div>`);
+  const achados = () => { const q = f.querySelector('#lQ').value.toLowerCase(), l = []; if(!q) return l; ordem().forEach((rid, r) => cols().forEach((c, ci) => { if(textoCel(r, ci).toLowerCase().includes(q) || String(cel(g, rid, c.id) ?? '').toLowerCase().includes(q)) l.push({r, c:ci}); })); return l; };
+  const prox = () => { const l = achados(); f.querySelector('#lInfo').textContent = l.length ? l.length + ' encontrada(s)' : 'Nada encontrado'; if(!l.length) return;
+    const k = l.find(x => x.r > sel.r || x.r === sel.r && x.c > sel.c) || l[0]; ancora = null; sel = {r:k.r, c:k.c}; marcaSel(); const td = celTd(k.r, k.c); if(td) td.scrollIntoView({block:'center', inline:'nearest', behavior:'smooth'}); };
+  f.querySelector('#lProx').onclick = prox; f.querySelector('#lQ').addEventListener('keydown', e => { if(e.key === 'Enter') prox(); });
+  const troca = (rid, c) => { const v = cel(g, rid, c.id); if(typeof v !== 'string' && typeof v !== 'number') return null; const q = f.querySelector('#lQ').value; const s = String(v); const re = new RegExp(q.replace(/[.*+?^${}()|[\]\\]/g, '\\$&'), 'gi'); if(!re.test(s)) return null; return converte(c, s.replace(re, f.querySelector('#lR').value)); };
+  if(subst){
+    f.querySelector('#lUm').onclick = () => { const rid = ordem()[sel.r], c = cols()[sel.c]; const n = rid && c && troca(rid, c); if(n !== null && n !== undefined){ grava([[['dados', g, rid, c.id], n]]); pinta(); } prox(); };
+    f.querySelector('#lTudo').onclick = () => { const p = []; ordem().forEach(rid => cols().forEach(c => { const n = troca(rid, c); if(n !== null) p.push([['dados', g, rid, c.id], n]); })); if(p.length){ grava(p); pinta(); } f.querySelector('#lInfo').textContent = p.length + ' substituição(ões)'; };
+  }
+}
+// ---- células: inserir / excluir / largura ----
+function excluiLinhasSel(){ const {r0, r1} = intervalo(), o = ordem().slice(), fora = o.slice(r0, r1 + 1); o.splice(r0, r1 - r0 + 1); const p = [[['guias', g, 'ordem'], o]]; fora.forEach(rid => { p.push([['dados', g, rid], '']); if(((S.fmt || {})[g] || {})[rid]) p.push([['fmt', g, rid], '']); }); grava(p); sel.r = Math.min(sel.r, Math.max(0, o.length - 1)); ancora = null; pinta(); }
+function excluiColunasSel(){ const {c0, c1} = intervalo(); if(c1 - c0 + 1 >= cols().length){ toast('A guia precisa de pelo menos uma coluna'); return; }
+  confirmaExclusao(c1 > c0 ? 'as colunas ' + F.colLetra(c0) + ' a ' + F.colLetra(c1) : 'a coluna "' + cols()[c0].nome + '"', () => { const cs = cols().slice(), tira = cs.splice(c0, c1 - c0 + 1), p = [[['guias', g, 'cols'], cs]];
+    ordem().forEach(rid => tira.forEach(c => { if(cel(g, rid, c.id) !== undefined) p.push([['dados', g, rid, c.id], '']); if(fmtDe(rid, c.id).b !== undefined || Object.keys(fmtDe(rid, c.id)).length) p.push([['fmt', g, rid, c.id], '']); })); grava(p); sel.c = Math.min(sel.c, cs.length - 1); ancora = null; pinta(); }); }
+function ajustaLargura(){ const {c0, c1} = intervalo(), cs = cols().map(x => ({...x})); const cv = document.createElement('canvas').getContext('2d'); cv.font = '13px IBM Plex Sans, sans-serif';
+  for(let c = c0; c <= c1; c++){ let w = cv.measureText(cs[c].nome).width + 60; ordem().forEach((rid, r) => { w = Math.max(w, cv.measureText(textoCel(r, c)).width + 30); }); cs[c].larg = Math.round(Math.min(480, Math.max(70, w))); }
+  grava([[['guias', g, 'cols'], cs]]); pinta(); }
+function janelaLargura(){ const c = cols()[sel.c]; const f = janela(`<h3>Largura da coluna ${F.colLetra(sel.c)}</h3><label class="campo">Largura (pixels)<input id="wL" type="number" min="50" max="800" value="${c.larg || 160}"></label><div class="acoes"><button class="btn" data-x>Cancelar</button><button class="btn pri" data-ok>OK</button></div>`);
+  f.querySelector('[data-ok]').onclick = () => { const {c0, c1} = intervalo(), cs = cols().map(x => ({...x})), w = Math.max(50, Math.min(800, +f.querySelector('#wL').value || 160)); for(let i = c0; i <= c1; i++) cs[i].larg = w; grava([[['guias', g, 'cols'], cs]]); fecha(f); pinta(); }; }
+
+// ---- fita: comandos ----
+const CMD = {
+  desfaz:() => volta(), refaz:() => refaz(),
+  colar:async () => { try{ colaTexto(await navigator.clipboard.readText()); }catch(e){ toast('Use Ctrl+V para colar (o navegador não deixou o botão ler a área de transferência)'); } },
+  copiar:() => { corte = false; document.execCommand('copy'); }, recortar:() => { corte = true; document.execCommand('copy'); },
+  pincel:() => { pincel = pincel ? null : {...ativo()}; document.body.classList.toggle('pinc', !!pincel); if(pincel) toast('Pincel: selecione as células que vão receber a formatação'); },
+  b:() => alterna('b'), i:() => alterna('i'), u:() => alterna('u'), s:() => alterna('s'),
+  fc:el => paleta(el, 'fc'), bg:el => paleta(el, 'bg'),
+  bordas:el => menu([['Todas as bordas', () => bordas('todas')], ['Borda externa', () => bordas('externa')], ['Borda inferior', () => bordas('inferior')], ['Borda superior', () => bordas('superior')], '-', ['Sem borda', () => bordas('nenhuma')]], el),
+  maior:() => aplicaFmt({fs:Math.min(32, (ativo().fs || 13) + 1)}), menor:() => aplicaFmt({fs:Math.max(8, (ativo().fs || 13) - 1)}),
+  esq:() => aplicaFmt({al:ativo().al === 'left' ? null : 'left'}), centro:() => aplicaFmt({al:ativo().al === 'center' ? null : 'center'}), dir:() => aplicaFmt({al:ativo().al === 'right' ? null : 'right'}),
+  quebra:() => alterna('wr'),
+  moeda:() => aplicaFmt({nf:'moeda', dec:null}), pct:() => aplicaFmt({nf:'pct', dec:null}), milhar:() => aplicaFmt({nf:'numero', dec:2}),
+  mdec:() => { const a = ativo(); aplicaFmt({dec:Math.min(6, (a.dec != null ? a.dec : a.nf === 'moeda' ? 2 : 0) + 1)}); }, ndec:() => { const a = ativo(); aplicaFmt({dec:Math.max(0, (a.dec != null ? a.dec : a.nf === 'moeda' ? 2 : 1) - 1)}); },
+  cond:el => menu([...['maior', 'menor', 'entre', 'igual', 'contem', 'vencida', 'duplicado'].map(k => [COND_OPS[k] + '…', () => janelaCond(k)]), '-', ['Barras de dados', () => janelaCond('barra')], ['Escala de cores', () => janelaCond('escala')], '-', ['Gerenciar regras…', janelaRegras]], el),
+  tabela:el => menuTabela(el),
+  limpafmt:() => aplicaFmt({}, true),
+  inserir:el => menu([['Inserir linha acima', () => novaLinha(intervalo().r0)], ['Inserir linha abaixo', () => novaLinha(intervalo().r1 + 1)], '-', ['Inserir coluna à esquerda', () => janelaColuna(null, intervalo().c0)], ['Inserir coluna à direita', () => janelaColuna(null, intervalo().c1 + 1)], '-', ['Nova guia', () => document.getElementById('novaGuia').click()]], el),
+  excluir:el => menu([['Excluir linhas selecionadas', excluiLinhasSel, 'perigo'], ['Excluir colunas selecionadas', excluiColunasSel, 'perigo']], el),
+  formatar:el => menu([['Largura da coluna…', janelaLargura], ['Ajustar largura automaticamente', ajustaLargura], '-', ['Editar coluna (nome, tipo, opções)…', () => janelaColuna(sel.c)]], el),
+  soma:el => menu([['Σ Soma', () => autoSoma('SOMA')], ['Média', () => autoSoma('MÉDIA')], ['Contar números', () => autoSoma('CONT.NÚM')], ['Máximo', () => autoSoma('MÁXIMO')], ['Mínimo', () => autoSoma('MÍNIMO')]], el),
+  classifica:el => menu([['Classificar de A a Z', () => ordena(sel.c, 1)], ['Classificar de Z a A', () => ordena(sel.c, -1)], '-', [(G().filtro ? '✓ ' : '') + 'Filtro (botões nos cabeçalhos)', () => { if(nivel !== 'editar'){ toast('Somente leitura'); return; } grava([[['guias', g, 'filtro'], G().filtro ? '' : true]]); pinta(); }], ['Limpar filtros', () => { filtros[g] = {}; pinta(); }]], el),
+  localiza:el => menu([['Localizar…', () => janelaLocalizar(false)], ...(nivel === 'editar' ? [['Substituir…', () => janelaLocalizar(true)]] : [])], el),
+};
+document.getElementById('fita').addEventListener('click', e => { const b = e.target.closest('[data-cmd]'); if(!b || !S) return; if(vis !== 'grade') trocaVis('grade'); const f = CMD[b.dataset.cmd]; if(f) f(b); });
+document.getElementById('fFonte').onchange = e => { aplicaFmt({ff:e.target.value || null}); $('#vis').focus(); };
+document.getElementById('fTam').onchange = e => { aplicaFmt({fs:+e.target.value === 13 ? null : +e.target.value}); $('#vis').focus(); };
+document.getElementById('fNum').onchange = e => { aplicaFmt({nf:e.target.value === 'geral' ? null : e.target.value, dec:null}); $('#vis').focus(); };
+// botões da fita acendem conforme a célula ativa
+function pintaFita(){
+  if(!S || !G()) return; const a = ativo(), on = (k, v) => { const b = document.querySelector(`#fita [data-cmd="${k}"]`); if(b) b.classList.toggle('on', !!v); };
+  on('b', a.b); on('i', a.i); on('u', a.u); on('s', a.s); on('esq', a.al === 'left'); on('centro', a.al === 'center'); on('dir', a.al === 'right'); on('quebra', a.wr); on('pincel', pincel);
+  $('#fFonte').value = a.ff || ''; $('#fTam').value = String(a.fs || 13); $('#fNum').value = a.nf || 'geral';
+  const bf = document.querySelector('#fita [data-cmd="classifica"]'); if(bf) bf.classList.toggle('on', filtroAtivo());
+  $('#bRefaz').disabled = !refazer.length;
+}
+// ---- tema claro / escuro (o mesmo do board) ----
+function aplicaTema(t){ document.documentElement.setAttribute('data-theme', t === 'claro' ? 'claro' : 'escuro'); $('#bTema').title = t === 'claro' ? 'Mudar para tema escuro' : 'Mudar para tema claro'; $('#bTema').innerHTML = t === 'claro' ? ICO_LUA : ICO_SOL; }
+const ICO_SOL = '<svg viewBox="0 0 16 16" width="15" height="15" fill="none" stroke="currentColor" stroke-width="1.4" stroke-linecap="round"><circle cx="8" cy="8" r="3"/><path d="M8 1.5v1.6M8 12.9v1.6M1.5 8h1.6M12.9 8h1.6M3.4 3.4l1.1 1.1M11.5 11.5l1.1 1.1M3.4 12.6l1.1-1.1M11.5 4.5l1.1-1.1"/></svg>';
+const ICO_LUA = '<svg viewBox="0 0 16 16" width="15" height="15" fill="none" stroke="currentColor" stroke-width="1.4" stroke-linejoin="round"><path d="M13.5 9.6A5.8 5.8 0 0 1 6.4 2.5a5.8 5.8 0 1 0 7.1 7.1z"/></svg>';
+let temaAtual = 'escuro'; try{ temaAtual = localStorage.getItem('theme') === 'claro' ? 'claro' : 'escuro'; }catch(e){}
+aplicaTema(temaAtual);
+$('#bTema').onclick = () => { temaAtual = temaAtual === 'claro' ? 'escuro' : 'claro'; try{ localStorage.setItem('theme', temaAtual); }catch(e){}
+  const vai = () => aplicaTema(temaAtual); if(document.startViewTransition && !reduz) document.startViewTransition(vai); else vai(); };
+addEventListener('storage', e => { if(e.key === 'theme'){ temaAtual = e.newValue === 'claro' ? 'claro' : 'escuro'; aplicaTema(temaAtual); } });
+
 // ---------- ajuda ----------
 $('#bAjuda').onclick = () => janela(`<h3>Fórmulas e atalhos</h3>
   <div class="ajuda"><b>Fórmulas</b> começam com <code>=</code>, separadas por <code>;</code>. Colunas são letras (A, B, C…) e linhas são os números da esquerda.<br>
@@ -978,7 +1348,7 @@ $('#bAjuda').onclick = () => janela(`<h3>Fórmulas e atalhos</h3>
   <b>PROCV entre guias:</b> <code>=PROCV(A2;Estoque!A:D;3;0)</code> procura o valor de A2 na 1ª coluna da guia Estoque e traz a 3ª coluna. Guia com espaço no nome: <code>'Minha guia'!A:D</code>.<br>
   <code>=SEERRO(PROCV(...);"não achei")</code> mostra um texto quando não encontra.<br><br>
   Funções: ${F.LISTA.join(', ')}.<br><br>
-  <b>Atalhos:</b> setas andam · Enter ou F2 edita · digitar começa a editar · Shift+setas seleciona várias · Delete limpa · Ctrl+C / Ctrl+V copia e cola (inclusive do Excel) · Ctrl+Z desfaz · Ctrl+F busca.<br>
+  <b>Atalhos:</b> setas andam · Enter ou F2 edita · digitar começa a editar · Shift+setas seleciona várias · Delete limpa · Ctrl+C / Ctrl+V copia e cola (inclusive do Excel) · Ctrl+Z desfaz · Ctrl+Y refaz · Ctrl+B negrito · Ctrl+I itálico · Ctrl+U sublinhado · Ctrl+X recorta · Ctrl+F busca · Ctrl+L localizar. Arraste com o mouse para selecionar várias células.<br>
   Clique no cabeçalho de uma coluna para ordenar, mudar o tipo ou excluir. Clique no número da linha para inserir ou excluir. Clique duas vezes numa guia para renomear.</div>
   <div class="acoes"><button class="btn pri" data-x>Entendi</button></div>`);
 </script>
