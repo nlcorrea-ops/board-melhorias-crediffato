@@ -580,11 +580,24 @@ async function loadVersion(meta){
   loading = true;
   try{
     loader.stage(2, 0);
-    let done = 0;
-    const snaps = await Promise.all(Array.from({ length: meta.parts }, (_, i) => getDoc(partDoc(meta.version, i)).then(s => { loader.stage(2, ++done / meta.parts); return s; })));
-    if(snaps.some(s => !s.exists())) throw new Error("A versão no banco está incompleta — peça pra publicar de novo.");
-    loader.stage(3, 0);
-    const html = await gunzipBase64(snaps.map(s => s.data().data).join(""));
+    // Versão do painel subida direto no site (painel-conteudo.html + a data dela em painel-conteudo-versao.txt):
+    // vale quando é mais nova que a publicada pela engrenagem. Publicar de novo pela engrenagem volta a valer a do banco.
+    let html = null;
+    try{
+      const vr = await fetch(new URL("painel-conteudo-versao.txt", location.href).href, { cache:"no-store" });
+      const siteEm = vr.ok ? Date.parse((await vr.text()).trim()) : NaN, pubEm = Date.parse(meta.updatedAt || "");
+      if(siteEm && (!pubEm || siteEm > pubEm)){
+        const r = await fetch(new URL("painel-conteudo.html", location.href).href, { cache:"no-store" });
+        if(r.ok){ html = await r.text(); loader.stage(2, 1); }
+      }
+    }catch(e){ html = null; }
+    if(html === null){
+      let done = 0;
+      const snaps = await Promise.all(Array.from({ length: meta.parts }, (_, i) => getDoc(partDoc(meta.version, i)).then(s => { loader.stage(2, ++done / meta.parts); return s; })));
+      if(snaps.some(s => !s.exists())) throw new Error("A versão no banco está incompleta — peça pra publicar de novo.");
+      loader.stage(3, 0);
+      html = await gunzipBase64(snaps.map(s => s.data().data).join(""));
+    }
     if(!allowed) return; // acesso retirado enquanto baixava
     await loader.calm();
     if(!allowed) return;
