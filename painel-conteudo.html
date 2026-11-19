@@ -12016,7 +12016,7 @@ console.assert(typeof identSaude('acc') === 'object', 'identSaude');
 const ROBO_URL = 'http://127.0.0.1:47823';
 const roboToken = () => { try{ return localStorage.getItem('roboToken') || ''; }catch(e){ return ''; } };
 // instalador publicado ao lado do painel (robo-local/instalador/montar.cmd gera o zip); versão mínima do robô que este painel espera
-const ROBO_INSTALADOR = 'Instalar-Robo-Local.cmd', ROBO_VERSAO_MIN = 13;   // versão do Instalar-Robo-Local.cmd publicado: robô mais velho que isso se atualiza sozinho
+const ROBO_INSTALADOR = 'Instalar-Robo-Local.cmd', ROBO_VERSAO_MIN = 14;   // versão do Instalar-Robo-Local.cmd publicado: robô mais velho que isso se atualiza sozinho
 // pareamento automático: o robô entrega a chave só para o painel publicado (no arquivo local, cola-se a chave do token.txt)
 // → true (pareou) | false (robô recusou) | 'sem-robo' (nada respondendo neste PC)
 async function roboParear(){
