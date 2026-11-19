@@ -12357,7 +12357,7 @@ function consPeriodos(hoje, fechamento){
       const errMt = erros.find(x => x.startsWith('Metrics:'));
       // o que o robô leu de HSM fica guardado (data, total e dias) para dar para conferir; se o Metrics falhou, fica a leitura anterior + o erro
       const hsmAnt = prevCfg.robo && prevCfg.robo.hsm;
-      const hsmNovo = mt && mt.hsmLeitura ? {em:new Date().toISOString(), total:mt.hsmLeitura.total, mkt:mt.hsm.mkt, util:mt.hsm.util, falha:mt.hsm.naoEleg, ini:mt.hsmLeitura.ini, fim:mt.hsmLeitura.fim, dias:Object.keys(mt.hsmLeitura.porDia || {}).length, ultDia:(mt.hsmLeitura.porDia || {})[mt.hsmLeitura.fim] ?? null}
+      const hsmNovo = mt && mt.hsmLeitura ? {em:new Date().toISOString(), total:mt.hsmLeitura.total, mkt:mt.hsm.mkt, util:mt.hsm.util, falha:mt.hsm.naoEleg, ini:mt.hsmLeitura.ini, fim:mt.hsmLeitura.fim, dias:Object.keys(mt.hsmLeitura.porDia || {}).length, ultDia:(mt.hsmLeitura.porDia || {})[mt.hsmLeitura.fim] ?? null, outros:mt.hsm.outros || 0, porDia:mt.hsmLeitura.porDiaCat || null}
         : hsmAnt ? {...hsmAnt, erro: errMt ? errMt.replace(/^Metrics:\s*/, '') : (mt ? 'o robô está na versão antiga: atualize o Robô local para a v9' : null), tentou:new Date().toISOString()} : (errMt ? {erro:errMt.replace(/^Metrics:\s*/, ''), tentou:new Date().toISOString()} : null);
       prevCfg.robo = {em:new Date().toISOString(), hsm:hsmNovo, respSemana: mt && mt.respSemana ? mt.respSemana : (prevCfg.robo && prevCfg.robo.respSemana) || null, valores:Object.fromEntries(CAMPOS.map(([g, k]) => [g + '.' + k, prevCfg[g][k]]))};
       const ref = P.realizado ? P.realizado.fim : null; if(ref) $s('prevRefDate').value = ref;
@@ -12379,7 +12379,14 @@ function leituraHsm(){
   if(!h){ el.textContent = ''; return; }
   let t = h.total != null ? `HSM lido pelo robô em ${dh(h.em)}: ${h.total.toLocaleString('pt-BR')} disparos de ${br(h.ini)} a ${br(h.fim)} (${(h.mkt || 0).toLocaleString('pt-BR')} Marketing, ${(h.util || 0).toLocaleString('pt-BR')} Utilitário, ${(h.falha || 0).toLocaleString('pt-BR')} com falha)${h.ultDia != null ? ` · só ${br(h.fim)}: ${h.ultDia.toLocaleString('pt-BR')}` : ''}.` : '';
   if(h.erro) t += ` ⚠ Na última tentativa (${dh(h.tentou)}): ${h.erro}.${h.total != null ? ' O HSM acima é da leitura anterior.' : ''}`;
+  const nf = n => (n || 0).toLocaleString('pt-BR');
+  if(h.outros) t += ` ${nf(h.outros)} disparo(s) com outra categoria não entraram no custo.`;
   el.textContent = t; el.style.color = h.erro ? 'var(--warn, #d8a94a)' : '';
+  // conferência dia a dia: compare um dia com o relatório de HSM do Metrics
+  if(h.porDia){ const dias = Object.keys(h.porDia).sort(); const tot = {mkt:0, util:0, falha:0, outros:0}; dias.forEach(d => Object.keys(tot).forEach(k => tot[k] += h.porDia[d][k] || 0));
+    const det = document.createElement('details'); det.style.marginTop = '6px';
+    det.innerHTML = `<summary style="cursor:pointer">Conferir o HSM dia a dia (${dias.length} dias)</summary><div style="max-height:260px;overflow:auto;margin-top:6px"><table style="width:100%;border-collapse:collapse;font-size:12px"><thead><tr>${['Dia', 'Marketing', 'Utilitário', 'Com falha', 'Outros', 'Total'].map((x, i) => `<th style="text-align:${i ? 'right' : 'left'};padding:3px 6px;border-bottom:1px solid currentColor;opacity:.8">${x}</th>`).join('')}</tr></thead><tbody>${dias.map(d => { const x = h.porDia[d]; return `<tr><td style="padding:2px 6px">${d.split('-').reverse().slice(0, 2).join('/')}</td>${[x.mkt, x.util, x.falha, x.outros, x.mkt + x.util + x.falha + x.outros].map(v => `<td style="text-align:right;padding:2px 6px;font-variant-numeric:tabular-nums">${nf(v)}</td>`).join('')}</tr>`; }).join('')}<tr style="font-weight:700"><td style="padding:3px 6px">Total</td>${[tot.mkt, tot.util, tot.falha, tot.outros, tot.mkt + tot.util + tot.falha + tot.outros].map(v => `<td style="text-align:right;padding:3px 6px">${nf(v)}</td>`).join('')}</tr></tbody></table></div>`;
+    el.appendChild(det); }
 }
 </script>
 <script>
