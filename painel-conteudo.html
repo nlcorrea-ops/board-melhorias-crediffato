@@ -1054,6 +1054,7 @@
   .robo-rodar{ display:flex; flex-wrap:wrap; align-items:center; gap:8px 12px; margin-top:10px; }
   .robo-rodar .btn-main:disabled{ opacity:.5; cursor:not-allowed; }
   /* status do robô: selo arredondado com LED + ações em pílula (16-17/11/2026) */
+  .robo-st .robo-ver{ font-family:var(--mono, ui-monospace, monospace); font-size:11px; padding:1px 7px; border-radius:99px; background:rgba(127,127,127,.16); font-weight:600; }
   .robo-st{ display:inline-flex; flex-wrap:wrap; align-items:center; gap:8px; font-size:12.5px; font-weight:600; color:var(--muted);
     padding:6px 8px 6px 12px; border-radius:999px; border:1px solid var(--border); background:color-mix(in srgb, var(--surface) 82%, transparent);
     box-shadow:0 1px 0 rgba(255,255,255,.04) inset, 0 4px 14px -8px rgba(0,0,0,.35); transition:border-color .25s, box-shadow .25s; }
@@ -12015,7 +12016,7 @@ console.assert(typeof identSaude('acc') === 'object', 'identSaude');
 const ROBO_URL = 'http://127.0.0.1:47823';
 const roboToken = () => { try{ return localStorage.getItem('roboToken') || ''; }catch(e){ return ''; } };
 // instalador publicado ao lado do painel (robo-local/instalador/montar.cmd gera o zip); versão mínima do robô que este painel espera
-const ROBO_INSTALADOR = 'Instalar-Robo-Local.cmd', ROBO_VERSAO_MIN = 8;
+const ROBO_INSTALADOR = 'Instalar-Robo-Local.cmd', ROBO_VERSAO_MIN = 13;   // versão do Instalar-Robo-Local.cmd publicado: robô mais velho que isso se atualiza sozinho
 // pareamento automático: o robô entrega a chave só para o painel publicado (no arquivo local, cola-se a chave do token.txt)
 // → true (pareou) | false (robô recusou) | 'sem-robo' (nada respondendo neste PC)
 async function roboParear(){
@@ -12057,10 +12058,10 @@ function roboAtualizar(){
 function roboAvisoHtml(s, idChave){
   const instalar = (txt = 'Instalar robô') => `<a class="robo-acao" href="${ROBO_INSTALADOR}" download title="Baixe e clique no arquivo: ele instala sozinho e o painel conecta em seguida">⬇ ${txt}</a>`;
   const deNovo = '<a class="robo-acao sec" href="#" data-de-novo>↻ Tentar de novo</a>';
-  if(s.ok) return s.versao < ROBO_VERSAO_MIN ? (s.rodando || s.fila ? 'Robô ocupado · atualiza ao terminar'
-      : s.atualizacao === 'antigo' ? `Robô antigo ${instalar('Reinstalar')}<span class="robo-dica">depois ele se atualiza sozinho</span>`
-      : `<span title="${sepEsc(String(s.atualizacao || ''))}">Não atualizou</span> ${instalar('Reinstalar')}`)
-    : (s.rodando ? 'Robô ocupado · sua rotina entra na fila' : 'Robô local pronto');
+  if(s.ok) return s.versao < ROBO_VERSAO_MIN ? (s.rodando || s.fila ? `Robô ocupado (v${s.versao}) · atualiza para a v${ROBO_VERSAO_MIN} ao terminar`
+      : s.atualizacao === 'antigo' ? `Robô antigo (v${s.versao}) ${instalar('Reinstalar')}<span class="robo-dica">depois ele se atualiza sozinho</span>`
+      : `<span title="${sepEsc(String(s.atualizacao || ''))}">Robô v${s.versao}: não atualizou para a v${ROBO_VERSAO_MIN}</span> ${instalar('Reinstalar')}`)
+    : (s.rodando ? `Robô ocupado · sua rotina entra na fila <b class="robo-ver">v${s.versao}</b>` : `Robô local pronto <b class="robo-ver">v${s.versao}</b>`);
   if(s.motivo === 'sem-robo') return `<span data-procurando></span>Robô desligado neste PC ${instalar()}<span class="robo-dica" title="Se já instalou: menu Iniciar → Robo local - iniciar">conecta sozinho ao instalar</span>`;
   if(location.protocol === 'file:') return (s.motivo === 'sem-token' ? 'Conecte o robô' : 'Chave não confere') + ` <input class="mon-in" id="${idChave}" type="password" placeholder="cole a chave (token.txt)" aria-label="Chave do robô" autocomplete="off"> <button type="button" class="robo-acao" data-conectar="${idChave}">Conectar</button>`;
   return `<span data-procurando></span>Robô não liberou a conexão ${deNovo} ${instalar('Reinstalar')}`;
